@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react'; // Added Minimize icon
+import { X, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
