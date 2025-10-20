@@ -12,6 +12,11 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432" # Expose for local development/debugging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myjourney_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio
@@ -25,6 +30,11 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -42,8 +52,15 @@ services:
       MINIO_USE_SSL: "false"
       MINIO_BUCKET_NAME: journey-images
     depends_on:
-      - db
-      - minio
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./backend:/app
       - /app/node_modules # Exclude node_modules from host mount
@@ -58,7 +75,8 @@ services:
     environment:
       VITE_API_BASE_URL: http://localhost:3001 # For local development (browser access)
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     volumes:
       - .:/app
       - /app/node_modules # Exclude node_modules from host mount

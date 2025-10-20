@@ -1,9 +1,9 @@
 # Use a Node.js base image
 FROM node:20-alpine
 
-# Install sharp dependencies
+# Install sharp dependencies and curl for healthcheck
 # libvips-dev is needed for sharp to compile correctly
-RUN apk add --no-cache vips-dev build-base gcc autoconf automake zlib-dev
+RUN apk add --no-cache vips-dev build-base gcc autoconf automake zlib-dev curl
 
 # Set the working directory
 WORKDIR /app
