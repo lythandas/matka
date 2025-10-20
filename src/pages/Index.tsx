@@ -37,14 +37,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useJourneys } from '@/contexts/JourneyContext';
 import CreateJourneyDialog from '@/components/CreateJourneyDialog';
-import ViewToggle from '@/components/ViewToggle'; // New import
-import GridPostCard from '@/components/GridPostCard'; // New import
+import ViewToggle from '@/components/ViewToggle';
+import GridPostCard from '@/components/GridPostCard';
 
 interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string };
+  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -59,7 +59,7 @@ const Index = () => {
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string } | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string; original?: string } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -67,7 +67,7 @@ const Index = () => {
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // New state for view mode
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
@@ -455,15 +455,15 @@ const Index = () => {
                     {post.title && (
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                    {post.image_urls?.medium && (
+                    {post.image_urls?.large && ( {/* Changed to large for card view */}
                       <img
-                        src={post.image_urls.medium}
+                        src={post.image_urls.large}
                         alt="Post image"
                         className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder.svg';
                           e.currentTarget.onerror = null;
-                          console.error(`Failed to load image: ${post.image_urls?.medium}`);
+                          console.error(`Failed to load image: ${post.image_urls?.large}`);
                         }}
                       />
                     )}

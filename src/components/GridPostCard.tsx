@@ -9,7 +9,7 @@ interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string }; // Updated to include original
+  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -22,8 +22,8 @@ interface GridPostCardProps {
 }
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
-  // Use the small image for grid view
-  const imageUrl = post.image_urls?.small || '/placeholder.svg';
+  // Use the medium image for grid view
+  const imageUrl = post.image_urls?.medium || '/placeholder.svg';
 
   return (
     <Card
