@@ -52,7 +52,8 @@ services:
       MINIO_SECRET_KEY: minioadmin
       MINIO_USE_SSL: "false"
       MINIO_BUCKET_NAME: journey-images
-      MINIO_PUBLIC_URL_BASE: http://minio:9000
+      MINIO_PUBLIC_URL_BASE: http://localhost:9000 # Changed to localhost for browser accessibility
+      JWT_SECRET: supersecretjwtkey_dev # Added JWT_SECRET
     depends_on:
       db:
         condition: service_healthy
