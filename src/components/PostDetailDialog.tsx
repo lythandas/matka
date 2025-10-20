@@ -28,7 +28,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({ post, isOpen, onClo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[95vh] overflow-y-auto"> {/* Increased max-width and max-height */}
         <DialogHeader className="relative">
           <DialogTitle>{post.title || "Post Details"}</DialogTitle>
           <DialogDescription>
