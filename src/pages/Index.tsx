@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useJourneys } from '@/contexts/JourneyContext';
 import CreateJourneyDialog from '@/components/CreateJourneyDialog';
+import ViewToggle from '@/components/ViewToggle'; // New import
+import GridPostCard from '@/components/GridPostCard'; // New import
 
 interface Post {
   id: string;
@@ -65,6 +67,7 @@ const Index = () => {
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // New state for view mode
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
@@ -262,7 +265,7 @@ const Index = () => {
                 variant="outline"
                 className="h-auto py-4 px-6 text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
                            hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
-                           hover:bg-transparent hover:border-transparent" // Added hover:border-transparent
+                           hover:bg-transparent hover:border-transparent"
               >
                 {selectedJourney ? selectedJourney.name : "Select Journey"}
                 <ChevronDown className="ml-2 h-6 w-6" />
@@ -421,6 +424,10 @@ const Index = () => {
           </Card>
         )}
 
+        <div className="mb-6">
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        </div>
+
         {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
         ) : posts.length === 0 ? (
@@ -436,80 +443,92 @@ const Index = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-6">
-            {posts.map((post, index) => (
-              <ShineCard
-                key={post.id}
-                className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                onClick={() => handlePostClick(post, index)}
-              >
-                <CardContent className="p-6">
-                  {post.title && (
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                  )}
-                  {post.image_urls?.medium && (
-                    <img
-                      src={post.image_urls.medium}
-                      alt="Post image"
-                      className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg'; // Corrected path
-                        e.currentTarget.onerror = null;
-                        console.error(`Failed to load image: ${post.image_urls?.medium}`);
-                      }}
-                    />
-                  )}
-                  {post.spotify_embed_url && (
-                    <div className="w-full aspect-video mb-4">
-                      <iframe
-                        src={post.spotify_embed_url}
-                        width="100%"
-                        height="100%"
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"
-                        className="rounded-md"
-                      ></iframe>
-                    </div>
-                  )}
-                  {post.coordinates && (
-                    <div className="mb-4">
-                      <MapComponent coordinates={post.coordinates} />
-                    </div>
-                  )}
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                    {isAuthenticated && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" className="ml-4 hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete your post
-                              and remove its data from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+          viewMode === 'list' ? (
+            <div className="space-y-6">
+              {posts.map((post, index) => (
+                <ShineCard
+                  key={post.id}
+                  className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                  onClick={() => handlePostClick(post, index)}
+                >
+                  <CardContent className="p-6">
+                    {post.title && (
+                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {format(new Date(post.created_at), 'PPP p')}
-                  </p>
-                </CardContent>
-              </ShineCard>
-            ))}
-          </div>
+                    {post.image_urls?.medium && (
+                      <img
+                        src={post.image_urls.medium}
+                        alt="Post image"
+                        className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.onerror = null;
+                          console.error(`Failed to load image: ${post.image_urls?.medium}`);
+                        }}
+                      />
+                    )}
+                    {post.spotify_embed_url && (
+                      <div className="w-full aspect-video mb-4">
+                        <iframe
+                          src={post.spotify_embed_url}
+                          width="100%"
+                          height="100%"
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          className="rounded-md"
+                        ></iframe>
+                      </div>
+                    )}
+                    {post.coordinates && (
+                      <div className="mb-4">
+                        <MapComponent coordinates={post.coordinates} />
+                      </div>
+                    )}
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                      {isAuthenticated && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon" className="ml-4 hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your post
+                                and remove its data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {format(new Date(post.created_at), 'PPP p')}
+                    </p>
+                  </CardContent>
+                </ShineCard>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post, index) => (
+                <GridPostCard
+                  key={post.id}
+                  post={post}
+                  onClick={() => handlePostClick(post, index)}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
       <MadeWithDyad />
