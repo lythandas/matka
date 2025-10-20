@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, ChevronDown, Compass } from 'lucide-react';
+import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench } from 'lucide-react'; // Added Wrench icon
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,7 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
+import CreateUserDialog from '@/components/CreateUserDialog'; // Import CreateUserDialog
 
 interface Post {
   id: string;
@@ -54,7 +55,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
-  const { isAuthenticated, login, logout } = useAuth();
+  const { isAuthenticated, user, login, logout } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -67,16 +68,32 @@ const Index = () => {
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
+  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false); // State for CreateUserDialog
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
+  const [loginUsername, setLoginUsername] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    await login(loginUsername, loginPassword);
+    setIsLoggingIn(false);
+  };
+
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`);
+      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
       }
@@ -99,7 +116,7 @@ const Index = () => {
       setPosts([]); // Clear posts if no journey is selected
       setLoadingPosts(false);
     }
-  }, [selectedJourney]);
+  }, [selectedJourney, isAuthenticated]); // Re-fetch posts when auth state changes
 
   const uploadImageToServer = async (file: File) => {
     setIsUploadingImage(true);
@@ -124,6 +141,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
         },
         body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
       });
@@ -158,6 +176,11 @@ const Index = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!isAuthenticated) {
+      showError('You must be logged in to create a post.');
+      return;
+    }
+
     if (!selectedJourney) {
       showError('Please select a journey before creating a post.');
       return;
@@ -177,6 +200,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
         },
         body: JSON.stringify({
           journeyId: selectedJourney.id, // Associate post with selected journey
@@ -212,6 +236,9 @@ const Index = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+        },
       });
 
       if (!response.ok) {
@@ -287,7 +314,7 @@ const Index = () => {
                   </DropdownMenuItem>
                 ))
               )}
-              {isAuthenticated && (
+              {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
@@ -299,8 +326,19 @@ const Index = () => {
           </DropdownMenu>
 
           <div className="flex items-center space-x-2">
+            {isAuthenticated && user?.role === 'admin' && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsCreateUserDialogOpen(true)}
+                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent"
+              >
+                <Wrench className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Admin Section</span>
+              </Button>
+            )}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+            <Button onClick={isAuthenticated ? logout : () => {}} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
           </div>
@@ -311,6 +349,38 @@ const Index = () => {
             Backend: {backendConnected ? "Connected" : "Disconnected"}
           </Badge>
         </div>
+
+        {!isAuthenticated && (
+          <Card className="mb-8 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold">Login</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <Input
+                  placeholder="Username"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  className="w-full"
+                  disabled={isLoggingIn}
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full"
+                  disabled={isLoggingIn}
+                />
+                <div className="flex justify-center">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isLoggingIn}>
+                    {isLoggingIn ? 'Logging in...' : 'Login'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {isAuthenticated && (
           <Card className="mb-8 shadow-lg">
@@ -486,7 +556,7 @@ const Index = () => {
                     )}
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                      {isAuthenticated && (
+                      {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('delete_any_post') || user?.role === 'admin') && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="icon" className="ml-4 hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
@@ -549,6 +619,11 @@ const Index = () => {
       <CreateJourneyDialog
         isOpen={isCreateJourneyDialogOpen}
         onClose={() => setIsCreateJourneyDialogOpen(false)}
+      />
+
+      <CreateUserDialog
+        isOpen={isCreateUserDialogOpen}
+        onClose={() => setIsCreateUserDialogOpen(false)}
       />
     </div>
   );
