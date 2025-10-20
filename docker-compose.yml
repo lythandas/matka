@@ -57,14 +57,10 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     volumes:
       - ./backend:/app
-      - /app/node_modules # Exclude node_modules from host mount
+      # The node_modules exclusion is now handled by .dockerignore and the Dockerfile build process.
+      # Removing the explicit /app/node_modules volume to avoid potential conflicts.
 
   frontend:
     build:
