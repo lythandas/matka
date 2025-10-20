@@ -451,6 +451,7 @@ const Index = () => {
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
+          key={selectedPostForDetail.id}
           post={selectedPostForDetail}
           isOpen={isDetailDialogOpen}
           onClose={handleCloseDetailDialog}
