@@ -19,12 +19,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle } from 'lucide-react'; // Added XCircle for clear buttons
+import { Trash2, Plus, XCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
+import PostDetailDialog from '@/components/PostDetailDialog'; // Import the new component
 
 interface Post {
   id: string;
@@ -51,6 +52,9 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+
+  const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
   const fetchPosts = async () => {
     try {
@@ -193,6 +197,16 @@ const Index = () => {
       console.error('Error deleting post:', error);
       showError(error.message || 'Failed to delete post.');
     }
+  };
+
+  const handlePostClick = (post: Post) => {
+    setSelectedPostForDetail(post);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleCloseDetailDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedPostForDetail(null);
   };
 
   return (
@@ -339,7 +353,11 @@ const Index = () => {
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <Card key={post.id} className="shadow-md hover:shadow-lg transition-shadow duration-200">
+              <Card
+                key={post.id}
+                className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                onClick={() => handlePostClick(post)}
+              >
                 <CardContent className="p-6">
                   {post.title && (
                     <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
@@ -378,7 +396,7 @@ const Index = () => {
                     {isAuthenticated && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" className="ml-4">
+                          <Button variant="destructive" size="icon" className="ml-4" onClick={(e) => e.stopPropagation()}> {/* Stop propagation to prevent opening detail dialog */}
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -410,6 +428,12 @@ const Index = () => {
         )}
       </div>
       <MadeWithDyad />
+
+      <PostDetailDialog
+        post={selectedPostForDetail}
+        isOpen={isDetailDialogOpen}
+        onClose={handleCloseDetailDialog}
+      />
     </div>
   );
 };
