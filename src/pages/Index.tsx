@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
-import ShineCard from '@/components/ShineCard'; // Import the new ShineCard component
+// import ShineCard from '@/components/ShineCard'; // Removed ShineCard import
 
 interface Post {
   id: string;
@@ -354,9 +354,9 @@ const Index = () => {
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <ShineCard // Using ShineCard here
+              <Card // Reverted to Card
                 key={post.id}
-                className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer" // Removed shine-related classes
                 onClick={() => handlePostClick(post)}
               >
                 <CardContent className="p-6">
@@ -423,7 +423,7 @@ const Index = () => {
                     {format(new Date(post.created_at), 'PPP p')}
                   </p>
                 </CardContent>
-              </ShineCard>
+              </Card>
             ))}
           </div>
         )}
