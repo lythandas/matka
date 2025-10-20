@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize, ChevronLeft, ChevronRight } from 'lucide-react'; // Added Maximize, ChevronLeft, ChevronRight icons
+import { X, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 
@@ -46,22 +46,15 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto p-0"> {/* Increased max-width and max-height, removed default padding */}
-          <DialogHeader className="p-6 pb-0 relative"> {/* Added padding back to header */}
+        <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto p-0">
+          <DialogHeader className="p-6 pb-0 relative">
             <DialogTitle>{post.title || "Post Details"}</DialogTitle>
             <DialogDescription>
               {format(new Date(post.created_at), 'PPP p')}
             </DialogDescription>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4 rounded-full hover:ring-2 hover:ring-blue-500"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {/* Removed the custom close button here, relying on the default one from DialogContent */}
           </DialogHeader>
-          <div className="relative p-6 pt-4"> {/* Added padding back to content */}
+          <div className="relative p-6 pt-4">
             {post.image_urls?.large && (
               <div className="relative mb-4">
                 <img
