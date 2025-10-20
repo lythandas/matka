@@ -35,7 +35,7 @@ const minioClient = new MinioClient({
 const MINIO_BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'journey-images';
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
-// Ensure bucket exists
+// Ensure bucket exists and set public read policy
 async function ensureMinioBucket() {
   const exists = await minioClient.bucketExists(MINIO_BUCKET_NAME);
   if (!exists) {
@@ -43,6 +43,28 @@ async function ensureMinioBucket() {
     fastify.log.info(`Bucket '${MINIO_BUCKET_NAME}' created.`);
   } else {
     fastify.log.info(`Bucket '${MINIO_BUCKET_NAME}' already exists.`);
+  }
+
+  // Set public read policy for the bucket
+  const policy = {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Allow',
+        Principal: {
+          AWS: ['*'],
+        },
+        Action: ['s3:GetObject'],
+        Resource: [`arn:aws:s3:::${MINIO_BUCKET_NAME}/*`],
+      },
+    ],
+  };
+
+  try {
+    await minioClient.setBucketPolicy(MINIO_BUCKET_NAME, JSON.stringify(policy));
+    fastify.log.info(`Public read policy set for bucket '${MINIO_BUCKET_NAME}'.`);
+  } catch (error) {
+    fastify.log.error({ error }, `Error setting public read policy for bucket '${MINIO_BUCKET_NAME}'.`);
   }
 }
 
