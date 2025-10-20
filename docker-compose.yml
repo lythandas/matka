@@ -52,7 +52,7 @@ services:
       MINIO_SECRET_KEY: minioadmin
       MINIO_USE_SSL: "false"
       MINIO_BUCKET_NAME: journey-images
-      MINIO_PUBLIC_URL_BASE: http://minio:9000 # Changed to use the MinIO service name
+      MINIO_PUBLIC_URL_BASE: http://localhost:9000 # Changed to use localhost for host machine access
     depends_on:
       db:
         condition: service_healthy
