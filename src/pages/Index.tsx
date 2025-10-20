@@ -259,8 +259,8 @@ const Index = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
-                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 hover:bg-transparent hover:text-blue-700 dark:hover:text-blue-300 flex items-center hover:ring-2 hover:ring-blue-500"
+                variant="outline" // Changed to outline to match login button style
+                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
               >
                 {selectedJourney ? selectedJourney.name : "Select Journey"}
                 <ChevronDown className="ml-2 h-6 w-6" />
