@@ -54,7 +54,9 @@ const ShineCard: React.FC<ShineCardProps> = ({ children, className, ...props }) 
       onMouseLeave={handleMouseLeave}
       {...props}
     >
-      {children}
+      <div className="relative z-10"> {/* Wrap children and give it a higher z-index */}
+        {children}
+      </div>
     </Card>
   );
 };
