@@ -1,12 +1,14 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { Client as MinioClient } from 'minio';
 import { Client as PgClient } from 'pg';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import { Readable } from 'stream';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import path from 'path';
+import fs from 'fs/promises'; // Use promise-based fs
+import fastifyStatic from '@fastify/static'; // Import fastify-static
 
 const fastify = Fastify({
   logger: true,
@@ -25,16 +27,7 @@ const pgClient = new PgClient({
   connectionString: process.env.DATABASE_URL,
 });
 
-// MinIO Client
-const minioClient = new MinioClient({
-  endPoint: process.env.MINIO_ENDPOINT || 'localhost',
-  port: parseInt(process.env.MINIO_PORT || '9000', 10),
-  useSSL: process.env.MINIO_USE_SSL === 'true',
-  accessKey: process.env.MINIO_ACCESS_KEY || 'minioadmin',
-  secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
-});
-
-const MINIO_BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'journey-images';
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads'); // Directory for storing images
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey'; // Secret for JWTs
 
@@ -45,38 +38,11 @@ const IMAGE_SIZES = {
   large: { width: 1200, height: 900 },
 };
 
-// Ensure bucket exists and set public read policy
-async function ensureMinioBucket() {
-  const exists = await minioClient.bucketExists(MINIO_BUCKET_NAME);
-  if (!exists) {
-    await minioClient.makeBucket(MINIO_BUCKET_NAME, 'us-east-1');
-    fastify.log.info(`Bucket '${MINIO_BUCKET_NAME}' created.`);
-  } else {
-    fastify.log.info(`Bucket '${MINIO_BUCKET_NAME}' already exists.`);
-  }
-
-  // Set public read policy for the bucket
-  const policy = {
-    Version: '2012-10-17',
-    Statement: [
-      {
-        Effect: 'Allow',
-        Principal: {
-          AWS: ['*'],
-        },
-        Action: ['s3:GetObject'],
-        Resource: [`arn:aws:s3:::${MINIO_BUCKET_NAME}/*`],
-      },
-    ],
-  };
-
-  try {
-    await minioClient.setBucketPolicy(MINIO_BUCKET_NAME, JSON.stringify(policy));
-    fastify.log.info(`Public read policy set for bucket '${MINIO_BUCKET_NAME}'.`);
-  } catch (error) {
-    fastify.log.error({ error }, `Error setting public read policy for bucket '${MINIO_BUCKET_NAME}'.`);
-  }
-}
+// Register fastify-static to serve uploaded images
+fastify.register(fastifyStatic, {
+  root: UPLOADS_DIR,
+  prefix: '/uploads/', // Serve files under /uploads/ route
+});
 
 // Ensure database tables exist (without creating default users/journeys/posts)
 async function ensureDbTable() {
@@ -364,7 +330,6 @@ fastify.post('/upload-image', async (request, reply) => {
     reply.status(401).send({ message: 'Authentication required.' });
     return;
   }
-  // For now, all authenticated users can upload images. Permissions can be added later.
 
   try {
     const { imageBase64, imageType } = request.body as { imageBase64: string; imageType: string };
@@ -394,55 +359,42 @@ fastify.post('/upload-image', async (request, reply) => {
       return;
     }
 
+    // Ensure the uploads directory exists
+    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+
     const imageUrls: { [key: string]: string } = {};
-    const baseObjectName = randomUUID();
-    const minioPublicUrlBase = process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`;
+    const baseFileName = randomUUID();
+    const backendBaseUrl = `http://localhost:3001`; // Assuming backend is accessible at this URL
 
-    // Upload original image
-    const originalObjectName = `${baseObjectName}-original.${fileExtension}`;
-    const originalStream = new Readable();
-    originalStream.push(buffer);
-    originalStream.push(null);
-    await minioClient.putObject(MINIO_BUCKET_NAME, originalObjectName, originalStream, buffer.length, {
-      'Content-Type': imageType,
-    });
-    imageUrls.original = `${minioPublicUrlBase}/${MINIO_BUCKET_NAME}/${originalObjectName}`;
-    fastify.log.info(`Original image '${originalObjectName}' uploaded successfully.`);
+    // Process and save images locally
+    for (const sizeKey of [...Object.keys(IMAGE_SIZES), 'original'] as Array<keyof typeof IMAGE_SIZES | 'original'>) {
+      const objectName = `${baseFileName}-${sizeKey}.${fileExtension}`;
+      const filePath = path.join(UPLOADS_DIR, objectName);
+      const publicUrl = `${backendBaseUrl}/uploads/${objectName}`;
 
-
-    for (const sizeKey of Object.keys(IMAGE_SIZES) as Array<keyof typeof IMAGE_SIZES>) {
-      const { width, height } = IMAGE_SIZES[sizeKey];
-      const objectName = `${baseObjectName}-${sizeKey}.${fileExtension}`;
-      
-      fastify.log.info(`Resizing image to ${width}x${height} for object: ${objectName}`);
-      let resizedBuffer;
-      try {
-        resizedBuffer = await sharp(buffer)
-          .resize(width, height, { fit: 'inside', withoutEnlargement: true })
-          .toBuffer();
-        fastify.log.info(`Image resized to ${sizeKey}. New buffer size: ${resizedBuffer.length}`);
-      } catch (sharpError) {
-        fastify.log.error({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
-        // Continue to next size or handle error as appropriate
-        continue; 
+      let processedBuffer = buffer;
+      if (sizeKey !== 'original') {
+        const { width, height } = IMAGE_SIZES[sizeKey];
+        fastify.log.info(`Resizing image to ${width}x${height} for file: ${objectName}`);
+        try {
+          processedBuffer = await sharp(buffer)
+            .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+            .toBuffer();
+          fastify.log.info(`Image resized to ${sizeKey}. New buffer size: ${processedBuffer.length}`);
+        } catch (sharpError) {
+          fastify.log.error({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
+          continue; 
+        }
       }
 
-      const stream = new Readable();
-      stream.push(resizedBuffer);
-      stream.push(null);
-
-      fastify.log.info(`Uploading object '${objectName}' to MinIO bucket '${MINIO_BUCKET_NAME}'`);
-      await minioClient.putObject(MINIO_BUCKET_NAME, objectName, stream, resizedBuffer.length, {
-        'Content-Type': imageType,
-      });
-      fastify.log.info(`Object '${objectName}' uploaded successfully.`);
-      
-      imageUrls[sizeKey] = `${minioPublicUrlBase}/${MINIO_BUCKET_NAME}/${objectName}`;
+      await fs.writeFile(filePath, processedBuffer);
+      fastify.log.info(`Image '${objectName}' saved locally at '${filePath}'.`);
+      imageUrls[sizeKey] = publicUrl;
     }
     
     reply.status(200).send({ imageUrls });
   } catch (error) {
-    fastify.log.error({ error }, 'Error uploading image');
+    fastify.log.error({ error }, 'Error uploading image to local storage');
     reply.status(500).send({ message: 'Failed to upload image' });
   }
 });
@@ -544,16 +496,18 @@ fastify.delete('/posts/:id', async (request, reply) => {
     }
 
     if (post.image_urls) {
-      // Delete all associated image sizes from MinIO, including original
+      // Delete all associated image sizes from local storage
       for (const sizeKey of Object.keys(post.image_urls)) {
         const imageUrl = (post.image_urls as any)[sizeKey]; // Cast to any to access dynamically
         if (imageUrl) {
-          const url = new URL(imageUrl);
-          const objectName = url.pathname.split('/').pop();
-          if (objectName) {
-            fastify.log.info(`Deleting image '${objectName}' from MinIO.`);
-            await minioClient.removeObject(MINIO_BUCKET_NAME, objectName);
-            fastify.log.info(`Image '${objectName}' deleted from MinIO.`);
+          try {
+            const url = new URL(imageUrl);
+            const fileName = path.basename(url.pathname);
+            const filePath = path.join(UPLOADS_DIR, fileName);
+            await fs.unlink(filePath);
+            fastify.log.info(`Image file '${fileName}' deleted from local storage.`);
+          } catch (fileError) {
+            fastify.log.warn({ fileError }, `Could not delete local image file for URL: ${imageUrl}. It might not exist.`);
           }
         }
       }
@@ -596,11 +550,12 @@ async function connectWithRetry(client: PgClient, maxRetries = 10, delay = 5000)
 // Run the server
 const start = async () => {
   try {
-    // Use the retry function for database connection
     await connectWithRetry(pgClient);
+    await ensureDbTable(); // This will drop and recreate tables, so it should be after connections
 
-    await ensureMinioBucket();
-    await ensureDbTable();
+    // Ensure the uploads directory exists on startup
+    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+    fastify.log.info(`Ensured uploads directory exists at: ${UPLOADS_DIR}`);
 
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);

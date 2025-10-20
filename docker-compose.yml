@@ -16,27 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
-    image: minio/minio
-    restart: always
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-      MINIO_BUCKETS: journey-images # MinIO will create this bucket on startup
-      MINIO_CORS_CONFIG: /etc/minio/cors.json # Point to the CORS config file
-    volumes:
-      - minio_data:/data
-      - ./cors.json:/etc/minio/cors.json # Mount the CORS policy file to a dedicated config path
-    command: server /data --console-address ":9001" # Explicitly start the MinIO server
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -46,25 +25,18 @@ services:
       - "3001:3001"
     environment:
       DATABASE_URL: postgres://user:password@db:5432/myjourney_db
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      MINIO_USE_SSL: "false"
-      MINIO_BUCKET_NAME: journey-images
-      MINIO_PUBLIC_URL_BASE: http://localhost:9000 # Changed to localhost for browser accessibility
-      JWT_SECRET: supersecretjwtkey_dev # Added JWT_SECRET
+      JWT_SECRET: supersecretjwtkey_dev
     depends_on:
       db:
-        condition: service_healthy
-      minio: # Depend directly on minio being healthy
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 60s # Increased start_period to 60 seconds
+      start_period: 60s
+    volumes:
+      - ./backend/uploads:/app/uploads # Mount a volume for persistent image storage
   frontend:
     build:
       context: .
@@ -82,4 +54,3 @@ services:
 
 volumes:
   db_data:
-  minio_data:
