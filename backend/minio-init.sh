@@ -6,7 +6,8 @@ MINIO_PID=$!
 
 # Wait for MinIO server to be ready
 echo "Waiting for MinIO server to start..."
-/usr/bin/mc ready local --timeout 30s
+# Removed --timeout 30s as it's not supported by 'mc ready'
+/usr/bin/mc ready local 
 if [ $? -ne 0 ]; then
   echo "MinIO server did not start in time. Exiting."
   kill $MINIO_PID
