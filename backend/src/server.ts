@@ -575,11 +575,29 @@ fastify.delete('/posts/:id', async (request, reply) => {
   }
 });
 
+// Function to connect to PostgreSQL with retries
+async function connectWithRetry(client: PgClient, maxRetries = 10, delay = 5000) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await client.connect();
+      fastify.log.info('Connected to PostgreSQL database.');
+      return;
+    } catch (error) {
+      fastify.log.warn(`Failed to connect to PostgreSQL (attempt ${i + 1}/${maxRetries}). Retrying in ${delay / 1000}s...`);
+      if (i < maxRetries - 1) {
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        throw error; // Re-throw if max retries reached
+      }
+    }
+  }
+}
+
 // Run the server
 const start = async () => {
   try {
-    await pgClient.connect();
-    fastify.log.info('Connected to PostgreSQL database.');
+    // Use the retry function for database connection
+    await connectWithRetry(pgClient);
 
     await ensureMinioBucket();
     await ensureDbTable();
