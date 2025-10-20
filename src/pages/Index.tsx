@@ -89,7 +89,7 @@ const Index = () => {
         await new Promise<void>((resolve) => {
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
-              imageBase64 = reader.result.split(',')[1];
+              imageBase664 = reader.result.split(',')[1];
               imageType = imageFile.type;
             }
             resolve();
@@ -120,6 +120,24 @@ const Index = () => {
     } catch (error) {
       console.error('Error creating post:', error);
       showError('Failed to create post.');
+    }
+  };
+
+  const handleDeletePost = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+
+      setPosts(posts.filter((post) => post.id !== id));
+      showSuccess('Post deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showError('Failed to delete post.');
     }
   };
 

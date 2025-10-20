@@ -93,7 +93,8 @@ fastify.post('/posts', async (request, reply) => {
       await minioClient.putObject(MINIO_BUCKET_NAME, objectName, stream, resizedBuffer.length, {
         'Content-Type': imageType,
       });
-      imageUrl = `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || '9000'}/${MINIO_BUCKET_NAME}/${objectName}`;
+      // Use MINIO_PUBLIC_URL_BASE for URLs accessible from the frontend
+      imageUrl = `${process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`}/${MINIO_BUCKET_NAME}/${objectName}`;
     }
 
     const result = await pgClient.query(
