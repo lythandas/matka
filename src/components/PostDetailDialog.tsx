@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react'; // Added Minimize icon
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
+import { showError } from '@/utils/toast';
 
 interface Post {
   id: string;
@@ -36,112 +37,122 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const [showFullscreenImage, setShowFullscreenImage] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [isImageFullscreen, setIsImageFullscreen] = useState(false);
 
   if (!post) return null;
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
 
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenEnabled) {
+      showError("Fullscreen mode is not supported by your browser.");
+      return;
+    }
+
+    if (document.fullscreenElement === imageRef.current) {
+      document.exitFullscreen();
+    } else {
+      imageRef.current?.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        showError("Failed to enter full-screen mode.");
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsImageFullscreen(document.fullscreenElement === imageRef.current);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto p-0">
-          <DialogHeader className="p-6 pb-0 relative">
-            <DialogTitle>{post.title || "Post Details"}</DialogTitle>
-            <DialogDescription>
-              {format(new Date(post.created_at), 'PPP p')}
-            </DialogDescription>
-            {/* Removed the custom close button here, relying on the default one from DialogContent */}
-          </DialogHeader>
-          <div className="relative p-6 pt-4">
-            {post.image_urls?.large && (
-              <div className="relative mb-4">
-                <img
-                  src={post.image_urls.large}
-                  alt={post.title || "Post image"}
-                  className="w-full h-auto object-cover rounded-md"
-                  onError={(e) => {
-                    e.currentTarget.src = '/public/placeholder.svg';
-                    e.currentTarget.onerror = null;
-                    console.error(`Failed to load image: ${post.image_urls?.large}`);
-                  }}
-                />
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-0 relative">
+          <DialogTitle>{post.title || "Post Details"}</DialogTitle>
+          <DialogDescription>
+            {format(new Date(post.created_at), 'PPP p')}
+          </DialogDescription>
+          {/* Relying on the default close button from DialogContent */}
+        </DialogHeader>
+        <div className="relative p-6 pt-4">
+          {post.image_urls?.large && (
+            <div className="relative mb-4">
+              <img
+                ref={imageRef}
+                src={post.image_urls.large}
+                alt={post.title || "Post image"}
+                className="w-full h-auto object-cover rounded-md"
+                onError={(e) => {
+                  e.currentTarget.src = '/public/placeholder.svg';
+                  e.currentTarget.onerror = null;
+                  console.error(`Failed to load image: ${post.image_urls?.large}`);
+                }}
+              />
+              {document.fullscreenEnabled && ( // Only show button if fullscreen is supported
                 <Button
                   variant="outline"
                   size="icon"
                   className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
-                  onClick={() => setShowFullscreenImage(true)}
+                  onClick={handleToggleFullscreen}
                 >
-                  <Maximize className="h-4 w-4" />
+                  {isImageFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                 </Button>
-              </div>
-            )}
-            {post.spotify_embed_url && (
-              <div className="w-full aspect-video mb-4">
-                <iframe
-                  src={post.spotify_embed_url}
-                  width="100%"
-                  height="100%"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded-md"
-                ></iframe>
-              </div>
-            )}
-            {post.coordinates && (
-              <div className="w-full h-64 rounded-md overflow-hidden mb-4">
-                <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
-              </div>
-            )}
-            <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-              {post.message}
-            </p>
-          </div>
-
-          {/* Navigation Buttons */}
-          {canGoPrevious && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
-              onClick={onPrevious}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
+              )}
+            </div>
           )}
-          {canGoNext && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
-              onClick={onNext}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+          {post.spotify_embed_url && (
+            <div className="w-full aspect-video mb-4">
+              <iframe
+                src={post.spotify_embed_url}
+                width="100%"
+                height="100%"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                className="rounded-md"
+              ></iframe>
+            </div>
           )}
-        </DialogContent>
-      </Dialog>
+          {post.coordinates && (
+            <div className="w-full h-64 rounded-md overflow-hidden mb-4">
+              <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
+            </div>
+          )}
+          <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+            {post.message}
+          </p>
+        </div>
 
-      {/* Fullscreen Image Dialog */}
-      <Dialog open={showFullscreenImage} onOpenChange={setShowFullscreenImage}>
-        <DialogContent className="max-w-screen-xl max-h-[98vh] w-full h-full p-0 flex items-center justify-center bg-black/90">
-          <img
-            src={post.image_urls?.large}
-            alt={post.title || "Full screen image"}
-            className="max-w-full max-h-full object-contain"
-          />
+        {/* Navigation Buttons */}
+        {canGoPrevious && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:text-gray-300 rounded-full hover:ring-2 hover:ring-blue-500"
-            onClick={() => setShowFullscreenImage(false)}
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
+            onClick={onPrevious}
           >
-            <X className="h-6 w-6" />
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+        {canGoNext && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
+            onClick={onNext}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
