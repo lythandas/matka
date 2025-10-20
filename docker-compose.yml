@@ -76,7 +76,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      - /app/node_modules # Exclude node_modules from host mount
+      # The node_modules exclusion is now handled by .dockerignore and the Dockerfile build process.
+      # Removing the explicit /app/node_modules volume to avoid potential conflicts.
 
 volumes:
   db_data:
