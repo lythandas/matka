@@ -32,6 +32,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
 
     mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
+    // This line adds the pin to the chosen location!
     new maplibregl.Marker()
       .setLngLat([coordinates.lng, coordinates.lat])
       .addTo(mapRef.current);
