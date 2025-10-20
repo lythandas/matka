@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Upload } from 'lucide-react';
+import { Trash2, Upload, Loader2 } from 'lucide-react'; // Import Loader2 for loading spinner
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge"; // Import Badge component
@@ -37,10 +37,13 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 const Index = () => {
   const { isAuthenticated, login, logout } = useAuth();
   const [message, setMessage] = useState<string>('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // For local thumbnail
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // URL from backend
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [backendConnected, setBackendConnected] = useState<boolean>(false); // New state for backend status
+  const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
@@ -51,11 +54,11 @@ const Index = () => {
       }
       const data: Post[] = await response.json();
       setPosts(data);
-      setBackendConnected(true); // Set to true on successful fetch
+      setBackendConnected(true);
     } catch (error) {
       console.error('Error fetching posts:', error);
       showError('Failed to load posts.');
-      setBackendConnected(false); // Set to false on error
+      setBackendConnected(false);
     } finally {
       setLoading(false);
     }
@@ -65,6 +68,53 @@ const Index = () => {
     fetchPosts();
   }, []);
 
+  const uploadImageToServer = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      const base64Data: string = await new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result.split(',')[1]);
+          } else {
+            reject(new Error("Failed to read image file."));
+          }
+        };
+        reader.onerror = (error) => {
+          console.error("FileReader error:", error);
+          reject(new Error("Failed to read image file."));
+        };
+      });
+
+      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload image');
+      }
+
+      const data = await response.json();
+      setUploadedImageUrl(data.imageUrl);
+      showSuccess('Image uploaded successfully!');
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      showError(error.message || 'Failed to upload image.');
+      // Clear selected file and preview if upload fails
+      setSelectedFile(null);
+      setPreviewImageUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -72,61 +122,62 @@ const Index = () => {
       // Client-side size validation
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
         showError('Image size exceeds 8MB limit.');
-        setImageFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = ''; // Clear input
+        setSelectedFile(null);
+        setPreviewImageUrl(null);
+        setUploadedImageUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       // Client-side type validation (basic check)
       if (!file.type.startsWith('image/')) {
         showError('Only image files are allowed.');
-        setImageFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = ''; // Clear input
+        setSelectedFile(null);
+        setPreviewImageUrl(null);
+        setUploadedImageUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
-      setImageFile(file);
+      setSelectedFile(file);
+      setPreviewImageUrl(URL.createObjectURL(file)); // Create local preview
+      setUploadedImageUrl(null); // Clear previous uploaded URL
+      uploadImageToServer(file); // Immediately upload
     } else {
-      setImageFile(null);
+      setSelectedFile(null);
+      setPreviewImageUrl(null);
+      setUploadedImageUrl(null);
+    }
+  };
+
+  const handleClearImage = () => {
+    setSelectedFile(null);
+    setPreviewImageUrl(null);
+    setUploadedImageUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!message.trim() && !imageFile) {
+    if (!message.trim() && !uploadedImageUrl) {
       showError('Please enter a message or select an image.');
+      return;
+    }
+    if (isUploadingImage) {
+      showError('Please wait for the image to finish uploading.');
       return;
     }
 
     try {
-      let imageBase64: string | undefined;
-      let imageType: string | undefined;
-
-      if (imageFile) {
-        const reader = new FileReader();
-        reader.readAsDataURL(imageFile);
-        await new Promise<void>((resolve, reject) => {
-          reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-              imageBase64 = reader.result.split(',')[1];
-              imageType = imageFile.type;
-            }
-            resolve();
-          };
-          reader.onerror = (error) => {
-            console.error("FileReader error:", error);
-            reject(new Error("Failed to read image file."));
-          };
-        });
-      }
-
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message, imageBase64, imageType }),
+        body: JSON.stringify({ message, imageUrl: uploadedImageUrl }), // Use uploadedImageUrl
       });
 
       if (!response.ok) {
@@ -137,10 +188,7 @@ const Index = () => {
       const newPost: Post = await response.json();
       setPosts([newPost, ...posts]);
       setMessage('');
-      setImageFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      handleClearImage(); // Clear image states after successful post
       showSuccess('Post created successfully!');
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -202,43 +250,58 @@ const Index = () => {
                   rows={4}
                   className="w-full resize-none"
                 />
-                <div className="flex items-center w-full">
-                  <Input
-                    id="image-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
-                    onChange={handleImageChange}
-                    ref={fileInputRef}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="flex-1 justify-start text-gray-600 dark:text-gray-400"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    {imageFile ? imageFile.name : "Choose Image (Max 8MB)"}
-                  </Button>
-                  {imageFile && (
+                <div className="flex flex-col items-center w-full space-y-2">
+                  <div className="flex items-center w-full">
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                      className="hidden"
+                    />
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setImageFile(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                      className="ml-2"
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      className="flex-1 justify-start text-gray-600 dark:text-gray-400"
+                      disabled={isUploadingImage}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {isUploadingImage ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
+                      {selectedFile ? selectedFile.name : "Choose Image (Max 8MB)"}
                     </Button>
+                    {selectedFile && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleClearImage}
+                        className="ml-2"
+                        disabled={isUploadingImage}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {previewImageUrl && (
+                    <div className="w-full max-w-xs mt-2">
+                      <img
+                        src={previewImageUrl}
+                        alt="Image preview"
+                        className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                      />
+                      {isUploadingImage && (
+                        <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isUploadingImage}>
                     Post
                   </Button>
                 </div>
