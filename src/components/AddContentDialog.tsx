@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Plus } from 'lucide-react';
+import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent'; // Import the new MapComponent
 
