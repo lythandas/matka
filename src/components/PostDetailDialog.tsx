@@ -13,7 +13,7 @@ interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string };
+  image_urls?: { small?: string; medium?: string; large?: string; original?: string }; // Updated to include original
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -71,6 +71,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     };
   }, []);
 
+  // Determine which image URL to use for the main display in the dialog
+  const dialogImageUrl = post.image_urls?.large || '/placeholder.svg';
+  // Determine which image URL to use when in fullscreen
+  const fullscreenImageUrl = post.image_urls?.original || post.image_urls?.large || '/placeholder.svg';
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto">
@@ -81,17 +87,17 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <div className="relative p-6 pt-4">
-          {post.image_urls?.large && (
+          {(post.image_urls?.large || post.image_urls?.original) && (
             <div className="relative mb-4">
               <img
                 ref={imageRef}
-                src={post.image_urls.large}
+                src={isImageFullscreen ? fullscreenImageUrl : dialogImageUrl} // Use original for fullscreen, large for dialog
                 alt={post.title || "Post image"}
                 className="w-full h-auto object-cover rounded-md"
                 onError={(e) => {
                   e.currentTarget.src = '/placeholder.svg'; // Corrected path
                   e.currentTarget.onerror = null;
-                  console.error(`Failed to load image: ${post.image_urls?.large}`);
+                  console.error(`Failed to load image: ${isImageFullscreen ? fullscreenImageUrl : dialogImageUrl}`);
                 }}
               />
               {document.fullscreenEnabled && (

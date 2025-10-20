@@ -135,6 +135,7 @@ async function ensureDbTable() {
           small: "https://picsum.photos/seed/marrakech-small/300/225",
           medium: "https://picsum.photos/seed/marrakech-medium/600/450",
           large: "https://picsum.photos/seed/marrakech-large/1200/900",
+          original: "https://picsum.photos/seed/marrakech-original/1920/1080", // Added original for sample
         },
         spotify_embed_url: null,
         coordinates: null
@@ -146,6 +147,7 @@ async function ensureDbTable() {
           small: "https://picsum.photos/seed/himalayas-small/300/225",
           medium: "https://picsum.photos/seed/himalayas-medium/600/450",
           large: "https://picsum.photos/seed/himalayas-large/1200/900",
+          original: "https://picsum.photos/seed/himalayas-original/1920/1080", // Added original for sample
         },
         spotify_embed_url: null,
         coordinates: null
@@ -157,6 +159,7 @@ async function ensureDbTable() {
           small: "https://picsum.photos/seed/rome-small/300/225",
           medium: "https://picsum.photos/seed/rome-medium/600/450",
           large: "https://picsum.photos/seed/rome-large/1200/900",
+          original: "https://picsum.photos/seed/rome-original/1920/1080", // Added original for sample
         },
         spotify_embed_url: null,
         coordinates: null
@@ -168,6 +171,7 @@ async function ensureDbTable() {
           small: "https://picsum.photos/seed/reef-small/300/225",
           medium: "https://picsum.photos/seed/reef-medium/600/450",
           large: "https://picsum.photos/seed/reef-large/1200/900",
+          original: "https://picsum.photos/seed/reef-original/1920/1080", // Added original for sample
         },
         spotify_embed_url: null,
         coordinates: null
@@ -179,6 +183,7 @@ async function ensureDbTable() {
           small: "https://picsum.photos/seed/eiffel-small/300/225",
           medium: "https://picsum.photos/seed/eiffel-medium/600/450",
           large: "https://picsum.photos/seed/eiffel-large/1200/900",
+          original: "https://picsum.photos/seed/eiffel-original/1920/1080", // Added original for sample
         },
         spotify_embed_url: null,
         coordinates: null
@@ -283,6 +288,18 @@ fastify.post('/upload-image', async (request, reply) => {
     const baseObjectName = randomUUID();
     const minioPublicUrlBase = process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`;
 
+    // Upload original image
+    const originalObjectName = `${baseObjectName}-original.${fileExtension}`;
+    const originalStream = new Readable();
+    originalStream.push(buffer);
+    originalStream.push(null);
+    await minioClient.putObject(MINIO_BUCKET_NAME, originalObjectName, originalStream, buffer.length, {
+      'Content-Type': imageType,
+    });
+    imageUrls.original = `${minioPublicUrlBase}/${MINIO_BUCKET_NAME}/${originalObjectName}`;
+    fastify.log.info(`Original image '${originalObjectName}' uploaded successfully.`);
+
+
     for (const sizeKey of Object.keys(IMAGE_SIZES) as Array<keyof typeof IMAGE_SIZES>) {
       const { width, height } = IMAGE_SIZES[sizeKey];
       const objectName = `${baseObjectName}-${sizeKey}.${fileExtension}`;
@@ -312,9 +329,6 @@ fastify.post('/upload-image', async (request, reply) => {
       
       imageUrls[sizeKey] = `${minioPublicUrlBase}/${MINIO_BUCKET_NAME}/${objectName}`;
     }
-
-    // Also store the original image URL if needed, or just rely on 'large' for highest quality
-    // For simplicity, we'll just return the generated sizes.
     
     reply.status(200).send({ imageUrls });
   } catch (error) {
@@ -330,7 +344,7 @@ fastify.post('/posts', async (request, reply) => {
     const { title, message, imageUrls, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
       title?: string; 
       message: string; 
-      imageUrls?: { small?: string; medium?: string; large?: string }; // Updated to imageUrls object
+      imageUrls?: { small?: string; medium?: string; large?: string; original?: string }; // Updated to include original
       spotifyEmbedUrl?: string; 
       coordinates?: { lat: number; lng: number };
       journeyId: string; // Now required
@@ -370,7 +384,7 @@ fastify.delete('/posts/:id', async (request, reply) => {
     const post = getPostResult.rows[0];
 
     if (post && post.image_urls) {
-      // Delete all associated image sizes from MinIO
+      // Delete all associated image sizes from MinIO, including original
       for (const sizeKey of Object.keys(post.image_urls)) {
         const imageUrl = post.image_urls[sizeKey];
         if (imageUrl) {
