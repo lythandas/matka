@@ -59,8 +59,6 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
-      # The node_modules exclusion is now handled by .dockerignore and the Dockerfile build process.
-      # Removing the explicit /app/node_modules volume to avoid potential conflicts.
 
   frontend:
     build:
@@ -76,8 +74,6 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      # The node_modules exclusion is now handled by .dockerignore and the Dockerfile build process.
-      # Removing the explicit /app/node_modules volume to avoid potential conflicts.
 
 volumes:
   db_data:
