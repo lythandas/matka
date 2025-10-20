@@ -20,7 +20,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Upload } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 interface Post {
   id: string;
@@ -32,11 +33,12 @@ interface Post {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const Index = () => {
+  const { isAuthenticated, login, logout } = useAuth(); // Use the auth context
   const [message, setMessage] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the hidden file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
     try {
@@ -83,7 +85,6 @@ const Index = () => {
         await new Promise<void>((resolve) => {
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
-              // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
               imageBase64 = reader.result.split(',')[1];
               imageType = imageFile.type;
             }
@@ -109,7 +110,7 @@ const Index = () => {
       setMessage('');
       setImageFile(null);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear the file input
+        fileInputRef.current.value = '';
       }
       showSuccess('Post created successfully!');
     } catch (error) {
@@ -143,65 +144,72 @@ const Index = () => {
           <h1 className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">
             My Journey
           </h1>
-          <ThemeToggle /> {/* Placed ThemeToggle here */}
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <Button onClick={isAuthenticated ? logout : login} variant="outline">
+              {isAuthenticated ? 'Logout' : 'Login'}
+            </Button>
+          </div>
         </div>
 
-        <Card className="mb-8 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold">Share Your Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Textarea
-                placeholder="What's on your mind today?"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-                className="w-full resize-none"
-              />
-              <div className="flex items-center w-full">
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  ref={fileInputRef}
-                  className="hidden"
+        {isAuthenticated && ( // Conditionally render "Share Your Day"
+          <Card className="mb-8 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl font-semibold">Share Your Day</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Textarea
+                  placeholder="What's on your mind today?"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  className="w-full resize-none"
                 />
-                <Button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="flex-1 justify-start text-gray-600 dark:text-gray-400"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {imageFile ? imageFile.name : "Choose Image"}
-                </Button>
-                {imageFile && (
+                <div className="flex items-center w-full">
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    ref={fileInputRef}
+                    className="hidden"
+                  />
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setImageFile(null);
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                      }
-                    }}
-                    className="ml-2"
+                    onClick={() => fileInputRef.current?.click()}
+                    variant="outline"
+                    className="flex-1 justify-start text-gray-600 dark:text-gray-400"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Upload className="mr-2 h-4 w-4" />
+                    {imageFile ? imageFile.name : "Choose Image"}
                   </Button>
-                )}
-              </div>
-              <div className="flex justify-center">
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Post
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  {imageFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setImageFile(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="ml-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="flex justify-center">
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Post
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-gray-200">
           Recent Posts
@@ -225,28 +233,30 @@ const Index = () => {
                   )}
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="icon" className="ml-4">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your post
-                            and remove its data from our servers.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
-                            Continue
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    {isAuthenticated && ( // Only show delete button if authenticated
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="icon" className="ml-4">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your post
+                              and remove its data from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {format(new Date(post.created_at), 'PPP p')}
