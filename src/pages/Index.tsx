@@ -236,7 +236,8 @@ const Index = () => {
             My Journey
           </h1>
           <div className="flex items-center space-x-2">
-            <ThemeToggle />
+            {/* Added hover:bg-transparent hover:text-inherit for consistency */}
+            <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" /> 
             <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
@@ -387,7 +388,7 @@ const Index = () => {
                       alt="Post image"
                       className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                       onError={(e) => {
-                        e.currentTarget.src = '/public/placeholder.svg';
+                        e.currentTarget.src = '/placeholder.svg'; // Corrected path
                         e.currentTarget.onerror = null;
                         console.error(`Failed to load image: ${post.image_urls?.medium}`);
                       }}

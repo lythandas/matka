@@ -92,7 +92,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 alt={post.title || "Post image"}
                 className="w-full h-auto object-cover rounded-md"
                 onError={(e) => {
-                  e.currentTarget.src = '/public/placeholder.svg';
+                  e.currentTarget.src = '/placeholder.svg'; // Corrected path
                   e.currentTarget.onerror = null;
                   console.error(`Failed to load image: ${post.image_urls?.large}`);
                 }}
