@@ -95,36 +95,36 @@ async function ensureDbTable() {
         title: "Marrakech Market Adventure",
         message: "Exploring the vibrant markets of Marrakech! The colors, sounds, and smells are an absolute feast for the senses. Every corner holds a new discovery.",
         image_url: "https://picsum.photos/seed/marrakech/800/600",
-        spotify_embed_url: "https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator",
-        coordinates: null // Removed coordinates
+        spotify_embed_url: null, // Removed Spotify embed URL
+        coordinates: null
       },
       {
         title: "Himalayan Sunrise",
         message: "Sunrise over the Himalayas. There's nothing quite like the crisp mountain air and the breathtaking views. Feeling incredibly small and inspired.",
         image_url: "https://picsum.photos/seed/himalayas/800/600",
         spotify_embed_url: null,
-        coordinates: null // Removed coordinates
+        coordinates: null
       },
       {
         title: "Roman Holiday",
         message: "Lost in the ancient streets of Rome. Every cobblestone tells a story, and the history here is palpable. Gelato in hand, life is good!",
         image_url: "https://picsum.photos/seed/rome/800/600",
-        spotify_embed_url: "https://open.spotify.com/embed/track/3y4LPNpQ8y0r0000000000?utm_source=generator", // Placeholder
-        coordinates: null // Removed coordinates
+        spotify_embed_url: null, // Removed Spotify embed URL
+        coordinates: null
       },
       {
         title: "Great Barrier Reef Dive",
         message: "Diving into the crystal-clear waters of the Great Barrier Reef. The marine life is astounding, a kaleidoscope of colors beneath the surface.",
         image_url: "https://picsum.photos/seed/reef/800/600",
         spotify_embed_url: null,
-        coordinates: null // Removed coordinates
+        coordinates: null
       },
       {
         title: "Parisian Evening",
         message: "A serene evening by the Eiffel Tower. The city of lights truly lives up to its name. Parisian charm is simply irresistible.",
         image_url: "https://picsum.photos/seed/eiffel/800/600",
-        spotify_embed_url: "https://open.spotify.com/embed/track/7tFiyTwD0FpgFgFJFyEoHf?utm_source=generator",
-        coordinates: null // Removed coordinates
+        spotify_embed_url: null, // Removed Spotify embed URL
+        coordinates: null
       }
     ];
 
