@@ -74,9 +74,6 @@ const Index = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('handleSubmit triggered.');
-    console.log('Current message:', message);
-    console.log('Current imageFile:', imageFile);
 
     if (!message.trim() && !imageFile) {
       showError('Please enter a message or select an image.');
@@ -100,11 +97,6 @@ const Index = () => {
           };
         });
       }
-
-      // --- Added console logs here ---
-      console.log('Image Base64 length:', imageBase64 ? imageBase64.length : 'N/A');
-      console.log('Image Type:', imageType);
-      // --- End of added console logs ---
 
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',

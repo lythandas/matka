@@ -6,10 +6,11 @@ MINIO_PID=$!
 
 # Wait for MinIO server to be ready
 echo "Waiting for MinIO server to start..."
-# Removed --timeout 30s as it's not supported by 'mc ready'
+# 'mc ready local' does not support --timeout, it waits indefinitely until ready or connection fails.
+# We rely on Docker's healthcheck for overall service health.
 /usr/bin/mc ready local 
 if [ $? -ne 0 ]; then
-  echo "MinIO server did not start in time. Exiting."
+  echo "MinIO server did not start in time or 'mc ready' failed. Exiting."
   kill $MINIO_PID
   exit 1
 fi

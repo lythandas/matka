@@ -15,11 +15,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = () => {
     setIsAuthenticated(true);
-    console.log('User logged in. isAuthenticated:', true); // Added log
   };
   const logout = () => {
     setIsAuthenticated(false);
-    console.log('User logged out. isAuthenticated:', false); // Added log
   };
 
   return (
