@@ -6,6 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from '@/utils/toast';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from 'lucide-react';
 
 interface Post {
   id: string;
@@ -99,6 +111,24 @@ const Index = () => {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete post');
+      }
+
+      setPosts(posts.filter((post) => post.id !== postId));
+      showSuccess('Post deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showError('Failed to delete post.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
@@ -152,7 +182,31 @@ const Index = () => {
                       className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                     />
                   )}
-                  <p className="text-lg mb-2 text-gray-800 dark:text-gray-200">{post.message}</p>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon" className="ml-4">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your post
+                            and remove its data from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {format(new Date(post.created_at), 'PPP p')}
                   </p>

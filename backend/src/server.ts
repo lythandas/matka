@@ -107,6 +107,39 @@ fastify.post('/posts', async (request, reply) => {
   }
 });
 
+// Delete a post by ID
+fastify.delete('/posts/:id', async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+
+    // First, get the post to check for an image URL
+    const getPostResult = await pgClient.query('SELECT image_url FROM posts WHERE id = $1', [id]);
+    const post = getPostResult.rows[0];
+
+    if (post && post.image_url) {
+      // Extract object name from URL
+      const url = new URL(post.image_url);
+      const objectName = url.pathname.split('/').pop();
+      if (objectName) {
+        await minioClient.removeObject(MINIO_BUCKET_NAME, objectName);
+        fastify.log.info(`Image '${objectName}' deleted from MinIO.`);
+      }
+    }
+
+    // Then, delete the post from the database
+    const result = await pgClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Post not found' });
+    } else {
+      reply.status(200).send({ message: 'Post deleted successfully', id: result.rows[0].id });
+    }
+  } catch (error) {
+    fastify.log.error('Error deleting post:', error);
+    reply.status(500).send({ message: 'Failed to delete post' });
+  }
+});
+
 // Run the server
 const start = async () => {
   try {
