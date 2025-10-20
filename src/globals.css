@@ -99,3 +99,6 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* MapLibre GL JS CSS */
+@import 'maplibre-gl/dist/maplibre-gl.css';

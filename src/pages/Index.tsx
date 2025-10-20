@@ -19,15 +19,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Upload, Loader2 } from 'lucide-react'; // Import Loader2 for loading spinner
+import { Trash2, Plus } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { Badge } from "@/components/ui/badge"; // Import Badge component
+import { Badge } from "@/components/ui/badge";
+import AddContentDialog from '@/components/AddContentDialog'; // Import the new dialog
+import MapComponent from '@/components/MapComponent'; // Import the new MapComponent
 
 interface Post {
   id: string;
+  title?: string; // New: Optional title
   message: string;
   image_url?: string;
+  spotify_embed_url?: string; // New: Optional Spotify embed URL
+  coordinates?: { lat: number; lng: number }; // New: Optional coordinates
   created_at: string;
 }
 
@@ -36,15 +41,16 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
   const { isAuthenticated, login, logout } = useAuth();
+  const [title, setTitle] = useState<string>(''); // New state for title
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null); // For local thumbnail
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null); // URL from backend
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+  const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>(''); // New state for Spotify URL
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null); // New state for coordinates
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
     try {
@@ -108,62 +114,26 @@ const Index = () => {
       showError(error.message || 'Failed to upload image.');
       // Clear selected file and preview if upload fails
       setSelectedFile(null);
-      setPreviewImageUrl(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setUploadedImageUrl(null);
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-
-      // Client-side size validation
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError('Image size exceeds 8MB limit.');
-        setSelectedFile(null);
-        setPreviewImageUrl(null);
-        setUploadedImageUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-
-      // Client-side type validation (basic check)
-      if (!file.type.startsWith('image/')) {
-        showError('Only image files are allowed.');
-        setSelectedFile(null);
-        setPreviewImageUrl(null);
-        setUploadedImageUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        return;
-      }
-
-      setSelectedFile(file);
-      setPreviewImageUrl(URL.createObjectURL(file)); // Create local preview
-      setUploadedImageUrl(null); // Clear previous uploaded URL
-      uploadImageToServer(file); // Immediately upload
+  const handleImageSelect = (file: File | null) => {
+    setSelectedFile(file);
+    if (file) {
+      uploadImageToServer(file);
     } else {
-      setSelectedFile(null);
-      setPreviewImageUrl(null);
-      setUploadedImageUrl(null);
-    }
-  };
-
-  const handleClearImage = () => {
-    setSelectedFile(null);
-    setPreviewImageUrl(null);
-    setUploadedImageUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setUploadedImageUrl(null); // Clear uploaded URL if file is deselected
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!message.trim() && !uploadedImageUrl) {
-      showError('Please enter a message or select an image.');
+    if (!title.trim() && !message.trim() && !uploadedImageUrl && !spotifyEmbedUrl && !coordinates) {
+      showError('Please enter a title, message, or add some content (image, Spotify, location).');
       return;
     }
     if (isUploadingImage) {
@@ -177,7 +147,13 @@ const Index = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message, imageUrl: uploadedImageUrl }), // Use uploadedImageUrl
+        body: JSON.stringify({
+          title: title.trim() || undefined,
+          message: message.trim(),
+          imageUrl: uploadedImageUrl,
+          spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
+          coordinates: coordinates || undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -187,8 +163,12 @@ const Index = () => {
 
       const newPost: Post = await response.json();
       setPosts([newPost, ...posts]);
+      setTitle('');
       setMessage('');
-      handleClearImage(); // Clear image states after successful post
+      setSelectedFile(null);
+      setUploadedImageUrl(null);
+      setSpotifyEmbedUrl('');
+      setCoordinates(null);
       showSuccess('Post created successfully!');
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -243,6 +223,12 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                  placeholder="Add a title (optional)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full"
+                />
                 <Textarea
                   placeholder="What's on your mind today?"
                   value={message}
@@ -250,55 +236,20 @@ const Index = () => {
                   rows={4}
                   className="w-full resize-none"
                 />
-                <div className="flex flex-col items-center w-full space-y-2">
-                  <div className="flex items-center w-full">
-                    <Input
-                      id="image-upload"
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
-                      onChange={handleImageChange}
-                      ref={fileInputRef}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      variant="outline"
-                      className="flex-1 justify-start text-gray-600 dark:text-gray-400"
-                      disabled={isUploadingImage}
-                    >
-                      {isUploadingImage ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="mr-2 h-4 w-4" />
-                      )}
-                      {selectedFile ? selectedFile.name : "Choose Image (Max 8MB)"}
+                <div className="flex justify-center">
+                  <AddContentDialog
+                    onImageSelect={handleImageSelect}
+                    onSpotifyEmbedChange={setSpotifyEmbedUrl}
+                    onCoordinatesChange={setCoordinates}
+                    uploadedImageUrl={uploadedImageUrl}
+                    isUploadingImage={isUploadingImage}
+                    currentSpotifyEmbedUrl={spotifyEmbedUrl}
+                    currentCoordinates={coordinates}
+                  >
+                    <Button type="button" variant="outline" className="flex items-center">
+                      <Plus className="mr-2 h-4 w-4" /> Add Content
                     </Button>
-                    {selectedFile && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleClearImage}
-                        className="ml-2"
-                        disabled={isUploadingImage}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                  {previewImageUrl && (
-                    <div className="w-full max-w-xs mt-2">
-                      <img
-                        src={previewImageUrl}
-                        alt="Image preview"
-                        className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
-                      />
-                      {isUploadingImage && (
-                        <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
-                      )}
-                    </div>
-                  )}
+                  </AddContentDialog>
                 </div>
                 <div className="flex justify-center">
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isUploadingImage}>
@@ -323,6 +274,9 @@ const Index = () => {
             {posts.map((post) => (
               <Card key={post.id} className="shadow-md hover:shadow-lg transition-shadow duration-200">
                 <CardContent className="p-6">
+                  {post.title && (
+                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                  )}
                   {post.image_url && (
                     <img
                       src={post.image_url}
@@ -334,6 +288,23 @@ const Index = () => {
                         console.error(`Failed to load image: ${post.image_url}`);
                       }}
                     />
+                  )}
+                  {post.spotify_embed_url && (
+                    <div className="w-full aspect-video mb-4">
+                      <iframe
+                        src={post.spotify_embed_url}
+                        width="100%"
+                        height="100%"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-md"
+                      ></iframe>
+                    </div>
+                  )}
+                  {post.coordinates && (
+                    <div className="mb-4">
+                      <MapComponent coordinates={post.coordinates} />
+                    </div>
                   )}
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
