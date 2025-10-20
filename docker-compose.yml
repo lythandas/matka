@@ -28,13 +28,7 @@ services:
     volumes:
       - minio_data:/data
       - ./cors-policy.json:/tmp/cors-policy.json # Mount the CORS policy file
-    command: >
-      sh -c "
-        minio server /data --console-address ':9001' &
-        /usr/bin/mc config host add local http://localhost:9000 minioadmin minioadmin &&
-        /usr/bin/mc policy set-json /tmp/cors-policy.json local/journey-images &&
-        wait %1
-      "
+    command: ["sh", "-c", "minio server /data --console-address ':9001' & /usr/bin/mc config host add local http://localhost:9000 minioadmin minioadmin && /usr/bin/mc policy set-json /tmp/cors-policy.json local/journey-images && wait %1"]
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
