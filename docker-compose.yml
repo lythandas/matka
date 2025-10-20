@@ -25,31 +25,17 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BUCKETS: journey-images # MinIO will create this bucket on startup
+      MINIO_CORS_CONFIG: /etc/minio/cors.json # Point to the CORS config file
     volumes:
       - minio_data:/data
-      # Removed the problematic direct mount of cors.json into /data
+      - ./cors.json:/etc/minio/cors.json # Mount the CORS policy file to a dedicated config path
     command: server /data --console-address ":9001" # Explicitly start the MinIO server
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  minio-setup:
-    image: minio/mc # Use the MinIO client image for setup
-    depends_on:
-      minio:
-        condition: service_healthy
-    volumes:
-      - ./cors.json:/tmp/cors.json # Mount cors.json to a temporary location
-      - ./backend/minio-setup.sh:/usr/local/bin/minio-setup.sh # Mount the setup script
-    entrypoint: ["/usr/local/bin/minio-setup.sh"] # Run the setup script
-    environment:
-      MINIO_ENDPOINT: minio:9000 # Internal Docker network address for MinIO
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      MINIO_BUCKET_NAME: journey-images
-    restart: "no" # This is a one-shot setup service
 
   backend:
     build:
@@ -70,8 +56,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio-setup: # Depend on minio-setup to ensure MinIO is configured
-        condition: service_completed_successfully
+      minio: # Depend directly on minio being healthy
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 10s
