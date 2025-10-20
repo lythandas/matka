@@ -157,20 +157,20 @@ const Index = () => {
                 rows={4}
                 className="w-full resize-none"
               />
-              <div className="flex items-center space-x-2 w-full"> {/* Added w-full here */}
+              <div className="flex items-center space-x-2 w-full">
                 <Input
                   id="image-upload"
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  ref={fileInputRef} // Attach ref
-                  className="hidden" // Hide the native input
+                  ref={fileInputRef}
+                  className="hidden"
                 />
                 <Button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()} // Trigger hidden input click
+                  onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="w-full justify-start text-gray-600 dark:text-gray-400"
+                  className="flex-1 justify-start text-gray-600 dark:text-gray-400" {/* Changed w-full to flex-1 */}
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {imageFile ? imageFile.name : "Choose Image"}
@@ -191,8 +191,8 @@ const Index = () => {
                   </Button>
                 )}
               </div>
-              <div className="flex justify-center"> {/* Centered the button */}
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white"> {/* Removed w-full */}
+              <div className="flex justify-center">
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
                   Post
                 </Button>
               </div>
