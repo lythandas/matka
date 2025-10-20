@@ -7,7 +7,8 @@ import { randomUUID } from 'crypto';
 import { Readable } from 'stream';
 
 const fastify = Fastify({
-  logger: true
+  logger: true,
+  bodyLimit: 10 * 1024 * 1024, // Increase body limit to 10MB (default is 1MB)
 });
 
 // Register CORS plugin
@@ -114,28 +115,44 @@ fastify.post('/posts', async (request, reply) => {
     const { message, imageBase64, imageType } = request.body as { message: string; imageBase64?: string; imageType?: string };
     let imageUrl: string | undefined;
 
+    fastify.log.info('Received post request. Message:', message);
+    if (imageBase64) {
+      fastify.log.info(`Image data received. Base64 length: ${imageBase64.length}, Type: ${imageType}`);
+    } else {
+      fastify.log.info('No image data received.');
+    }
+
     if (imageBase64 && imageType) {
       const buffer = Buffer.from(imageBase64, 'base64');
       const objectName = `${randomUUID()}.${imageType.split('/')[1]}`; // e.g., uuid.jpeg
+      
+      fastify.log.info(`Resizing image for object: ${objectName}`);
       const resizedBuffer = await sharp(buffer)
         .resize(800, 600, { fit: 'inside', withoutEnlargement: true }) // Resize for web display
         .toBuffer();
+      fastify.log.info(`Image resized. New buffer size: ${resizedBuffer.length}`);
 
       const stream = new Readable();
       stream.push(resizedBuffer);
       stream.push(null);
 
+      fastify.log.info(`Uploading object '${objectName}' to MinIO bucket '${MINIO_BUCKET_NAME}'`);
       await minioClient.putObject(MINIO_BUCKET_NAME, objectName, stream, resizedBuffer.length, {
         'Content-Type': imageType,
       });
+      fastify.log.info(`Object '${objectName}' uploaded successfully.`);
+      
       // Use MINIO_PUBLIC_URL_BASE for URLs accessible from the frontend
       imageUrl = `${process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`}/${MINIO_BUCKET_NAME}/${objectName}`;
+      fastify.log.info(`Generated image URL: ${imageUrl}`);
     }
 
+    fastify.log.info('Inserting post into database.');
     const result = await pgClient.query(
       'INSERT INTO posts (message, image_url) VALUES ($1, $2) RETURNING *',
       [message, imageUrl]
     );
+    fastify.log.info('Post inserted successfully. New post ID:', result.rows[0].id);
     reply.status(201).send(result.rows[0]);
   } catch (error) {
     fastify.log.error({ error }, 'Error creating post');
@@ -147,6 +164,7 @@ fastify.post('/posts', async (request, reply) => {
 fastify.delete('/posts/:id', async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
+    fastify.log.info(`Attempting to delete post with ID: ${id}`);
 
     // First, get the post to check for an image URL
     const getPostResult = await pgClient.query('SELECT image_url FROM posts WHERE id = $1', [id]);
@@ -157,6 +175,7 @@ fastify.delete('/posts/:id', async (request, reply) => {
       const url = new URL(post.image_url);
       const objectName = url.pathname.split('/').pop();
       if (objectName) {
+        fastify.log.info(`Deleting image '${objectName}' from MinIO.`);
         await minioClient.removeObject(MINIO_BUCKET_NAME, objectName);
         fastify.log.info(`Image '${objectName}' deleted from MinIO.`);
       }
@@ -166,8 +185,10 @@ fastify.delete('/posts/:id', async (request, reply) => {
     const result = await pgClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);
 
     if (result.rowCount === 0) {
+      fastify.log.warn(`Post with ID ${id} not found for deletion.`);
       reply.status(404).send({ message: 'Post not found' });
     } else {
+      fastify.log.info(`Post with ID ${id} deleted successfully.`);
       reply.status(200).send({ message: 'Post deleted successfully', id: result.rows[0].id });
     }
   } catch (error) {
