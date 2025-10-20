@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +17,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 interface Post {
   id: string;
@@ -33,6 +34,7 @@ const Index = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the hidden file input
 
   const fetchPosts = async () => {
     try {
@@ -104,6 +106,9 @@ const Index = () => {
       setPosts([newPost, ...posts]);
       setMessage('');
       setImageFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Clear the file input
+      }
       showSuccess('Post created successfully!');
     } catch (error) {
       console.error('Error creating post:', error);
@@ -132,9 +137,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-center mb-8 text-blue-600 dark:text-blue-400">
-          My Journey
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">
+            My Journey
+          </h1>
+          <ThemeToggle /> {/* Placed ThemeToggle here */}
+        </div>
 
         <Card className="mb-8 shadow-lg">
           <CardHeader>
@@ -149,12 +157,40 @@ const Index = () => {
                 rows={4}
                 className="w-full resize-none"
               />
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="file:text-blue-600 file:dark:text-blue-400 file:bg-blue-50 file:dark:bg-blue-900 file:border-0 file:rounded-md file:px-4 file:py-2 file:mr-4 file:cursor-pointer"
-              />
+              <div className="flex items-center space-x-2"> {/* Flex container for alignment */}
+                <Input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  ref={fileInputRef} // Attach ref
+                  className="hidden" // Hide the native input
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()} // Trigger hidden input click
+                  variant="outline"
+                  className="w-full justify-start text-gray-600 dark:text-gray-400"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  {imageFile ? imageFile.name : "Choose Image"}
+                </Button>
+                {imageFile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setImageFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                 Post
               </Button>
