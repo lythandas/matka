@@ -103,7 +103,7 @@ fastify.get('/posts', async (request, reply) => {
     const result = await pgClient.query('SELECT * FROM posts ORDER BY created_at DESC');
     return result.rows;
   } catch (error) {
-    fastify.log.error('Error fetching posts:', error);
+    fastify.log.error({ error }, 'Error fetching posts');
     reply.status(500).send({ message: 'Failed to fetch posts' });
   }
 });
@@ -138,7 +138,7 @@ fastify.post('/posts', async (request, reply) => {
     );
     reply.status(201).send(result.rows[0]);
   } catch (error) {
-    fastify.log.error('Error creating post:', error);
+    fastify.log.error({ error }, 'Error creating post');
     reply.status(500).send({ message: 'Failed to create post' });
   }
 });
@@ -171,7 +171,7 @@ fastify.delete('/posts/:id', async (request, reply) => {
       reply.status(200).send({ message: 'Post deleted successfully', id: result.rows[0].id });
     }
   } catch (error) {
-    fastify.log.error('Error deleting post:', error);
+    fastify.log.error({ error }, 'Error deleting post');
     reply.status(500).send({ message: 'Failed to delete post' });
   }
 });
