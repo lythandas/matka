@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { showError, showSuccess } from '@/utils/toast';
+import { useAuth } from './AuthContext'; // Import useAuth
 
 interface Journey {
   id: string;
@@ -23,6 +24,7 @@ const JourneyContext = createContext<JourneyContextType | undefined>(undefined);
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export const JourneyProvider = ({ children }: { children: ReactNode }) => {
+  const { token, isAuthenticated } = useAuth(); // Get token and isAuthenticated from AuthContext
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [selectedJourney, setSelectedJourneyState] = useState<Journey | null>(null);
   const [loadingJourneys, setLoadingJourneys] = useState<boolean>(true);
@@ -30,7 +32,19 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
   const fetchJourneys = useCallback(async () => {
     setLoadingJourneys(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/journeys`);
+      if (!token) {
+        // If no token, clear journeys and stop loading
+        setJourneys([]);
+        setSelectedJourneyState(null);
+        setLoadingJourneys(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/journeys`, {
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the authentication token
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch journeys');
       }
@@ -52,18 +66,31 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoadingJourneys(false);
     }
-  }, [selectedJourney]);
+  }, [selectedJourney, token]); // Add token to dependencies
 
   useEffect(() => {
-    fetchJourneys();
-  }, [fetchJourneys]);
+    // Only fetch if authenticated and token is available
+    if (isAuthenticated && token) {
+      fetchJourneys();
+    } else if (!isAuthenticated) {
+      // If not authenticated, clear journeys and stop loading
+      setJourneys([]);
+      setSelectedJourneyState(null);
+      setLoadingJourneys(false);
+    }
+  }, [isAuthenticated, token, fetchJourneys]); // Update useEffect dependencies
 
   const createJourney = async (name: string): Promise<Journey | null> => {
+    if (!token) {
+      showError('Authentication required to create a journey.');
+      return null;
+    }
     try {
       const response = await fetch(`${API_BASE_URL}/journeys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Include the authentication token
         },
         body: JSON.stringify({ name }),
       });
