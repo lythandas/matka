@@ -157,7 +157,7 @@ const Index = () => {
                 rows={4}
                 className="w-full resize-none"
               />
-              <div className="flex items-center space-x-2"> {/* Flex container for alignment */}
+              <div className="flex items-center space-x-2 w-full"> {/* Added w-full here */}
                 <Input
                   id="image-upload"
                   type="file"
@@ -191,9 +191,11 @@ const Index = () => {
                   </Button>
                 )}
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                Post
-              </Button>
+              <div className="flex justify-center"> {/* Centered the button */}
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white"> {/* Removed w-full */}
+                  Post
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
