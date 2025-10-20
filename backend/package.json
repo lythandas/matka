@@ -21,7 +21,7 @@
     "sharp": "^0.33.4"
   },
   "devDependencies": {
-    "@types/minio": "^7.1.4",
+    "@types/minio": "^8.0.0",
     "@types/node": "^20.14.12",
     "@types/pg": "^8.11.6",
     "@types/sharp": "^0.32.0",
