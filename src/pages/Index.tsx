@@ -55,7 +55,7 @@ const Index = () => {
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
-  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null); // New state for index
+  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
   const fetchPosts = async () => {
@@ -237,7 +237,7 @@ const Index = () => {
           </h1>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500">
+            <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
           </div>
@@ -286,7 +286,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleImageSelect(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -310,7 +310,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setSpotifyEmbedUrl('')}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -327,7 +327,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setCoordinates(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -346,7 +346,7 @@ const Index = () => {
                     currentSpotifyEmbedUrl={spotifyEmbedUrl}
                     currentCoordinates={coordinates}
                   >
-                    <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500">
+                    <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
                       <Plus className="mr-2 h-4 w-4" /> Add Content
                     </Button>
                   </AddContentDialog>

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
@@ -80,7 +80,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           <DialogDescription>
             {format(new Date(post.created_at), 'PPP p')}
           </DialogDescription>
-          {/* Relying on the default close button from DialogContent */}
         </DialogHeader>
         <div className="relative p-6 pt-4">
           {post.image_urls?.large && (
@@ -96,11 +95,11 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   console.error(`Failed to load image: ${post.image_urls?.large}`);
                 }}
               />
-              {document.fullscreenEnabled && ( // Only show button if fullscreen is supported
+              {document.fullscreenEnabled && (
                 <Button
                   variant="outline"
                   size="icon"
-                  className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
+                  className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                   onClick={handleToggleFullscreen}
                 >
                   {isImageFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
@@ -135,7 +134,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
             onClick={onPrevious}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -145,7 +144,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
             onClick={onNext}
           >
             <ChevronRight className="h-5 w-5" />
