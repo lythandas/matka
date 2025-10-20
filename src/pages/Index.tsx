@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
@@ -170,7 +172,7 @@ const Index = () => {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="flex-1 justify-start text-gray-600 dark:text-gray-400" {/* Changed w-full to flex-1 */}
+                  className="flex-1 justify-start text-gray-600 dark:text-gray-400"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   {imageFile ? imageFile.name : "Choose Image"}
