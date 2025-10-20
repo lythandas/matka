@@ -75,18 +75,31 @@ async function ensureMinioBucket() {
   }
 }
 
-// Ensure database table exists and populate with sample data if empty
+// Ensure database tables exist and populate with sample data if empty
 async function ensureDbTable() {
-  // Drop the table if it exists to ensure schema is always up-to-date in dev
+  // Drop tables if they exist to ensure schema is always up-to-date in dev
   await pgClient.query('DROP TABLE IF EXISTS posts;');
-  fastify.log.info('Existing posts table dropped (if any).');
+  await pgClient.query('DROP TABLE IF EXISTS journeys;');
+  fastify.log.info('Existing posts and journeys tables dropped (if any).');
 
+  // Create journeys table
+  await pgClient.query(`
+    CREATE TABLE journeys (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  fastify.log.info('Journeys table ensured.');
+
+  // Create posts table with foreign key to journeys
   await pgClient.query(`
     CREATE TABLE posts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE, -- Add foreign key
       title TEXT,
       message TEXT NOT NULL,
-      image_urls JSONB, -- Changed to JSONB to store multiple image URLs
+      image_urls JSONB,
       spotify_embed_url TEXT,
       coordinates JSONB,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -94,8 +107,25 @@ async function ensureDbTable() {
   `);
   fastify.log.info('Posts table ensured.');
 
-  const { rowCount } = await pgClient.query('SELECT 1 FROM posts LIMIT 1');
-  if (rowCount === 0) {
+  // Ensure default journey and associate sample posts
+  const { rowCount: journeyCount } = await pgClient.query('SELECT 1 FROM journeys LIMIT 1');
+  let defaultJourneyId: string;
+  if (journeyCount === 0) {
+    fastify.log.info('Journeys table is empty, creating default journey.');
+    const { rows } = await pgClient.query(
+      'INSERT INTO journeys (name) VALUES ($1) RETURNING id',
+      ['My Journey']
+    );
+    defaultJourneyId = rows[0].id;
+    fastify.log.info(`Default journey 'My Journey' created with ID: ${defaultJourneyId}`);
+  } else {
+    const { rows } = await pgClient.query('SELECT id FROM journeys ORDER BY created_at ASC LIMIT 1');
+    defaultJourneyId = rows[0].id;
+    fastify.log.info(`Using existing default journey with ID: ${defaultJourneyId}`);
+  }
+
+  const { rowCount: postCount } = await pgClient.query('SELECT 1 FROM posts LIMIT 1');
+  if (postCount === 0) {
     fastify.log.info('Posts table is empty, inserting sample data.');
     const samplePosts = [
       {
@@ -157,8 +187,8 @@ async function ensureDbTable() {
 
     for (const post of samplePosts) {
       await pgClient.query(
-        'INSERT INTO posts (title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5)',
-        [post.title, post.message, post.image_urls, post.spotify_embed_url, post.coordinates]
+        'INSERT INTO posts (journey_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6)',
+        [defaultJourneyId, post.title, post.message, post.image_urls, post.spotify_embed_url, post.coordinates]
       );
     }
     fastify.log.info('Sample posts inserted.');
@@ -170,10 +200,48 @@ fastify.get('/', async (request, reply) => {
   return { hello: 'world from Fastify backend!' };
 });
 
-// Get all posts
+// Get all journeys
+fastify.get('/journeys', async (request, reply) => {
+  try {
+    const result = await pgClient.query('SELECT * FROM journeys ORDER BY created_at ASC');
+    return result.rows;
+  } catch (error) {
+    fastify.log.error({ error }, 'Error fetching journeys');
+    reply.status(500).send({ message: 'Failed to fetch journeys' });
+  }
+});
+
+// Create a new journey
+fastify.post('/journeys', async (request, reply) => {
+  try {
+    const { name } = request.body as { name: string };
+    if (!name || name.trim() === '') {
+      reply.status(400).send({ message: 'Journey name is required.' });
+      return;
+    }
+    const result = await pgClient.query(
+      'INSERT INTO journeys (name) VALUES ($1) RETURNING *',
+      [name.trim()]
+    );
+    reply.status(201).send(result.rows[0]);
+  } catch (error) {
+    fastify.log.error({ error }, 'Error creating journey');
+    reply.status(500).send({ message: 'Failed to create journey' });
+  }
+});
+
+// Get all posts for a specific journey (or all if no journeyId provided)
 fastify.get('/posts', async (request, reply) => {
   try {
-    const result = await pgClient.query('SELECT * FROM posts ORDER BY created_at DESC');
+    const { journeyId } = request.query as { journeyId?: string };
+    let query = 'SELECT * FROM posts';
+    const params: string[] = [];
+    if (journeyId) {
+      query += ' WHERE journey_id = $1';
+      params.push(journeyId);
+    }
+    query += ' ORDER BY created_at DESC';
+    const result = await pgClient.query(query, params);
     return result.rows;
   } catch (error) {
     fastify.log.error({ error }, 'Error fetching posts');
@@ -259,13 +327,19 @@ fastify.post('/upload-image', async (request, reply) => {
 // Create a new post with an optional image URL, title, Spotify embed, and coordinates
 fastify.post('/posts', async (request, reply) => {
   try {
-    const { title, message, imageUrls, spotifyEmbedUrl, coordinates } = request.body as { 
+    const { title, message, imageUrls, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
       title?: string; 
       message: string; 
       imageUrls?: { small?: string; medium?: string; large?: string }; // Updated to imageUrls object
       spotifyEmbedUrl?: string; 
       coordinates?: { lat: number; lng: number };
+      journeyId: string; // Now required
     };
+
+    if (!journeyId) {
+      reply.status(400).send({ message: 'Journey ID is required to create a post.' });
+      return;
+    }
 
     if (!message.trim() && !imageUrls && !spotifyEmbedUrl && !coordinates) {
       reply.status(400).send({ message: 'At least a message, image, Spotify URL, or coordinates are required.' });
@@ -274,8 +348,8 @@ fastify.post('/posts', async (request, reply) => {
 
     fastify.log.info('Inserting post into database.');
     const result = await pgClient.query(
-      'INSERT INTO posts (title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title || null, message, imageUrls || null, spotifyEmbedUrl || null, coordinates || null]
+      'INSERT INTO posts (journey_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [journeyId, title || null, message, imageUrls || null, spotifyEmbedUrl || null, coordinates || null]
     );
     fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
     reply.status(201).send(result.rows[0]);
