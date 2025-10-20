@@ -155,8 +155,9 @@ fastify.get('/', async (request, reply) => {
 // Check if any users exist
 fastify.get('/users/exists', async (request, reply) => {
   try {
-    const { rowCount } = await pgClient.query('SELECT 1 FROM users LIMIT 1');
-    return { exists: rowCount > 0 };
+    const result = await pgClient.query('SELECT 1 FROM users LIMIT 1');
+    const exists = (result.rowCount ?? 0) > 0; // Safely access rowCount
+    return { exists };
   } catch (error) {
     fastify.log.error({ error }, 'Error checking for existing users');
     reply.status(500).send({ message: 'Failed to check user existence' });
@@ -173,7 +174,8 @@ fastify.post('/register', async (request, reply) => {
       return;
     }
 
-    const { rowCount: userCount } = await pgClient.query('SELECT 1 FROM users LIMIT 1');
+    const userCountResult = await pgClient.query('SELECT 1 FROM users LIMIT 1');
+    const userCount = userCountResult.rowCount ?? 0; // Safely access rowCount
     if (userCount > 0) {
       reply.status(403).send({ message: 'Registration is closed. An admin user already exists.' });
       return;
@@ -367,7 +369,7 @@ fastify.post('/upload-image', async (request, reply) => {
   try {
     const { imageBase64, imageType } = request.body as { imageBase64: string; imageType: string };
 
-    if (!imageBase64 || !imageType) {
+    if (!imageBase664 || !imageType) {
       reply.status(400).send({ message: 'Missing imageBase64 or imageType' });
       return;
     }
