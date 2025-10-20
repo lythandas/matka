@@ -455,7 +455,7 @@ const Index = () => {
                     {post.title && (
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                    {post.image_urls?.large && ( {/* Changed to large for card view */}
+                    {post.image_urls?.large && (
                       <img
                         src={post.image_urls.large}
                         alt="Post image"
