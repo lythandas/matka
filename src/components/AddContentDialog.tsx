@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import MapComponent from './MapComponent'; // Import the new MapComponent
+import MapComponent from './MapComponent';
 
 interface AddContentDialogProps {
   onImageSelect: (file: File | null) => void;
@@ -51,10 +51,8 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   useEffect(() => {
     setSpotifyInput(currentSpotifyEmbedUrl);
     if (uploadedImageUrl) {
-      // If an image was successfully uploaded, we don't need the local preview anymore
       setPreviewImageUrl(uploadedImageUrl);
     } else if (!selectedFile) {
-      // If no file is selected and no uploaded URL, clear preview
       setPreviewImageUrl(null);
     }
   }, [currentSpotifyEmbedUrl, uploadedImageUrl, selectedFile]);
@@ -83,7 +81,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
 
       setSelectedFile(file);
       setPreviewImageUrl(URL.createObjectURL(file));
-      onImageSelect(file); // Pass the file up for immediate upload
+      onImageSelect(file);
     } else {
       setSelectedFile(null);
       setPreviewImageUrl(null);
@@ -106,7 +104,6 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
 
   const handleAddSpotifyEmbed = () => {
     if (spotifyInput.trim()) {
-      // Basic validation for Spotify embed URL
       if (spotifyInput.includes('spotify.com/embed/')) {
         onSpotifyEmbedChange(spotifyInput.trim());
         showSuccess('Spotify embed URL added!');
@@ -114,7 +111,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
         showError('Please enter a valid Spotify embed URL (e.g., from Spotify "Share" -> "Embed track").');
       }
     } else {
-      onSpotifyEmbedChange(''); // Clear if input is empty
+      onSpotifyEmbedChange('');
       showSuccess('Spotify embed URL cleared.');
     }
   };
@@ -170,14 +167,14 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] min-h-[450px] flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Content to Your Post</DialogTitle>
           <DialogDescription>
             Choose what kind of content you want to add.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="image" className="w-full">
+        <Tabs defaultValue="image" className="w-full flex-grow flex flex-col">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="image">
               <Image className="h-4 w-4 mr-2" /> Image
@@ -189,7 +186,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="image" className="mt-4 space-y-4">
+          <TabsContent value="image" className="mt-4 space-y-4 flex-grow overflow-y-auto">
             <Label htmlFor="image-upload">Upload Image (Max 8MB)</Label>
             <div className="flex items-center w-full">
               <Input
@@ -240,7 +237,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               </div>
             )}
           </TabsContent>
-          <TabsContent value="spotify" className="mt-4 space-y-4">
+          <TabsContent value="spotify" className="mt-4 space-y-4 flex-grow overflow-y-auto">
             <Label htmlFor="spotify-embed">Spotify Embed URL</Label>
             <Input
               id="spotify-embed"
@@ -271,7 +268,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               </div>
             )}
           </TabsContent>
-          <TabsContent value="location" className="mt-4 space-y-4">
+          <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
             <Label>Share Your Location</Label>
             <Button
               type="button"
@@ -299,7 +296,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             )}
           </TabsContent>
         </Tabs>
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <Button type="button" onClick={() => setOpen(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>

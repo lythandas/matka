@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import maplibregl from 'maplibre-gl'; // Changed from mapboxgl
+import maplibregl from 'maplibre-gl';
 import { showError } from '@/utils/toast';
 
 interface MapComponentProps {
@@ -12,11 +12,11 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, className }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null); // Changed from mapboxgl.Map
-  const [mapId] = useState(() => `map-${Math.random().toString(36).substring(2, 9)}`); // Unique ID for each map instance
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const [mapId] = useState(() => `map-${Math.random().toString(36).substring(2, 9)}`);
 
   useEffect(() => {
-    if (mapRef.current) return; // Initialize map only once
+    if (mapRef.current) return;
 
     if (!mapContainerRef.current) {
       showError("Map container not found.");
@@ -25,14 +25,14 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
 
     mapRef.current = new maplibregl.Map({
       container: mapId,
-      style: 'https://tiles.stadiamaps.com/styles/osm_bright.json', // Using a free OpenStreetMap style from Stadia Maps
+      style: 'https://tiles.stadiamaps.com/styles/osm_bright.json',
       center: [coordinates.lng, coordinates.lat],
       zoom: zoom,
     });
 
-    mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right'); // Changed from mapboxgl.NavigationControl
+    mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-    new maplibregl.Marker() // Changed from mapboxgl.Marker
+    new maplibregl.Marker()
       .setLngLat([coordinates.lng, coordinates.lat])
       .addTo(mapRef.current);
 
@@ -45,7 +45,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
   }, [coordinates, zoom, mapId]);
 
   return (
-    <div ref={mapContainerRef} id={mapId} className={`w-full h-64 rounded-md ${className}`} />
+    <div ref={mapContainerRef} id={mapId} className={`w-full h-64 rounded-md relative overflow-hidden ${className}`} />
   );
 };
 
