@@ -163,7 +163,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] min-h-[450px] flex flex-col">
+      <DialogContent className="sm:max-w-[500px] min-h-[550px] flex flex-col"> {/* Increased size */}
         <DialogHeader>
           <DialogTitle>Add Content to Your Post</DialogTitle>
           <DialogDescription>
@@ -197,7 +197,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500" {/* Removed hover:bg-transparent hover:text-inherit */}
                 disabled={isUploadingImage}
               >
                 {isUploadingImage ? (
@@ -213,7 +213,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleClearImage}
-                  className="ml-2 hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  className="ml-2 hover:ring-2 hover:ring-blue-500" {/* Removed hover:bg-transparent hover:text-inherit */}
                   disabled={isUploadingImage}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -243,7 +243,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             />
             <div className="flex justify-end space-x-2">
               {currentSpotifyEmbedUrl && (
-                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500"> {/* Removed hover:bg-transparent hover:text-inherit */}
                   Clear Spotify
                 </Button>
               )}
@@ -285,7 +285,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
                 </p>
                 <MapComponent coordinates={currentCoordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500"> {/* Removed hover:bg-transparent hover:text-inherit */}
                   Clear Location
                 </Button>
               </>
