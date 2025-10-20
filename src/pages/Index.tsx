@@ -70,6 +70,10 @@ const Index = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    console.log('handleSubmit triggered.'); // Added log
+    console.log('Current message:', message); // Added log
+    console.log('Current imageFile:', imageFile); // Added log
+
     if (!message.trim() && !imageFile) {
       showError('Please enter a message or select an image.');
       return;
@@ -116,24 +120,6 @@ const Index = () => {
     } catch (error) {
       console.error('Error creating post:', error);
       showError('Failed to create post.');
-    }
-  };
-
-  const handleDeletePost = async (postId: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete post');
-      }
-
-      setPosts(posts.filter((post) => post.id !== postId));
-      showSuccess('Post deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      showError('Failed to delete post.');
     }
   };
 

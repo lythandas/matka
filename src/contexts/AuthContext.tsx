@@ -13,8 +13,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false); // Default to not authenticated
 
-  const login = () => setIsAuthenticated(true);
-  const logout = () => setIsAuthenticated(false);
+  const login = () => {
+    setIsAuthenticated(true);
+    console.log('User logged in. isAuthenticated:', true); // Added log
+  };
+  const logout = () => {
+    setIsAuthenticated(false);
+    console.log('User logged out. isAuthenticated:', false); // Added log
+  };
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
