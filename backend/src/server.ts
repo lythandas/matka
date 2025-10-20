@@ -73,8 +73,11 @@ async function ensureDbTable() {
   await pgClient.query(`
     CREATE TABLE IF NOT EXISTS posts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title TEXT, -- New: Title for the post
       message TEXT NOT NULL,
       image_url TEXT,
+      spotify_embed_url TEXT, -- New: Spotify embed URL
+      coordinates JSONB, -- New: Coordinates for map, stored as JSON
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -85,31 +88,46 @@ async function ensureDbTable() {
     fastify.log.info('Posts table is empty, inserting sample data.');
     const samplePosts = [
       {
+        title: "Marrakech Market Adventure",
         message: "Exploring the vibrant markets of Marrakech! The colors, sounds, and smells are an absolute feast for the senses. Every corner holds a new discovery.",
-        image_url: "https://picsum.photos/seed/marrakech/800/600"
+        image_url: "https://picsum.photos/seed/marrakech/800/600",
+        spotify_embed_url: "https://open.spotify.com/embed/track/0VjIjW4GlUZAMYd2vXMi3b?utm_source=generator",
+        coordinates: { lat: 31.6295, lng: -7.9811 }
       },
       {
+        title: "Himalayan Sunrise",
         message: "Sunrise over the Himalayas. There's nothing quite like the crisp mountain air and the breathtaking views. Feeling incredibly small and inspired.",
-        image_url: "https://picsum.photos/seed/himalayas/800/600"
+        image_url: "https://picsum.photos/seed/himalayas/800/600",
+        spotify_embed_url: null,
+        coordinates: { lat: 27.9861, lng: 86.9226 }
       },
       {
+        title: "Roman Holiday",
         message: "Lost in the ancient streets of Rome. Every cobblestone tells a story, and the history here is palpable. Gelato in hand, life is good!",
-        image_url: "https://picsum.photos/seed/rome/800/600"
+        image_url: "https://picsum.photos/seed/rome/800/600",
+        spotify_embed_url: "https://open.spotify.com/embed/track/3y4LPNpQ8y0r0000000000?utm_source=generator", // Placeholder
+        coordinates: { lat: 41.9028, lng: 12.4964 }
       },
       {
+        title: "Great Barrier Reef Dive",
         message: "Diving into the crystal-clear waters of the Great Barrier Reef. The marine life is astounding, a kaleidoscope of colors beneath the surface.",
-        image_url: "https://picsum.photos/seed/reef/800/600"
+        image_url: "https://picsum.photos/seed/reef/800/600",
+        spotify_embed_url: null,
+        coordinates: { lat: -16.8175, lng: 145.9700 }
       },
       {
+        title: "Parisian Evening",
         message: "A serene evening by the Eiffel Tower. The city of lights truly lives up to its name. Parisian charm is simply irresistible.",
-        image_url: "https://picsum.photos/seed/eiffel/800/600"
+        image_url: "https://picsum.photos/seed/eiffel/800/600",
+        spotify_embed_url: "https://open.spotify.com/embed/track/7tFiyTwD0FpgFgFJFyEoHf?utm_source=generator",
+        coordinates: { lat: 48.8584, lng: 2.2945 }
       }
     ];
 
     for (const post of samplePosts) {
       await pgClient.query(
-        'INSERT INTO posts (message, image_url) VALUES ($1, $2)',
-        [post.message, post.image_url]
+        'INSERT INTO posts (title, message, image_url, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5)',
+        [post.title, post.message, post.image_url, post.spotify_embed_url, post.coordinates]
       );
     }
     fastify.log.info('Sample posts inserted.');
@@ -198,20 +216,26 @@ fastify.post('/upload-image', async (request, reply) => {
 });
 
 
-// Create a new post with an optional image URL
+// Create a new post with an optional image URL, title, Spotify embed, and coordinates
 fastify.post('/posts', async (request, reply) => {
   try {
-    const { message, imageUrl } = request.body as { message: string; imageUrl?: string };
+    const { title, message, imageUrl, spotifyEmbedUrl, coordinates } = request.body as { 
+      title?: string; 
+      message: string; 
+      imageUrl?: string; 
+      spotifyEmbedUrl?: string; 
+      coordinates?: { lat: number; lng: number };
+    };
 
-    if (!message.trim() && !imageUrl) {
-      reply.status(400).send({ message: 'Message or image URL is required.' });
+    if (!message.trim() && !imageUrl && !spotifyEmbedUrl && !coordinates) {
+      reply.status(400).send({ message: 'At least a message, image, Spotify URL, or coordinates are required.' });
       return;
     }
 
     fastify.log.info('Inserting post into database.');
     const result = await pgClient.query(
-      'INSERT INTO posts (message, image_url) VALUES ($1, $2) RETURNING *',
-      [message, imageUrl]
+      'INSERT INTO posts (title, message, image_url, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title || null, message, imageUrl || null, spotifyEmbedUrl || null, coordinates || null]
     );
     fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
     reply.status(201).send(result.rows[0]);
