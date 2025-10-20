@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import maplibregl from 'maplibregl';
 import { showError } from '@/utils/toast';
 
 interface MapComponentProps {
@@ -25,7 +25,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
 
     mapRef.current = new maplibregl.Map({
       container: mapId,
-      style: 'https://tiles.stadiamaps.com/styles/osm_bright.json',
+      style: 'https://tiles.stadiamaps.com/styles/outdoors.json', // Changed to outdoors.json for terrain and natural features
       center: [coordinates.lng, coordinates.lat],
       zoom: zoom,
     });
