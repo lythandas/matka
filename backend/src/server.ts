@@ -115,7 +115,7 @@ fastify.post('/posts', async (request, reply) => {
     const { message, imageBase64, imageType } = request.body as { message: string; imageBase64?: string; imageType?: string };
     let imageUrl: string | undefined;
 
-    fastify.log.info('Received post request. Message:', message);
+    fastify.log.info(`Received post request. Message: ${message}`);
     if (imageBase64) {
       fastify.log.info(`Image data received. Base64 length: ${imageBase64.length}, Type: ${imageType}`);
     } else {
@@ -152,7 +152,7 @@ fastify.post('/posts', async (request, reply) => {
       'INSERT INTO posts (message, image_url) VALUES ($1, $2) RETURNING *',
       [message, imageUrl]
     );
-    fastify.log.info('Post inserted successfully. New post ID:', result.rows[0].id);
+    fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
     reply.status(201).send(result.rows[0]);
   } catch (error) {
     fastify.log.error({ error }, 'Error creating post');
