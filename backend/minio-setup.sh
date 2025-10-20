@@ -8,7 +8,7 @@ set -e
 # Create the bucket if it doesn't exist
 /usr/bin/mc mb local/${MINIO_BUCKET_NAME} || true
 
-# Apply the CORS policy to the bucket
-/usr/bin/mc anonymous set-json /tmp/cors-policy.json local/${MINIO_BUCKET_NAME}
+# Removed the incorrect CORS policy application command.
+# CORS is now handled by mounting cors.json directly into the MinIO server's config.
 
 echo "MinIO setup completed successfully."

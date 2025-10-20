@@ -27,7 +27,7 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio_data:/data
-      - ./cors-policy.json:/tmp/cors-policy.json # Mount the CORS policy file
+      - ./cors.json:/data/.minio.sys/config/cors.json # Mount the CORS policy file to MinIO's config path
     command: server /data --console-address ":9001" # Explicitly start the MinIO server
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
@@ -41,7 +41,7 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./cors-policy.json:/tmp/cors-policy.json
+      # Removed the cors-policy.json mount as it's now handled by the minio service directly
       - ./backend/minio-setup.sh:/usr/local/bin/minio-setup.sh # Mount the new setup script
     entrypoint: ["/usr/local/bin/minio-setup.sh"] # Run the setup script
     environment:
