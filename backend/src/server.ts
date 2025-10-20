@@ -44,7 +44,7 @@ async function ensureMinioBucket() {
   }
 }
 
-// Ensure database table exists
+// Ensure database table exists and populate with sample data if empty
 async function ensureDbTable() {
   await pgClient.query(`
     CREATE TABLE IF NOT EXISTS posts (
@@ -55,6 +55,41 @@ async function ensureDbTable() {
     );
   `);
   fastify.log.info('Posts table ensured.');
+
+  const { rowCount } = await pgClient.query('SELECT 1 FROM posts LIMIT 1');
+  if (rowCount === 0) {
+    fastify.log.info('Posts table is empty, inserting sample data.');
+    const samplePosts = [
+      {
+        message: "Exploring the vibrant markets of Marrakech! The colors, sounds, and smells are an absolute feast for the senses. Every corner holds a new discovery.",
+        image_url: "https://picsum.photos/seed/marrakech/800/600"
+      },
+      {
+        message: "Sunrise over the Himalayas. There's nothing quite like the crisp mountain air and the breathtaking views. Feeling incredibly small and inspired.",
+        image_url: "https://picsum.photos/seed/himalayas/800/600"
+      },
+      {
+        message: "Lost in the ancient streets of Rome. Every cobblestone tells a story, and the history here is palpable. Gelato in hand, life is good!",
+        image_url: "https://picsum.photos/seed/rome/800/600"
+      },
+      {
+        message: "Diving into the crystal-clear waters of the Great Barrier Reef. The marine life is astounding, a kaleidoscope of colors beneath the surface.",
+        image_url: "https://picsum.photos/seed/reef/800/600"
+      },
+      {
+        message: "A serene evening by the Eiffel Tower. The city of lights truly lives up to its name. Parisian charm is simply irresistible.",
+        image_url: "https://picsum.photos/seed/eiffel/800/600"
+      }
+    ];
+
+    for (const post of samplePosts) {
+      await pgClient.query(
+        'INSERT INTO posts (message, image_url) VALUES ($1, $2)',
+        [post.message, post.image_url]
+      );
+    }
+    fastify.log.info('Sample posts inserted.');
+  }
 }
 
 // Routes
