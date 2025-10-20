@@ -7,6 +7,7 @@ import { Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
+import { cn } from '@/lib/utils'; // Import cn utility for conditional class names
 
 interface Post {
   id: string;
@@ -19,7 +20,7 @@ interface Post {
 }
 
 interface PostDetailDialogProps {
-  post: Post; // Changed to non-nullable as it will be conditionally rendered
+  post: Post;
   isOpen: boolean;
   onClose: () => void;
   currentIndex: number;
@@ -97,7 +98,10 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  className={cn(
+                    "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+                    isImageFullscreen ? "fixed z-[1000]" : "absolute" // Use fixed and high z-index when fullscreen
+                  )}
                   onClick={handleToggleFullscreen}
                 >
                   {isImageFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
