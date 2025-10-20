@@ -5,8 +5,8 @@ import { Client as PgClient } from 'pg';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import { Readable } from 'stream';
-import bcrypt from 'bcrypt'; // Import bcrypt
-import jwt from 'jsonwebtoken'; // Import jsonwebtoken
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const fastify = Fastify({
   logger: true,
@@ -78,12 +78,12 @@ async function ensureMinioBucket() {
   }
 }
 
-// Ensure database tables exist and populate with sample data if empty
+// Ensure database tables exist (without creating default users/journeys/posts)
 async function ensureDbTable() {
   // Drop tables if they exist to ensure schema is always up-to-date in dev
   await pgClient.query('DROP TABLE IF EXISTS posts;');
   await pgClient.query('DROP TABLE IF EXISTS journeys;');
-  await pgClient.query('DROP TABLE IF EXISTS users;'); // Drop users table first due to foreign key constraints
+  await pgClient.query('DROP TABLE IF EXISTS users;');
   fastify.log.info('Existing posts, journeys, and users tables dropped (if any).');
 
   // Create users table
@@ -98,20 +98,6 @@ async function ensureDbTable() {
     );
   `);
   fastify.log.info('Users table ensured.');
-
-  // Create initial admin user if no users exist
-  const { rowCount: userCount } = await pgClient.query('SELECT 1 FROM users LIMIT 1');
-  if (userCount === 0) {
-    fastify.log.info('Users table is empty, creating initial admin user.');
-    const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'adminpassword'; // Default for dev, should be strong in prod
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    await pgClient.query(
-      'INSERT INTO users (username, password_hash, role, permissions) VALUES ($1, $2, $3, $4)',
-      [adminUsername, hashedPassword, 'admin', JSON.stringify(['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post'])]
-    );
-    fastify.log.info(`Initial admin user '${adminUsername}' created.`);
-  }
 
   // Create journeys table with foreign key to users
   await pgClient.query(`
@@ -139,119 +125,25 @@ async function ensureDbTable() {
     );
   `);
   fastify.log.info('Posts table ensured.');
-
-  // Ensure default journey and associate sample posts with the admin user
-  const { rows: adminUsers } = await pgClient.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-  const adminUserId = adminUsers[0].id;
-
-  const { rowCount: journeyCount } = await pgClient.query('SELECT 1 FROM journeys LIMIT 1');
-  let defaultJourneyId: string;
-  if (journeyCount === 0) {
-    fastify.log.info('Journeys table is empty, creating default journey.');
-    const { rows } = await pgClient.query(
-      'INSERT INTO journeys (name, user_id) VALUES ($1, $2) RETURNING id',
-      ['My Journey', adminUserId]
-    );
-    defaultJourneyId = rows[0].id;
-    fastify.log.info(`Default journey 'My Journey' created with ID: ${defaultJourneyId} for admin user.`);
-  } else {
-    const { rows } = await pgClient.query('SELECT id FROM journeys ORDER BY created_at ASC LIMIT 1');
-    defaultJourneyId = rows[0].id;
-    fastify.log.info(`Using existing default journey with ID: ${defaultJourneyId}`);
-  }
-
-  const { rowCount: postCount } = await pgClient.query('SELECT 1 FROM posts LIMIT 1');
-  if (postCount === 0) {
-    fastify.log.info('Posts table is empty, inserting sample data.');
-    const samplePosts = [
-      {
-        title: "Marrakech Market Adventure",
-        message: "Exploring the vibrant markets of Marrakech! The colors, sounds, and smells are an absolute feast for the senses. Every corner holds a new discovery.",
-        image_urls: {
-          small: "https://picsum.photos/seed/marrakech-small/300/225",
-          medium: "https://picsum.photos/seed/marrakech-medium/600/450",
-          large: "https://picsum.photos/seed/marrakech-large/1200/900",
-          original: "https://picsum.photos/seed/marrakech-original/1920/1080",
-        },
-        spotify_embed_url: null,
-        coordinates: null
-      },
-      {
-        title: "Himalayan Sunrise",
-        message: "Sunrise over the Himalayas. There's nothing quite like the crisp mountain air and the breathtaking views. Feeling incredibly small and inspired.",
-        image_urls: {
-          small: "https://picsum.photos/seed/himalayas-small/300/225",
-          medium: "https://picsum.photos/seed/himalayas-medium/600/450",
-          large: "https://picsum.photos/seed/himalayas-large/1200/900",
-          original: "https://picsum.photos/seed/himalayas-original/1920/1080",
-        },
-        spotify_embed_url: null,
-        coordinates: null
-      },
-      {
-        title: "Roman Holiday",
-        message: "Lost in the ancient streets of Rome. Every cobblestone tells a story, and the history here is palpable. Gelato in hand, life is good!",
-        image_urls: {
-          small: "https://picsum.photos/seed/rome-small/300/225",
-          medium: "https://picsum.photos/seed/rome-medium/600/450",
-          large: "https://picsum.photos/seed/rome-large/1200/900",
-          original: "https://picsum.photos/seed/rome-original/1920/1080",
-        },
-        spotify_embed_url: null,
-        coordinates: null
-      },
-      {
-        title: "Great Barrier Reef Dive",
-        message: "Diving into the crystal-clear waters of the Great Barrier Reef. The marine life is astounding, a kaleidoscope of colors beneath the surface.",
-        image_urls: {
-          small: "https://picsum.photos/seed/reef-small/300/225",
-          medium: "https://picsum.photos/seed/reef-medium/600/450",
-          large: "https://picsum.photos/seed/reef-large/1200/900",
-          original: "https://picsum.photos/seed/reef-original/1920/1080",
-        },
-        spotify_embed_url: null,
-        coordinates: null
-      },
-      {
-        title: "Parisian Evening",
-        message: "A serene evening by the Eiffel Tower. The city of lights truly lives up to its name. Parisian charm is simply irresistible.",
-        image_urls: {
-          small: "https://picsum.photos/seed/eiffel-small/300/225",
-          medium: "https://picsum.photos/seed/eiffel-medium/600/450",
-          large: "https://picsum.photos/seed/eiffel-large/1200/900",
-          original: "https://picsum.photos/seed/eiffel-original/1920/1080",
-        },
-        spotify_embed_url: null,
-        coordinates: null
-      }
-    ];
-
-    for (const post of samplePosts) {
-      await pgClient.query(
-        'INSERT INTO posts (journey_id, user_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [defaultJourneyId, adminUserId, post.title, post.message, post.image_urls, post.spotify_embed_url, post.coordinates]
-      );
-    }
-    fastify.log.info('Sample posts inserted.');
-  }
 }
 
-// Authentication middleware (placeholder for now)
+// Authentication middleware
 fastify.decorateRequest('user', null); // Add user property to request
 
 fastify.addHook('preHandler', async (request, reply) => {
-  // For now, we'll bypass auth for initial development,
-  // but this is where JWT verification would go.
-  // We'll assume an admin user for now for creating content.
-  // In a real app, you'd verify the JWT and set request.user
-  // For now, we'll just set a dummy admin user for content creation
-  const { rows } = await pgClient.query("SELECT id, username, role, permissions FROM users WHERE role = 'admin' LIMIT 1");
-  if (rows.length > 0) {
-    request.user = rows[0];
-  } else {
-    // Fallback if no admin user exists (shouldn't happen after ensureDbTable)
-    request.user = { id: 'anonymous', username: 'anonymous', role: 'user', permissions: [] };
+  const authHeader = request.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7, authHeader.length);
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: string; username: string; role: string; permissions: string[] };
+      request.user = decoded;
+    } catch (error) {
+      fastify.log.warn('Invalid or expired JWT provided.');
+      // Optionally, clear the token from the client if it's expired/invalid
+      // reply.status(401).send({ message: 'Unauthorized: Invalid or expired token.' });
+    }
   }
+  // If no token or invalid token, request.user remains null
 });
 
 
@@ -259,6 +151,59 @@ fastify.addHook('preHandler', async (request, reply) => {
 fastify.get('/', async (request, reply) => {
   return { hello: 'world from Fastify backend!' };
 });
+
+// Check if any users exist
+fastify.get('/users/exists', async (request, reply) => {
+  try {
+    const { rowCount } = await pgClient.query('SELECT 1 FROM users LIMIT 1');
+    return { exists: rowCount > 0 };
+  } catch (error) {
+    fastify.log.error({ error }, 'Error checking for existing users');
+    reply.status(500).send({ message: 'Failed to check user existence' });
+  }
+});
+
+// Register the first user (admin)
+fastify.post('/register', async (request, reply) => {
+  try {
+    const { username, password } = request.body as { username: string; password: string };
+
+    if (!username || !password) {
+      reply.status(400).send({ message: 'Username and password are required.' });
+      return;
+    }
+
+    const { rowCount: userCount } = await pgClient.query('SELECT 1 FROM users LIMIT 1');
+    if (userCount > 0) {
+      reply.status(403).send({ message: 'Registration is closed. An admin user already exists.' });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post'];
+    const result = await pgClient.query(
+      'INSERT INTO users (username, password_hash, role, permissions) VALUES ($1, $2, $3, $4) RETURNING id, username, role, permissions',
+      [username, hashedPassword, 'admin', JSON.stringify(adminPermissions)]
+    );
+    const newUser = result.rows[0];
+
+    const token = jwt.sign(
+      { id: newUser.id, username: newUser.username, role: newUser.role, permissions: newUser.permissions },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    reply.status(201).send({ token, user: { id: newUser.id, username: newUser.username, role: newUser.role, permissions: newUser.permissions } });
+  } catch (error: any) {
+    if (error.code === '23505') { // Unique violation error code
+      reply.status(409).send({ message: 'Username already exists.' });
+    } else {
+      fastify.log.error({ error }, 'Error during first user registration');
+      reply.status(500).send({ message: 'Failed to register user' });
+    }
+  }
+});
+
 
 // User login route
 fastify.post('/login', async (request, reply) => {
@@ -293,9 +238,8 @@ fastify.post('/login', async (request, reply) => {
 
 // Admin route to create a new user
 fastify.post('/users', async (request, reply) => {
-  // This route should be protected by an admin role check in a real application
-  if (request.user.role !== 'admin') {
-    reply.status(403).send({ message: 'Forbidden: Only administrators can create users.' });
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_users')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_users permission can create users.' });
     return;
   }
 
@@ -331,12 +275,15 @@ fastify.post('/users', async (request, reply) => {
 
 // Get all journeys (now filtered by user_id or all for admin)
 fastify.get('/journeys', async (request, reply) => {
+  if (!request.user) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
   try {
     let query = 'SELECT * FROM journeys';
     const params: string[] = [];
 
-    // For now, let's allow admin to see all, and regular users to see their own
-    if (request.user.role !== 'admin') {
+    if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
       query += ' WHERE user_id = $1';
       params.push(request.user.id);
     }
@@ -351,17 +298,17 @@ fastify.get('/journeys', async (request, reply) => {
 
 // Create a new journey
 fastify.post('/journeys', async (request, reply) => {
-  try {
-    if (!request.user || !request.user.id) {
-      reply.status(401).send({ message: 'Authentication required.' });
-      return;
-    }
-    // Check if user has permission to create journey
-    if (request.user.role !== 'admin' && !request.user.permissions.includes('create_journey')) {
-      reply.status(403).send({ message: 'Forbidden: You do not have permission to create journeys.' });
-      return;
-    }
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+  // Check if user has permission to create journey
+  if (request.user.role !== 'admin' && !request.user.permissions.includes('create_journey')) {
+    reply.status(403).send({ message: 'Forbidden: You do not have permission to create journeys.' });
+    return;
+  }
 
+  try {
     const { name } = request.body as { name: string };
     if (!name || name.trim() === '') {
       reply.status(400).send({ message: 'Journey name is required.' });
@@ -380,6 +327,10 @@ fastify.post('/journeys', async (request, reply) => {
 
 // Get all posts for a specific journey (or all if no journeyId provided)
 fastify.get('/posts', async (request, reply) => {
+  if (!request.user) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
   try {
     const { journeyId } = request.query as { journeyId?: string };
     let query = 'SELECT * FROM posts';
@@ -391,8 +342,7 @@ fastify.get('/posts', async (request, reply) => {
       params.push(journeyId);
     }
 
-    // For now, let's allow admin to see all, and regular users to see their own
-    if (request.user.role !== 'admin') {
+    if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
       query += `${params.length > 0 ? ' AND' : ' WHERE'} user_id = $${paramIndex++}`;
       params.push(request.user.id);
     }
@@ -408,13 +358,13 @@ fastify.get('/posts', async (request, reply) => {
 
 // New endpoint for uploading images
 fastify.post('/upload-image', async (request, reply) => {
-  try {
-    if (!request.user || !request.user.id) {
-      reply.status(401).send({ message: 'Authentication required.' });
-      return;
-    }
-    // For now, all authenticated users can upload images. Permissions can be added later.
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+  // For now, all authenticated users can upload images. Permissions can be added later.
 
+  try {
     const { imageBase64, imageType } = request.body as { imageBase64: string; imageType: string };
 
     if (!imageBase64 || !imageType) {
@@ -498,17 +448,17 @@ fastify.post('/upload-image', async (request, reply) => {
 
 // Create a new post with an optional image URL, title, Spotify embed, and coordinates
 fastify.post('/posts', async (request, reply) => {
-  try {
-    if (!request.user || !request.user.id) {
-      reply.status(401).send({ message: 'Authentication required.' });
-      return;
-    }
-    // Check if user has permission to create post
-    if (request.user.role !== 'admin' && !request.user.permissions.includes('create_post')) {
-      reply.status(403).send({ message: 'Forbidden: You do not have permission to create posts.' });
-      return;
-    }
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+  // Check if user has permission to create post
+  if (request.user.role !== 'admin' && !request.user.permissions.includes('create_post')) {
+    reply.status(403).send({ message: 'Forbidden: You do not have permission to create posts.' });
+    return;
+  }
 
+  try {
     const { title, message, imageUrls, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
       title?: string; 
       message: string; 
@@ -527,6 +477,25 @@ fastify.post('/posts', async (request, reply) => {
       reply.status(400).send({ message: 'At least a message, image, Spotify URL, or coordinates are required.' });
       return;
     }
+    
+    // Check if the user owns the journey or has admin/edit_any_journey permissions
+    const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
+
+    if (!journey) {
+      reply.status(404).send({ message: 'Journey not found.' });
+      return;
+    }
+
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.role === 'admin';
+    const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
+
+    if (!isOwner && !isAdmin && !canEditAnyJourney) {
+      reply.status(403).send({ message: 'Forbidden: You do not have permission to post to this journey.' });
+      return;
+    }
+
 
     fastify.log.info('Inserting post into database.');
     const result = await pgClient.query(
@@ -543,12 +512,12 @@ fastify.post('/posts', async (request, reply) => {
 
 // Delete a post by ID
 fastify.delete('/posts/:id', async (request, reply) => {
-  try {
-    if (!request.user || !request.user.id) {
-      reply.status(401).send({ message: 'Authentication required.' });
-      return;
-    }
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
 
+  try {
     const { id } = request.params as { id: string };
     fastify.log.info(`Attempting to delete post with ID: ${id}`);
 
@@ -631,6 +600,6 @@ declare module 'fastify' {
       username: string;
       role: string;
       permissions: string[];
-    };
+    } | null; // user can be null if not authenticated
   }
 }

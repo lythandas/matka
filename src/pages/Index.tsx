@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench } from 'lucide-react'; // Added Wrench icon
+import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +40,8 @@ import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import CreateUserDialog from '@/components/CreateUserDialog';
-import LoginDialog from '@/components/LoginDialog'; // Import LoginDialog
+import LoginDialog from '@/components/LoginDialog';
+import RegisterDialog from '@/components/RegisterDialog'; // Import RegisterDialog
 
 interface Post {
   id: string;
@@ -56,7 +57,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, usersExist, fetchUsersExist } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -70,7 +71,8 @@ const Index = () => {
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false); // State for LoginDialog
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false); // State for RegisterDialog
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -273,6 +275,18 @@ const Index = () => {
     setSelectedPostIndex(null);
   };
 
+  const handleAuthButtonClick = () => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      if (usersExist === false) {
+        setIsRegisterDialogOpen(true);
+      } else {
+        setIsLoginDialogOpen(true);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
@@ -329,8 +343,8 @@ const Index = () => {
               </Button>
             )}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <Button onClick={isAuthenticated ? logout : () => setIsLoginDialogOpen(true)} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-              {isAuthenticated ? 'Logout' : 'Login'}
+            <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+              {isAuthenticated ? 'Logout' : (usersExist === false ? 'Register' : 'Login')}
             </Button>
           </div>
         </div>
@@ -585,7 +599,14 @@ const Index = () => {
         onClose={() => setIsCreateUserDialogOpen(false)}
       />
 
-      {!isAuthenticated && (
+      {usersExist === false && (
+        <RegisterDialog
+          isOpen={isRegisterDialogOpen}
+          onClose={() => setIsRegisterDialogOpen(false)}
+        />
+      )}
+
+      {usersExist === true && !isAuthenticated && (
         <LoginDialog
           isOpen={isLoginDialogOpen}
           onClose={() => setIsLoginDialogOpen(false)}

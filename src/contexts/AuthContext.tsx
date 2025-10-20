@@ -16,6 +16,8 @@ interface AuthContextType {
   token: string | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  usersExist: boolean | null; // New state to track if any users exist
+  fetchUsersExist: () => Promise<void>; // Function to fetch user existence status
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +28,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [usersExist, setUsersExist] = useState<boolean | null>(null); // null means loading/unknown
+
+  const fetchUsersExist = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/exists`);
+      if (!response.ok) {
+        throw new Error('Failed to check user existence');
+      }
+      const data = await response.json();
+      setUsersExist(data.exists);
+    } catch (error) {
+      console.error('Error fetching user existence:', error);
+      showError('Failed to determine if users exist.');
+      setUsersExist(false); // Assume no users exist if check fails
+    }
+  }, []);
 
   // Load auth state from localStorage on initial render
   useEffect(() => {
@@ -41,7 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout(); // Clear invalid data
       }
     }
-  }, []);
+    fetchUsersExist(); // Check user existence on app load
+  }, [fetchUsersExist]);
 
   const login = useCallback(async (username: string, password: string) => {
     try {
@@ -79,10 +98,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     showSuccess('Logged out successfully!');
+    setUsersExist(true); // Assume users still exist after logout
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist }}>
       {children}
     </AuthContext.Provider>
   );
