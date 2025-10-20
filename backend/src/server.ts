@@ -8,7 +8,7 @@ import { Readable } from 'stream';
 
 const fastify = Fastify({
   logger: true,
-  bodyLimit: 10 * 1024 * 1024, // Increase body limit to 10MB (default is 1MB)
+  bodyLimit: 8 * 1024 * 1024, // Set body limit to 8MB for image uploads
 });
 
 // Register CORS plugin
@@ -124,13 +124,42 @@ fastify.post('/posts', async (request, reply) => {
 
     if (imageBase64 && imageType) {
       const buffer = Buffer.from(imageBase64, 'base64');
-      const objectName = `${randomUUID()}.${imageType.split('/')[1]}`; // e.g., uuid.jpeg
+
+      // Server-side size limit check
+      const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+      if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
+        fastify.log.warn(`Image size (${buffer.length} bytes) exceeds limit (${MAX_IMAGE_SIZE_BYTES} bytes).`);
+        reply.status(400).send({ message: 'Image size exceeds 8MB limit.' });
+        return;
+      }
+
+      // Validate image type
+      if (!imageType.startsWith('image/')) {
+        fastify.log.warn(`Invalid image type received: ${imageType}`);
+        reply.status(400).send({ message: 'Invalid image type.' });
+        return;
+      }
+      const fileExtension = imageType.split('/')[1];
+      if (!['jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension)) {
+        fastify.log.warn(`Unsupported image file extension: ${fileExtension}`);
+        reply.status(400).send({ message: 'Unsupported image file format.' });
+        return;
+      }
+
+      const objectName = `${randomUUID()}.${fileExtension}`;
       
       fastify.log.info(`Resizing image for object: ${objectName}`);
-      const resizedBuffer = await sharp(buffer)
-        .resize(800, 600, { fit: 'inside', withoutEnlargement: true }) // Resize for web display
-        .toBuffer();
-      fastify.log.info(`Image resized. New buffer size: ${resizedBuffer.length}`);
+      let resizedBuffer;
+      try {
+        resizedBuffer = await sharp(buffer)
+          .resize(800, 600, { fit: 'inside', withoutEnlargement: true }) // Resize for web display
+          .toBuffer();
+        fastify.log.info(`Image resized. New buffer size: ${resizedBuffer.length}`);
+      } catch (sharpError) {
+        fastify.log.error({ sharpError }, 'Error during image resizing with sharp.');
+        reply.status(500).send({ message: 'Failed to process image.' });
+        return;
+      }
 
       const stream = new Readable();
       stream.push(resizedBuffer);
@@ -143,6 +172,7 @@ fastify.post('/posts', async (request, reply) => {
       fastify.log.info(`Object '${objectName}' uploaded successfully.`);
       
       // Use MINIO_PUBLIC_URL_BASE for URLs accessible from the frontend
+      // Ensure MINIO_PUBLIC_URL_BASE is correctly set in docker-compose.yml
       imageUrl = `${process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`}/${MINIO_BUCKET_NAME}/${objectName}`;
       fastify.log.info(`Generated image URL: ${imageUrl}`);
     }

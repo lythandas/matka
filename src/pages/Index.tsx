@@ -32,6 +32,7 @@ interface Post {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
   const { isAuthenticated, login, logout } = useAuth();
@@ -66,7 +67,25 @@ const Index = () => {
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setImageFile(event.target.files[0]);
+      const file = event.target.files[0];
+
+      // Client-side size validation
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        showError('Image size exceeds 8MB limit.');
+        setImageFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = ''; // Clear input
+        return;
+      }
+
+      // Client-side type validation (basic check)
+      if (!file.type.startsWith('image/')) {
+        showError('Only image files are allowed.');
+        setImageFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = ''; // Clear input
+        return;
+      }
+
+      setImageFile(file);
     } else {
       setImageFile(null);
     }
@@ -87,13 +106,17 @@ const Index = () => {
       if (imageFile) {
         const reader = new FileReader();
         reader.readAsDataURL(imageFile);
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
               imageBase64 = reader.result.split(',')[1];
               imageType = imageFile.type;
             }
             resolve();
+          };
+          reader.onerror = (error) => {
+            console.error("FileReader error:", error);
+            reject(new Error("Failed to read image file."));
           };
         });
       }
@@ -107,7 +130,8 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create post');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create post');
       }
 
       const newPost: Post = await response.json();
@@ -118,9 +142,9 @@ const Index = () => {
         fileInputRef.current.value = '';
       }
       showSuccess('Post created successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error);
-      showError('Failed to create post.');
+      showError(error.message || 'Failed to create post.');
     }
   };
 
@@ -131,14 +155,15 @@ const Index = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete post');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete post');
       }
 
       setPosts(posts.filter((post) => post.id !== id));
       showSuccess('Post deleted successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting post:', error);
-      showError('Failed to delete post.');
+      showError(error.message || 'Failed to delete post.');
     }
   };
 
@@ -181,7 +206,7 @@ const Index = () => {
                   <Input
                     id="image-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
                     onChange={handleImageChange}
                     ref={fileInputRef}
                     className="hidden"
@@ -193,7 +218,7 @@ const Index = () => {
                     className="flex-1 justify-start text-gray-600 dark:text-gray-400"
                   >
                     <Upload className="mr-2 h-4 w-4" />
-                    {imageFile ? imageFile.name : "Choose Image"}
+                    {imageFile ? imageFile.name : "Choose Image (Max 8MB)"}
                   </Button>
                   {imageFile && (
                     <Button
@@ -240,6 +265,11 @@ const Index = () => {
                       src={post.image_url}
                       alt="Post image"
                       className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
+                      onError={(e) => {
+                        e.currentTarget.src = '/public/placeholder.svg'; // Fallback image
+                        e.currentTarget.onerror = null; // Prevent infinite loop
+                        console.error(`Failed to load image: ${post.image_url}`);
+                      }}
                     />
                   )}
                   <div className="flex justify-between items-start mb-2">
