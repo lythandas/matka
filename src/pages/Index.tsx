@@ -467,9 +467,11 @@ const Index = () => {
           </Card>
         )}
 
-        <div className="mb-6">
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        </div>
+        {posts.length > 0 && ( // Conditionally render ViewToggle
+          <div className="mb-6">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
+        )}
 
         {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
