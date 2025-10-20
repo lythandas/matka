@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Upload } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from "@/components/ui/badge"; // Import Badge component
 
 interface Post {
   id: string;
@@ -33,11 +34,12 @@ interface Post {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const Index = () => {
-  const { isAuthenticated, login, logout } = useAuth(); // Use the auth context
+  const { isAuthenticated, login, logout } = useAuth();
   const [message, setMessage] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [backendConnected, setBackendConnected] = useState<boolean>(false); // New state for backend status
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
@@ -48,9 +50,11 @@ const Index = () => {
       }
       const data: Post[] = await response.json();
       setPosts(data);
+      setBackendConnected(true); // Set to true on successful fetch
     } catch (error) {
       console.error('Error fetching posts:', error);
       showError('Failed to load posts.');
+      setBackendConnected(false); // Set to false on error
     } finally {
       setLoading(false);
     }
@@ -70,9 +74,9 @@ const Index = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log('handleSubmit triggered.'); // Added log
-    console.log('Current message:', message); // Added log
-    console.log('Current imageFile:', imageFile); // Added log
+    console.log('handleSubmit triggered.');
+    console.log('Current message:', message);
+    console.log('Current imageFile:', imageFile);
 
     if (!message.trim() && !imageFile) {
       showError('Please enter a message or select an image.');
@@ -89,7 +93,7 @@ const Index = () => {
         await new Promise<void>((resolve) => {
           reader.onloadend = () => {
             if (typeof reader.result === 'string') {
-              imageBase664 = reader.result.split(',')[1];
+              imageBase64 = reader.result.split(',')[1];
               imageType = imageFile.type;
             }
             resolve();
@@ -156,7 +160,13 @@ const Index = () => {
           </div>
         </div>
 
-        {isAuthenticated && ( // Conditionally render "Share Your Day"
+        <div className="flex justify-end mb-4">
+          <Badge variant={backendConnected ? "default" : "destructive"}>
+            Backend: {backendConnected ? "Connected" : "Disconnected"}
+          </Badge>
+        </div>
+
+        {isAuthenticated && (
           <Card className="mb-8 shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl font-semibold">Share Your Day</CardTitle>
@@ -237,7 +247,7 @@ const Index = () => {
                   )}
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                    {isAuthenticated && ( // Only show delete button if authenticated
+                    {isAuthenticated && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="destructive" size="icon" className="ml-4">
