@@ -19,7 +19,7 @@ interface Post {
 }
 
 interface PostDetailDialogProps {
-  post: Post | null;
+  post: Post; // Changed to non-nullable as it will be conditionally rendered
   isOpen: boolean;
   onClose: () => void;
   currentIndex: number;
@@ -39,8 +39,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 }) => {
   const imageRef = useRef<HTMLImageElement>(null);
   const [isImageFullscreen, setIsImageFullscreen] = useState(false);
-
-  if (!post) return null;
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;

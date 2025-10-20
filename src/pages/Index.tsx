@@ -449,15 +449,17 @@ const Index = () => {
       </div>
       <MadeWithDyad />
 
-      <PostDetailDialog
-        post={selectedPostForDetail}
-        isOpen={isDetailDialogOpen}
-        onClose={handleCloseDetailDialog}
-        currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
-        totalPosts={posts.length}
-        onNext={handleNextPost}
-        onPrevious={handlePreviousPost}
-      />
+      {selectedPostForDetail && isDetailDialogOpen && (
+        <PostDetailDialog
+          post={selectedPostForDetail}
+          isOpen={isDetailDialogOpen}
+          onClose={handleCloseDetailDialog}
+          currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
+          totalPosts={posts.length}
+          onNext={handleNextPost}
+          onPrevious={handlePreviousPost}
+        />
+      )}
     </div>
   );
 };
