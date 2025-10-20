@@ -260,7 +260,9 @@ const Index = () => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
+                           hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
+                           hover:bg-transparent hover:border-transparent" // Added hover:border-transparent
               >
                 {selectedJourney ? selectedJourney.name : "Select Journey"}
                 <ChevronDown className="ml-2 h-6 w-6" />
@@ -294,7 +296,7 @@ const Index = () => {
           </DropdownMenu>
 
           <div className="flex items-center space-x-2">
-            <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" /> 
+            <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
             <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
