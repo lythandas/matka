@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import mapboxgl from 'mapbox-gl'; // Changed from maplibregl
+import maplibregl from 'maplibre-gl'; // Changed from mapboxgl
 import { showError } from '@/utils/toast';
 
 interface MapComponentProps {
@@ -10,13 +10,9 @@ interface MapComponentProps {
   className?: string;
 }
 
-// IMPORTANT: You need to set your Mapbox Access Token in your .env file
-// Example: VITE_MAPBOX_ACCESS_TOKEN=YOUR_MAPBOX_ACCESS_TOKEN
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-
 const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, className }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null); // Changed from maplibregl.Map
+  const mapRef = useRef<maplibregl.Map | null>(null); // Changed from mapboxgl.Map
   const [mapId] = useState(() => `map-${Math.random().toString(36).substring(2, 9)}`); // Unique ID for each map instance
 
   useEffect(() => {
@@ -27,21 +23,16 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
       return;
     }
 
-    if (!mapboxgl.accessToken) {
-      showError("Mapbox Access Token is not set. Please add VITE_MAPBOX_ACCESS_TOKEN to your .env file.");
-      return;
-    }
-
-    mapRef.current = new mapboxgl.Map({
+    mapRef.current = new maplibregl.Map({
       container: mapId,
-      style: 'mapbox://styles/mapbox/streets-v11', // Using a detailed Mapbox Streets style
+      style: 'https://tiles.stadiamaps.com/styles/osm_bright.json', // Using a free OpenStreetMap style from Stadia Maps
       center: [coordinates.lng, coordinates.lat],
       zoom: zoom,
     });
 
-    mapRef.current.addControl(new mapboxgl.NavigationControl(), 'top-right'); // Changed from maplibregl.NavigationControl
+    mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right'); // Changed from mapboxgl.NavigationControl
 
-    new mapboxgl.Marker() // Changed from maplibregl.Marker
+    new maplibregl.Marker() // Changed from mapboxgl.Marker
       .setLngLat([coordinates.lng, coordinates.lat])
       .addTo(mapRef.current);
 
