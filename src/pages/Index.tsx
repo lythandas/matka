@@ -25,13 +25,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
-import PostDetailDialog from '@/components/PostDetailDialog'; // Import the new component
+import PostDetailDialog from '@/components/PostDetailDialog';
+import ShineCard from '@/components/ShineCard'; // Import the new ShineCard component
 
 interface Post {
   id: string;
   title?: string;
   message: string;
-  image_url?: string;
+  image_urls?: { small?: string; medium?: string; large?: string }; // Updated to object
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -45,7 +46,7 @@ const Index = () => {
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string } | null>(null); // Updated state
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -111,14 +112,14 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setUploadedImageUrl(data.imageUrl);
+      setUploadedImageUrls(data.imageUrls); // Store the object of URLs
       showSuccess('Image uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading image:', error);
       showError(error.message || 'Failed to upload image.');
       // Clear selected file and preview if upload fails
       setSelectedFile(null);
-      setUploadedImageUrl(null);
+      setUploadedImageUrls(null);
     } finally {
       setIsUploadingImage(false);
     }
@@ -129,14 +130,14 @@ const Index = () => {
     if (file) {
       uploadImageToServer(file);
     } else {
-      setUploadedImageUrl(null); // Clear uploaded URL if file is deselected
+      setUploadedImageUrls(null); // Clear uploaded URLs if file is deselected
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!title.trim() && !message.trim() && !uploadedImageUrl && !spotifyEmbedUrl && !coordinates) {
+    if (!title.trim() && !message.trim() && !uploadedImageUrls && !spotifyEmbedUrl && !coordinates) {
       showError('Please enter a title, message, or add some content (image, Spotify, location).');
       return;
     }
@@ -154,7 +155,7 @@ const Index = () => {
         body: JSON.stringify({
           title: title.trim() || undefined,
           message: message.trim(),
-          imageUrl: uploadedImageUrl,
+          imageUrls: uploadedImageUrls, // Send the object of URLs
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
           coordinates: coordinates || undefined,
         }),
@@ -170,7 +171,7 @@ const Index = () => {
       setTitle('');
       setMessage('');
       setSelectedFile(null);
-      setUploadedImageUrl(null);
+      setUploadedImageUrls(null);
       setSpotifyEmbedUrl('');
       setCoordinates(null);
       showSuccess('Post created successfully!');
@@ -252,13 +253,13 @@ const Index = () => {
                 />
 
                 {/* Content Previews */}
-                {(uploadedImageUrl || spotifyEmbedUrl || coordinates) && (
+                {(uploadedImageUrls || spotifyEmbedUrl || coordinates) && (
                   <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                     <h4 className="text-lg font-semibold">Content Preview:</h4>
-                    {uploadedImageUrl && (
+                    {uploadedImageUrls?.medium && ( // Use medium size for preview
                       <div className="relative">
                         <img
-                          src={uploadedImageUrl}
+                          src={uploadedImageUrls.medium}
                           alt="Image preview"
                           className="w-full h-auto max-h-64 object-cover rounded-md"
                         />
@@ -322,7 +323,7 @@ const Index = () => {
                     onImageSelect={handleImageSelect}
                     onSpotifyEmbedChange={setSpotifyEmbedUrl}
                     onCoordinatesChange={setCoordinates}
-                    uploadedImageUrl={uploadedImageUrl}
+                    uploadedImageUrl={uploadedImageUrls?.medium || null} // Pass medium size for preview
                     isUploadingImage={isUploadingImage}
                     currentSpotifyEmbedUrl={spotifyEmbedUrl}
                     currentCoordinates={coordinates}
@@ -353,7 +354,7 @@ const Index = () => {
         ) : (
           <div className="space-y-6">
             {posts.map((post) => (
-              <Card
+              <ShineCard // Using ShineCard here
                 key={post.id}
                 className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
                 onClick={() => handlePostClick(post)}
@@ -362,15 +363,15 @@ const Index = () => {
                   {post.title && (
                     <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                   )}
-                  {post.image_url && (
+                  {post.image_urls?.medium && ( // Use medium size for main feed
                     <img
-                      src={post.image_url}
+                      src={post.image_urls.medium}
                       alt="Post image"
                       className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                       onError={(e) => {
                         e.currentTarget.src = '/public/placeholder.svg'; // Fallback image
                         e.currentTarget.onerror = null; // Prevent infinite loop
-                        console.error(`Failed to load image: ${post.image_url}`);
+                        console.error(`Failed to load image: ${post.image_urls?.medium}`);
                       }}
                     />
                   )}
@@ -396,7 +397,7 @@ const Index = () => {
                     {isAuthenticated && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" className="ml-4" onClick={(e) => e.stopPropagation()}> {/* Stop propagation to prevent opening detail dialog */}
+                          <Button variant="destructive" size="icon" className="ml-4" onClick={(e) => e.stopPropagation()}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -422,7 +423,7 @@ const Index = () => {
                     {format(new Date(post.created_at), 'PPP p')}
                   </p>
                 </CardContent>
-              </Card>
+              </ShineCard>
             ))}
           </div>
         )}

@@ -11,7 +11,7 @@ interface Post {
   id: string;
   title?: string;
   message: string;
-  image_url?: string;
+  image_urls?: { small?: string; medium?: string; large?: string }; // Updated to object
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -28,24 +28,23 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({ post, isOpen, onClo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto"> {/* Increased max-w here */}
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="relative">
-          <DialogTitle>{post.title || "Post Details"}</DialogTitle> {/* Removed pr-8 as custom close button is gone */}
+          <DialogTitle>{post.title || "Post Details"}</DialogTitle>
           <DialogDescription>
             {format(new Date(post.created_at), 'PPP p')}
           </DialogDescription>
-          {/* Removed the custom close button here, DialogContent provides one by default */}
         </DialogHeader>
         <div className="space-y-4 py-4">
-          {post.image_url && (
+          {post.image_urls?.large && ( // Use large size for detail view
             <img
-              src={post.image_url}
+              src={post.image_urls.large}
               alt={post.title || "Post image"}
               className="w-full h-auto object-cover rounded-md"
               onError={(e) => {
                 e.currentTarget.src = '/public/placeholder.svg';
                 e.currentTarget.onerror = null;
-                console.error(`Failed to load image: ${post.image_url}`);
+                console.error(`Failed to load image: ${post.image_urls?.large}`);
               }}
             />
           )}

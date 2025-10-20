@@ -22,7 +22,7 @@ interface AddContentDialogProps {
   onImageSelect: (file: File | null) => void;
   onSpotifyEmbedChange: (url: string) => void;
   onCoordinatesChange: (coords: { lat: number; lng: number } | null) => void;
-  uploadedImageUrl: string | null;
+  uploadedImageUrl: string | null; // This will now be the URL of the medium image for preview
   isUploadingImage: boolean;
   currentSpotifyEmbedUrl: string;
   currentCoordinates: { lat: number; lng: number } | null;
@@ -35,7 +35,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   onImageSelect,
   onSpotifyEmbedChange,
   onCoordinatesChange,
-  uploadedImageUrl,
+  uploadedImageUrl, // This is now the specific URL for preview
   isUploadingImage,
   currentSpotifyEmbedUrl,
   currentCoordinates,
@@ -50,12 +50,9 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
 
   useEffect(() => {
     setSpotifyInput(currentSpotifyEmbedUrl);
-    if (uploadedImageUrl) {
-      setPreviewImageUrl(uploadedImageUrl);
-    } else if (!selectedFile) {
-      setPreviewImageUrl(null);
-    }
-  }, [currentSpotifyEmbedUrl, uploadedImageUrl, selectedFile]);
+    // Use the passed uploadedImageUrl directly for preview
+    setPreviewImageUrl(uploadedImageUrl);
+  }, [currentSpotifyEmbedUrl, uploadedImageUrl]);
 
   const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -80,8 +77,9 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       }
 
       setSelectedFile(file);
+      // For local preview, create object URL
       setPreviewImageUrl(URL.createObjectURL(file));
-      onImageSelect(file);
+      onImageSelect(file); // Pass the file to the parent for upload
     } else {
       setSelectedFile(null);
       setPreviewImageUrl(null);
@@ -92,7 +90,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   const handleClearImage = () => {
     setSelectedFile(null);
     setPreviewImageUrl(null);
-    onImageSelect(null);
+    onImageSelect(null); // Notify parent to clear image
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
