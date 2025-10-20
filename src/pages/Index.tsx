@@ -26,13 +26,13 @@ import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
-import ShineCard from '@/components/ShineCard'; // Import the new ShineCard component
+import ShineCard from '@/components/ShineCard';
 
 interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string }; // Updated to object
+  image_urls?: { small?: string; medium?: string; large?: string };
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
@@ -46,7 +46,7 @@ const Index = () => {
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string } | null>(null); // Updated state
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string } | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -55,6 +55,7 @@ const Index = () => {
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
+  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null); // New state for index
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
   const fetchPosts = async () => {
@@ -112,12 +113,11 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setUploadedImageUrls(data.imageUrls); // Store the object of URLs
+      setUploadedImageUrls(data.imageUrls);
       showSuccess('Image uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading image:', error);
       showError(error.message || 'Failed to upload image.');
-      // Clear selected file and preview if upload fails
       setSelectedFile(null);
       setUploadedImageUrls(null);
     } finally {
@@ -130,7 +130,7 @@ const Index = () => {
     if (file) {
       uploadImageToServer(file);
     } else {
-      setUploadedImageUrls(null); // Clear uploaded URLs if file is deselected
+      setUploadedImageUrls(null);
     }
   };
 
@@ -155,7 +155,7 @@ const Index = () => {
         body: JSON.stringify({
           title: title.trim() || undefined,
           message: message.trim(),
-          imageUrls: uploadedImageUrls, // Send the object of URLs
+          imageUrls: uploadedImageUrls,
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
           coordinates: coordinates || undefined,
         }),
@@ -200,14 +200,32 @@ const Index = () => {
     }
   };
 
-  const handlePostClick = (post: Post) => {
+  const handlePostClick = (post: Post, index: number) => {
     setSelectedPostForDetail(post);
+    setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
+  };
+
+  const handleNextPost = () => {
+    if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
+      const nextIndex = selectedPostIndex + 1;
+      setSelectedPostIndex(nextIndex);
+      setSelectedPostForDetail(posts[nextIndex]);
+    }
+  };
+
+  const handlePreviousPost = () => {
+    if (selectedPostIndex !== null && selectedPostIndex > 0) {
+      const prevIndex = selectedPostIndex - 1;
+      setSelectedPostIndex(prevIndex);
+      setSelectedPostForDetail(posts[prevIndex]);
+    }
   };
 
   const handleCloseDetailDialog = () => {
     setIsDetailDialogOpen(false);
     setSelectedPostForDetail(null);
+    setSelectedPostIndex(null);
   };
 
   return (
@@ -219,7 +237,7 @@ const Index = () => {
           </h1>
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <Button onClick={isAuthenticated ? logout : login} variant="outline">
+            <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
           </div>
@@ -256,7 +274,7 @@ const Index = () => {
                 {(uploadedImageUrls || spotifyEmbedUrl || coordinates) && (
                   <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                     <h4 className="text-lg font-semibold">Content Preview:</h4>
-                    {uploadedImageUrls?.medium && ( // Use medium size for preview
+                    {uploadedImageUrls?.medium && (
                       <div className="relative">
                         <img
                           src={uploadedImageUrls.medium}
@@ -268,7 +286,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleImageSelect(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -292,7 +310,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setSpotifyEmbedUrl('')}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -309,7 +327,7 @@ const Index = () => {
                           variant="ghost"
                           size="icon"
                           onClick={() => setCoordinates(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500"
                         >
                           <XCircle className="h-5 w-5 text-red-500" />
                         </Button>
@@ -323,12 +341,12 @@ const Index = () => {
                     onImageSelect={handleImageSelect}
                     onSpotifyEmbedChange={setSpotifyEmbedUrl}
                     onCoordinatesChange={setCoordinates}
-                    uploadedImageUrl={uploadedImageUrls?.medium || null} // Pass medium size for preview
+                    uploadedImageUrl={uploadedImageUrls?.medium || null}
                     isUploadingImage={isUploadingImage}
                     currentSpotifyEmbedUrl={spotifyEmbedUrl}
                     currentCoordinates={coordinates}
                   >
-                    <Button type="button" variant="outline" className="flex items-center">
+                    <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500">
                       <Plus className="mr-2 h-4 w-4" /> Add Content
                     </Button>
                   </AddContentDialog>
@@ -353,24 +371,24 @@ const Index = () => {
           <p className="text-center text-gray-600 dark:text-gray-400">No posts yet. Be the first to share!</p>
         ) : (
           <div className="space-y-6">
-            {posts.map((post) => (
-              <ShineCard // Using ShineCard here
+            {posts.map((post, index) => (
+              <ShineCard
                 key={post.id}
                 className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                onClick={() => handlePostClick(post)}
+                onClick={() => handlePostClick(post, index)}
               >
                 <CardContent className="p-6">
                   {post.title && (
                     <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                   )}
-                  {post.image_urls?.medium && ( // Use medium size for main feed
+                  {post.image_urls?.medium && (
                     <img
                       src={post.image_urls.medium}
                       alt="Post image"
                       className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                       onError={(e) => {
-                        e.currentTarget.src = '/public/placeholder.svg'; // Fallback image
-                        e.currentTarget.onerror = null; // Prevent infinite loop
+                        e.currentTarget.src = '/public/placeholder.svg';
+                        e.currentTarget.onerror = null;
                         console.error(`Failed to load image: ${post.image_urls?.medium}`);
                       }}
                     />
@@ -434,6 +452,10 @@ const Index = () => {
         post={selectedPostForDetail}
         isOpen={isDetailDialogOpen}
         onClose={handleCloseDetailDialog}
+        currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
+        totalPosts={posts.length}
+        onNext={handleNextPost}
+        onPrevious={handlePreviousPost}
       />
     </div>
   );

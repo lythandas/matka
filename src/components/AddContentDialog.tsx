@@ -22,7 +22,7 @@ interface AddContentDialogProps {
   onImageSelect: (file: File | null) => void;
   onSpotifyEmbedChange: (url: string) => void;
   onCoordinatesChange: (coords: { lat: number; lng: number } | null) => void;
-  uploadedImageUrl: string | null; // This will now be the URL of the medium image for preview
+  uploadedImageUrl: string | null;
   isUploadingImage: boolean;
   currentSpotifyEmbedUrl: string;
   currentCoordinates: { lat: number; lng: number } | null;
@@ -35,7 +35,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   onImageSelect,
   onSpotifyEmbedChange,
   onCoordinatesChange,
-  uploadedImageUrl, // This is now the specific URL for preview
+  uploadedImageUrl,
   isUploadingImage,
   currentSpotifyEmbedUrl,
   currentCoordinates,
@@ -50,7 +50,6 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
 
   useEffect(() => {
     setSpotifyInput(currentSpotifyEmbedUrl);
-    // Use the passed uploadedImageUrl directly for preview
     setPreviewImageUrl(uploadedImageUrl);
   }, [currentSpotifyEmbedUrl, uploadedImageUrl]);
 
@@ -77,9 +76,8 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       }
 
       setSelectedFile(file);
-      // For local preview, create object URL
       setPreviewImageUrl(URL.createObjectURL(file));
-      onImageSelect(file); // Pass the file to the parent for upload
+      onImageSelect(file);
     } else {
       setSelectedFile(null);
       setPreviewImageUrl(null);
@@ -90,7 +88,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   const handleClearImage = () => {
     setSelectedFile(null);
     setPreviewImageUrl(null);
-    onImageSelect(null); // Notify parent to clear image
+    onImageSelect(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -199,7 +197,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="flex-1 justify-start text-gray-600 dark:text-gray-400"
+                className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500"
                 disabled={isUploadingImage}
               >
                 {isUploadingImage ? (
@@ -215,7 +213,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleClearImage}
-                  className="ml-2"
+                  className="ml-2 hover:ring-2 hover:ring-blue-500"
                   disabled={isUploadingImage}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -245,11 +243,11 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             />
             <div className="flex justify-end space-x-2">
               {currentSpotifyEmbedUrl && (
-                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed}>
+                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500">
                   Clear Spotify
                 </Button>
               )}
-              <Button type="button" onClick={handleAddSpotifyEmbed}>
+              <Button type="button" onClick={handleAddSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500">
                 {currentSpotifyEmbedUrl ? 'Update Spotify' : 'Add Spotify'}
               </Button>
             </div>
@@ -272,7 +270,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               type="button"
               onClick={handleGetLocation}
               disabled={locationLoading}
-              className="w-full"
+              className="w-full hover:ring-2 hover:ring-blue-500"
             >
               {locationLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -287,7 +285,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
                 </p>
                 <MapComponent coordinates={currentCoordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full">
+                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500">
                   Clear Location
                 </Button>
               </>
@@ -295,7 +293,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
           </TabsContent>
         </Tabs>
         <DialogFooter className="pt-4">
-          <Button type="button" onClick={() => setOpen(false)}>Close</Button>
+          <Button type="button" onClick={() => setOpen(false)} className="hover:ring-2 hover:ring-blue-500">Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
