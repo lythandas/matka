@@ -28,9 +28,9 @@ services:
     volumes:
       - minio_data:/data
       - ./cors-policy.json:/tmp/cors-policy.json # Mount the CORS policy file
-      # Removed minio-init.sh mount and entrypoint/command
+    command: server /data --console-address ":9001" # Explicitly start the MinIO server
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"] # This healthcheck will now work with default MinIO start
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 5
