@@ -15,7 +15,8 @@ export default defineConfig(() => ({
   },
   build: {
     rollupOptions: {
-      external: ['maplibregl'], // Add maplibregl to external dependencies
+      // Removed maplibregl from external dependencies as the import path is now correct
+      external: [], 
     },
   },
 }));

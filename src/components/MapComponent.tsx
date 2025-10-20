@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import maplibregl from 'maplibregl';
+import maplibregl from 'maplibre-gl'; // Corrected import path
 import { showError } from '@/utils/toast';
 
 interface MapComponentProps {
