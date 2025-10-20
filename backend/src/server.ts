@@ -35,6 +35,13 @@ const minioClient = new MinioClient({
 const MINIO_BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'journey-images';
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
+// Define image sizes for optimization
+const IMAGE_SIZES = {
+  small: { width: 300, height: 225 },
+  medium: { width: 600, height: 450 },
+  large: { width: 1200, height: 900 },
+};
+
 // Ensure bucket exists and set public read policy
 async function ensureMinioBucket() {
   const exists = await minioClient.bucketExists(MINIO_BUCKET_NAME);
@@ -77,11 +84,11 @@ async function ensureDbTable() {
   await pgClient.query(`
     CREATE TABLE posts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      title TEXT, -- New: Title for the post
+      title TEXT,
       message TEXT NOT NULL,
-      image_url TEXT,
-      spotify_embed_url TEXT, -- New: Spotify embed URL
-      coordinates JSONB, -- New: Coordinates for map, stored as JSON
+      image_urls JSONB, -- Changed to JSONB to store multiple image URLs
+      spotify_embed_url TEXT,
+      coordinates JSONB,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -94,44 +101,64 @@ async function ensureDbTable() {
       {
         title: "Marrakech Market Adventure",
         message: "Exploring the vibrant markets of Marrakech! The colors, sounds, and smells are an absolute feast for the senses. Every corner holds a new discovery.",
-        image_url: "https://picsum.photos/seed/marrakech/800/600",
-        spotify_embed_url: null, // Removed Spotify embed URL
+        image_urls: {
+          small: "https://picsum.photos/seed/marrakech-small/300/225",
+          medium: "https://picsum.photos/seed/marrakech-medium/600/450",
+          large: "https://picsum.photos/seed/marrakech-large/1200/900",
+        },
+        spotify_embed_url: null,
         coordinates: null
       },
       {
         title: "Himalayan Sunrise",
         message: "Sunrise over the Himalayas. There's nothing quite like the crisp mountain air and the breathtaking views. Feeling incredibly small and inspired.",
-        image_url: "https://picsum.photos/seed/himalayas/800/600",
+        image_urls: {
+          small: "https://picsum.photos/seed/himalayas-small/300/225",
+          medium: "https://picsum.photos/seed/himalayas-medium/600/450",
+          large: "https://picsum.photos/seed/himalayas-large/1200/900",
+        },
         spotify_embed_url: null,
         coordinates: null
       },
       {
         title: "Roman Holiday",
         message: "Lost in the ancient streets of Rome. Every cobblestone tells a story, and the history here is palpable. Gelato in hand, life is good!",
-        image_url: "https://picsum.photos/seed/rome/800/600",
-        spotify_embed_url: null, // Removed Spotify embed URL
+        image_urls: {
+          small: "https://picsum.photos/seed/rome-small/300/225",
+          medium: "https://picsum.photos/seed/rome-medium/600/450",
+          large: "https://picsum.photos/seed/rome-large/1200/900",
+        },
+        spotify_embed_url: null,
         coordinates: null
       },
       {
         title: "Great Barrier Reef Dive",
         message: "Diving into the crystal-clear waters of the Great Barrier Reef. The marine life is astounding, a kaleidoscope of colors beneath the surface.",
-        image_url: "https://picsum.photos/seed/reef/800/600",
+        image_urls: {
+          small: "https://picsum.photos/seed/reef-small/300/225",
+          medium: "https://picsum.photos/seed/reef-medium/600/450",
+          large: "https://picsum.photos/seed/reef-large/1200/900",
+        },
         spotify_embed_url: null,
         coordinates: null
       },
       {
         title: "Parisian Evening",
         message: "A serene evening by the Eiffel Tower. The city of lights truly lives up to its name. Parisian charm is simply irresistible.",
-        image_url: "https://picsum.photos/seed/eiffel/800/600",
-        spotify_embed_url: null, // Removed Spotify embed URL
+        image_urls: {
+          small: "https://picsum.photos/seed/eiffel-small/300/225",
+          medium: "https://picsum.photos/seed/eiffel-medium/600/450",
+          large: "https://picsum.photos/seed/eiffel-large/1200/900",
+        },
+        spotify_embed_url: null,
         coordinates: null
       }
     ];
 
     for (const post of samplePosts) {
       await pgClient.query(
-        'INSERT INTO posts (title, message, image_url, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5)',
-        [post.title, post.message, post.image_url, post.spotify_embed_url, post.coordinates]
+        'INSERT INTO posts (title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5)',
+        [post.title, post.message, post.image_urls, post.spotify_embed_url, post.coordinates]
       );
     }
     fastify.log.info('Sample posts inserted.');
@@ -184,35 +211,44 @@ fastify.post('/upload-image', async (request, reply) => {
       return;
     }
 
-    const objectName = `${randomUUID()}.${fileExtension}`;
-    
-    fastify.log.info(`Resizing image for object: ${objectName}`);
-    let resizedBuffer;
-    try {
-      resizedBuffer = await sharp(buffer)
-        .resize(800, 600, { fit: 'inside', withoutEnlargement: true }) // Resize for web display
-        .toBuffer();
-      fastify.log.info(`Image resized. New buffer size: ${resizedBuffer.length}`);
-    } catch (sharpError) {
-      fastify.log.error({ sharpError }, 'Error during image resizing with sharp.');
-      reply.status(500).send({ message: 'Failed to process image.' });
-      return;
+    const imageUrls: { [key: string]: string } = {};
+    const baseObjectName = randomUUID();
+    const minioPublicUrlBase = process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`;
+
+    for (const sizeKey of Object.keys(IMAGE_SIZES) as Array<keyof typeof IMAGE_SIZES>) {
+      const { width, height } = IMAGE_SIZES[sizeKey];
+      const objectName = `${baseObjectName}-${sizeKey}.${fileExtension}`;
+      
+      fastify.log.info(`Resizing image to ${width}x${height} for object: ${objectName}`);
+      let resizedBuffer;
+      try {
+        resizedBuffer = await sharp(buffer)
+          .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+          .toBuffer();
+        fastify.log.info(`Image resized to ${sizeKey}. New buffer size: ${resizedBuffer.length}`);
+      } catch (sharpError) {
+        fastify.log.error({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
+        // Continue to next size or handle error as appropriate
+        continue; 
+      }
+
+      const stream = new Readable();
+      stream.push(resizedBuffer);
+      stream.push(null);
+
+      fastify.log.info(`Uploading object '${objectName}' to MinIO bucket '${MINIO_BUCKET_NAME}'`);
+      await minioClient.putObject(MINIO_BUCKET_NAME, objectName, stream, resizedBuffer.length, {
+        'Content-Type': imageType,
+      });
+      fastify.log.info(`Object '${objectName}' uploaded successfully.`);
+      
+      imageUrls[sizeKey] = `${minioPublicUrlBase}/${MINIO_BUCKET_NAME}/${objectName}`;
     }
 
-    const stream = new Readable();
-    stream.push(resizedBuffer);
-    stream.push(null);
-
-    fastify.log.info(`Uploading object '${objectName}' to MinIO bucket '${MINIO_BUCKET_NAME}'`);
-    await minioClient.putObject(MINIO_BUCKET_NAME, objectName, stream, resizedBuffer.length, {
-      'Content-Type': imageType,
-    });
-    fastify.log.info(`Object '${objectName}' uploaded successfully.`);
+    // Also store the original image URL if needed, or just rely on 'large' for highest quality
+    // For simplicity, we'll just return the generated sizes.
     
-    const imageUrl = `${process.env.MINIO_PUBLIC_URL_BASE || `http://localhost:${process.env.MINIO_PORT || '9000'}`}/${MINIO_BUCKET_NAME}/${objectName}`;
-    fastify.log.info(`Generated image URL: ${imageUrl}`);
-    
-    reply.status(200).send({ imageUrl });
+    reply.status(200).send({ imageUrls });
   } catch (error) {
     fastify.log.error({ error }, 'Error uploading image');
     reply.status(500).send({ message: 'Failed to upload image' });
@@ -223,23 +259,23 @@ fastify.post('/upload-image', async (request, reply) => {
 // Create a new post with an optional image URL, title, Spotify embed, and coordinates
 fastify.post('/posts', async (request, reply) => {
   try {
-    const { title, message, imageUrl, spotifyEmbedUrl, coordinates } = request.body as { 
+    const { title, message, imageUrls, spotifyEmbedUrl, coordinates } = request.body as { 
       title?: string; 
       message: string; 
-      imageUrl?: string; 
+      imageUrls?: { small?: string; medium?: string; large?: string }; // Updated to imageUrls object
       spotifyEmbedUrl?: string; 
       coordinates?: { lat: number; lng: number };
     };
 
-    if (!message.trim() && !imageUrl && !spotifyEmbedUrl && !coordinates) {
+    if (!message.trim() && !imageUrls && !spotifyEmbedUrl && !coordinates) {
       reply.status(400).send({ message: 'At least a message, image, Spotify URL, or coordinates are required.' });
       return;
     }
 
     fastify.log.info('Inserting post into database.');
     const result = await pgClient.query(
-      'INSERT INTO posts (title, message, image_url, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title || null, message, imageUrl || null, spotifyEmbedUrl || null, coordinates || null]
+      'INSERT INTO posts (title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title || null, message, imageUrls || null, spotifyEmbedUrl || null, coordinates || null]
     );
     fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
     reply.status(201).send(result.rows[0]);
@@ -255,18 +291,23 @@ fastify.delete('/posts/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
     fastify.log.info(`Attempting to delete post with ID: ${id}`);
 
-    // First, get the post to check for an image URL
-    const getPostResult = await pgClient.query('SELECT image_url FROM posts WHERE id = $1', [id]);
+    // First, get the post to check for image URLs
+    const getPostResult = await pgClient.query('SELECT image_urls FROM posts WHERE id = $1', [id]);
     const post = getPostResult.rows[0];
 
-    if (post && post.image_url) {
-      // Extract object name from URL
-      const url = new URL(post.image_url);
-      const objectName = url.pathname.split('/').pop();
-      if (objectName) {
-        fastify.log.info(`Deleting image '${objectName}' from MinIO.`);
-        await minioClient.removeObject(MINIO_BUCKET_NAME, objectName);
-        fastify.log.info(`Image '${objectName}' deleted from MinIO.`);
+    if (post && post.image_urls) {
+      // Delete all associated image sizes from MinIO
+      for (const sizeKey of Object.keys(post.image_urls)) {
+        const imageUrl = post.image_urls[sizeKey];
+        if (imageUrl) {
+          const url = new URL(imageUrl);
+          const objectName = url.pathname.split('/').pop();
+          if (objectName) {
+            fastify.log.info(`Deleting image '${objectName}' from MinIO.`);
+            await minioClient.removeObject(MINIO_BUCKET_NAME, objectName);
+            fastify.log.info(`Image '${objectName}' deleted from MinIO.`);
+          }
+        }
       }
     }
 
