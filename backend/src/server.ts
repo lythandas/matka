@@ -369,7 +369,7 @@ fastify.post('/upload-image', async (request, reply) => {
   try {
     const { imageBase64, imageType } = request.body as { imageBase64: string; imageType: string };
 
-    if (!imageBase664 || !imageType) {
+    if (!imageBase64 || !imageType) {
       reply.status(400).send({ message: 'Missing imageBase64 or imageType' });
       return;
     }
