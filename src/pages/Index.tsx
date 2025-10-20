@@ -101,6 +101,11 @@ const Index = () => {
         });
       }
 
+      // --- Added console logs here ---
+      console.log('Image Base64 length:', imageBase64 ? imageBase64.length : 'N/A');
+      console.log('Image Type:', imageType);
+      // --- End of added console logs ---
+
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: {
