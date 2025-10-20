@@ -19,20 +19,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, XCircle } from 'lucide-react'; // Added XCircle for clear buttons
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
-import AddContentDialog from '@/components/AddContentDialog'; // Import the new dialog
-import MapComponent from '@/components/MapComponent'; // Import the new MapComponent
+import AddContentDialog from '@/components/AddContentDialog';
+import MapComponent from '@/components/MapComponent';
 
 interface Post {
   id: string;
-  title?: string; // New: Optional title
+  title?: string;
   message: string;
   image_url?: string;
-  spotify_embed_url?: string; // New: Optional Spotify embed URL
-  coordinates?: { lat: number; lng: number }; // New: Optional coordinates
+  spotify_embed_url?: string;
+  coordinates?: { lat: number; lng: number };
   created_at: string;
 }
 
@@ -41,13 +41,13 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
   const { isAuthenticated, login, logout } = useAuth();
-  const [title, setTitle] = useState<string>(''); // New state for title
+  const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
-  const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>(''); // New state for Spotify URL
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null); // New state for coordinates
+  const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
@@ -236,6 +236,73 @@ const Index = () => {
                   rows={4}
                   className="w-full resize-none"
                 />
+
+                {/* Content Previews */}
+                {(uploadedImageUrl || spotifyEmbedUrl || coordinates) && (
+                  <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                    <h4 className="text-lg font-semibold">Content Preview:</h4>
+                    {uploadedImageUrl && (
+                      <div className="relative">
+                        <img
+                          src={uploadedImageUrl}
+                          alt="Image preview"
+                          className="w-full h-auto max-h-64 object-cover rounded-md"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleImageSelect(null)}
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                        >
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        </Button>
+                        {isUploadingImage && (
+                          <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                        )}
+                      </div>
+                    )}
+                    {spotifyEmbedUrl && (
+                      <div className="relative w-full aspect-video">
+                        <iframe
+                          src={spotifyEmbedUrl}
+                          width="100%"
+                          height="100%"
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          className="rounded-md"
+                        ></iframe>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSpotifyEmbedUrl('')}
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                        >
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        </Button>
+                      </div>
+                    )}
+                    {coordinates && (
+                      <div className="relative">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+                          Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                        </p>
+                        <MapComponent coordinates={coordinates} className="h-48" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCoordinates(null)}
+                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full"
+                        >
+                          <XCircle className="h-5 w-5 text-red-500" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-center">
                   <AddContentDialog
                     onImageSelect={handleImageSelect}
