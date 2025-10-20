@@ -372,7 +372,7 @@ fastify.post('/upload-image', async (request, reply) => {
       const filePath = path.join(UPLOADS_DIR, objectName);
       const publicUrl = `${backendBaseUrl}/uploads/${objectName}`;
 
-      let processedBuffer = buffer;
+      let processedBuffer: Buffer = buffer; // Explicitly type as Buffer
       if (sizeKey !== 'original') {
         const { width, height } = IMAGE_SIZES[sizeKey];
         fastify.log.info(`Resizing image to ${width}x${height} for file: ${objectName}`);
