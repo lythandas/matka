@@ -260,7 +260,7 @@ const Index = () => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
+                className="h-auto py-4 px-6 text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
                            hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
                            hover:bg-transparent hover:border-transparent" // Added hover:border-transparent
               >
