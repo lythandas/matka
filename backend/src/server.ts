@@ -70,8 +70,12 @@ async function ensureMinioBucket() {
 
 // Ensure database table exists and populate with sample data if empty
 async function ensureDbTable() {
+  // Drop the table if it exists to ensure schema is always up-to-date in dev
+  await pgClient.query('DROP TABLE IF EXISTS posts;');
+  fastify.log.info('Existing posts table dropped (if any).');
+
   await pgClient.query(`
-    CREATE TABLE IF NOT EXISTS posts (
+    CREATE TABLE posts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       title TEXT, -- New: Title for the post
       message TEXT NOT NULL,
