@@ -17,6 +17,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    labels:
+      - "com.example.service:db" # Added a dummy label
 
   minio:
     image: minio/minio
