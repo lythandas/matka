@@ -159,7 +159,7 @@ const Index = () => {
                 rows={4}
                 className="w-full resize-none"
               />
-              <div className="flex items-center space-x-2 w-full">
+              <div className="flex items-center w-full"> {/* Removed space-x-2 */}
                 <Input
                   id="image-upload"
                   type="file"
@@ -188,6 +188,7 @@ const Index = () => {
                         fileInputRef.current.value = '';
                       }
                     }}
+                    className="ml-2" {/* Added ml-2 here */}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
