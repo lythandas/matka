@@ -28,21 +28,13 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({ post, isOpen, onClo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto"> {/* Increased max-w here */}
         <DialogHeader className="relative">
-          <DialogTitle className="pr-8">{post.title || "Post Details"}</DialogTitle>
+          <DialogTitle>{post.title || "Post Details"}</DialogTitle> {/* Removed pr-8 as custom close button is gone */}
           <DialogDescription>
             {format(new Date(post.created_at), 'PPP p')}
           </DialogDescription>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
+          {/* Removed the custom close button here, DialogContent provides one by default */}
         </DialogHeader>
         <div className="space-y-4 py-4">
           {post.image_url && (
