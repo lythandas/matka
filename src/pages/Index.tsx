@@ -259,8 +259,8 @@ const Index = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline" // Changed to outline to match login button style
-                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                variant="outline"
+                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
               >
                 {selectedJourney ? selectedJourney.name : "Select Journey"}
                 <ChevronDown className="ml-2 h-6 w-6" />
@@ -418,10 +418,6 @@ const Index = () => {
             </CardContent>
           </Card>
         )}
-
-        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-gray-200">
-          Posts in "{selectedJourney?.name || 'No Journey Selected'}"
-        </h2>
 
         {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
