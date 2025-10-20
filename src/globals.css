@@ -100,5 +100,5 @@
   }
 }
 
-/* MapLibre GL JS CSS */
-@import 'maplibre-gl/dist/maplibre-gl.css';
+/* Mapbox GL JS CSS */
+@import 'mapbox-gl/dist/mapbox-gl.css';
