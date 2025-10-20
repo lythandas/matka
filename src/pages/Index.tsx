@@ -39,7 +39,8 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
-import CreateUserDialog from '@/components/CreateUserDialog'; // Import CreateUserDialog
+import CreateUserDialog from '@/components/CreateUserDialog';
+import LoginDialog from '@/components/LoginDialog'; // Import LoginDialog
 
 interface Post {
   id: string;
@@ -55,7 +56,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -68,23 +69,13 @@ const Index = () => {
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
-  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false); // State for CreateUserDialog
+  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false); // State for LoginDialog
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
-
-  const [loginUsername, setLoginUsername] = useState<string>('');
-  const [loginPassword, setLoginPassword] = useState<string>('');
-  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    await login(loginUsername, loginPassword);
-    setIsLoggingIn(false);
-  };
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -338,7 +329,7 @@ const Index = () => {
               </Button>
             )}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <Button onClick={isAuthenticated ? logout : () => {}} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+            <Button onClick={isAuthenticated ? logout : () => setIsLoginDialogOpen(true)} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
             </Button>
           </div>
@@ -349,38 +340,6 @@ const Index = () => {
             Backend: {backendConnected ? "Connected" : "Disconnected"}
           </Badge>
         </div>
-
-        {!isAuthenticated && (
-          <Card className="mb-8 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">Login</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <Input
-                  placeholder="Username"
-                  value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  className="w-full"
-                  disabled={isLoggingIn}
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full"
-                  disabled={isLoggingIn}
-                />
-                <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isLoggingIn}>
-                    {isLoggingIn ? 'Logging in...' : 'Login'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        )}
 
         {isAuthenticated && (
           <Card className="mb-8 shadow-lg">
@@ -625,6 +584,13 @@ const Index = () => {
         isOpen={isCreateUserDialogOpen}
         onClose={() => setIsCreateUserDialogOpen(false)}
       />
+
+      {!isAuthenticated && (
+        <LoginDialog
+          isOpen={isLoginDialogOpen}
+          onClose={() => setIsLoginDialogOpen(false)}
+        />
+      )}
     </div>
   );
 };
