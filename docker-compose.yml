@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: myjourney_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Expose for local development/debugging
+
+  minio:
+    image: minio/minio
+    restart: always
+    ports:
+      - "9000:9000" # MinIO API port
+      - "9001:9001" # MinIO Console port
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3001:3001" # Fastify backend port
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/myjourney_db
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET_NAME: journey-images
+    depends_on:
+      - db
+      - minio
+    volumes:
+      - ./backend:/app
+      - /app/node_modules # Exclude node_modules from host mount
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
+    ports:
+      - "8080:8080" # React frontend port
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001 # For local development
+    depends_on:
+      - backend
+    volumes:
+      - .:/app
+      - /app/node_modules # Exclude node_modules from host mount
+
+volumes:
+  db_data:
+  minio_data:
