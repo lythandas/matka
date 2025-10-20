@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle } from 'lucide-react';
+import { Trash2, Plus, XCircle, ChevronDown, Compass } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,16 @@ import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
 import ShineCard from '@/components/ShineCard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useJourneys } from '@/contexts/JourneyContext';
+import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 
 interface Post {
   id: string;
@@ -43,6 +53,7 @@ const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
   const { isAuthenticated, login, logout } = useAuth();
+  const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -51,16 +62,18 @@ const Index = () => {
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (journeyId: string) => {
+    setLoadingPosts(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/posts`);
+      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
       }
@@ -72,13 +85,18 @@ const Index = () => {
       showError('Failed to load posts.');
       setBackendConnected(false);
     } finally {
-      setLoading(false);
+      setLoadingPosts(false);
     }
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (selectedJourney) {
+      fetchPosts(selectedJourney.id);
+    } else {
+      setPosts([]); // Clear posts if no journey is selected
+      setLoadingPosts(false);
+    }
+  }, [selectedJourney]);
 
   const uploadImageToServer = async (file: File) => {
     setIsUploadingImage(true);
@@ -137,6 +155,11 @@ const Index = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!selectedJourney) {
+      showError('Please select a journey before creating a post.');
+      return;
+    }
+
     if (!title.trim() && !message.trim() && !uploadedImageUrls && !spotifyEmbedUrl && !coordinates) {
       showError('Please enter a title, message, or add some content (image, Spotify, location).');
       return;
@@ -153,6 +176,7 @@ const Index = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          journeyId: selectedJourney.id, // Associate post with selected journey
           title: title.trim() || undefined,
           message: message.trim(),
           imageUrls: uploadedImageUrls,
@@ -232,11 +256,41 @@ const Index = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">
-            My Journey
-          </h1>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 hover:bg-transparent hover:text-blue-700 dark:hover:text-blue-300 flex items-center">
+                {selectedJourney ? selectedJourney.name : "Select Journey"}
+                <ChevronDown className="ml-2 h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {loadingJourneys ? (
+                <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
+              ) : (
+                journeys.map((journey) => (
+                  <DropdownMenuItem
+                    key={journey.id}
+                    onClick={() => setSelectedJourney(journey)}
+                    className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
+                  >
+                    {journey.name}
+                  </DropdownMenuItem>
+                ))
+              )}
+              {isAuthenticated && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="flex items-center space-x-2">
-            {/* Added hover:bg-transparent hover:text-inherit for consistency */}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" /> 
             <Button onClick={isAuthenticated ? logout : login} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
               {isAuthenticated ? 'Logout' : 'Login'}
@@ -253,7 +307,7 @@ const Index = () => {
         {isAuthenticated && (
           <Card className="mb-8 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl font-semibold">Share Your Day</CardTitle>
+              <CardTitle className="text-2xl font-semibold">Share Your Day in "{selectedJourney?.name || 'No Journey Selected'}"</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -353,7 +407,7 @@ const Index = () => {
                   </AddContentDialog>
                 </div>
                 <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isUploadingImage}>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isUploadingImage || !selectedJourney}>
                     Post
                   </Button>
                 </div>
@@ -363,13 +417,23 @@ const Index = () => {
         )}
 
         <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-gray-200">
-          Recent Posts
+          Posts in "{selectedJourney?.name || 'No Journey Selected'}"
         </h2>
 
-        {loading ? (
+        {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
         ) : posts.length === 0 ? (
-          <p className="text-center text-gray-600 dark:text-gray-400">No posts yet. Be the first to share!</p>
+          <div className="text-center py-12">
+            <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+            <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+              Your journey awaits! Start by adding your first post.
+            </p>
+            {isAuthenticated && (
+              <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                Use the "Share Your Day" section above to begin.
+              </p>
+            )}
+          </div>
         ) : (
           <div className="space-y-6">
             {posts.map((post, index) => (
@@ -461,6 +525,11 @@ const Index = () => {
           onPrevious={handlePreviousPost}
         />
       )}
+
+      <CreateJourneyDialog
+        isOpen={isCreateJourneyDialogOpen}
+        onClose={() => setIsCreateJourneyDialogOpen(false)}
+      />
     </div>
   );
 };
