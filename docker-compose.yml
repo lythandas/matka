@@ -28,11 +28,9 @@ services:
     volumes:
       - minio_data:/data
       - ./cors-policy.json:/tmp/cors-policy.json # Mount the CORS policy file
-    entrypoint: ["/bin/sh", "-c"] # Override the default entrypoint
-    command: >
-      /usr/bin/mc config host add local http://localhost:9000 minioadmin minioadmin &&
-      /usr/bin/mc policy set-json /tmp/cors-policy.json local/journey-images &&
-      minio server /data --console-address ':9001'
+      - ./backend/minio-init.sh:/usr/local/bin/minio-init.sh # Mount the init script
+    entrypoint: ["/bin/sh", "/usr/local/bin/minio-init.sh"] # Execute the init script
+    command: [] # No additional command needed, script handles everything
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
