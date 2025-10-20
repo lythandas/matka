@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react'; // Added React import
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -197,7 +197,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500"
+                className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset" {/* Added ring-inset */}
                 disabled={isUploadingImage}
               >
                 {isUploadingImage ? (
@@ -213,7 +213,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleClearImage}
-                  className="ml-2 hover:ring-2 hover:ring-blue-500"
+                  className="ml-2 hover:ring-2 hover:ring-blue-500 ring-inset" {/* Added ring-inset */}
                   disabled={isUploadingImage}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -243,7 +243,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             />
             <div className="flex justify-end space-x-2">
               {currentSpotifyEmbedUrl && (
-                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500">
+                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 ring-inset"> {/* Added ring-inset */}
                   Clear Spotify
                 </Button>
               )}
@@ -285,7 +285,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
                 </p>
                 <MapComponent coordinates={currentCoordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500">
+                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset"> {/* Added ring-inset */}
                   Clear Location
                 </Button>
               </>
