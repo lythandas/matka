@@ -37,9 +37,11 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   onNext,
   onPrevious,
 }) => {
+  // All hooks must be declared unconditionally at the top level of the component
   const imageRef = useRef<HTMLImageElement>(null);
   const [isImageFullscreen, setIsImageFullscreen] = useState(false);
 
+  // Now, if post is null, we return, but hooks have already been called consistently.
   if (!post) return null;
 
   const canGoPrevious = currentIndex > 0;
