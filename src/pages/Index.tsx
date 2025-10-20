@@ -258,7 +258,10 @@ const Index = () => {
         <div className="flex justify-between items-center mb-8">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 hover:bg-transparent hover:text-blue-700 dark:hover:text-blue-300 flex items-center">
+              <Button
+                variant="ghost"
+                className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 hover:bg-transparent hover:text-blue-700 dark:hover:text-blue-300 flex items-center hover:ring-2 hover:ring-blue-500"
+              >
                 {selectedJourney ? selectedJourney.name : "Select Journey"}
                 <ChevronDown className="ml-2 h-6 w-6" />
               </Button>
@@ -407,7 +410,7 @@ const Index = () => {
                   </AddContentDialog>
                 </div>
                 <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isUploadingImage || !selectedJourney}>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingImage || !selectedJourney}>
                     Post
                   </Button>
                 </div>
@@ -480,7 +483,7 @@ const Index = () => {
                     {isAuthenticated && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" className="ml-4" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="destructive" size="icon" className="ml-4 hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
