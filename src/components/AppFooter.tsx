@@ -10,11 +10,7 @@ const AppFooter: React.FC = () => {
         <Compass className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         <span className="font-bold text-lg text-blue-600 dark:text-blue-400">Matka</span>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-500 mb-1 max-w-xs text-center">
-        Matka, Finnish trip, <br />
-        Stories told, paths we have walked, <br />
-        Memories we keep.
-      </p>
+      {/* Removed the haiku/descriptive text */}
       <a
         href="https://www.dyad.sh/"
         target="_blank"
