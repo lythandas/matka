@@ -177,7 +177,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     }
   };
 
-  const fallbackInitials = currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('') : currentUser.username[0];
+  const fallbackInitials = currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('') : (currentUser.username ? currentUser.username[0] : '?');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

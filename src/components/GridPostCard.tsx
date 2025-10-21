@@ -30,7 +30,7 @@ interface GridPostCardProps {
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
   const imageUrl = post.image_urls?.medium || '/placeholder.svg';
   const displayName = post.author_name || post.author_username;
-  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : post.author_username[0];
+  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : (post.author_username ? post.author_username[0] : '?');
 
   return (
     <Card

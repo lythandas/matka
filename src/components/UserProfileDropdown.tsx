@@ -24,7 +24,7 @@ const UserProfileDropdown: React.FC = () => {
   const [isManageAccountDialogOpen, setIsManageAccountDialogOpen] = useState<boolean>(false);
 
   const displayName = user?.name || user?.username;
-  const fallbackInitials = user?.name ? user.name.split(' ').map(n => n[0]).join('') : user?.username[0];
+  const fallbackInitials = user?.name ? user.name.split(' ').map(n => n[0]).join('') : (user?.username ? user.username[0] : '?');
 
   const handleAuthButtonClick = () => {
     if (isAuthenticated) {

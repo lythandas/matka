@@ -246,7 +246,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
     return null;
   }
 
-  const fallbackInitials = user.name ? user.name.split(' ').map(n => n[0]).join('') : user.username[0];
+  const fallbackInitials = user.name ? user.name.split(' ').map(n => n[0]).join('') : (user.username ? user.username[0] : '?');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

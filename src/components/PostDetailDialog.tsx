@@ -80,7 +80,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const dialogImageUrl = post.image_urls?.large || '/placeholder.svg';
   const fullscreenImageUrl = post.image_urls?.original || post.image_urls?.large || '/placeholder.svg';
   const displayName = post.author_name || post.author_username;
-  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : post.author_username[0];
+  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : (post.author_username ? post.author_username[0] : '?');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

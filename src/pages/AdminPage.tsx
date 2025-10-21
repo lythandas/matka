@@ -288,7 +288,7 @@ const AdminPage: React.FC = () => {
                                     <AvatarImage src={user.profile_image_url} alt={user.name || user.username} />
                                   ) : (
                                     <AvatarFallback className="bg-blue-500 text-white">
-                                      {user.name ? user.name[0] : user.username[0]}
+                                      {user.name ? user.name[0] : (user.username ? user.username[0] : '?')}
                                     </AvatarFallback>
                                   )}
                                 </Avatar>
@@ -487,7 +487,7 @@ const AdminPage: React.FC = () => {
                                     <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
                                   ) : (
                                     <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                                      {journey.owner_name ? journey.owner_name[0] : journey.owner_username[0]}
+                                      {journey.owner_name ? journey.owner_name[0] : (journey.owner_username ? journey.owner_username[0] : '?')}
                                     </AvatarFallback>
                                   )}
                                 </Avatar>
