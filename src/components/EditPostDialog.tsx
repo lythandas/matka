@@ -398,7 +398,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
           <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
-            <div className="flex space-x-2 mb-4">
+            <div className="flex space-x-2"> {/* Removed mb-4 */}
               <Button
                 type="button"
                 variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
@@ -426,7 +426,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             </div>
 
             {locationSelectionMode === 'current' && (
-              <>
+              <div className="space-y-4"> {/* Added wrapper div with space-y-4 */}
                 <Button
                   type="button"
                   onClick={handleGetLocation}
@@ -447,16 +447,16 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 </Button>
                 {coordinates && (
                   <>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                       Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
                     </p>
-                    <MapComponent coordinates={coordinates} className="h-48 mt-2" />
-                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset mt-4" disabled={isSaving || isUploadingMedia}>
+                    <MapComponent coordinates={coordinates} className="h-48" />
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset">
                       Clear Location
                     </Button>
                   </>
                 )}
-              </>
+              </div>
             )}
 
             {locationSelectionMode === 'search' && (

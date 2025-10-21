@@ -299,7 +299,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             )}
           </TabsContent>
           <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
-            <div className="flex space-x-2 mb-4">
+            <div className="flex space-x-2"> {/* Removed mb-4 */}
               <Button
                 type="button"
                 variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
@@ -327,7 +327,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             </div>
 
             {locationSelectionMode === 'current' && (
-              <>
+              <div className="space-y-4"> {/* Added wrapper div with space-y-4 */}
                 <Button
                   type="button"
                   onClick={handleGetLocation}
@@ -343,16 +343,16 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 </Button>
                 {currentCoordinates && (
                   <>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center"> {/* Removed mb-2, will be spaced by parent */}
                       Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
                     </p>
-                    <MapComponent coordinates={currentCoordinates} className="h-48 mt-2" />
-                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset mt-4">
+                    <MapComponent coordinates={currentCoordinates} className="h-48" /> {/* Removed mt-2, will be spaced by parent */}
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset"> {/* Removed mt-4, will be spaced by parent */}
                       Clear Location
                     </Button>
                   </>
                 )}
-              </>
+              </div>
             )}
 
             {locationSelectionMode === 'search' && (
