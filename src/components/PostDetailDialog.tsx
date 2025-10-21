@@ -32,7 +32,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   onPrevious,
 }) => {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isImageFullscreen, setIsImageFullscreen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null); // New ref for video
+  const [isMediaFullscreen, setIsMediaFullscreen] = useState(false); // Changed to isMediaFullscreen
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
@@ -43,10 +44,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
       return;
     }
 
-    if (document.fullscreenElement === imageRef.current) {
+    const targetElement = post.image_urls?.type === 'image' ? imageRef.current : videoRef.current;
+
+    if (document.fullscreenElement === targetElement) {
       document.exitFullscreen();
     } else {
-      imageRef.current?.requestFullscreen().catch((err) => {
+      targetElement?.requestFullscreen().catch((err) => {
         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
         showError("Failed to enter full-screen mode.");
       });
@@ -55,18 +58,49 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsImageFullscreen(document.fullscreenElement === imageRef.current);
+      const targetElement = post.image_urls?.type === 'image' ? imageRef.current : videoRef.current;
+      setIsMediaFullscreen(document.fullscreenElement === targetElement);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, []);
+  }, [post.image_urls]);
 
-  const dialogImageUrl = post.image_urls?.large || '/placeholder.svg';
-  const fullscreenImageUrl = post.image_urls?.original || post.image_urls?.large || '/placeholder.svg';
   const displayName = post.author_name || post.author_username;
+
+  let mediaElement: React.ReactNode = null;
+  let mediaFullscreenUrl: string | undefined;
+
+  if (post.image_urls?.type === 'image') {
+    const dialogImageUrl = post.image_urls.urls.large || '/placeholder.svg';
+    mediaFullscreenUrl = post.image_urls.urls.original || post.image_urls.urls.large || '/placeholder.svg';
+    mediaElement = (
+      <img
+        ref={imageRef}
+        src={isMediaFullscreen ? mediaFullscreenUrl : dialogImageUrl}
+        alt={post.title || "Post image"}
+        className="w-full h-auto object-cover rounded-md"
+        onError={(e) => {
+          e.currentTarget.src = '/placeholder.svg';
+          e.currentTarget.onerror = null;
+          console.error(`Failed to load image: ${isMediaFullscreen ? mediaFullscreenUrl : dialogImageUrl}`);
+        }}
+      />
+    );
+  } else if (post.image_urls?.type === 'video') {
+    const videoUrl = post.image_urls.url;
+    mediaFullscreenUrl = videoUrl; // For videos, the original URL is used for fullscreen
+    mediaElement = (
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        controls
+        className="w-full h-auto object-cover rounded-md"
+      />
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -91,30 +125,20 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </div>
         </DialogHeader>
         <div className="relative p-6 pt-4">
-          {(post.image_urls?.large || post.image_urls?.original) && (
+          {post.image_urls && (
             <div className="relative mb-4">
-              <img
-                ref={imageRef}
-                src={isImageFullscreen ? fullscreenImageUrl : dialogImageUrl}
-                alt={post.title || "Post image"}
-                className="w-full h-auto object-cover rounded-md"
-                onError={(e) => {
-                  e.currentTarget.src = '/placeholder.svg';
-                  e.currentTarget.onerror = null;
-                  console.error(`Failed to load image: ${isImageFullscreen ? fullscreenImageUrl : dialogImageUrl}`);
-                }}
-              />
-              {document.fullscreenEnabled && (
+              {mediaElement}
+              {document.fullscreenEnabled && (post.image_urls.type === 'image' || post.image_urls.type === 'video') && (
                 <Button
                   variant="outline"
                   size="icon"
                   className={cn(
                     "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                    isImageFullscreen ? "fixed z-[1000]" : "absolute"
+                    isMediaFullscreen ? "fixed z-[1000]" : "absolute"
                   )}
                   onClick={handleToggleFullscreen}
                 >
-                  {isImageFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                 </Button>
               )}
             </div>

@@ -16,79 +16,89 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload, XCircle } from 'lucide-react';
+import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload, XCircle, Video } from 'lucide-react'; // Added Video icon
 import MapComponent from './MapComponent';
-import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants'; // Updated import
+import { MediaInfo } from '@/types'; // Import MediaInfo type
 
 interface AddContentDialogProps {
-  onImageSelect: (file: File | null) => void;
+  onMediaSelect: (file: File | null) => void; // Changed to onMediaSelect
   onSpotifyEmbedChange: (url: string) => void;
   onCoordinatesChange: (coords: { lat: number; lng: number } | null) => void;
-  uploadedImageUrl: string | null;
-  isUploadingImage: boolean;
+  uploadedMediaInfo: MediaInfo | null; // Changed to uploadedMediaInfo
+  isUploadingMedia: boolean; // Changed to isUploadingMedia
   currentSpotifyEmbedUrl: string;
   currentCoordinates: { lat: number; lng: number } | null;
   children: React.ReactNode;
 }
 
 const AddContentDialog: React.FC<AddContentDialogProps> = ({
-  onImageSelect,
+  onMediaSelect,
   onSpotifyEmbedChange,
   onCoordinatesChange,
-  uploadedImageUrl,
-  isUploadingImage,
+  uploadedMediaInfo,
+  isUploadingMedia,
   currentSpotifyEmbedUrl,
   currentCoordinates,
   children,
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // For local file preview
   const [spotifyInput, setSpotifyInput] = useState<string>(currentSpotifyEmbedUrl);
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSpotifyInput(currentSpotifyEmbedUrl);
-    setPreviewImageUrl(uploadedImageUrl);
-  }, [currentSpotifyEmbedUrl, uploadedImageUrl]);
+    // Set local preview if mediaInfo is already present (e.g., from an existing post)
+    if (uploadedMediaInfo) {
+      if (uploadedMediaInfo.type === 'image' && uploadedMediaInfo.urls.medium) {
+        setLocalPreviewUrl(uploadedMediaInfo.urls.medium);
+      } else if (uploadedMediaInfo.type === 'video' && uploadedMediaInfo.url) {
+        setLocalPreviewUrl(uploadedMediaInfo.url);
+      }
+    } else {
+      setLocalPreviewUrl(null);
+    }
+  }, [currentSpotifyEmbedUrl, uploadedMediaInfo]);
 
-  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) { // Use new constant
+        showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
-        setPreviewImageUrl(null);
-        onImageSelect(null);
+        setLocalPreviewUrl(null);
+        onMediaSelect(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
-      if (!file.type.startsWith('image/')) {
-        showError('Only image files are allowed.');
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        showError('Only image or video files are allowed.');
         setSelectedFile(null);
-        setPreviewImageUrl(null);
-        onImageSelect(null);
+        setLocalPreviewUrl(null);
+        onMediaSelect(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       setSelectedFile(file);
-      setPreviewImageUrl(URL.createObjectURL(file));
-      onImageSelect(file);
+      setLocalPreviewUrl(URL.createObjectURL(file)); // Set local preview
+      onMediaSelect(file);
     } else {
       setSelectedFile(null);
-      setPreviewImageUrl(null);
-      onImageSelect(null);
+      setLocalPreviewUrl(null);
+      onMediaSelect(null);
     }
   };
 
-  const handleClearImage = () => {
+  const handleClearMedia = () => { // Changed to handleClearMedia
     setSelectedFile(null);
-    setPreviewImageUrl(null);
-    onImageSelect(null);
+    setLocalPreviewUrl(null);
+    onMediaSelect(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -158,6 +168,10 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
     showSuccess('Location cleared.');
   };
 
+  const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
+  const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -170,10 +184,10 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             Choose what kind of content you want to add.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="image" className="w-full flex-grow flex flex-col">
+        <Tabs defaultValue="media" className="w-full flex-grow flex flex-col"> {/* Changed default to media */}
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="image">
-              <Image className="h-4 w-4 mr-2" /> Image
+            <TabsTrigger value="media">
+              <Image className="h-4 w-4 mr-2" /> Media
             </TabsTrigger>
             <TabsTrigger value="spotify">
               <Music className="h-4 w-4 mr-2" /> Spotify
@@ -182,52 +196,61 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="image" className="mt-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="image-upload">Upload Image (Max {MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
+          <TabsContent value="media" className="mt-4 space-y-4 flex-grow overflow-y-auto">
+            <Label htmlFor="media-upload">Upload Image or Video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
-                id="image-upload"
+                id="media-upload"
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
-                onChange={handleImageFileChange}
+                accept={SUPPORTED_MEDIA_TYPES} // Use new constant
+                onChange={handleMediaFileChange}
                 ref={fileInputRef}
                 className="hidden"
+                disabled={isUploadingMedia}
               />
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
-                disabled={isUploadingImage}
+                disabled={isUploadingMedia}
               >
-                {isUploadingImage ? (
+                {isUploadingMedia ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : "Choose Image"}
+                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media Selected" : "Choose Media")}
               </Button>
-              {(selectedFile || uploadedImageUrl) && (
+              {(selectedFile || uploadedMediaInfo) && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={handleClearImage}
+                  onClick={handleClearMedia}
                   className="ml-2 hover:ring-2 hover:ring-blue-500 ring-inset"
-                  disabled={isUploadingImage}
+                  disabled={isUploadingMedia}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}
             </div>
-            {previewImageUrl && (
+            {currentMediaPreviewUrl && (
               <div className="w-full max-w-xs mx-auto mt-2">
-                <img
-                  src={previewImageUrl}
-                  alt="Image preview"
-                  className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
-                />
-                {isUploadingImage && (
+                {currentMediaType === 'image' ? (
+                  <img
+                    src={currentMediaPreviewUrl}
+                    alt="Media preview"
+                    className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                  />
+                ) : (
+                  <video
+                    src={currentMediaPreviewUrl}
+                    controls
+                    className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                  />
+                )}
+                {isUploadingMedia && (
                   <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
                 )}
               </div>

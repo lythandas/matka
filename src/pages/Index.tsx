@@ -37,8 +37,8 @@ import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
-import { Post, Journey } from '@/types'; // Centralized Post and Journey interfaces
+import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { Post, Journey, MediaInfo } from '@/types'; // Centralized Post and Journey interfaces
 import CreateJourneyDialog from '@/components/CreateJourneyDialog'; // Ensure this import is present
 
 const Index = () => {
@@ -47,8 +47,8 @@ const Index = () => {
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<{ small?: string; medium?: string; large?: string; original?: string } | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(null); // Updated to MediaInfo
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false); // Changed to isUploadingMedia
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -113,8 +113,8 @@ const Index = () => {
     }
   }, [selectedJourney, isAuthenticated]);
 
-  const uploadImageToServer = async (file: File) => {
-    setIsUploadingImage(true);
+  const uploadMediaToServer = async (file: File) => { // Changed to uploadMediaToServer
+    setIsUploadingMedia(true);
     try {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -123,54 +123,54 @@ const Index = () => {
           if (typeof reader.result === 'string') {
             resolve(reader.result.split(',')[1]);
           } else {
-            reject(new Error("Failed to read image file."));
+            reject(new Error("Failed to read file."));
           }
         };
         reader.onerror = (error) => {
           console.error("FileReader error:", error);
-          reject(new Error("Failed to read image file."));
+          reject(new Error("Failed to read file."));
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+      const response = await fetch(`${API_BASE_URL}/upload-media`, { // Updated endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
-        body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
+        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }), // Pass isProfileImage: false
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload image');
+        throw new Error(errorData.message || 'Failed to upload media');
       }
 
       const data = await response.json();
-      setUploadedImageUrls(data.imageUrls);
-      showSuccess('Image uploaded successfully!');
+      setUploadedMediaInfo(data.mediaInfo); // Set the structured mediaInfo
+      showSuccess('Media uploaded successfully!');
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      showError(error.message || 'Failed to upload image.');
+      console.error('Error uploading media:', error);
+      showError(error.message || 'Failed to upload media.');
       setSelectedFile(null);
-      setUploadedImageUrls(null);
+      setUploadedMediaInfo(null);
     } finally {
-      setIsUploadingImage(false);
+      setIsUploadingMedia(false);
     }
   };
 
-  const handleImageSelect = (file: File | null) => {
+  const handleMediaSelect = (file: File | null) => { // Changed to handleMediaSelect
     setSelectedFile(file);
     if (file) {
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) { // Use new constant
+        showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
-        setUploadedImageUrls(null);
+        setUploadedMediaInfo(null);
         return;
       }
-      uploadImageToServer(file);
+      uploadMediaToServer(file);
     } else {
-      setUploadedImageUrls(null);
+      setUploadedMediaInfo(null);
     }
   };
 
@@ -187,12 +187,12 @@ const Index = () => {
       return;
     }
 
-    if (!title.trim() && !message.trim() && !uploadedImageUrls && !spotifyEmbedUrl && !coordinates) {
-      showError('Please enter a title, message, or add some content (image, Spotify, location).');
+    if (!title.trim() && !message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to uploadedMediaInfo
+      showError('Please enter a title, message, or add some content (media, Spotify, location).');
       return;
     }
-    if (isUploadingImage) {
-      showError('Please wait for the image to finish uploading.');
+    if (isUploadingMedia) { // Updated to isUploadingMedia
+      showError('Please wait for the media to finish uploading.');
       return;
     }
 
@@ -207,7 +207,7 @@ const Index = () => {
           journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),
-          imageUrls: uploadedImageUrls,
+          mediaInfo: uploadedMediaInfo, // Send the structured mediaInfo
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
           coordinates: coordinates || undefined,
         }),
@@ -223,7 +223,7 @@ const Index = () => {
       setTitle('');
       setMessage('');
       setSelectedFile(null);
-      setUploadedImageUrls(null);
+      setUploadedMediaInfo(null);
       setSpotifyEmbedUrl('');
       setCoordinates(null);
       showSuccess('Post created successfully!');
@@ -297,6 +297,9 @@ const Index = () => {
 
   const showMatkaAsMainTitle = !selectedJourney && !loadingJourneys && journeys.length === 0;
 
+  const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
+  const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto flex-grow w-full">
@@ -340,31 +343,39 @@ const Index = () => {
                   />
 
                   {/* Content Previews */}
-                  {(uploadedImageUrls || spotifyEmbedUrl || coordinates) && (
+                  {(uploadedMediaInfo || spotifyEmbedUrl || coordinates) && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <h4 className="text-lg font-semibold">Content Preview:</h4>
-                      {uploadedImageUrls?.medium && (
+                      {currentMediaPreviewUrl && (
                         <div className="relative">
-                          <img
-                            src={uploadedImageUrls.medium}
-                            alt="Image preview"
-                            className="w-full h-auto max-h-64 object-cover rounded-md"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                              e.currentTarget.onerror = null;
-                              console.error(`Failed to load image: ${uploadedImageUrls?.medium}`);
-                            }}
-                          />
+                          {currentMediaType === 'image' ? (
+                            <img
+                              src={currentMediaPreviewUrl}
+                              alt="Media preview"
+                              className="w-full h-auto max-h-64 object-cover rounded-md"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                                e.currentTarget.onerror = null;
+                                console.error(`Failed to load media: ${currentMediaPreviewUrl}`);
+                              }}
+                            />
+                          ) : (
+                            <video
+                              src={currentMediaPreviewUrl}
+                              controls
+                              className="w-full h-auto max-h-64 object-cover rounded-md"
+                            />
+                          )}
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleImageSelect(null)}
+                            onClick={() => handleMediaSelect(null)}
                             className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                           >
                             <XCircle className="h-5 w-5 text-red-500" />
                           </Button>
-                          {isUploadingImage && (
+                          {isUploadingMedia && (
                             <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
                           )}
                         </div>
@@ -412,11 +423,11 @@ const Index = () => {
 
                   <div className="flex justify-center">
                     <AddContentDialog
-                      onImageSelect={handleImageSelect}
+                      onMediaSelect={handleMediaSelect}
                       onSpotifyEmbedChange={setSpotifyEmbedUrl}
                       onCoordinatesChange={setCoordinates}
-                      uploadedImageUrl={uploadedImageUrls?.medium || null}
-                      isUploadingImage={isUploadingImage}
+                      uploadedMediaInfo={uploadedMediaInfo}
+                      isUploadingMedia={isUploadingMedia}
                       currentSpotifyEmbedUrl={spotifyEmbedUrl}
                       currentCoordinates={coordinates}
                     >
@@ -426,7 +437,7 @@ const Index = () => {
                     </AddContentDialog>
                   </div>
                   <div className="flex justify-center">
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingImage || !selectedJourney}>
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !selectedJourney}>
                       Post
                     </Button>
                   </div>
@@ -505,16 +516,23 @@ const Index = () => {
                     {post.title && (
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                    {post.image_urls?.large && (
+                    {post.image_urls?.type === 'image' && post.image_urls.urls.large && (
                       <img
-                        src={post.image_urls.large}
+                        src={post.image_urls.urls.large}
                         alt="Post image"
                         className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder.svg';
                           e.currentTarget.onerror = null;
-                          console.error(`Failed to load image: ${post.image_urls?.large}`);
+                          console.error(`Failed to load image: ${post.image_urls?.urls.large}`);
                         }}
+                      />
+                    )}
+                    {post.image_urls?.type === 'video' && post.image_urls.url && (
+                      <video
+                        src={post.image_urls.url}
+                        controls
+                        className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
                       />
                     )}
                     {post.spotify_embed_url && (

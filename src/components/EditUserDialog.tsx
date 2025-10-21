@@ -26,7 +26,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { MAX_PROFILE_IMAGE_SIZE_BYTES, SUPPORTED_IMAGE_TYPES } from '@/config/constants'; // Updated import
 import { User, Role } from '@/types'; // Centralized User and Role interfaces
 
 interface EditUserDialogProps {
@@ -118,13 +118,13 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+      const response = await fetch(`${API_BASE_URL}/upload-media`, { // Updated endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
+        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: true }), // Pass isProfileImage
       });
 
       if (!response.ok) {
@@ -133,7 +133,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
       }
 
       const data = await response.json();
-      setProfileImageUrl(data.imageUrls.medium || data.imageUrls.original);
+      setProfileImageUrl(data.mediaInfo.urls.medium || data.mediaInfo.urls.original);
       setLocalPreviewUrl(null); // Clear local preview once server URL is available
       showSuccess('Profile image uploaded successfully!');
     } catch (error: any) {
@@ -151,8 +151,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+      if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) { // Use new constant
+        showError(`Image size exceeds ${MAX_PROFILE_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setProfileImageUrl(user.profile_image_url);
         setLocalPreviewUrl(null); // Clear local preview
@@ -161,7 +161,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
       }
 
       if (!file.type.startsWith('image/')) {
-        showError('Only image files are allowed.');
+        showError('Only image files are allowed for profile pictures.');
         setSelectedFile(null);
         setProfileImageUrl(user.profile_image_url);
         setLocalPreviewUrl(null); // Clear local preview
@@ -264,7 +264,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
               <Input
                 id="profile-image-upload"
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
+                accept={SUPPORTED_IMAGE_TYPES} // Use new constant
                 onChange={handleImageFileChange}
                 ref={fileInputRef}
                 className="hidden"

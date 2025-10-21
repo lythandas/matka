@@ -15,8 +15,44 @@ interface GridPostCardProps {
 }
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
-  const imageUrl = post.image_urls?.medium || '/placeholder.svg';
+  const media = post.image_urls;
   const displayName = post.author_name || post.author_username;
+
+  let mediaElement: React.ReactNode = null;
+  let fallbackImage = '/placeholder.svg';
+
+  if (media?.type === 'image') {
+    fallbackImage = media.urls.medium || '/placeholder.svg';
+    mediaElement = (
+      <img
+        src={media.urls.medium || '/placeholder.svg'}
+        alt={post.title || "Post image"}
+        className="object-cover w-full h-full"
+        onError={(e) => {
+          e.currentTarget.src = '/placeholder.svg';
+          e.currentTarget.onerror = null;
+        }}
+      />
+    );
+  } else if (media?.type === 'video') {
+    mediaElement = (
+      <video
+        src={media.url}
+        controls={false} // No controls for grid card, maybe show play icon overlay
+        muted
+        loop
+        className="object-cover w-full h-full"
+      />
+    );
+  } else {
+    mediaElement = (
+      <img
+        src={fallbackImage}
+        alt="Placeholder"
+        className="object-cover w-full h-full"
+      />
+    );
+  }
 
   return (
     <Card
@@ -28,15 +64,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
     >
       <CardContent className="p-0">
         <AspectRatio ratio={1 / 1}>
-          <img
-            src={imageUrl}
-            alt={post.title || "Post image"}
-            className="object-cover w-full h-full"
-            onError={(e) => {
-              e.currentTarget.src = '/placeholder.svg';
-              e.currentTarget.onerror = null;
-            }}
-          />
+          {mediaElement}
         </AspectRatio>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold">
           {post.title && (

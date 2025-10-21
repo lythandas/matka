@@ -22,11 +22,16 @@ export interface Journey {
   owner_profile_image_url?: string;
 }
 
+// Define the structure for media content
+export type MediaInfo = 
+  | { type: 'image'; urls: { small?: string; medium?: string; large?: string; original?: string } }
+  | { type: 'video'; url: string };
+
 export interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
+  image_urls?: MediaInfo; // Updated to use MediaInfo type
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;

@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { processAndSaveMedia, deleteMediaFiles } from '../utils/mediaProcessor'; // Updated import
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
@@ -267,6 +268,12 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
         params.push(surname || null);
       }
       if (profile_image_url !== undefined) {
+        // If a new profile_image_url is provided, delete the old one first
+        const oldUserResult = await pgClient.query('SELECT profile_image_url FROM users WHERE id = $1', [id]);
+        const oldProfileImageUrl = oldUserResult.rows[0]?.profile_image_url;
+        if (oldProfileImageUrl && oldProfileImageUrl !== profile_image_url) {
+          await deleteMediaFiles(oldProfileImageUrl, fastify.log);
+        }
         fieldsToUpdate.push(`profile_image_url = $${paramIndex++}`);
         params.push(profile_image_url || null);
       }
@@ -336,6 +343,12 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
         params.push(surname || null);
       }
       if (profile_image_url !== undefined) {
+        // If a new profile_image_url is provided, delete the old one first
+        const oldUserResult = await pgClient.query('SELECT profile_image_url FROM users WHERE id = $1', [request.user.id]);
+        const oldProfileImageUrl = oldUserResult.rows[0]?.profile_image_url;
+        if (oldProfileImageUrl && oldProfileImageUrl !== profile_image_url) {
+          await deleteMediaFiles(oldProfileImageUrl, fastify.log);
+        }
         fieldsToUpdate.push(`profile_image_url = $${paramIndex++}`);
         params.push(profile_image_url || null);
       }
@@ -404,6 +417,13 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       if (request.user.id === id) {
         reply.status(403).send({ message: 'Forbidden: You cannot delete your own admin account.' });
         return;
+      }
+
+      // Delete associated profile image if it exists
+      const userResult = await pgClient.query('SELECT profile_image_url FROM users WHERE id = $1', [id]);
+      const profileImageUrl = userResult.rows[0]?.profile_image_url;
+      if (profileImageUrl) {
+        await deleteMediaFiles(profileImageUrl, fastify.log);
       }
 
       const result = await pgClient.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);

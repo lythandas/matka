@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { deleteImageFiles } from '../utils/imageProcessor'; // Import deleteImageFiles
+import { deleteMediaFiles } from '../utils/mediaProcessor'; // Updated import
 
 const postsRoutes: FastifyPluginAsync = async (fastify) => {
   const pgClient = fastify.pg;
@@ -51,10 +51,10 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const { title, message, imageUrls, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
+      const { title, message, mediaInfo, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
         title?: string; 
         message: string; 
-        imageUrls?: { small?: string; medium?: string; large?: string; original?: string };
+        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string }; // Updated to mediaInfo
         spotifyEmbedUrl?: string; 
         coordinates?: { lat: number; lng: number };
         journeyId: string;
@@ -65,8 +65,8 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      if (!message.trim() && !imageUrls && !spotifyEmbedUrl && !coordinates) {
-        reply.status(400).send({ message: 'At least a message, image, Spotify URL, or coordinates are required.' });
+      if (!message.trim() && !mediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to mediaInfo
+        reply.status(400).send({ message: 'At least a message, media, Spotify URL, or coordinates are required.' });
         return;
       }
       
@@ -89,7 +89,7 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       fastify.log.info('Inserting post into database.');
       const result = await pgClient.query(
         'INSERT INTO posts (journey_id, user_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-        [journeyId, request.user.id, title || null, message, imageUrls || null, spotifyEmbedUrl || null, coordinates || null]
+        [journeyId, request.user.id, title || null, message, mediaInfo ? JSON.stringify(mediaInfo) : null, spotifyEmbedUrl || null, coordinates || null] // Store mediaInfo as JSONB
       );
       fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
       reply.status(201).send(result.rows[0]);
@@ -108,15 +108,15 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const { id } = request.params as { id: string };
-      const { title, message, imageUrls, spotifyEmbedUrl, coordinates } = request.body as {
+      const { title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
         title?: string;
         message?: string;
-        imageUrls?: { small?: string; medium?: string; large?: string; original?: string } | null;
+        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string } | null; // Updated to mediaInfo
         spotifyEmbedUrl?: string | null;
         coordinates?: { lat: number; lng: number } | null;
       };
 
-      const getPostResult = await pgClient.query('SELECT user_id FROM posts WHERE id = $1', [id]);
+      const getPostResult = await pgClient.query('SELECT user_id, image_urls FROM posts WHERE id = $1', [id]); // Also fetch old image_urls
       const post = getPostResult.rows[0];
 
       if (!post) {
@@ -144,9 +144,13 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         fieldsToUpdate.push(`message = $${paramIndex++}`);
         params.push(message);
       }
-      if (imageUrls !== undefined) {
+      if (mediaInfo !== undefined) {
+        // If new mediaInfo is provided, delete old media files first
+        if (post.image_urls) {
+          await deleteMediaFiles(post.image_urls, fastify.log);
+        }
         fieldsToUpdate.push(`image_urls = $${paramIndex++}`);
-        params.push(imageUrls ? JSON.stringify(imageUrls) : null);
+        params.push(mediaInfo ? JSON.stringify(mediaInfo) : null);
       }
       if (spotifyEmbedUrl !== undefined) {
         fieldsToUpdate.push(`spotify_embed_url = $${paramIndex++}`);
@@ -207,7 +211,7 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       if (post.image_urls) {
-        await deleteImageFiles(post.image_urls, fastify.log); // Corrected: pass fastify.log
+        await deleteMediaFiles(post.image_urls, fastify.log); // Corrected: pass fastify.log
       }
 
       const result = await pgClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);

@@ -8,11 +8,11 @@ import usersRoutes from './routes/users';
 import rolesRoutes from './routes/roles';
 import journeysRoutes from './routes/journeys';
 import postsRoutes from './routes/posts';
-import uploadsRoutes from './routes/uploads';
+import uploadsRoutes from './routes/uploads'; // Updated import
 
 const fastify = Fastify({
   logger: true,
-  bodyLimit: 2 * 1024 * 1024, // Set body limit to 2MB for image uploads
+  bodyLimit: 15 * 1024 * 1024, // Increased body limit to 15MB to accommodate larger files
 });
 
 // Register CORS plugin

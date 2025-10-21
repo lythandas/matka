@@ -14,12 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle } from 'lucide-react';
+import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle, Video } from 'lucide-react'; // Added Video icon
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
-import { Post } from '@/types'; // Centralized Post interface
+import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants'; // Updated import
+import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interfaces
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -32,9 +32,9 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<typeof post.image_urls>(post.image_urls || null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(post.image_urls?.medium || null);
-  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(post.image_urls || null); // Updated to MediaInfo
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // For local file preview
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false); // Changed to isUploadingMedia
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>(post.spotify_embed_url || '');
   const [coordinates, setCoordinates] = useState<typeof post.coordinates>(post.coordinates || null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -44,15 +44,24 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   useEffect(() => {
     setTitle(post.title || '');
     setMessage(post.message);
-    setUploadedImageUrls(post.image_urls || null);
-    setPreviewImageUrl(post.image_urls?.medium || null);
+    setUploadedMediaInfo(post.image_urls || null);
     setSpotifyEmbedUrl(post.spotify_embed_url || '');
     setCoordinates(post.coordinates || null);
     setSelectedFile(null); // Clear selected file on new post prop
+    // Set local preview if mediaInfo is already present (e.g., from an existing post)
+    if (post.image_urls) {
+      if (post.image_urls.type === 'image' && post.image_urls.urls.medium) {
+        setLocalPreviewUrl(post.image_urls.urls.medium);
+      } else if (post.image_urls.type === 'video' && post.image_urls.url) {
+        setLocalPreviewUrl(post.image_urls.url);
+      }
+    } else {
+      setLocalPreviewUrl(null);
+    }
   }, [post]);
 
-  const uploadImageToServer = async (file: File) => {
-    setIsUploadingImage(true);
+  const uploadMediaToServer = async (file: File) => { // Changed to uploadMediaToServer
+    setIsUploadingMedia(true);
     try {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -61,84 +70,84 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           if (typeof reader.result === 'string') {
             resolve(reader.result.split(',')[1]);
           } else {
-            reject(new Error("Failed to read image file."));
+            reject(new Error("Failed to read file."));
           }
         };
         reader.onerror = (error) => {
           console.error("FileReader error:", error);
-          reject(new Error("Failed to read image file."));
+          reject(new Error("Failed to read file."));
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-image`, {
+      const response = await fetch(`${API_BASE_URL}/upload-media`, { // Updated endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
-        body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
+        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }), // Pass isProfileImage: false
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload image');
+        throw new Error(errorData.message || 'Failed to upload media');
       }
 
       const data = await response.json();
-      setUploadedImageUrls(data.imageUrls);
-      setPreviewImageUrl(data.imageUrls.medium);
-      showSuccess('Image uploaded successfully!');
+      setUploadedMediaInfo(data.mediaInfo); // Set the structured mediaInfo
+      setLocalPreviewUrl(null); // Clear local preview once server URL is available
+      showSuccess('Media uploaded successfully!');
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      showError(error.message || 'Failed to upload image.');
+      console.error('Error uploading media:', error);
+      showError(error.message || 'Failed to upload media.');
       setSelectedFile(null);
-      setUploadedImageUrls(null);
-      setPreviewImageUrl(null);
+      setUploadedMediaInfo(null);
+      setLocalPreviewUrl(null);
     } finally {
-      setIsUploadingImage(false);
+      setIsUploadingMedia(false);
     }
   };
 
-  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => { // Changed to handleMediaFileChange
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) { // Use new constant
+        showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
-        setPreviewImageUrl(null);
-        setUploadedImageUrls(null);
+        setLocalPreviewUrl(null);
+        setUploadedMediaInfo(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
-      if (!file.type.startsWith('image/')) {
-        showError('Only image files are allowed.');
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        showError('Only image or video files are allowed.');
         setSelectedFile(null);
-        setPreviewImageUrl(null);
-        setUploadedImageUrls(null);
+        setLocalPreviewUrl(null);
+        setUploadedMediaInfo(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       setSelectedFile(file);
-      setPreviewImageUrl(URL.createObjectURL(file));
-      uploadImageToServer(file);
+      setLocalPreviewUrl(URL.createObjectURL(file)); // Set local preview
+      uploadMediaToServer(file);
     } else {
       setSelectedFile(null);
-      setPreviewImageUrl(null);
-      setUploadedImageUrls(null);
+      setLocalPreviewUrl(null);
+      setUploadedMediaInfo(null);
     }
   };
 
-  const handleClearImage = () => {
+  const handleClearMedia = () => { // Changed to handleClearMedia
     setSelectedFile(null);
-    setPreviewImageUrl(null);
-    setUploadedImageUrls(null);
+    setLocalPreviewUrl(null);
+    setUploadedMediaInfo(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    showSuccess('Image cleared.');
+    showSuccess('Media cleared.');
   };
 
   const handleSpotifyInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,12 +212,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   };
 
   const handleSave = async () => {
-    if (!message.trim() && !uploadedImageUrls && !spotifyEmbedUrl && !coordinates) {
-      showError('At least a message, image, Spotify URL, or coordinates are required.');
+    if (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to uploadedMediaInfo
+      showError('At least a message, media, Spotify URL, or coordinates are required.');
       return;
     }
-    if (isUploadingImage) {
-      showError('Please wait for the image to finish uploading.');
+    if (isUploadingMedia) { // Updated to isUploadingMedia
+      showError('Please wait for the media to finish uploading.');
       return;
     }
 
@@ -223,7 +232,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         body: JSON.stringify({
           title: title.trim() || null,
           message: message.trim(),
-          imageUrls: uploadedImageUrls,
+          mediaInfo: uploadedMediaInfo, // Send the structured mediaInfo
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || null,
           coordinates: coordinates || null,
         }),
@@ -246,6 +255,9 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
   };
 
+  const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
+  const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] min-h-[600px] flex flex-col">
@@ -262,7 +274,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             placeholder="Add a title (optional)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={isSaving || isUploadingImage}
+            disabled={isSaving || isUploadingMedia}
           />
           <Label htmlFor="message">Message</Label>
           <Textarea
@@ -272,13 +284,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             className="resize-none"
-            disabled={isSaving || isUploadingImage}
+            disabled={isSaving || isUploadingMedia}
           />
         </div>
-        <Tabs defaultValue="image" className="w-full flex-grow flex flex-col">
+        <Tabs defaultValue="media" className="w-full flex-grow flex flex-col"> {/* Changed default to media */}
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="image">
-              <Image className="h-4 w-4 mr-2" /> Image
+            <TabsTrigger value="media">
+              <Image className="h-4 w-4 mr-2" /> Media
             </TabsTrigger>
             <TabsTrigger value="spotify">
               <Music className="h-4 w-4 mr-2" /> Spotify
@@ -287,53 +299,61 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="image" className="mt-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="image-upload">Upload Image (Max {MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
+          <TabsContent value="media" className="mt-4 space-y-4 flex-grow overflow-y-auto">
+            <Label htmlFor="media-upload">Upload Image or Video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
-                id="image-upload"
+                id="media-upload"
                 type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff"
-                onChange={handleImageFileChange}
+                accept={SUPPORTED_MEDIA_TYPES} // Use new constant
+                onChange={handleMediaFileChange}
                 ref={fileInputRef}
                 className="hidden"
-                disabled={isSaving || isUploadingImage}
+                disabled={isSaving || isUploadingMedia}
               />
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
-                disabled={isSaving || isUploadingImage}
+                disabled={isSaving || isUploadingMedia}
               >
-                {isUploadingImage ? (
+                {isUploadingMedia ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : (uploadedImageUrls ? "Image Selected" : "Choose Image")}
+                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media Selected" : "Choose Media")}
               </Button>
-              {(selectedFile || uploadedImageUrls) && (
+              {(selectedFile || uploadedMediaInfo) && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  onClick={handleClearImage}
+                  onClick={handleClearMedia}
                   className="ml-2 hover:ring-2 hover:ring-blue-500 ring-inset"
-                  disabled={isSaving || isUploadingImage}
+                  disabled={isSaving || isUploadingMedia}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}
             </div>
-            {previewImageUrl && (
+            {currentMediaPreviewUrl && (
               <div className="w-full max-w-xs mx-auto mt-2">
-                <img
-                  src={previewImageUrl}
-                  alt="Image preview"
-                  className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
-                />
-                {isUploadingImage && (
+                {currentMediaType === 'image' ? (
+                  <img
+                    src={currentMediaPreviewUrl}
+                    alt="Media preview"
+                    className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                  />
+                ) : (
+                  <video
+                    src={currentMediaPreviewUrl}
+                    controls
+                    className="w-full h-auto object-cover rounded-md border border-gray-200 dark:border-gray-700"
+                  />
+                )}
+                {isUploadingMedia && (
                   <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
                 )}
               </div>
@@ -346,15 +366,15 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               placeholder="e.g., https://open.spotify.com/embed/track/..."
               value={spotifyEmbedUrl}
               onChange={handleSpotifyInputChange}
-              disabled={isSaving || isUploadingImage}
+              disabled={isSaving || isUploadingMedia}
             />
             <div className="flex justify-end space-x-2">
               {spotifyEmbedUrl && (
-                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingImage}>
+                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingMedia}>
                   Clear Spotify
                 </Button>
               )}
-              <Button type="button" onClick={handleAddSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500" disabled={isSaving || isUploadingImage}>
+              <Button type="button" onClick={handleAddSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500" disabled={isSaving || isUploadingMedia}>
                 {spotifyEmbedUrl ? 'Update Spotify' : 'Add Spotify'}
               </Button>
             </div>
@@ -376,7 +396,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             <Button
               type="button"
               onClick={handleGetLocation}
-              disabled={locationLoading || isSaving || isUploadingImage}
+              disabled={locationLoading || isSaving || isUploadingMedia}
               className="w-full hover:ring-2 hover:ring-blue-500"
             >
               {locationLoading ? (
@@ -397,7 +417,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
                 </p>
                 <MapComponent coordinates={coordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingImage}>
+                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingMedia}>
                   Clear Location
                 </Button>
               </>
@@ -405,10 +425,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           </TabsContent>
         </Tabs>
         <DialogFooter className="pt-4">
-          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || isUploadingImage || (!message.trim() && !uploadedImageUrls && !spotifyEmbedUrl && !coordinates)} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates)} className="hover:ring-2 hover:ring-blue-500">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
