@@ -18,31 +18,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench, Edit } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Trash2, Plus, XCircle, Compass, Edit } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
 import ShineCard from '@/components/ShineCard';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useJourneys } from '@/contexts/JourneyContext';
-import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import EditPostDialog from '@/components/EditPostDialog';
-import { useNavigate } from 'react-router-dom';
+import AppHeader from '@/components/AppHeader'; // Import AppHeader
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter'; // Import AppFooter
@@ -77,9 +67,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const Index = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, user, logout, usersExist, fetchUsersExist } = useAuth();
-  const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
+  const { isAuthenticated, user, usersExist } = useAuth();
+  const { selectedJourney, loadingJourneys, journeys } = useJourneys();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -90,7 +79,6 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
-  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
@@ -331,85 +319,12 @@ const Index = () => {
     }
   };
 
-  const handleAuthButtonClick = () => {
-    if (isAuthenticated) {
-      logout();
-    } else {
-      if (usersExist === false) {
-        setIsRegisterDialogOpen(true);
-      } else {
-        setIsLoginDialogOpen(true);
-      }
-    }
-  };
-
   const showMatkaAsMainTitle = !selectedJourney && !loadingJourneys && journeys.length === 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          {showMatkaAsMainTitle ? (
-            <h1 className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center">
-              <Compass className="mr-3 h-8 w-8" /> Matka
-            </h1>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 px-6 text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
-                             hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
-                             hover:bg-transparent hover:border-transparent"
-                >
-                  {selectedJourney ? selectedJourney.name : "Select Journey"}
-                  <ChevronDown className="ml-2 h-6 w-6" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {loadingJourneys ? (
-                  <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
-                ) : (
-                  journeys.map((journey) => (
-                    <DropdownMenuItem
-                      key={journey.id}
-                      onClick={() => setSelectedJourney(journey)}
-                      className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
-                    >
-                      {journey.name}
-                    </DropdownMenuItem>
-                  ))
-                )}
-                {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          <div className="flex items-center space-x-2">
-            {isAuthenticated && user?.role === 'admin' && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => navigate('/admin')}
-                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent"
-              >
-                <Wrench className="h-[1.2rem] w-[1.2rem]" />
-                <span className="sr-only">Admin Section</span>
-              </Button>
-            )}
-            <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <UserProfileDropdown />
-          </div>
-        </div>
+        <AppHeader /> {/* Use the new AppHeader component */}
 
         <div className="flex justify-end mb-4">
           <Badge variant={backendConnected ? "default" : "destructive"}>
@@ -543,7 +458,7 @@ const Index = () => {
                 <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
                   Create your first journey to start sharing your experiences.
                 </p>
-                <Button onClick={() => setIsCreateJourneyDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+                <Button onClick={() => { /* Handled by AppHeader's CreateJourneyDialog */ }} className="hover:ring-2 hover:ring-blue-500">
                   <Plus className="mr-2 h-4 w-4" /> Create New Journey
                 </Button>
               </div>
@@ -690,7 +605,7 @@ const Index = () => {
           )
         )}
       </div>
-      <AppFooter /> {/* Using the new AppFooter component */}
+      <AppFooter />
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
@@ -713,11 +628,6 @@ const Index = () => {
           onUpdate={handlePostUpdated}
         />
       )}
-
-      <CreateJourneyDialog
-        isOpen={isCreateJourneyDialogOpen}
-        onClose={() => setIsCreateJourneyDialogOpen(false)}
-      />
 
       <CreateUserDialog
         isOpen={isCreateUserDialogOpen}
