@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post } from '@/types';
+import { Compass } from 'lucide-react'; // Import the Compass icon
 
 interface GridPostCardProps {
   post: Post;
@@ -14,17 +15,13 @@ interface GridPostCardProps {
   className?: string;
 }
 
-// Removed STADIA_API_KEY as it's no longer used for static maps
-
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
   const media = post.image_urls;
   const displayName = post.author_name || post.author_username;
 
   let mediaElement: React.ReactNode = null;
-  let fallbackImage = '/placeholder.svg';
 
   if (media?.type === 'image') {
-    fallbackImage = media.urls.medium || '/placeholder.svg';
     mediaElement = (
       <img
         src={media.urls.medium || '/placeholder.svg'}
@@ -47,13 +44,14 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
       />
     );
   } else {
-    // If no image/video, and no Stadia Maps, fallback to generic placeholder
+    // If no image/video, display the Matka compass logo and title
     mediaElement = (
-      <img
-        src={fallbackImage}
-        alt="Placeholder"
-        className="object-cover w-full h-full"
-      />
+      <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center">
+        <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 line-clamp-3">
+          {post.title || post.message.substring(0, 50) + (post.message.length > 50 ? '...' : '') || 'Untitled Post'}
+        </h3>
+      </div>
     );
   }
 
