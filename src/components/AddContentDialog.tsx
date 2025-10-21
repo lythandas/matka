@@ -16,10 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload, XCircle, Video } from 'lucide-react'; // Added Video icon
+import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload, XCircle, Video, LocateFixed, Search } from 'lucide-react'; // Added Video, LocateFixed, Search icons
 import MapComponent from './MapComponent';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants'; // Updated import
 import { MediaInfo } from '@/types'; // Import MediaInfo type
+import LocationSearch from './LocationSearch'; // Import the new LocationSearch component
 
 interface AddContentDialogProps {
   onMediaSelect: (file: File | null) => void; // Changed to onMediaSelect
@@ -47,6 +48,9 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // For local file preview
   const [spotifyInput, setSpotifyInput] = useState<string>(currentSpotifyEmbedUrl);
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>(
+    currentCoordinates ? 'current' : 'search' // Default to current if coords exist, else search
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -62,6 +66,13 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       setLocalPreviewUrl(null);
     }
   }, [currentSpotifyEmbedUrl, uploadedMediaInfo]);
+
+  useEffect(() => {
+    // When dialog opens, if there are current coordinates, set mode to 'current', otherwise 'search'
+    if (open) {
+      setLocationSelectionMode(currentCoordinates ? 'current' : 'search');
+    }
+  }, [open, currentCoordinates]);
 
   const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -288,30 +299,68 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             )}
           </TabsContent>
           <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
-            <Label>Share Your Location</Label>
-            <Button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={locationLoading}
-              className="w-full hover:ring-2 hover:ring-blue-500"
-            >
-              {locationLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <MapPin className="mr-2 h-4 w-4" />
-              )}
-              {locationLoading ? 'Getting Location...' : 'Get Current Location'}
-            </Button>
-            {currentCoordinates && (
+            <div className="flex space-x-2 mb-4">
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('current');
+                  onCoordinatesChange(null); // Clear search selection when switching
+                }}
+                className="flex-1 hover:ring-2 hover:ring-blue-500"
+                disabled={isUploadingMedia}
+              >
+                <LocateFixed className="mr-2 h-4 w-4" /> Get Current Location
+              </Button>
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'search' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('search');
+                  onCoordinatesChange(null); // Clear current location when switching
+                }}
+                className="flex-1 hover:ring-2 hover:ring-blue-500"
+                disabled={isUploadingMedia}
+              >
+                <Search className="mr-2 h-4 w-4" /> Search Location
+              </Button>
+            </div>
+
+            {locationSelectionMode === 'current' && (
               <>
-                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                  Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
-                </p>
-                <MapComponent coordinates={currentCoordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset">
-                  Clear Location
+                <Button
+                  type="button"
+                  onClick={handleGetLocation}
+                  disabled={locationLoading || isUploadingMedia}
+                  className="w-full hover:ring-2 hover:ring-blue-500"
+                >
+                  {locationLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MapPin className="mr-2 h-4 w-4" />
+                  )}
+                  {locationLoading ? 'Getting Location...' : 'Get Current Location'}
                 </Button>
+                {currentCoordinates && (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                      Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
+                    </p>
+                    <MapComponent coordinates={currentCoordinates} className="h-48 mt-2" />
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset mt-4">
+                      Clear Location
+                    </Button>
+                  </>
+                )}
               </>
+            )}
+
+            {locationSelectionMode === 'search' && (
+              <LocationSearch
+                onSelectLocation={onCoordinatesChange}
+                currentCoordinates={currentCoordinates}
+                disabled={isUploadingMedia}
+              />
             )}
           </TabsContent>
         </Tabs>

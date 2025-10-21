@@ -14,12 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle, Video } from 'lucide-react'; // Added Video icon
+import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle, Video, LocateFixed, Search } from 'lucide-react'; // Added Video, LocateFixed, Search icons
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants'; // Updated import
 import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interfaces
+import LocationSearch from './LocationSearch'; // Import the new LocationSearch component
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -39,6 +40,9 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const [coordinates, setCoordinates] = useState<typeof post.coordinates>(post.coordinates || null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>(
+    post.coordinates ? 'current' : 'search' // Default to current if coords exist, else search
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,6 +62,8 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     } else {
       setLocalPreviewUrl(null);
     }
+    // Set location mode based on existing coordinates
+    setLocationSelectionMode(post.coordinates ? 'current' : 'search');
   }, [post]);
 
   const uploadMediaToServer = async (file: File) => { // Changed to uploadMediaToServer
@@ -392,35 +398,73 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
           <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
-            <Label>Share Your Location</Label>
-            <Button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={locationLoading || isSaving || isUploadingMedia}
-              className="w-full hover:ring-2 hover:ring-blue-500"
-            >
-              {locationLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Getting Location...
-                </>
-              ) : (
-                <>
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Get Current Location
-                </>
-              )}
-            </Button>
-            {coordinates && (
+            <div className="flex space-x-2 mb-4">
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('current');
+                  setCoordinates(null); // Clear search selection when switching
+                }}
+                className="flex-1 hover:ring-2 hover:ring-blue-500"
+                disabled={isSaving || isUploadingMedia}
+              >
+                <LocateFixed className="mr-2 h-4 w-4" /> Get Current Location
+              </Button>
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'search' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('search');
+                  setCoordinates(null); // Clear current location when switching
+                }}
+                className="flex-1 hover:ring-2 hover:ring-blue-500"
+                disabled={isSaving || isUploadingMedia}
+              >
+                <Search className="mr-2 h-4 w-4" /> Search Location
+              </Button>
+            </div>
+
+            {locationSelectionMode === 'current' && (
               <>
-                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                  Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
-                </p>
-                <MapComponent coordinates={coordinates} className="h-48" />
-                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingMedia}>
-                  Clear Location
+                <Button
+                  type="button"
+                  onClick={handleGetLocation}
+                  disabled={locationLoading || isSaving || isUploadingMedia}
+                  className="w-full hover:ring-2 hover:ring-blue-500"
+                >
+                  {locationLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Getting Location...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Get Current Location
+                    </>
+                  )}
                 </Button>
+                {coordinates && (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+                      Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                    </p>
+                    <MapComponent coordinates={coordinates} className="h-48 mt-2" />
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset mt-4" disabled={isSaving || isUploadingMedia}>
+                      Clear Location
+                    </Button>
+                  </>
+                )}
               </>
+            )}
+
+            {locationSelectionMode === 'search' && (
+              <LocationSearch
+                onSelectLocation={setCoordinates}
+                currentCoordinates={coordinates}
+                disabled={isSaving || isUploadingMedia}
+              />
             )}
           </TabsContent>
         </Tabs>
