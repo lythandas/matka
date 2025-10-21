@@ -30,6 +30,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [usersExist, setUsersExist] = useState<boolean | null>(null); // null means loading/unknown
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+    setToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+    showSuccess('Logged out successfully!');
+    setUsersExist(true); // Assume users still exist after logout, or will be created
+  }, []);
+
   const fetchUsersExist = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/users/exists`);
@@ -38,12 +48,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       const data = await response.json();
       setUsersExist(data.exists);
+      if (!data.exists && isAuthenticated) { // If no users exist in DB but frontend thinks it's authenticated
+        console.warn("No users found in backend, but frontend is authenticated. Forcing logout.");
+        logout(); // Force logout to clear stale token
+      }
     } catch (error) {
       console.error('Error fetching user existence:', error);
       showError('Failed to determine if users exist.');
       setUsersExist(false); // Assume no users exist if check fails
+      if (isAuthenticated) {
+        logout(); // Force logout if check fails and frontend is authenticated
+      }
     }
-  }, []);
+  }, [isAuthenticated, logout]);
 
   // Load auth state from localStorage on initial render
   useEffect(() => {
@@ -60,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     fetchUsersExist(); // Check user existence on app load
-  }, [fetchUsersExist]);
+  }, [fetchUsersExist, logout]);
 
   const login = useCallback(async (username: string, password: string) => {
     try {
@@ -84,22 +101,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(data.user);
       setIsAuthenticated(true);
       showSuccess('Logged in successfully!');
+      setUsersExist(true); // After successful login, we know users exist
     } catch (error: any) {
       console.error('Login error:', error);
       showError(error.message || 'Failed to log in.');
       logout(); // Ensure state is cleared on failed login
     }
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    showSuccess('Logged out successfully!');
-    setUsersExist(true); // Assume users still exist after logout
-  }, []);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist }}>

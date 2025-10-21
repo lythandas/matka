@@ -46,51 +46,84 @@ fastify.register(fastifyStatic, {
 
 // Ensure database tables exist (without creating default users/journeys/posts)
 async function ensureDbTable() {
-  // Drop tables if they exist to ensure schema is always up-to-date in dev
-  await pgClient.query('DROP TABLE IF EXISTS posts;');
-  await pgClient.query('DROP TABLE IF EXISTS journeys;');
-  await pgClient.query('DROP TABLE IF EXISTS users;');
-  fastify.log.info('Existing posts, journeys, and users tables dropped (if any).');
-
-  // Create users table
-  await pgClient.query(`
-    CREATE TABLE users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      username TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user', -- 'admin' or 'user'
-      permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post', 'create_journey', 'delete_journey']
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  // Check if users table exists
+  const usersTableCheck = await pgClient.query(`
+    SELECT EXISTS (
+      SELECT FROM pg_tables
+      WHERE schemaname = 'public' AND tablename  = 'users'
     );
   `);
-  fastify.log.info('Users table ensured.');
+  const usersTableExists = usersTableCheck.rows[0].exists;
 
-  // Create journeys table with foreign key to users
-  await pgClient.query(`
-    CREATE TABLE journeys (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
-      name TEXT NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  if (!usersTableExists) {
+    fastify.log.info('Users table not found, creating...');
+    await pgClient.query(`
+      CREATE TABLE users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user', -- 'admin' or 'user'
+        permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post', 'create_journey', 'delete_journey']
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    fastify.log.info('Users table created.');
+  } else {
+    fastify.log.info('Users table already exists.');
+  }
+
+  // Check if journeys table exists
+  const journeysTableCheck = await pgClient.query(`
+    SELECT EXISTS (
+      SELECT FROM pg_tables
+      WHERE schemaname = 'public' AND tablename  = 'journeys'
     );
   `);
-  fastify.log.info('Journeys table ensured.');
+  const journeysTableExists = journeysTableCheck.rows[0].exists;
 
-  // Create posts table with foreign key to journeys and users
-  await pgClient.query(`
-    CREATE TABLE posts (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
-      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
-      title TEXT,
-      message TEXT NOT NULL,
-      image_urls JSONB,
-      spotify_embed_url TEXT,
-      coordinates JSONB,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  if (!journeysTableExists) {
+    fastify.log.info('Journeys table not found, creating...');
+    await pgClient.query(`
+      CREATE TABLE journeys (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
+        name TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    fastify.log.info('Journeys table created.');
+  } else {
+    fastify.log.info('Journeys table already exists.');
+  }
+
+  // Check if posts table exists
+  const postsTableCheck = await pgClient.query(`
+    SELECT EXISTS (
+      SELECT FROM pg_tables
+      WHERE schemaname = 'public' AND tablename  = 'posts'
     );
   `);
-  fastify.log.info('Posts table ensured.');
+  const postsTableExists = postsTableCheck.rows[0].exists;
+
+  if (!postsTableExists) {
+    fastify.log.info('Posts table not found, creating...');
+    await pgClient.query(`
+      CREATE TABLE posts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
+        title TEXT,
+        message TEXT NOT NULL,
+        image_urls JSONB,
+        spotify_embed_url TEXT,
+        coordinates JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    fastify.log.info('Posts table created.');
+  } else {
+    fastify.log.info('Posts table already exists.');
+  }
 }
 
 // Authentication middleware
