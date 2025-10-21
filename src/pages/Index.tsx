@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,8 +43,9 @@ import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import EditPostDialog from '@/components/EditPostDialog';
 import { useNavigate } from 'react-router-dom';
-import UserProfileDropdown from '@/components/UserProfileDropdown'; // Import new component
-import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
+import UserProfileDropdown from '@/components/UserProfileDropdown';
+import { getAvatarInitials } from '@/lib/utils';
+import AppFooter from '@/components/AppFooter'; // Import AppFooter
 
 interface Post {
   id: string;
@@ -55,22 +55,22 @@ interface Post {
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
-  user_id: string; // Add user_id to Post interface
-  author_username: string; // New
-  author_name?: string; // New
-  author_surname?: string; // New
-  author_profile_image_url?: string; // New
+  user_id: string;
+  author_username: string;
+  author_name?: string;
+  author_surname?: string;
+  author_profile_image_url?: string;
 }
 
 interface Journey {
   id: string;
   name: string;
   created_at: string;
-  user_id: string; // Add user_id to Journey interface
-  owner_username: string; // New
-  owner_name?: string; // New
-  owner_surname?: string; // New
-  owner_profile_image_url?: string; // New
+  user_id: string;
+  owner_username: string;
+  owner_name?: string;
+  owner_surname?: string;
+  owner_profile_image_url?: string;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -343,48 +343,56 @@ const Index = () => {
     }
   };
 
+  const showMatkaAsMainTitle = !selectedJourney && !loadingJourneys && journeys.length === 0;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="h-auto py-4 px-6 text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
-                           hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
-                           hover:bg-transparent hover:border-transparent"
-              >
-                {selectedJourney ? selectedJourney.name : "Select Journey"}
-                <ChevronDown className="ml-2 h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {loadingJourneys ? (
-                <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
-              ) : (
-                journeys.map((journey) => (
-                  <DropdownMenuItem
-                    key={journey.id}
-                    onClick={() => setSelectedJourney(journey)}
-                    className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
-                  >
-                    {journey.name}
-                  </DropdownMenuItem>
-                ))
-              )}
-              {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {showMatkaAsMainTitle ? (
+            <h1 className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center">
+              <Compass className="mr-3 h-8 w-8" /> Matka
+            </h1>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-auto py-4 px-6 text-4xl font-extrabold text-blue-600 dark:text-blue-400 flex items-center 
+                             hover:ring-4 hover:ring-offset-2 hover:ring-offset-background hover:ring-blue-500 
+                             hover:bg-transparent hover:border-transparent"
+                >
+                  {selectedJourney ? selectedJourney.name : "Select Journey"}
+                  <ChevronDown className="ml-2 h-6 w-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {loadingJourneys ? (
+                  <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
+                ) : (
+                  journeys.map((journey) => (
+                    <DropdownMenuItem
+                      key={journey.id}
+                      onClick={() => setSelectedJourney(journey)}
+                      className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
+                    >
+                      {journey.name}
+                    </DropdownMenuItem>
+                  ))
+                )}
+                {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
+                      <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <div className="flex items-center space-x-2">
             {isAuthenticated && user?.role === 'admin' && (
@@ -399,7 +407,7 @@ const Index = () => {
               </Button>
             )}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <UserProfileDropdown /> {/* New UserProfileDropdown component */}
+            <UserProfileDropdown />
           </div>
         </div>
 
@@ -682,7 +690,7 @@ const Index = () => {
           )
         )}
       </div>
-      <MadeWithDyad />
+      <AppFooter /> {/* Using the new AppFooter component */}
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
