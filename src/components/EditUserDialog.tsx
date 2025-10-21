@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
+import { ALL_PERMISSIONS, getPermissionDisplayName } from '@/lib/permissions'; // Import from new utility
 
 interface User {
   id: string;
@@ -33,17 +34,6 @@ interface EditUserDialogProps {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-
-const ALL_PERMISSIONS = [
-  'create_post',
-  'delete_post',
-  'create_journey',
-  'delete_journey',
-  'manage_users',
-  'edit_any_journey',
-  'delete_any_journey',
-  'delete_any_post',
-];
 
 const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, onUserUpdated }) => {
   const { token, user: currentUser } = useAuth();
@@ -161,8 +151,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
                     onCheckedChange={(checked) => handlePermissionChange(perm, !!checked)}
                     disabled={isUpdating}
                   />
-                  <Label htmlFor={`perm-${perm}`} className="capitalize">
-                    {perm.replace(/_/g, ' ')}
+                  <Label htmlFor={`perm-${perm}`}>
+                    {getPermissionDisplayName(perm)}
                   </Label>
                 </div>
               ))}

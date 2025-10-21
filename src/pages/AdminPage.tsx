@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
+import { getPermissionDisplayName } from '@/lib/permissions'; // Import from new utility
 
 interface User {
   id: string;
@@ -204,7 +205,7 @@ const AdminPage: React.FC = () => {
                                 {user.permissions.length > 0 ? (
                                   user.permissions.map((perm) => (
                                     <span key={perm} className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
-                                      {perm.replace(/_/g, ' ')}
+                                      {getPermissionDisplayName(perm)}
                                     </span>
                                   ))
                                 ) : (
