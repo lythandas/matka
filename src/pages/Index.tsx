@@ -41,7 +41,7 @@ import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
-import RegisterDialog from '@/components/RegisterDialog'; // Import RegisterDialog
+import RegisterDialog from '@/components/RegisterDialog';
 
 interface Post {
   id: string;
@@ -54,7 +54,6 @@ interface Post {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const Index = () => {
   const { isAuthenticated, user, logout, usersExist, fetchUsersExist } = useAuth();
@@ -72,12 +71,28 @@ const Index = () => {
   const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false); // State for RegisterDialog
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
+
+  // Effect to check backend connectivity
+  useEffect(() => {
+    const checkBackendStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/`); // Ping the root endpoint
+        setBackendConnected(response.ok);
+      } catch (error) {
+        console.error('Backend connection check failed:', error);
+        setBackendConnected(false);
+      }
+    };
+    checkBackendStatus();
+    const interval = setInterval(checkBackendStatus, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, []); // Run once on mount and then every 10s
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -92,24 +107,22 @@ const Index = () => {
       }
       const data: Post[] = await response.json();
       setPosts(data);
-      setBackendConnected(true);
     } catch (error) {
       console.error('Error fetching posts:', error);
       showError('Failed to load posts.');
-      setBackendConnected(false);
     } finally {
       setLoadingPosts(false);
     }
   };
 
   useEffect(() => {
-    if (selectedJourney) {
+    if (selectedJourney) { // Only fetch posts if a journey is selected
       fetchPosts(selectedJourney.id);
     } else {
       setPosts([]); // Clear posts if no journey is selected
       setLoadingPosts(false);
     }
-  }, [selectedJourney, isAuthenticated]); // Re-fetch posts when auth state changes
+  }, [selectedJourney, isAuthenticated]); // Re-fetch posts when auth state or selected journey changes
 
   const uploadImageToServer = async (file: File) => {
     setIsUploadingImage(true);
@@ -356,115 +369,138 @@ const Index = () => {
         </div>
 
         {isAuthenticated && (
-          <Card className="mb-8 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">Share Your Day in "{selectedJourney?.name || 'No Journey Selected'}"</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  placeholder="Add a title (optional)"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full"
-                />
-                <Textarea
-                  placeholder="What's on your mind today?"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={4}
-                  className="w-full resize-none"
-                />
+          selectedJourney ? (
+            <Card className="mb-8 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">Share Your Day in "{selectedJourney.name}"</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <Input
+                    placeholder="Add a title (optional)"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full"
+                  />
+                  <Textarea
+                    placeholder="What's on your mind today?"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={4}
+                    className="w-full resize-none"
+                  />
 
-                {/* Content Previews */}
-                {(uploadedImageUrls || spotifyEmbedUrl || coordinates) && (
-                  <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                    <h4 className="text-lg font-semibold">Content Preview:</h4>
-                    {uploadedImageUrls?.medium && (
-                      <div className="relative">
-                        <img
-                          src={uploadedImageUrls.medium}
-                          alt="Image preview"
-                          className="w-full h-auto max-h-64 object-cover rounded-md"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleImageSelect(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        >
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        </Button>
-                        {isUploadingImage && (
-                          <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
-                        )}
-                      </div>
-                    )}
-                    {spotifyEmbedUrl && (
-                      <div className="relative w-full aspect-video">
-                        <iframe
-                          src={spotifyEmbedUrl}
-                          width="100%"
-                          height="100%"
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          className="rounded-md"
-                        ></iframe>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSpotifyEmbedUrl('')}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        >
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        </Button>
-                      </div>
-                    )}
-                    {coordinates && (
-                      <div className="relative">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
-                          Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
-                        </p>
-                        <MapComponent coordinates={coordinates} className="h-48" />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCoordinates(null)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        >
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        </Button>
-                      </div>
-                    )}
+                  {/* Content Previews */}
+                  {(uploadedImageUrls || spotifyEmbedUrl || coordinates) && (
+                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                      <h4 className="text-lg font-semibold">Content Preview:</h4>
+                      {uploadedImageUrls?.medium && (
+                        <div className="relative">
+                          <img
+                            src={uploadedImageUrls.medium}
+                            alt="Image preview"
+                            className="w-full h-auto max-h-64 object-cover rounded-md"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                              e.currentTarget.onerror = null;
+                              console.error(`Failed to load image: ${uploadedImageUrls?.medium}`);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleImageSelect(null)}
+                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          </Button>
+                          {isUploadingImage && (
+                            <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                          )}
+                        </div>
+                      )}
+                      {spotifyEmbedUrl && (
+                        <div className="relative w-full aspect-video">
+                          <iframe
+                            src={spotifyEmbedUrl}
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="rounded-md"
+                          ></iframe>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSpotifyEmbedUrl('')}
+                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          </Button>
+                        </div>
+                      )}
+                      {coordinates && (
+                        <div className="relative">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+                            Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                          </p>
+                          <MapComponent coordinates={coordinates} className="h-48" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCoordinates(null)}
+                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-center">
+                    <AddContentDialog
+                      onImageSelect={handleImageSelect}
+                      onSpotifyEmbedChange={setSpotifyEmbedUrl}
+                      onCoordinatesChange={setCoordinates}
+                      uploadedImageUrl={uploadedImageUrls?.medium || null}
+                      isUploadingImage={isUploadingImage}
+                      currentSpotifyEmbedUrl={spotifyEmbedUrl}
+                      currentCoordinates={coordinates}
+                    >
+                      <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                        <Plus className="mr-2 h-4 w-4" /> Add Content
+                      </Button>
+                    </AddContentDialog>
                   </div>
-                )}
-
-                <div className="flex justify-center">
-                  <AddContentDialog
-                    onImageSelect={handleImageSelect}
-                    onSpotifyEmbedChange={setSpotifyEmbedUrl}
-                    onCoordinatesChange={setCoordinates}
-                    uploadedImageUrl={uploadedImageUrls?.medium || null}
-                    isUploadingImage={isUploadingImage}
-                    currentSpotifyEmbedUrl={spotifyEmbedUrl}
-                    currentCoordinates={coordinates}
-                  >
-                    <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-                      <Plus className="mr-2 h-4 w-4" /> Add Content
+                  <div className="flex justify-center">
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingImage || !selectedJourney}>
+                      Post
                     </Button>
-                  </AddContentDialog>
-                </div>
-                <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingImage || !selectedJourney}>
-                    Post
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            // Message to create a journey if authenticated but no journey selected
+            isAuthenticated && !loadingJourneys && journeys.length === 0 && (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  You don't have any journeys yet!
+                </p>
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
+                  Create your first journey to start sharing your experiences.
+                </p>
+                <Button onClick={() => setIsCreateJourneyDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+                  <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                </Button>
+              </div>
+            )
+          )
         )}
 
         {posts.length > 0 && ( // Conditionally render ViewToggle
@@ -475,7 +511,7 @@ const Index = () => {
 
         {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
-        ) : posts.length === 0 ? (
+        ) : posts.length === 0 && selectedJourney ? ( // Only show this if a journey is selected but has no posts
           <div className="text-center py-12">
             <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
