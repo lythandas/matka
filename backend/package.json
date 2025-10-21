@@ -28,7 +28,7 @@
     "@types/sharp": "^0.32.0",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/fastify-static": "^6.0.0",
+    "@types/fastify-static": "^7.0.0",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
     "@typescript-eslint/parser": "^7.17.0",
     "eslint": "^8.57.0",
