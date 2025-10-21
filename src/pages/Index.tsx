@@ -32,10 +32,10 @@ import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import EditPostDialog from '@/components/EditPostDialog';
-import AppHeader from '@/components/AppHeader'; // Import AppHeader
+import AppHeader from '@/components/AppHeader';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
-import AppFooter from '@/components/AppFooter'; // Import AppFooter
+import AppFooter from '@/components/AppFooter';
 
 interface Post {
   id: string;
@@ -324,13 +324,25 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto">
-        <AppHeader /> {/* Use the new AppHeader component */}
+        <AppHeader />
 
         <div className="flex justify-end mb-4">
           <Badge variant={backendConnected ? "default" : "destructive"}>
             Backend: {backendConnected ? "Connected" : "Disconnected"}
           </Badge>
         </div>
+
+        {/* NEW WELCOME SECTION FOR ADMIN REGISTRATION */}
+        {!isAuthenticated && usersExist === false && (
+          <div className="text-center py-12">
+            <Compass className="h-32 w-32 mx-auto text-blue-600 dark:text-blue-400 mb-6" />
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome to Matka!</h2>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+              It looks like you're just getting started. Please register your first admin account to begin your journey.
+            </p>
+            {/* The UserProfileDropdown in AppHeader will handle opening the RegisterDialog */}
+          </div>
+        )}
 
         {isAuthenticated && (
           selectedJourney ? (
