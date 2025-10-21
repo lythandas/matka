@@ -73,6 +73,7 @@ interface Journey {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const Index = () => {
   const navigate = useNavigate();
@@ -196,6 +197,12 @@ const Index = () => {
   const handleImageSelect = (file: File | null) => {
     setSelectedFile(file);
     if (file) {
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+        setSelectedFile(null);
+        setUploadedImageUrls(null);
+        return;
+      }
       uploadImageToServer(file);
     } else {
       setUploadedImageUrls(null);

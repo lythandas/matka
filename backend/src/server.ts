@@ -12,7 +12,7 @@ import uploadsRoutes from './routes/uploads';
 
 const fastify = Fastify({
   logger: true,
-  bodyLimit: 8 * 1024 * 1024, // Set body limit to 8MB for image uploads
+  bodyLimit: 2 * 1024 * 1024, // Set body limit to 2MB for image uploads
 });
 
 // Register CORS plugin

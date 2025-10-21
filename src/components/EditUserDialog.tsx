@@ -50,7 +50,7 @@ interface EditUserDialogProps {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, onUserUpdated }) => {
   const { token, user: currentUser } = useAuth();
@@ -164,7 +164,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
       const file = event.target.files[0];
 
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError('Image size exceeds 8MB limit.');
+        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setProfileImageUrl(user.profile_image_url);
         if (fileInputRef.current) fileInputRef.current.value = '';

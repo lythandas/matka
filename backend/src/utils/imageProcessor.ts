@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 export const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
-export const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 export const IMAGE_SIZES = {
   small: { width: 300, height: 225 },
@@ -22,7 +22,7 @@ export async function processAndSaveImage(
 
   if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
     log({ bufferLength: buffer.length }, `Image size exceeds limit (${MAX_IMAGE_SIZE_BYTES} bytes).`);
-    throw new Error('Image size exceeds 8MB limit.');
+    throw new Error(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
   }
 
   if (!imageType.startsWith('image/')) {

@@ -36,7 +36,7 @@ interface EditPostDialogProps {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate }) => {
   const [title, setTitle] = useState<string>(post.title || '');
@@ -114,7 +114,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       const file = event.target.files[0];
 
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        showError('Image size exceeds 8MB limit.');
+        showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setPreviewImageUrl(null);
         setUploadedImageUrls(null);
@@ -298,7 +298,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             </TabsTrigger>
           </TabsList>
           <TabsContent value="image" className="mt-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="image-upload">Upload Image (Max 8MB)</Label>
+            <Label htmlFor="image-upload">Upload Image (Max {MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
                 id="image-upload"
