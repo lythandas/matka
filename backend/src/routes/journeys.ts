@@ -10,15 +10,19 @@ const journeysRoutes: FastifyPluginAsync = async (fastify) => {
       return;
     }
     try {
-      let query = 'SELECT * FROM journeys';
+      let query = `
+        SELECT j.*, u.username AS owner_username, u.name AS owner_name, u.surname AS owner_surname, u.profile_image_url AS owner_profile_image_url
+        FROM journeys j
+        JOIN users u ON j.user_id = u.id
+      `;
       const params: string[] = [];
       let paramIndex = 1;
 
       if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
-        query += ' WHERE user_id = $1';
+        query += ` WHERE j.user_id = $${paramIndex++}`;
         params.push(request.user.id);
       }
-      query += ' ORDER BY created_at ASC';
+      query += ' ORDER BY j.created_at ASC';
       const result = await pgClient.query(query, params);
       return result.rows;
     } catch (error) {

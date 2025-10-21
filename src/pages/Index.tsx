@@ -42,8 +42,9 @@ import GridPostCard from '@/components/GridPostCard';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
-import EditPostDialog from '@/components/EditPostDialog'; // Import EditPostDialog
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import EditPostDialog from '@/components/EditPostDialog';
+import { useNavigate } from 'react-router-dom';
+import UserProfileDropdown from '@/components/UserProfileDropdown'; // Import new component
 
 interface Post {
   id: string;
@@ -53,12 +54,28 @@ interface Post {
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
+  user_id: string; // Add user_id to Post interface
+  author_username: string; // New
+  author_name?: string; // New
+  author_surname?: string; // New
+  author_profile_image_url?: string; // New
+}
+
+interface Journey {
+  id: string;
+  name: string;
+  created_at: string;
+  user_id: string; // Add user_id to Journey interface
+  owner_username: string; // New
+  owner_name?: string; // New
+  owner_surname?: string; // New
+  owner_profile_image_url?: string; // New
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const Index = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout, usersExist, fetchUsersExist } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
@@ -81,8 +98,8 @@ const Index = () => {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false); // New state for edit post dialog
-  const [postToEdit, setPostToEdit] = useState<Post | null>(null); // New state for post being edited
+  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
+  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
   // Effect to check backend connectivity
   useEffect(() => {
@@ -98,14 +115,14 @@ const Index = () => {
     checkBackendStatus();
     const interval = setInterval(checkBackendStatus, 10000); // Check every 10 seconds
     return () => clearInterval(interval);
-  }, []); // Run once on mount and then every 10s
+  }, []);
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
     try {
       const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (!response.ok) {
@@ -122,13 +139,13 @@ const Index = () => {
   };
 
   useEffect(() => {
-    if (selectedJourney) { // Only fetch posts if a journey is selected
+    if (selectedJourney) {
       fetchPosts(selectedJourney.id);
     } else {
-      setPosts([]); // Clear posts if no journey is selected
+      setPosts([]);
       setLoadingPosts(false);
     }
-  }, [selectedJourney, isAuthenticated]); // Re-fetch posts when auth state or selected journey changes
+  }, [selectedJourney, isAuthenticated]);
 
   const uploadImageToServer = async (file: File) => {
     setIsUploadingImage(true);
@@ -153,7 +170,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({ imageBase64: base64Data, imageType: file.type }),
       });
@@ -212,10 +229,10 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({
-          journeyId: selectedJourney.id, // Associate post with selected journey
+          journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),
           imageUrls: uploadedImageUrls,
@@ -249,7 +266,7 @@ const Index = () => {
       const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // Include token
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
 
@@ -301,7 +318,6 @@ const Index = () => {
 
   const handlePostUpdated = (updatedPost: Post) => {
     setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
-    // If the detailed view is open for this post, update it too
     if (selectedPostForDetail?.id === updatedPost.id) {
       setSelectedPostForDetail(updatedPost);
     }
@@ -367,7 +383,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => navigate('/admin')} // Navigate to AdminPage
+                onClick={() => navigate('/admin')}
                 className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent"
               >
                 <Wrench className="h-[1.2rem] w-[1.2rem]" />
@@ -375,9 +391,7 @@ const Index = () => {
               </Button>
             )}
             <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" /> 
-            <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-              {isAuthenticated ? 'Logout' : (usersExist === false ? 'Register' : 'Login')}
-            </Button>
+            <UserProfileDropdown /> {/* New UserProfileDropdown component */}
           </div>
         </div>
 
@@ -504,7 +518,6 @@ const Index = () => {
               </CardContent>
             </Card>
           ) : (
-            // Message to create a journey if authenticated but no journey selected
             isAuthenticated && !loadingJourneys && journeys.length === 0 && (
               <div className="text-center py-12">
                 <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
@@ -522,7 +535,7 @@ const Index = () => {
           )
         )}
 
-        {posts.length > 0 && ( // Conditionally render ViewToggle
+        {posts.length > 0 && (
           <div className="mb-6">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           </div>
@@ -530,7 +543,7 @@ const Index = () => {
 
         {loadingPosts ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
-        ) : posts.length === 0 && selectedJourney ? ( // Only show this if a journey is selected but has no posts
+        ) : posts.length === 0 && selectedJourney ? (
           <div className="text-center py-12">
             <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
             <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
@@ -552,6 +565,27 @@ const Index = () => {
                   onClick={() => handlePostClick(post, index)}
                 >
                   <CardContent className="p-6">
+                    <div className="flex items-center mb-4">
+                      {post.author_profile_image_url ? (
+                        <img
+                          src={post.author_profile_image_url}
+                          alt={post.author_name || post.author_username}
+                          className="w-10 h-10 rounded-full object-cover mr-3"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                          {post.author_name ? post.author_name[0] : post.author_username[0]}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          {post.author_name || post.author_username}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {format(new Date(post.created_at), 'PPP p')}
+                        </p>
+                      </div>
+                    </div>
                     {post.title && (
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
@@ -586,7 +620,7 @@ const Index = () => {
                     )}
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                      <div className="flex space-x-2"> {/* Container for action buttons */}
+                      <div className="flex space-x-2">
                         {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('edit_any_post') || user?.role === 'admin') && (
                           <Button
                             variant="outline"
@@ -623,9 +657,6 @@ const Index = () => {
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {format(new Date(post.created_at), 'PPP p')}
-                    </p>
                   </CardContent>
                 </ShineCard>
               ))}

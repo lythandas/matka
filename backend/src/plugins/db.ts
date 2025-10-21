@@ -58,6 +58,9 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
         username TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT, -- Link to role
+        name TEXT,
+        surname TEXT,
+        profile_image_url TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);

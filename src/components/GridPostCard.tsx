@@ -3,7 +3,8 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { cn } from '@/lib/utils'; // For combining class names
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Post {
   id: string;
@@ -13,6 +14,11 @@ interface Post {
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
+  user_id: string;
+  author_username: string;
+  author_name?: string;
+  author_surname?: string;
+  author_profile_image_url?: string;
 }
 
 interface GridPostCardProps {
@@ -22,8 +28,9 @@ interface GridPostCardProps {
 }
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
-  // Use the medium image for grid view
   const imageUrl = post.image_urls?.medium || '/placeholder.svg';
+  const displayName = post.author_name || post.author_username;
+  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : post.author_username[0];
 
   return (
     <Card
@@ -45,11 +52,23 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
             }}
           />
         </AspectRatio>
-        {post.title && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold truncate">
-            {post.title}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold">
+          {post.title && (
+            <p className="truncate mb-1">{post.title}</p>
+          )}
+          <div className="flex items-center text-xs text-gray-300">
+            <Avatar className="h-5 w-5 mr-2">
+              {post.author_profile_image_url ? (
+                <AvatarImage src={post.author_profile_image_url} alt={displayName} />
+              ) : (
+                <AvatarFallback className="bg-blue-500 text-white text-xs">
+                  {fallbackInitials}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <span>{displayName}</span>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

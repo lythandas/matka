@@ -7,16 +7,22 @@ import { Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
-import { cn } from '@/lib/utils'; // Import cn utility for conditional class names
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string }; // Updated to include original
+  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
   spotify_embed_url?: string;
   coordinates?: { lat: number; lng: number };
   created_at: string;
+  user_id: string;
+  author_username: string;
+  author_name?: string;
+  author_surname?: string;
+  author_profile_image_url?: string;
 }
 
 interface PostDetailDialogProps {
@@ -71,31 +77,43 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     };
   }, []);
 
-  // Determine which image URL to use for the main display in the dialog
   const dialogImageUrl = post.image_urls?.large || '/placeholder.svg';
-  // Determine which image URL to use when in fullscreen
   const fullscreenImageUrl = post.image_urls?.original || post.image_urls?.large || '/placeholder.svg';
-
+  const displayName = post.author_name || post.author_username;
+  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : post.author_username[0];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[950px] max-h-[98vh] overflow-y-auto">
         <DialogHeader className="p-6 pb-0 relative">
-          <DialogTitle>{post.title || "Post Details"}</DialogTitle>
-          <DialogDescription>
-            {format(new Date(post.created_at), 'PPP p')}
-          </DialogDescription>
+          <div className="flex items-center mb-2">
+            <Avatar className="h-10 w-10 mr-3">
+              {post.author_profile_image_url ? (
+                <AvatarImage src={post.author_profile_image_url} alt={displayName} />
+              ) : (
+                <AvatarFallback className="bg-blue-500 text-white text-lg">
+                  {fallbackInitials}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <DialogTitle>{post.title || "Post Details"}</DialogTitle>
+              <DialogDescription>
+                By {displayName} &bull; {format(new Date(post.created_at), 'PPP p')}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         <div className="relative p-6 pt-4">
           {(post.image_urls?.large || post.image_urls?.original) && (
             <div className="relative mb-4">
               <img
                 ref={imageRef}
-                src={isImageFullscreen ? fullscreenImageUrl : dialogImageUrl} // Use original for fullscreen, large for dialog
+                src={isImageFullscreen ? fullscreenImageUrl : dialogImageUrl}
                 alt={post.title || "Post image"}
                 className="w-full h-auto object-cover rounded-md"
                 onError={(e) => {
-                  e.currentTarget.src = '/placeholder.svg'; // Corrected path
+                  e.currentTarget.src = '/placeholder.svg';
                   e.currentTarget.onerror = null;
                   console.error(`Failed to load image: ${isImageFullscreen ? fullscreenImageUrl : dialogImageUrl}`);
                 }}
@@ -106,7 +124,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   size="icon"
                   className={cn(
                     "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                    isImageFullscreen ? "fixed z-[1000]" : "absolute" // Use fixed and high z-index when fullscreen
+                    isImageFullscreen ? "fixed z-[1000]" : "absolute"
                   )}
                   onClick={handleToggleFullscreen}
                 >
@@ -137,7 +155,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </p>
         </div>
 
-        {/* Navigation Buttons */}
         {canGoPrevious && (
           <Button
             variant="outline"

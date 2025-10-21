@@ -13,8 +13,8 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import EditUserDialog from '@/components/EditUserDialog';
 import EditJourneyDialog from '@/components/EditJourneyDialog';
-import CreateRoleDialog from '@/components/CreateRoleDialog'; // New import
-import EditRoleDialog from '@/components/EditRoleDialog';     // New import
+import CreateRoleDialog from '@/components/CreateRoleDialog';
+import EditRoleDialog from '@/components/EditRoleDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,12 +28,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
 import { getPermissionDisplayName } from '@/lib/permissions';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface User {
   id: string;
   username: string;
-  role: string; // Now role name
-  permissions: string[]; // Permissions derived from the role
+  role: string;
+  permissions: string[];
+  name?: string; // New
+  surname?: string; // New
+  profile_image_url?: string; // New
   created_at: string;
 }
 
@@ -41,10 +45,14 @@ interface Journey {
   id: string;
   name: string;
   user_id: string;
+  owner_username: string; // New
+  owner_name?: string; // New
+  owner_surname?: string; // New
+  owner_profile_image_url?: string; // New
   created_at: string;
 }
 
-interface Role { // New interface for roles
+interface Role {
   id: string;
   name: string;
   permissions: string[];
@@ -64,11 +72,11 @@ const AdminPage: React.FC = () => {
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const [roles, setRoles] = useState<Role[]>([]); // New state for roles
-  const [loadingRoles, setLoadingRoles] = useState<boolean>(true); // New state for loading roles
-  const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState<boolean>(false); // New state
-  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState<boolean>(false);     // New state
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);                 // New state
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState<boolean>(true);
+  const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState<boolean>(false);
+  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState<boolean>(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
   const [isEditJourneyDialogOpen, setIsEditJourneyDialogOpen] = useState<boolean>(false);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
@@ -126,11 +134,11 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     if (currentUser?.role === 'admin') {
       fetchUsers();
-      fetchRoles(); // Fetch roles for admin view
-      fetchJourneys(); // Also fetch journeys for admin view
+      fetchRoles();
+      fetchJourneys();
     } else {
       showError('Access Denied: You must be an administrator to view this page.');
-      navigate('/'); // Redirect non-admins
+      navigate('/');
     }
   }, [currentUser, navigate, fetchUsers, fetchRoles, fetchJourneys]);
 
@@ -140,8 +148,7 @@ const AdminPage: React.FC = () => {
 
   const handleRoleUpdated = (updatedRole: Role) => {
     setRoles((prev) => prev.map((r) => (r.id === updatedRole.id ? updatedRole : r)));
-    // Also re-fetch users as their displayed permissions might change
-    fetchUsers();
+    fetchUsers(); // Re-fetch users as their displayed permissions might change
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -163,7 +170,7 @@ const AdminPage: React.FC = () => {
       }
 
       showSuccess('User deleted successfully!');
-      fetchUsers(); // Re-fetch users to update the list
+      fetchUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
       showError(error.message || 'Failed to delete user.');
@@ -189,8 +196,8 @@ const AdminPage: React.FC = () => {
       }
 
       showSuccess('Role deleted successfully!');
-      fetchRoles(); // Re-fetch roles to update the list
-      fetchUsers(); // Re-fetch users as their roles might be affected
+      fetchRoles();
+      fetchUsers();
     } catch (error: any) {
       console.error('Error deleting role:', error);
       showError(error.message || 'Failed to delete role.');
@@ -216,7 +223,7 @@ const AdminPage: React.FC = () => {
       }
 
       showSuccess('Journey deleted successfully!');
-      fetchJourneys(); // Re-fetch journeys to update the list
+      fetchJourneys();
     } catch (error: any) {
       console.error('Error deleting journey:', error);
       showError(error.message || 'Failed to delete journey.');
@@ -224,7 +231,7 @@ const AdminPage: React.FC = () => {
   };
 
   if (currentUser?.role !== 'admin') {
-    return null; // Should be redirected by useEffect, but a fallback
+    return null;
   }
 
   return (
@@ -235,13 +242,13 @@ const AdminPage: React.FC = () => {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Journeys
           </Button>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <div></div> {/* Placeholder for alignment */}
+          <div></div>
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-3"> {/* Updated to 3 columns */}
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="roles">Role Management</TabsTrigger> {/* New Tab */}
+            <TabsTrigger value="roles">Role Management</TabsTrigger>
             <TabsTrigger value="journeys">Journey Management</TabsTrigger>
           </TabsList>
 
@@ -264,9 +271,9 @@ const AdminPage: React.FC = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Username</TableHead>
-                          <TableHead>Role</TableHead> {/* Changed from Permissions */}
-                          <TableHead>Permissions</TableHead> {/* New column to show derived permissions */}
+                          <TableHead>User</TableHead> {/* Combined for avatar, name, username */}
+                          <TableHead>Role</TableHead>
+                          <TableHead>Permissions</TableHead>
                           <TableHead>Created At</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -274,8 +281,24 @@ const AdminPage: React.FC = () => {
                       <TableBody>
                         {users.map((user) => (
                           <TableRow key={user.id}>
-                            <TableCell className="font-medium">{user.username}</TableCell>
-                            <TableCell>{user.role}</TableCell> {/* Display role name */}
+                            <TableCell className="font-medium">
+                              <div className="flex items-center">
+                                <Avatar className="h-9 w-9 mr-3">
+                                  {user.profile_image_url ? (
+                                    <AvatarImage src={user.profile_image_url} alt={user.name || user.username} />
+                                  ) : (
+                                    <AvatarFallback className="bg-blue-500 text-white">
+                                      {user.name ? user.name[0] : user.username[0]}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">{user.name || user.username}</p>
+                                  {user.name && <p className="text-sm text-muted-foreground">@{user.username}</p>}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{user.role}</TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {user.permissions.length > 0 ? (
@@ -305,7 +328,7 @@ const AdminPage: React.FC = () => {
                                     <Button
                                       variant="destructive"
                                       size="icon"
-                                      disabled={user.id === currentUser?.id} // Prevent admin from deleting themselves
+                                      disabled={user.id === currentUser?.id}
                                       className="hover:ring-2 hover:ring-blue-500"
                                     >
                                       <Trash2 className="h-4 w-4" />
@@ -339,7 +362,6 @@ const AdminPage: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* New Role Management Tab */}
           <TabsContent value="roles" className="mt-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -398,7 +420,7 @@ const AdminPage: React.FC = () => {
                                     <Button
                                       variant="destructive"
                                       size="icon"
-                                      disabled={role.name === 'admin' || role.name === 'user'} // Prevent deleting default roles
+                                      disabled={role.name === 'admin' || role.name === 'user'}
                                       className="hover:ring-2 hover:ring-blue-500"
                                     >
                                       <Trash2 className="h-4 w-4" />
@@ -449,7 +471,7 @@ const AdminPage: React.FC = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Name</TableHead>
-                          <TableHead>Owner ID</TableHead>
+                          <TableHead>Owner</TableHead> {/* Changed to display owner info */}
                           <TableHead>Created At</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -458,7 +480,22 @@ const AdminPage: React.FC = () => {
                         {journeys.map((journey) => (
                           <TableRow key={journey.id}>
                             <TableCell className="font-medium">{journey.name}</TableCell>
-                            <TableCell>{journey.user_id}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Avatar className="h-8 w-8 mr-2">
+                                  {journey.owner_profile_image_url ? (
+                                    <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
+                                  ) : (
+                                    <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                                      {journey.owner_name ? journey.owner_name[0] : journey.owner_username[0]}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <p className="text-sm text-gray-800 dark:text-gray-200">
+                                  {journey.owner_name || journey.owner_username}
+                                </p>
+                              </div>
+                            </TableCell>
                             <TableCell>{format(new Date(journey.created_at), 'PPP')}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end space-x-2">

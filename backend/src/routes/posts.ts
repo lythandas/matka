@@ -12,21 +12,25 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
     }
     try {
       const { journeyId } = request.query as { journeyId?: string };
-      let query = 'SELECT * FROM posts';
+      let query = `
+        SELECT p.*, u.username AS author_username, u.name AS author_name, u.surname AS author_surname, u.profile_image_url AS author_profile_image_url
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+      `;
       const params: string[] = [];
       let paramIndex = 1;
 
       if (journeyId) {
-        query += ` WHERE journey_id = $${paramIndex++}`;
+        query += ` WHERE p.journey_id = $${paramIndex++}`;
         params.push(journeyId);
       }
 
       if (!request.user.permissions.includes('edit_any_journey')) {
-        query += `${params.length > 0 ? ' AND' : ' WHERE'} user_id = $${paramIndex++}`;
+        query += `${params.length > 0 ? ' AND' : ' WHERE'} p.user_id = $${paramIndex++}`;
         params.push(request.user.id);
       }
       
-      query += ' ORDER BY created_at DESC';
+      query += ' ORDER BY p.created_at DESC';
       const result = await pgClient.query(query, params);
       return result.rows;
     } catch (error) {

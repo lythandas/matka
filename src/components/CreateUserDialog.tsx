@@ -41,6 +41,8 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
   const { token, user: currentUser } = useAuth();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [surname, setSurname] = useState<string>('');
   const [selectedRoleId, setSelectedRoleId] = useState<string>('');
   const [roles, setRoles] = useState<Role[]>([]);
   const [isCreating, setIsCreating] = useState<boolean>(false);
@@ -61,7 +63,6 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
         }
         const data: Role[] = await response.json();
         setRoles(data);
-        // Set default role to 'user' if available, otherwise the first role
         const defaultUserRole = data.find(r => r.name === 'user');
         setSelectedRoleId(defaultUserRole ? defaultUserRole.id : (data.length > 0 ? data[0].id : ''));
       } catch (error) {
@@ -100,6 +101,9 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
           username: username.trim(),
           password: password.trim(),
           role_id: selectedRoleId,
+          name: name.trim() || null,
+          surname: surname.trim() || null,
+          profile_image_url: null, // No profile image upload on creation for simplicity
         }),
       });
 
@@ -111,6 +115,8 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
       showSuccess(`User '${username}' created successfully!`);
       setUsername('');
       setPassword('');
+      setName('');
+      setSurname('');
       setSelectedRoleId('');
       onUserCreated();
       onClose();
@@ -122,9 +128,8 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
     }
   };
 
-  // Only allow admin to create users
   if (currentUser?.role !== 'admin') {
-    return null; // Or render a message indicating lack of permission
+    return null;
   }
 
   return (
@@ -161,6 +166,32 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
               onChange={(e) => setPassword(e.target.value)}
               className="col-span-3"
               placeholder="••••••••"
+              disabled={isCreating}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="col-span-3"
+              placeholder="First Name (optional)"
+              disabled={isCreating}
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="surname" className="text-right">
+              Surname
+            </Label>
+            <Input
+              id="surname"
+              value={surname}
+              onChange={(e) => setSurname(e.target.value)}
+              className="col-span-3"
+              placeholder="Last Name (optional)"
               disabled={isCreating}
             />
           </div>

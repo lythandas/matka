@@ -8,6 +8,9 @@ interface User {
   username: string;
   role: string; // Now stores role name
   permissions: string[]; // Permissions derived from the role
+  name?: string; // New
+  surname?: string; // New
+  profile_image_url?: string; // New
 }
 
 interface AuthContextType {
@@ -18,6 +21,7 @@ interface AuthContextType {
   logout: () => void;
   usersExist: boolean | null; // New state to track if any users exist
   fetchUsersExist: () => Promise<void>; // Function to fetch user existence status
+  updateUser: (updatedUserData: Partial<User>, newToken?: string) => void; // New function to update user in context
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,8 +113,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [logout]);
 
+  const updateUser = useCallback((updatedUserData: Partial<User>, newToken?: string) => {
+    setUser((prevUser) => {
+      if (!prevUser) return null;
+      const newUser = { ...prevUser, ...updatedUserData };
+      localStorage.setItem('authUser', JSON.stringify(newUser));
+      return newUser;
+    });
+    if (newToken) {
+      setToken(newToken);
+      localStorage.setItem('authToken', newToken);
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
