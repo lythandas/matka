@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import fs from 'fs/promises';
+import { FastifyBaseLogger } from 'fastify'; // Import FastifyBaseLogger
 
 export const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -16,22 +17,22 @@ export async function processAndSaveImage(
   imageBase64: string,
   imageType: string,
   backendBaseUrl: string,
-  log: (obj: any, msg?: string) => void // Logger function from Fastify
+  log: FastifyBaseLogger // Changed to FastifyBaseLogger
 ): Promise<{ [key: string]: string }> {
   const buffer = Buffer.from(imageBase64, 'base64');
 
   if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
-    log({ bufferLength: buffer.length }, `Image size exceeds limit (${MAX_IMAGE_SIZE_BYTES} bytes).`);
+    log.warn({ bufferLength: buffer.length }, `Image size exceeds limit (${MAX_IMAGE_SIZE_BYTES} bytes).`); // Updated call
     throw new Error(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
   }
 
   if (!imageType.startsWith('image/')) {
-    log({ imageType }, `Invalid image type received.`);
+    log.warn({ imageType }, `Invalid image type received.`); // Updated call
     throw new Error('Invalid image type.');
   }
   const fileExtension = imageType.split('/')[1];
   if (!['jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension)) {
-    log({ fileExtension }, `Unsupported image file extension.`);
+    log.warn({ fileExtension }, `Unsupported image file extension.`); // Updated call
     throw new Error('Unsupported image file format.');
   }
 
@@ -48,27 +49,27 @@ export async function processAndSaveImage(
     let processedBuffer: Buffer = buffer;
     if (sizeKey !== 'original') {
       const { width, height } = IMAGE_SIZES[sizeKey];
-      log(`Resizing image to ${width}x${height} for file: ${objectName}`);
+      log.info(`Resizing image to ${width}x${height} for file: ${objectName}`); // Updated call
       try {
         processedBuffer = await sharp(buffer)
           .resize(width, height, { fit: 'inside', withoutEnlargement: true })
           .toBuffer();
-        log(`Image resized to ${sizeKey}. New buffer size: ${processedBuffer.length}`);
+        log.info(`Image resized to ${sizeKey}. New buffer size: ${processedBuffer.length}`); // Updated call
       } catch (sharpError) {
-        log({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
+        log.warn({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`); // Updated call
         continue;
       }
     }
 
     await fs.writeFile(filePath, processedBuffer);
-    log(`Image '${objectName}' saved locally at '${filePath}'.`);
+    log.info(`Image '${objectName}' saved locally at '${filePath}'.`); // Updated call
     imageUrls[sizeKey] = publicUrl;
   }
 
   return imageUrls;
 }
 
-export async function deleteImageFiles(imageUrls: { [key: string]: string }, log: (obj: any, msg?: string) => void) {
+export async function deleteImageFiles(imageUrls: { [key: string]: string }, log: FastifyBaseLogger) { // Changed to FastifyBaseLogger
   for (const sizeKey of Object.keys(imageUrls)) {
     const imageUrl = imageUrls[sizeKey];
     if (imageUrl) {
@@ -77,9 +78,9 @@ export async function deleteImageFiles(imageUrls: { [key: string]: string }, log
         const fileName = path.basename(url.pathname);
         const filePath = path.join(UPLOADS_DIR, fileName);
         await fs.unlink(filePath);
-        log(`Image file '${fileName}' deleted from local storage.`);
+        log.info(`Image file '${fileName}' deleted from local storage.`); // Updated call
       } catch (fileError) {
-        log({ fileError }, `Could not delete local image file for URL: ${imageUrl}. It might not exist.`);
+        log.warn({ fileError }, `Could not delete local image file for URL: ${imageUrl}. It might not exist.`); // Updated call
       }
     }
   }

@@ -31,7 +31,7 @@ const uploadsRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Use the environment variable for the backend's internal URL
       const backendBaseUrl = process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001'; 
-      const imageUrls = await processAndSaveImage(imageBase64, imageType, backendBaseUrl, fastify.log.warn);
+      const imageUrls = await processAndSaveImage(imageBase64, imageType, backendBaseUrl, fastify.log); // Passed fastify.log directly
       
       reply.status(200).send({ imageUrls });
     } catch (error: any) {
