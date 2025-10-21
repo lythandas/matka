@@ -343,7 +343,7 @@ const Index = () => {
                     className="w-full resize-none"
                   />
 
-                  {/* Content Previews */}
+                  {/* Content Previews - Adjusted order */}
                   {(uploadedMediaInfo || spotifyEmbedUrl || coordinates) && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <h4 className="text-lg font-semibold">Content Preview:</h4>
@@ -548,11 +548,6 @@ const Index = () => {
                         ></iframe>
                       </div>
                     )}
-                    {post.coordinates && (
-                      <div className="mb-4">
-                        <MapComponent coordinates={post.coordinates} />
-                      </div>
-                    )}
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
                       <div className="flex space-x-2">
@@ -592,6 +587,11 @@ const Index = () => {
                         )}
                       </div>
                     </div>
+                    {post.coordinates && ( // Moved coordinates to the bottom
+                      <div className="mt-4">
+                        <MapComponent coordinates={post.coordinates} />
+                      </div>
+                    )}
                   </CardContent>
                 </ShineCard>
               ))}

@@ -155,14 +155,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               ></iframe>
             </div>
           )}
-          {post.coordinates && (
-            <div className="w-full h-64 rounded-md overflow-hidden mb-4">
+          <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4"> {/* Added mb-4 for spacing */}
+            {post.message}
+          </p>
+          {post.coordinates && ( // Moved coordinates to the bottom
+            <div className="w-full h-64 rounded-md overflow-hidden"> {/* Removed mb-4 */}
               <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
             </div>
           )}
-          <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-            {post.message}
-          </p>
         </div>
 
         {canGoPrevious && (
