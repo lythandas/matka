@@ -39,6 +39,7 @@ import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
 import { Post, Journey } from '@/types'; // Centralized Post and Journey interfaces
+import CreateJourneyDialog from '@/components/CreateJourneyDialog'; // Ensure this import is present
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
@@ -633,6 +634,7 @@ const Index = () => {
       )}
 
       <CreateJourneyDialog
+        key="create-journey-dialog" // Added a key here
         isOpen={isCreateJourneyDialogOpen}
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
