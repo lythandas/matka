@@ -16,6 +16,7 @@ import { LogOut, Settings, User as UserIcon } from 'lucide-react';
 import LoginDialog from './LoginDialog';
 import RegisterDialog from './RegisterDialog';
 import ManageAccountDialog from './ManageAccountDialog'; // Will create this next
+import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 
 const UserProfileDropdown: React.FC = () => {
   const { isAuthenticated, user, logout, usersExist } = useAuth();
@@ -24,7 +25,6 @@ const UserProfileDropdown: React.FC = () => {
   const [isManageAccountDialogOpen, setIsManageAccountDialogOpen] = useState<boolean>(false);
 
   const displayName = user?.name || user?.username;
-  const fallbackInitials = user?.name ? user.name.split(' ').map(n => n[0]).join('') : (user?.username ? user.username[0] : '?');
 
   const handleAuthButtonClick = () => {
     if (isAuthenticated) {
@@ -70,7 +70,7 @@ const UserProfileDropdown: React.FC = () => {
                 <AvatarImage src={user.profile_image_url} alt={displayName} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white">
-                  {fallbackInitials}
+                  {getAvatarInitials(user?.name, user?.username)}
                 </AvatarFallback>
               )}
             </Avatar>

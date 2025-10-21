@@ -9,6 +9,7 @@ import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 
 interface Post {
   id: string;
@@ -80,7 +81,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const dialogImageUrl = post.image_urls?.large || '/placeholder.svg';
   const fullscreenImageUrl = post.image_urls?.original || post.image_urls?.large || '/placeholder.svg';
   const displayName = post.author_name || post.author_username;
-  const fallbackInitials = post.author_name ? post.author_name.split(' ').map(n => n[0]).join('') : (post.author_username ? post.author_username[0] : '?');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -92,7 +92,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 <AvatarImage src={post.author_profile_image_url} alt={displayName} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  {fallbackInitials}
+                  {getAvatarInitials(post.author_name, post.author_username)}
                 </AvatarFallback>
               )}
             </Avatar>

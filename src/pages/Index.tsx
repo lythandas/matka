@@ -45,6 +45,7 @@ import RegisterDialog from '@/components/RegisterDialog';
 import EditPostDialog from '@/components/EditPostDialog';
 import { useNavigate } from 'react-router-dom';
 import UserProfileDropdown from '@/components/UserProfileDropdown'; // Import new component
+import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 
 interface Post {
   id: string;
@@ -581,7 +582,7 @@ const Index = () => {
                         />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                          {post.author_name ? post.author_name[0] : post.author_username[0]}
+                          {getAvatarInitials(post.author_name, post.author_username)}
                         </div>
                       )}
                       <div>

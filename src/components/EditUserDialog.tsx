@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 
 interface User {
   id: string;
@@ -254,7 +255,6 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
     return null;
   }
 
-  const fallbackInitials = user.name ? user.name.split(' ').map(n => n[0]).join('') : (user.username ? user.username[0] : '?');
   const currentImageSrc = localPreviewUrl || profileImageUrl; // Prioritize local preview
 
   return (
@@ -273,7 +273,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
                 <AvatarImage src={currentImageSrc} alt={user.name || user.username} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-4xl">
-                  {fallbackInitials}
+                  {getAvatarInitials(user.name, user.username)}
                 </AvatarFallback>
               )}
             </Avatar>
