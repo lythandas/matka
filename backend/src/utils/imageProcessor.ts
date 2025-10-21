@@ -16,7 +16,7 @@ export const IMAGE_SIZES = {
 export async function processAndSaveImage(
   imageBase64: string,
   imageType: string,
-  backendBaseUrl: string,
+  backendBaseUrl: string, // This parameter will now be the EXTERNAL URL
   log: FastifyBaseLogger // Changed to FastifyBaseLogger
 ): Promise<{ [key: string]: string }> {
   const buffer = Buffer.from(imageBase64, 'base64');
@@ -44,7 +44,7 @@ export async function processAndSaveImage(
   for (const sizeKey of [...Object.keys(IMAGE_SIZES), 'original'] as Array<keyof typeof IMAGE_SIZES | 'original'>) {
     const objectName = `${baseFileName}-${sizeKey}.${fileExtension}`;
     const filePath = path.join(UPLOADS_DIR, objectName);
-    const publicUrl = `${backendBaseUrl}/uploads/${objectName}`;
+    const publicUrl = `${backendBaseUrl}/uploads/${objectName}`; // Use the provided backendBaseUrl (external)
 
     let processedBuffer: Buffer = buffer;
     if (sizeKey !== 'original') {
