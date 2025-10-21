@@ -297,8 +297,9 @@ const Index = () => {
 
   const showMatkaAsMainTitle = !selectedJourney && !loadingJourneys && journeys.length === 0;
 
-  const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
-  const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
+  // Corrected: Removed localPreviewUrl reference as it's not a state in Index.tsx
+  const currentMediaPreviewUrl = uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null;
+  const currentMediaType = uploadedMediaInfo?.type === 'video' ? 'video' : 'image'; // Simplified based on uploadedMediaInfo
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
