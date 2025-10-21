@@ -6,9 +6,9 @@ import { Compass } from 'lucide-react';
 const AppFooter: React.FC = () => {
   return (
     <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center justify-center space-y-1 mt-8">
-      <div className="flex items-center space-x-2">
-        <Compass className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <span className="font-semibold text-blue-600 dark:text-blue-400">Matka</span>
+      <div className="flex flex-col items-center space-y-1 mb-1"> {/* Changed to flex-col and added margin-bottom */}
+        <Compass className="h-5 w-5 text-blue-600 dark:text-blue-400" /> {/* Slightly larger icon */}
+        <span className="font-bold text-lg text-blue-600 dark:text-blue-400">Matka</span> {/* Larger and bolder text */}
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
         Matka means 'journey' or 'trip' in Finnish, perfectly capturing the essence of your travel and life experiences.
