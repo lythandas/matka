@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench } from 'lucide-react';
+import { Trash2, Plus, XCircle, ChevronDown, Compass, Wrench, Edit } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,8 @@ import GridPostCard from '@/components/GridPostCard';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
+import EditPostDialog from '@/components/EditPostDialog'; // Import EditPostDialog
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 interface Post {
   id: string;
@@ -56,6 +58,7 @@ interface Post {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const Index = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const { isAuthenticated, user, logout, usersExist, fetchUsersExist } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, fetchJourneys, loadingJourneys } = useJourneys();
   const [title, setTitle] = useState<string>('');
@@ -77,6 +80,9 @@ const Index = () => {
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
+
+  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false); // New state for edit post dialog
+  const [postToEdit, setPostToEdit] = useState<Post | null>(null); // New state for post being edited
 
   // Effect to check backend connectivity
   useEffect(() => {
@@ -288,6 +294,19 @@ const Index = () => {
     setSelectedPostIndex(null);
   };
 
+  const handleEditPost = (post: Post) => {
+    setPostToEdit(post);
+    setIsEditPostDialogOpen(true);
+  };
+
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+    // If the detailed view is open for this post, update it too
+    if (selectedPostForDetail?.id === updatedPost.id) {
+      setSelectedPostForDetail(updatedPost);
+    }
+  };
+
   const handleAuthButtonClick = () => {
     if (isAuthenticated) {
       logout();
@@ -348,7 +367,7 @@ const Index = () => {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setIsCreateUserDialogOpen(true)}
+                onClick={() => navigate('/admin')} // Navigate to AdminPage
                 className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent"
               >
                 <Wrench className="h-[1.2rem] w-[1.2rem]" />
@@ -567,30 +586,42 @@ const Index = () => {
                     )}
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                      {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('delete_any_post') || user?.role === 'admin') && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="icon" className="ml-4 hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your post
-                                and remove its data from our servers.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                      <div className="flex space-x-2"> {/* Container for action buttons */}
+                        {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('edit_any_post') || user?.role === 'admin') && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('delete_any_post') || user?.role === 'admin') && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete your post
+                                  and remove its data from our servers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {format(new Date(post.created_at), 'PPP p')}
@@ -624,6 +655,15 @@ const Index = () => {
           totalPosts={posts.length}
           onNext={handleNextPost}
           onPrevious={handlePreviousPost}
+        />
+      )}
+
+      {postToEdit && (
+        <EditPostDialog
+          isOpen={isEditPostDialogOpen}
+          onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
+          post={postToEdit}
+          onUpdate={handlePostUpdated}
         />
       )}
 

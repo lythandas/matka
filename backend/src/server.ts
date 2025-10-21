@@ -240,6 +240,106 @@ fastify.post('/users', async (request, reply) => {
   }
 });
 
+// Get all users (Admin only)
+fastify.get('/users', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_users')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_users permission can view users.' });
+    return;
+  }
+  try {
+    const result = await pgClient.query('SELECT id, username, role, permissions, created_at FROM users ORDER BY created_at ASC');
+    return result.rows;
+  } catch (error) {
+    fastify.log.error({ error }, 'Error fetching users');
+    reply.status(500).send({ message: 'Failed to fetch users' });
+  }
+});
+
+// Update a user (Admin only)
+fastify.put('/users/:id', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_users')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_users permission can update users.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+    const { username, role, permissions } = request.body as {
+      username?: string;
+      role?: string;
+      permissions?: string[];
+    };
+
+    const fieldsToUpdate: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (username !== undefined) {
+      fieldsToUpdate.push(`username = $${paramIndex++}`);
+      params.push(username);
+    }
+    if (role !== undefined) {
+      fieldsToUpdate.push(`role = $${paramIndex++}`);
+      params.push(role);
+    }
+    if (permissions !== undefined) {
+      fieldsToUpdate.push(`permissions = $${paramIndex++}`);
+      params.push(JSON.stringify(permissions));
+    }
+
+    if (fieldsToUpdate.length === 0) {
+      reply.status(400).send({ message: 'No fields provided for update.' });
+      return;
+    }
+
+    params.push(id); // Add ID as the last parameter
+
+    const query = `UPDATE users SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramIndex} RETURNING id, username, role, permissions`;
+    const result = await pgClient.query(query, params);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'User not found.' });
+      return;
+    }
+    reply.status(200).send(result.rows[0]);
+  } catch (error: any) {
+    if (error.code === '23505') { // Unique violation error code
+      reply.status(409).send({ message: 'Username already exists.' });
+    } else {
+      fastify.log.error({ error }, 'Error updating user');
+      reply.status(500).send({ message: 'Failed to update user' });
+    }
+  }
+});
+
+// Delete a user (Admin only)
+fastify.delete('/users/:id', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_users')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_users permission can delete users.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+    // Prevent admin from deleting themselves
+    if (request.user.id === id) {
+      reply.status(403).send({ message: 'Forbidden: You cannot delete your own admin account.' });
+      return;
+    }
+
+    const result = await pgClient.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'User not found.' });
+      return;
+    }
+    reply.status(200).send({ message: 'User deleted successfully', id: result.rows[0].id });
+  } catch (error) {
+    fastify.log.error({ error }, 'Error deleting user');
+    reply.status(500).send({ message: 'Failed to delete user' });
+  }
+});
+
 
 // Get all journeys (now filtered by user_id or all for admin)
 fastify.get('/journeys', async (request, reply) => {
@@ -292,6 +392,98 @@ fastify.post('/journeys', async (request, reply) => {
     reply.status(500).send({ message: 'Failed to create journey' });
   }
 });
+
+// Update a journey
+fastify.put('/journeys/:id', async (request, reply) => {
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+    const { name } = request.body as { name: string };
+
+    if (!name || name.trim() === '') {
+      reply.status(400).send({ message: 'Journey name is required.' });
+      return;
+    }
+
+    // Check if the user owns the journey or has admin/edit_any_journey permissions
+    const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const journey = journeyResult.rows[0];
+
+    if (!journey) {
+      reply.status(404).send({ message: 'Journey not found.' });
+      return;
+    }
+
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.role === 'admin';
+    const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
+
+    if (!isOwner && !isAdmin && !canEditAnyJourney) {
+      reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
+      return;
+    }
+
+    const result = await pgClient.query(
+      'UPDATE journeys SET name = $1 WHERE id = $2 RETURNING *',
+      [name.trim(), id]
+    );
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Journey not found.' });
+      return;
+    }
+    reply.status(200).send(result.rows[0]);
+  } catch (error) {
+    fastify.log.error({ error }, 'Error updating journey');
+    reply.status(500).send({ message: 'Failed to update journey' });
+  }
+});
+
+// Delete a journey
+fastify.delete('/journeys/:id', async (request, reply) => {
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+
+    // Check if the user owns the journey or has admin/delete_any_journey permissions
+    const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const journey = journeyResult.rows[0];
+
+    if (!journey) {
+      reply.status(404).send({ message: 'Journey not found.' });
+      return;
+    }
+
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.role === 'admin';
+    const canDeleteAnyJourney = request.user.permissions.includes('delete_any_journey');
+
+    if (!isOwner && !isAdmin && !canDeleteAnyJourney) {
+      reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
+      return;
+    }
+
+    const result = await pgClient.query('DELETE FROM journeys WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Journey not found.' });
+      return;
+    }
+    reply.status(200).send({ message: 'Journey deleted successfully', id: result.rows[0].id });
+  } catch (error) {
+    fastify.log.error({ error }, 'Error deleting journey');
+    reply.status(500).send({ message: 'Failed to delete journey' });
+  }
+});
+
 
 // Get all posts for a specific journey (or all if no journeyId provided)
 fastify.get('/posts', async (request, reply) => {
@@ -463,6 +655,89 @@ fastify.post('/posts', async (request, reply) => {
     reply.status(500).send({ message: 'Failed to create post' });
   }
 });
+
+// Update a post by ID
+fastify.put('/posts/:id', async (request, reply) => {
+  if (!request.user || !request.user.id) {
+    reply.status(401).send({ message: 'Authentication required.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+    const { title, message, imageUrls, spotifyEmbedUrl, coordinates } = request.body as {
+      title?: string;
+      message?: string;
+      imageUrls?: { small?: string; medium?: string; large?: string; original?: string } | null;
+      spotifyEmbedUrl?: string | null;
+      coordinates?: { lat: number; lng: number } | null;
+    };
+
+    // First, get the post to check ownership
+    const getPostResult = await pgClient.query('SELECT user_id FROM posts WHERE id = $1', [id]);
+    const post = getPostResult.rows[0];
+
+    if (!post) {
+      reply.status(404).send({ message: 'Post not found.' });
+      return;
+    }
+
+    // Check ownership or admin permission
+    const isOwner = post.user_id === request.user.id;
+    const isAdmin = request.user.role === 'admin';
+    const canEditAnyPost = request.user.permissions.includes('edit_any_post');
+
+    if (!isOwner && !isAdmin && !canEditAnyPost) {
+      reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
+      return;
+    }
+
+    const fieldsToUpdate: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (title !== undefined) {
+      fieldsToUpdate.push(`title = $${paramIndex++}`);
+      params.push(title || null);
+    }
+    if (message !== undefined) {
+      fieldsToUpdate.push(`message = $${paramIndex++}`);
+      params.push(message);
+    }
+    if (imageUrls !== undefined) {
+      fieldsToUpdate.push(`image_urls = $${paramIndex++}`);
+      params.push(imageUrls ? JSON.stringify(imageUrls) : null);
+    }
+    if (spotifyEmbedUrl !== undefined) {
+      fieldsToUpdate.push(`spotify_embed_url = $${paramIndex++}`);
+      params.push(spotifyEmbedUrl || null);
+    }
+    if (coordinates !== undefined) {
+      fieldsToUpdate.push(`coordinates = $${paramIndex++}`);
+      params.push(coordinates ? JSON.stringify(coordinates) : null);
+    }
+
+    if (fieldsToUpdate.length === 0) {
+      reply.status(400).send({ message: 'No fields provided for update.' });
+      return;
+    }
+
+    params.push(id); // Add ID as the last parameter
+
+    const query = `UPDATE posts SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+    const result = await pgClient.query(query, params);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Post not found.' });
+      return;
+    }
+    reply.status(200).send(result.rows[0]);
+  } catch (error) {
+    fastify.log.error({ error }, 'Error updating post');
+    reply.status(500).send({ message: 'Failed to update post' });
+  }
+});
+
 
 // Delete a post by ID
 fastify.delete('/posts/:id', async (request, reply) => {
