@@ -58,6 +58,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
   const [name, setName] = useState<string>(user.name || '');
   const [surname, setSurname] = useState<string>(user.surname || '');
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(user.profile_image_url);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // NEW STATE for local file preview
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string>('');
@@ -72,6 +73,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
     setName(user.name || '');
     setSurname(user.surname || '');
     setProfileImageUrl(user.profile_image_url);
+    setLocalPreviewUrl(null); // Clear local preview on user change/dialog open
     setSelectedFile(null); // Clear selected file on new user prop
     setCurrentRolePermissions(user.permissions);
 
@@ -148,12 +150,14 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
 
       const data = await response.json();
       setProfileImageUrl(data.imageUrls.medium || data.imageUrls.original);
+      setLocalPreviewUrl(null); // Clear local preview once server URL is available
       showSuccess('Profile image uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading image:', error);
       showError(error.message || 'Failed to upload image.');
       setSelectedFile(null);
       setProfileImageUrl(user.profile_image_url); // Revert to current user's image on error
+      setLocalPreviewUrl(null); // Clear local preview on error
     } finally {
       setIsUploadingImage(false);
     }
@@ -167,6 +171,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setProfileImageUrl(user.profile_image_url);
+        setLocalPreviewUrl(null); // Clear local preview
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -175,22 +180,25 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         showError('Only image files are allowed.');
         setSelectedFile(null);
         setProfileImageUrl(user.profile_image_url);
+        setLocalPreviewUrl(null); // Clear local preview
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       setSelectedFile(file);
-      setProfileImageUrl(URL.createObjectURL(file)); // Show local preview
+      setLocalPreviewUrl(URL.createObjectURL(file)); // Set local preview
       uploadImageToServer(file);
     } else {
       setSelectedFile(null);
       setProfileImageUrl(user.profile_image_url);
+      setLocalPreviewUrl(null); // Clear local preview
     }
   };
 
   const handleClearImage = () => {
     setSelectedFile(null);
     setProfileImageUrl(undefined);
+    setLocalPreviewUrl(null); // Clear local preview
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -247,6 +255,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
   }
 
   const fallbackInitials = user.name ? user.name.split(' ').map(n => n[0]).join('') : (user.username ? user.username[0] : '?');
+  const currentImageSrc = localPreviewUrl || profileImageUrl; // Prioritize local preview
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -260,8 +269,8 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         <div className="grid gap-4 py-4">
           <div className="flex flex-col items-center gap-4 mb-4">
             <Avatar className="h-24 w-24">
-              {profileImageUrl ? (
-                <AvatarImage src={profileImageUrl} alt={user.name || user.username} />
+              {currentImageSrc ? (
+                <AvatarImage src={currentImageSrc} alt={user.name || user.username} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-4xl">
                   {fallbackInitials}

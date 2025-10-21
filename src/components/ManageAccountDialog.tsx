@@ -41,6 +41,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   const [name, setName] = useState<string>(currentUser.name || '');
   const [surname, setSurname] = useState<string>(currentUser.surname || '');
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(currentUser.profile_image_url);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // NEW STATE for local file preview
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -50,6 +51,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     setName(currentUser.name || '');
     setSurname(currentUser.surname || '');
     setProfileImageUrl(currentUser.profile_image_url);
+    setLocalPreviewUrl(null); // Clear local preview on user change/dialog open
     setSelectedFile(null); // Clear selected file on dialog open/user change
   }, [currentUser, isOpen]);
 
@@ -89,12 +91,14 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
       const data = await response.json();
       // Assuming the backend returns an object with different sizes, we'll use the medium or original for profile
       setProfileImageUrl(data.imageUrls.medium || data.imageUrls.original);
+      setLocalPreviewUrl(null); // Clear local preview once server URL is available
       showSuccess('Profile image uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading image:', error);
       showError(error.message || 'Failed to upload image.');
       setSelectedFile(null);
       setProfileImageUrl(currentUser.profile_image_url); // Revert to current user's image on error
+      setLocalPreviewUrl(null); // Clear local preview on error
     } finally {
       setIsUploadingImage(false);
     }
@@ -108,6 +112,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         showError(`Image size exceeds ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setProfileImageUrl(currentUser.profile_image_url);
+        setLocalPreviewUrl(null); // Clear local preview
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -116,23 +121,26 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         showError('Only image files are allowed.');
         setSelectedFile(null);
         setProfileImageUrl(currentUser.profile_image_url);
+        setLocalPreviewUrl(null); // Clear local preview
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       setSelectedFile(file);
       // Show a local preview immediately
-      setProfileImageUrl(URL.createObjectURL(file));
+      setLocalPreviewUrl(URL.createObjectURL(file));
       uploadImageToServer(file);
     } else {
       setSelectedFile(null);
       setProfileImageUrl(currentUser.profile_image_url);
+      setLocalPreviewUrl(null); // Clear local preview
     }
   };
 
   const handleClearImage = () => {
     setSelectedFile(null);
     setProfileImageUrl(undefined); // Set to undefined to clear it in the backend
+    setLocalPreviewUrl(null); // Clear local preview
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -178,6 +186,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   };
 
   const fallbackInitials = currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('') : (currentUser.username ? currentUser.username[0] : '?');
+  const currentImageSrc = localPreviewUrl || profileImageUrl; // Prioritize local preview
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -191,8 +200,8 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         <div className="grid gap-4 py-4">
           <div className="flex flex-col items-center gap-4 mb-4">
             <Avatar className="h-24 w-24">
-              {profileImageUrl ? (
-                <AvatarImage src={profileImageUrl} alt={currentUser.name || currentUser.username} />
+              {currentImageSrc ? (
+                <AvatarImage src={currentImageSrc} alt={currentUser.name || currentUser.username} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-4xl">
                   {fallbackInitials}
