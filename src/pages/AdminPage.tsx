@@ -13,6 +13,8 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import EditUserDialog from '@/components/EditUserDialog';
 import EditJourneyDialog from '@/components/EditJourneyDialog';
+import CreateRoleDialog from '@/components/CreateRoleDialog'; // New import
+import EditRoleDialog from '@/components/EditRoleDialog';     // New import
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +27,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
-import { getPermissionDisplayName } from '@/lib/permissions'; // Import from new utility
+import { getPermissionDisplayName } from '@/lib/permissions';
 
 interface User {
   id: string;
   username: string;
-  role: string;
-  permissions: string[];
+  role: string; // Now role name
+  permissions: string[]; // Permissions derived from the role
   created_at: string;
 }
 
 interface Journey {
   id: string;
   name: string;
-  user_id: string; // Added user_id to journey interface
+  user_id: string;
+  created_at: string;
+}
+
+interface Role { // New interface for roles
+  id: string;
+  name: string;
+  permissions: string[];
   created_at: string;
 }
 
@@ -54,11 +63,18 @@ const AdminPage: React.FC = () => {
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [roles, setRoles] = useState<Role[]>([]); // New state for roles
+  const [loadingRoles, setLoadingRoles] = useState<boolean>(true); // New state for loading roles
+  const [isCreateRoleDialogOpen, setIsCreateRoleDialogOpen] = useState<boolean>(false); // New state
+  const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState<boolean>(false);     // New state
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);                 // New state
+
   const [isEditJourneyDialogOpen, setIsEditJourneyDialogOpen] = useState<boolean>(false);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
 
   const fetchUsers = useCallback(async () => {
-    if (!token || currentUser?.role !== 'admin') {
+    if (!token || currentUser?.role !== 'admin' || !currentUser?.permissions.includes('manage_users')) {
       setLoadingUsers(false);
       return;
     }
@@ -82,18 +98,50 @@ const AdminPage: React.FC = () => {
     }
   }, [token, currentUser]);
 
+  const fetchRoles = useCallback(async () => {
+    if (!token || currentUser?.role !== 'admin' || !currentUser?.permissions.includes('manage_roles')) {
+      setLoadingRoles(false);
+      return;
+    }
+    setLoadingRoles(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch roles');
+      }
+      const data: Role[] = await response.json();
+      setRoles(data);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      showError('Failed to load roles.');
+    } finally {
+      setLoadingRoles(false);
+    }
+  }, [token, currentUser]);
+
   useEffect(() => {
     if (currentUser?.role === 'admin') {
       fetchUsers();
+      fetchRoles(); // Fetch roles for admin view
       fetchJourneys(); // Also fetch journeys for admin view
     } else {
       showError('Access Denied: You must be an administrator to view this page.');
       navigate('/'); // Redirect non-admins
     }
-  }, [currentUser, navigate, fetchUsers, fetchJourneys]);
+  }, [currentUser, navigate, fetchUsers, fetchRoles, fetchJourneys]);
 
   const handleUserUpdated = (updatedUser: User) => {
     setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+  };
+
+  const handleRoleUpdated = (updatedRole: Role) => {
+    setRoles((prev) => prev.map((r) => (r.id === updatedRole.id ? updatedRole : r)));
+    // Also re-fetch users as their displayed permissions might change
+    fetchUsers();
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -119,6 +167,33 @@ const AdminPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting user:', error);
       showError(error.message || 'Failed to delete user.');
+    }
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    if (!token) {
+      showError('Authentication required to delete a role.');
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/roles/${roleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete role');
+      }
+
+      showSuccess('Role deleted successfully!');
+      fetchRoles(); // Re-fetch roles to update the list
+      fetchUsers(); // Re-fetch users as their roles might be affected
+    } catch (error: any) {
+      console.error('Error deleting role:', error);
+      showError(error.message || 'Failed to delete role.');
     }
   };
 
@@ -164,8 +239,9 @@ const AdminPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3"> {/* Updated to 3 columns */}
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="roles">Role Management</TabsTrigger> {/* New Tab */}
             <TabsTrigger value="journeys">Journey Management</TabsTrigger>
           </TabsList>
 
@@ -189,8 +265,8 @@ const AdminPage: React.FC = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Username</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Permissions</TableHead>
+                          <TableHead>Role</TableHead> {/* Changed from Permissions */}
+                          <TableHead>Permissions</TableHead> {/* New column to show derived permissions */}
                           <TableHead>Created At</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -199,7 +275,7 @@ const AdminPage: React.FC = () => {
                         {users.map((user) => (
                           <TableRow key={user.id}>
                             <TableCell className="font-medium">{user.username}</TableCell>
-                            <TableCell>{user.role}</TableCell>
+                            <TableCell>{user.role}</TableCell> {/* Display role name */}
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {user.permissions.length > 0 ? (
@@ -246,6 +322,99 @@ const AdminPage: React.FC = () => {
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                                       <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* New Role Management Tab */}
+          <TabsContent value="roles" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-2xl font-bold">Manage Roles</CardTitle>
+                <Button onClick={() => setIsCreateRoleDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+                  <Plus className="mr-2 h-4 w-4" /> Create New Role
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {loadingRoles ? (
+                  <div className="flex justify-center items-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                    <p className="ml-2 text-gray-600 dark:text-gray-400">Loading roles...</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Role Name</TableHead>
+                          <TableHead>Permissions</TableHead>
+                          <TableHead>Created At</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {roles.map((role) => (
+                          <TableRow key={role.id}>
+                            <TableCell className="font-medium">{role.name}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {role.permissions.length > 0 ? (
+                                  role.permissions.map((perm) => (
+                                    <span key={perm} className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full">
+                                      {getPermissionDisplayName(perm)}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-500">None</span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>{format(new Date(role.created_at), 'PPP')}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => { setSelectedRole(role); setIsEditRoleDialogOpen(true); }}
+                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="destructive"
+                                      size="icon"
+                                      disabled={role.name === 'admin' || role.name === 'user'} // Prevent deleting default roles
+                                      className="hover:ring-2 hover:ring-blue-500"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the role "{role.name}".
+                                        You cannot delete roles that have users assigned to them or are default roles.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteRole(role.id)}>
                                         Continue
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -340,6 +509,7 @@ const AdminPage: React.FC = () => {
       <CreateUserDialog
         isOpen={isCreateUserDialogOpen}
         onClose={() => { setIsCreateUserDialogOpen(false); fetchUsers(); }}
+        onUserCreated={fetchUsers}
       />
 
       {selectedUser && (
@@ -348,6 +518,21 @@ const AdminPage: React.FC = () => {
           onClose={() => { setIsEditUserDialogOpen(false); setSelectedUser(null); }}
           user={selectedUser}
           onUserUpdated={handleUserUpdated}
+        />
+      )}
+
+      <CreateRoleDialog
+        isOpen={isCreateRoleDialogOpen}
+        onClose={() => { setIsCreateRoleDialogOpen(false); fetchRoles(); }}
+        onRoleCreated={fetchRoles}
+      />
+
+      {selectedRole && (
+        <EditRoleDialog
+          isOpen={isEditRoleDialogOpen}
+          onClose={() => { setIsEditRoleDialogOpen(false); setSelectedRole(null); }}
+          role={selectedRole}
+          onRoleUpdated={handleRoleUpdated}
         />
       )}
 

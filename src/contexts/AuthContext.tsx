@@ -6,8 +6,8 @@ import { showError, showSuccess } from '@/utils/toast';
 interface User {
   id: string;
   username: string;
-  role: string;
-  permissions: string[];
+  role: string; // Now stores role name
+  permissions: string[]; // Permissions derived from the role
 }
 
 interface AuthContextType {

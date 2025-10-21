@@ -12,18 +12,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
-import { ALL_PERMISSIONS, getPermissionDisplayName } from '@/lib/permissions'; // Import from new utility
+import { getPermissionDisplayName } from '@/lib/permissions';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface User {
   id: string;
   username: string;
-  role: string;
-  permissions: string[];
+  role: string; // Now role name
+  permissions: string[]; // Permissions derived from the role
   created_at: string;
+}
+
+interface Role {
+  id: string;
+  name: string;
+  permissions: string[];
 }
 
 interface EditUserDialogProps {
@@ -38,21 +50,54 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, onUserUpdated }) => {
   const { token, user: currentUser } = useAuth();
   const [username, setUsername] = useState<string>(user.username);
-  const [role, setRole] = useState<string>(user.role);
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>(user.permissions);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [loadingRoles, setLoadingRoles] = useState<boolean>(true);
+  const [currentRolePermissions, setCurrentRolePermissions] = useState<string[]>(user.permissions);
 
   useEffect(() => {
     setUsername(user.username);
-    setRole(user.role);
-    setSelectedPermissions(user.permissions);
-  }, [user]);
+    setCurrentRolePermissions(user.permissions); // Update permissions when user prop changes
+    const fetchRoles = async () => {
+      if (!token) return;
+      setLoadingRoles(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/roles`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch roles');
+        }
+        const data: Role[] = await response.json();
+        setRoles(data);
+        const userCurrentRole = data.find(r => r.name === user.role);
+        setSelectedRoleId(userCurrentRole ? userCurrentRole.id : (data.length > 0 ? data[0].id : ''));
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        showError('Failed to load roles for user editing.');
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
 
-  const handlePermissionChange = (permission: string, checked: boolean) => {
-    setSelectedPermissions((prev) =>
-      checked ? [...prev, permission] : prev.filter((p) => p !== permission)
-    );
-  };
+    if (isOpen) {
+      fetchRoles();
+    }
+  }, [isOpen, token, user]);
+
+  // Update displayed permissions when selected role changes
+  useEffect(() => {
+    const selectedRole = roles.find(r => r.id === selectedRoleId);
+    if (selectedRole) {
+      setCurrentRolePermissions(selectedRole.permissions);
+    } else {
+      setCurrentRolePermissions([]);
+    }
+  }, [selectedRoleId, roles]);
+
 
   const handleUpdateUser = async () => {
     if (!username.trim()) {
@@ -75,8 +120,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         },
         body: JSON.stringify({
           username: username.trim(),
-          role,
-          permissions: selectedPermissions,
+          role_id: selectedRoleId,
         }),
       });
 
@@ -108,7 +152,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         <DialogHeader>
           <DialogTitle>Edit User: {user.username}</DialogTitle>
           <DialogDescription>
-            Update user details, role, and permissions.
+            Update user details and role.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -129,33 +173,38 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="col-span-3 p-2 border rounded-md bg-background text-foreground"
-              disabled={isUpdating}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+            <Select value={selectedRoleId} onValueChange={setSelectedRoleId} disabled={isUpdating || loadingRoles || user.id === currentUser?.id}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingRoles ? (
+                  <SelectItem value="loading" disabled>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading roles...
+                  </SelectItem>
+                ) : (
+                  roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right mt-2">Permissions</Label>
-            <div className="col-span-3 space-y-2">
-              {ALL_PERMISSIONS.map((perm) => (
-                <div key={perm} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`perm-${perm}`}
-                    checked={selectedPermissions.includes(perm)}
-                    onCheckedChange={(checked) => handlePermissionChange(perm, !!checked)}
-                    disabled={isUpdating}
-                  />
-                  <Label htmlFor={`perm-${perm}`}>
-                    {getPermissionDisplayName(perm)}
-                  </Label>
-                </div>
-              ))}
+            <Label className="text-right mt-2">Permissions (from selected role)</Label>
+            <div className="col-span-3 space-y-2 p-2 border rounded-md bg-muted/50">
+              {currentRolePermissions.length > 0 ? (
+                currentRolePermissions.map((perm) => (
+                  <div key={perm} className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-blue-500" />
+                    <span>{getPermissionDisplayName(perm)}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No permissions assigned to this role.</p>
+              )}
             </div>
           </div>
         </div>
@@ -163,7 +212,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
           <Button variant="outline" onClick={onClose} disabled={isUpdating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleUpdateUser} disabled={!username.trim() || isUpdating} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleUpdateUser} disabled={!username.trim() || !selectedRoleId || isUpdating} className="hover:ring-2 hover:ring-blue-500">
             {isUpdating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

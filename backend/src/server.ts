@@ -44,85 +44,84 @@ fastify.register(fastifyStatic, {
   prefix: '/uploads/', // Serve files under /uploads/ route
 });
 
-// Ensure database tables exist (without creating default users/journeys/posts)
+// Ensure database tables exist and set up default roles
 async function ensureDbTable() {
-  // Check if users table exists
-  const usersTableCheck = await pgClient.query(`
-    SELECT EXISTS (
-      SELECT FROM pg_tables
-      WHERE schemaname = 'public' AND tablename  = 'users'
+  // Drop tables in correct order to avoid foreign key constraints issues
+  await pgClient.query('DROP TABLE IF EXISTS posts CASCADE;');
+  await pgClient.query('DROP TABLE IF EXISTS journeys CASCADE;');
+  await pgClient.query('DROP TABLE IF EXISTS users CASCADE;');
+  await pgClient.query('DROP TABLE IF EXISTS roles CASCADE;');
+  fastify.log.info('Existing posts, journeys, users, and roles tables dropped (if any).');
+
+  // Create roles table
+  await pgClient.query(`
+    CREATE TABLE roles (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL UNIQUE,
+      permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post']
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  const usersTableExists = usersTableCheck.rows[0].exists;
+  fastify.log.info('Roles table created.');
 
-  if (!usersTableExists) {
-    fastify.log.info('Users table not found, creating...');
-    await pgClient.query(`
-      CREATE TABLE users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        username TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'user', -- 'admin' or 'user'
-        permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post', 'create_journey', 'delete_journey']
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    fastify.log.info('Users table created.');
-  } else {
-    fastify.log.info('Users table already exists.');
+  // Create users table with foreign key to roles
+  await pgClient.query(`
+    CREATE TABLE users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT, -- Link to role
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  fastify.log.info('Users table created.');
+
+  // Create journeys table with foreign key to users
+  await pgClient.query(`
+    CREATE TABLE journeys (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
+      name TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  fastify.log.info('Journeys table created.');
+
+  // Create posts table with foreign key to journeys and users
+  await pgClient.query(`
+    CREATE TABLE posts (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
+      title TEXT,
+      message TEXT NOT NULL,
+      image_urls JSONB,
+      spotify_embed_url TEXT,
+      coordinates JSONB,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  fastify.log.info('Posts table created.');
+
+  // Insert default roles if they don't exist
+  const adminRoleResult = await pgClient.query("SELECT id FROM roles WHERE name = 'admin'");
+  if (adminRoleResult.rowCount === 0) {
+    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post', 'manage_roles', 'edit_any_post'];
+    await pgClient.query(
+      "INSERT INTO roles (name, permissions) VALUES ('admin', $1)",
+      [JSON.stringify(adminPermissions)]
+    );
+    fastify.log.info('Default admin role created.');
   }
 
-  // Check if journeys table exists
-  const journeysTableCheck = await pgClient.query(`
-    SELECT EXISTS (
-      SELECT FROM pg_tables
-      WHERE schemaname = 'public' AND tablename  = 'journeys'
+  const userRoleResult = await pgClient.query("SELECT id FROM roles WHERE name = 'user'");
+  if (userRoleResult.rowCount === 0) {
+    const userPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey'];
+    await pgClient.query(
+      "INSERT INTO roles (name, permissions) VALUES ('user', $1)",
+      [JSON.stringify(userPermissions)]
     );
-  `);
-  const journeysTableExists = journeysTableCheck.rows[0].exists;
-
-  if (!journeysTableExists) {
-    fastify.log.info('Journeys table not found, creating...');
-    await pgClient.query(`
-      CREATE TABLE journeys (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
-        name TEXT NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    fastify.log.info('Journeys table created.');
-  } else {
-    fastify.log.info('Journeys table already exists.');
-  }
-
-  // Check if posts table exists
-  const postsTableCheck = await pgClient.query(`
-    SELECT EXISTS (
-      SELECT FROM pg_tables
-      WHERE schemaname = 'public' AND tablename  = 'posts'
-    );
-  `);
-  const postsTableExists = postsTableCheck.rows[0].exists;
-
-  if (!postsTableExists) {
-    fastify.log.info('Posts table not found, creating...');
-    await pgClient.query(`
-      CREATE TABLE posts (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Link to user
-        title TEXT,
-        message TEXT NOT NULL,
-        image_urls JSONB,
-        spotify_embed_url TEXT,
-        coordinates JSONB,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    fastify.log.info('Posts table created.');
-  } else {
-    fastify.log.info('Posts table already exists.');
+    fastify.log.info('Default user role created.');
   }
 }
 
@@ -181,20 +180,27 @@ fastify.post('/register', async (request, reply) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post'];
+    const adminRoleResult = await pgClient.query("SELECT id, name, permissions FROM roles WHERE name = 'admin'");
+    const adminRole = adminRoleResult.rows[0];
+
+    if (!adminRole) {
+      reply.status(500).send({ message: 'Admin role not found. Database initialization error.' });
+      return;
+    }
+
     const result = await pgClient.query(
-      'INSERT INTO users (username, password_hash, role, permissions) VALUES ($1, $2, $3, $4) RETURNING id, username, role, permissions',
-      [username, hashedPassword, 'admin', JSON.stringify(adminPermissions)]
+      'INSERT INTO users (username, password_hash, role_id) VALUES ($1, $2, $3) RETURNING id, username, role_id',
+      [username, hashedPassword, adminRole.id]
     );
     const newUser = result.rows[0];
 
     const token = jwt.sign(
-      { id: newUser.id, username: newUser.username, role: newUser.role, permissions: newUser.permissions },
+      { id: newUser.id, username: newUser.username, role: adminRole.name, permissions: adminRole.permissions },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    reply.status(201).send({ token, user: { id: newUser.id, username: newUser.username, role: newUser.role, permissions: newUser.permissions } });
+    reply.status(201).send({ token, user: { id: newUser.id, username: newUser.username, role: adminRole.name, permissions: adminRole.permissions } });
   } catch (error: any) {
     if (error.code === '23505') { // Unique violation error code
       reply.status(409).send({ message: 'Username already exists.' });
@@ -210,7 +216,10 @@ fastify.post('/register', async (request, reply) => {
 fastify.post('/login', async (request, reply) => {
   try {
     const { username, password } = request.body as { username: string; password: string };
-    const result = await pgClient.query('SELECT id, username, password_hash, role, permissions FROM users WHERE username = $1', [username]);
+    const result = await pgClient.query(
+      'SELECT u.id, u.username, u.password_hash, r.name AS role_name, r.permissions FROM users u JOIN roles r ON u.role_id = r.id WHERE u.username = $1',
+      [username]
+    );
     const user = result.rows[0];
 
     if (!user) {
@@ -225,12 +234,12 @@ fastify.post('/login', async (request, reply) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, permissions: user.permissions },
+      { id: user.id, username: user.username, role: user.role_name, permissions: user.permissions },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    reply.status(200).send({ token, user: { id: user.id, username: user.username, role: user.role, permissions: user.permissions } });
+    reply.status(200).send({ token, user: { id: user.id, username: user.username, role: user.role_name, permissions: user.permissions } });
   } catch (error) {
     fastify.log.error({ error }, 'Error during login');
     reply.status(500).send({ message: 'Failed to login' });
@@ -245,11 +254,10 @@ fastify.post('/users', async (request, reply) => {
   }
 
   try {
-    const { username, password, role = 'user', permissions = [] } = request.body as {
+    const { username, password, role_id } = request.body as {
       username: string;
       password: string;
-      role?: string;
-      permissions?: string[];
+      role_id?: string;
     };
 
     if (!username || !password) {
@@ -257,12 +265,41 @@ fastify.post('/users', async (request, reply) => {
       return;
     }
 
+    let finalRoleId = role_id;
+    if (!finalRoleId) {
+      // Default to 'user' role if not provided
+      const defaultRoleResult = await pgClient.query("SELECT id FROM roles WHERE name = 'user'");
+      if (defaultRoleResult.rowCount === 0) {
+        reply.status(500).send({ message: 'Default user role not found. Database initialization error.' });
+        return;
+      }
+      finalRoleId = defaultRoleResult.rows[0].id;
+    } else {
+      // Verify the provided role_id exists
+      const roleCheck = await pgClient.query('SELECT id FROM roles WHERE id = $1', [finalRoleId]);
+      if (roleCheck.rowCount === 0) {
+        reply.status(400).send({ message: 'Invalid role_id provided.' });
+        return;
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pgClient.query(
-      'INSERT INTO users (username, password_hash, role, permissions) VALUES ($1, $2, $3, $4) RETURNING id, username, role, permissions',
-      [username, hashedPassword, role, JSON.stringify(permissions)]
+      'INSERT INTO users (username, password_hash, role_id) VALUES ($1, $2, $3) RETURNING id, username, role_id',
+      [username, hashedPassword, finalRoleId]
     );
-    reply.status(201).send(result.rows[0]);
+    const newUser = result.rows[0];
+
+    // Fetch role name and permissions for the response
+    const roleInfoResult = await pgClient.query('SELECT name, permissions FROM roles WHERE id = $1', [newUser.role_id]);
+    const roleInfo = roleInfoResult.rows[0];
+
+    reply.status(201).send({
+      id: newUser.id,
+      username: newUser.username,
+      role: roleInfo.name,
+      permissions: roleInfo.permissions,
+    });
   } catch (error: any) {
     if (error.code === '23505') { // Unique violation error code
       reply.status(409).send({ message: 'Username already exists.' });
@@ -280,7 +317,9 @@ fastify.get('/users', async (request, reply) => {
     return;
   }
   try {
-    const result = await pgClient.query('SELECT id, username, role, permissions, created_at FROM users ORDER BY created_at ASC');
+    const result = await pgClient.query(
+      'SELECT u.id, u.username, r.name AS role, r.permissions, u.created_at FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.created_at ASC'
+    );
     return result.rows;
   } catch (error) {
     fastify.log.error({ error }, 'Error fetching users');
@@ -297,10 +336,9 @@ fastify.put('/users/:id', async (request, reply) => {
 
   try {
     const { id } = request.params as { id: string };
-    const { username, role, permissions } = request.body as {
+    const { username, role_id } = request.body as {
       username?: string;
-      role?: string;
-      permissions?: string[];
+      role_id?: string;
     };
 
     const fieldsToUpdate: string[] = [];
@@ -311,13 +349,15 @@ fastify.put('/users/:id', async (request, reply) => {
       fieldsToUpdate.push(`username = $${paramIndex++}`);
       params.push(username);
     }
-    if (role !== undefined) {
-      fieldsToUpdate.push(`role = $${paramIndex++}`);
-      params.push(role);
-    }
-    if (permissions !== undefined) {
-      fieldsToUpdate.push(`permissions = $${paramIndex++}`);
-      params.push(JSON.stringify(permissions));
+    if (role_id !== undefined) {
+      // Verify the provided role_id exists
+      const roleCheck = await pgClient.query('SELECT id FROM roles WHERE id = $1', [role_id]);
+      if (roleCheck.rowCount === 0) {
+        reply.status(400).send({ message: 'Invalid role_id provided.' });
+        return;
+      }
+      fieldsToUpdate.push(`role_id = $${paramIndex++}`);
+      params.push(role_id);
     }
 
     if (fieldsToUpdate.length === 0) {
@@ -327,14 +367,25 @@ fastify.put('/users/:id', async (request, reply) => {
 
     params.push(id); // Add ID as the last parameter
 
-    const query = `UPDATE users SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramIndex} RETURNING id, username, role, permissions`;
+    const query = `UPDATE users SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramIndex} RETURNING id, username, role_id`;
     const result = await pgClient.query(query, params);
 
     if (result.rowCount === 0) {
       reply.status(404).send({ message: 'User not found.' });
       return;
     }
-    reply.status(200).send(result.rows[0]);
+    const updatedUser = result.rows[0];
+
+    // Fetch role name and permissions for the response
+    const roleInfoResult = await pgClient.query('SELECT name, permissions FROM roles WHERE id = $1', [updatedUser.role_id]);
+    const roleInfo = roleInfoResult.rows[0];
+
+    reply.status(200).send({
+      id: updatedUser.id,
+      username: updatedUser.username,
+      role: roleInfo.name,
+      permissions: roleInfo.permissions,
+    });
   } catch (error: any) {
     if (error.code === '23505') { // Unique violation error code
       reply.status(409).send({ message: 'Username already exists.' });
@@ -373,6 +424,148 @@ fastify.delete('/users/:id', async (request, reply) => {
   }
 });
 
+// Get all roles (Admin only)
+fastify.get('/roles', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_roles')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_roles permission can view roles.' });
+    return;
+  }
+  try {
+    const result = await pgClient.query('SELECT id, name, permissions, created_at FROM roles ORDER BY created_at ASC');
+    return result.rows;
+  } catch (error) {
+    fastify.log.error({ error }, 'Error fetching roles');
+    reply.status(500).send({ message: 'Failed to fetch roles' });
+  }
+});
+
+// Create a new role (Admin only)
+fastify.post('/roles', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_roles')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_roles permission can create roles.' });
+    return;
+  }
+
+  try {
+    const { name, permissions = [] } = request.body as { name: string; permissions?: string[] };
+
+    if (!name || name.trim() === '') {
+      reply.status(400).send({ message: 'Role name is required.' });
+      return;
+    }
+
+    const result = await pgClient.query(
+      'INSERT INTO roles (name, permissions) VALUES ($1, $2) RETURNING id, name, permissions',
+      [name.trim(), JSON.stringify(permissions)]
+    );
+    reply.status(201).send(result.rows[0]);
+  } catch (error: any) {
+    if (error.code === '23505') { // Unique violation error code
+      reply.status(409).send({ message: 'Role name already exists.' });
+    } else {
+      fastify.log.error({ error }, 'Error creating role');
+      reply.status(500).send({ message: 'Failed to create role' });
+    }
+  }
+});
+
+// Update a role (Admin only)
+fastify.put('/roles/:id', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_roles')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_roles permission can update roles.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+    const { name, permissions } = request.body as { name?: string; permissions?: string[] };
+
+    const fieldsToUpdate: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      fieldsToUpdate.push(`name = $${paramIndex++}`);
+      params.push(name.trim());
+    }
+    if (permissions !== undefined) {
+      fieldsToUpdate.push(`permissions = $${paramIndex++}`);
+      params.push(JSON.stringify(permissions));
+    }
+
+    if (fieldsToUpdate.length === 0) {
+      reply.status(400).send({ message: 'No fields provided for update.' });
+      return;
+    }
+
+    params.push(id); // Add ID as the last parameter
+
+    const query = `UPDATE roles SET ${fieldsToUpdate.join(', ')} WHERE id = $${paramIndex} RETURNING id, name, permissions`;
+    const result = await pgClient.query(query, params);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Role not found.' });
+      return;
+    }
+    reply.status(200).send(result.rows[0]);
+  } catch (error: any) {
+    if (error.code === '23505') { // Unique violation error code
+      reply.status(409).send({ message: 'Role name already exists.' });
+    } else {
+      fastify.log.error({ error }, 'Error updating role');
+      reply.status(500).send({ message: 'Failed to update role' });
+    }
+  }
+});
+
+// Delete a role (Admin only)
+fastify.delete('/roles/:id', async (request, reply) => {
+  if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_roles')) {
+    reply.status(403).send({ message: 'Forbidden: Only administrators with manage_roles permission can delete roles.' });
+    return;
+  }
+
+  try {
+    const { id } = request.params as { id: string };
+
+    // Prevent deleting default roles or roles that users are currently assigned to
+    const roleCheck = await pgClient.query('SELECT name FROM roles WHERE id = $1', [id]);
+    const roleName = roleCheck.rows[0]?.name;
+
+    if (!roleName) {
+      reply.status(404).send({ message: 'Role not found.' });
+      return;
+    }
+
+    if (roleName === 'admin' || roleName === 'user') {
+      reply.status(403).send({ message: `Forbidden: Cannot delete default role '${roleName}'.` });
+      return;
+    }
+
+    // Check if any users are assigned to this role
+    const userCountResult = await pgClient.query('SELECT COUNT(*) FROM users WHERE role_id = $1', [id]);
+    if (parseInt(userCountResult.rows[0].count) > 0) {
+      reply.status(409).send({ message: 'Cannot delete role: Users are currently assigned to this role. Please reassign them first.' });
+      return;
+    }
+
+    const result = await pgClient.query('DELETE FROM roles WHERE id = $1 RETURNING id', [id]);
+
+    if (result.rowCount === 0) {
+      reply.status(404).send({ message: 'Role not found.' });
+      return;
+    }
+    reply.status(200).send({ message: 'Role deleted successfully', id: result.rows[0].id });
+  } catch (error: any) {
+    if (error.code === '23503') { // Foreign key violation (if ON DELETE RESTRICT is used and users are still linked)
+      reply.status(409).send({ message: 'Cannot delete role: Users are currently assigned to this role. Please reassign them first.' });
+    } else {
+      fastify.log.error({ error }, 'Error deleting role');
+      reply.status(500).send({ message: 'Failed to delete role' });
+    }
+  }
+});
+
 
 // Get all journeys (now filtered by user_id or all for admin)
 fastify.get('/journeys', async (request, reply) => {
@@ -383,7 +576,9 @@ fastify.get('/journeys', async (request, reply) => {
   try {
     let query = 'SELECT * FROM journeys';
     const params: string[] = [];
+    let paramIndex = 1;
 
+    // Admin users with 'edit_any_journey' permission can see all journeys
     if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
       query += ' WHERE user_id = $1';
       params.push(request.user.id);
@@ -404,7 +599,7 @@ fastify.post('/journeys', async (request, reply) => {
     return;
   }
   // Check if user has permission to create journey
-  if (request.user.role !== 'admin' && !request.user.permissions.includes('create_journey')) {
+  if (!request.user.permissions.includes('create_journey')) {
     reply.status(403).send({ message: 'Forbidden: You do not have permission to create journeys.' });
     return;
   }
@@ -452,10 +647,9 @@ fastify.put('/journeys/:id', async (request, reply) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.role === 'admin';
     const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
 
-    if (!isOwner && !isAdmin && !canEditAnyJourney) {
+    if (!isOwner && !canEditAnyJourney) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
       return;
     }
@@ -496,10 +690,9 @@ fastify.delete('/journeys/:id', async (request, reply) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.role === 'admin';
     const canDeleteAnyJourney = request.user.permissions.includes('delete_any_journey');
 
-    if (!isOwner && !isAdmin && !canDeleteAnyJourney) {
+    if (!isOwner && !canDeleteAnyJourney) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
       return;
     }
@@ -535,7 +728,8 @@ fastify.get('/posts', async (request, reply) => {
       params.push(journeyId);
     }
 
-    if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
+    // Admin users with 'edit_any_journey' permission can see all posts in any journey
+    if (!request.user.permissions.includes('edit_any_journey')) {
       query += `${params.length > 0 ? ' AND' : ' WHERE'} user_id = $${paramIndex++}`;
       params.push(request.user.id);
     }
@@ -632,7 +826,7 @@ fastify.post('/posts', async (request, reply) => {
     return;
   }
   // Check if user has permission to create post
-  if (request.user.role !== 'admin' && !request.user.permissions.includes('create_post')) {
+  if (!request.user.permissions.includes('create_post')) {
     reply.status(403).send({ message: 'Forbidden: You do not have permission to create posts.' });
     return;
   }
@@ -667,10 +861,9 @@ fastify.post('/posts', async (request, reply) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.role === 'admin';
     const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
 
-    if (!isOwner && !isAdmin && !canEditAnyJourney) {
+    if (!isOwner && !canEditAnyJourney) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to post to this journey.' });
       return;
     }
@@ -717,10 +910,9 @@ fastify.put('/posts/:id', async (request, reply) => {
 
     // Check ownership or admin permission
     const isOwner = post.user_id === request.user.id;
-    const isAdmin = request.user.role === 'admin';
     const canEditAnyPost = request.user.permissions.includes('edit_any_post');
 
-    if (!isOwner && !isAdmin && !canEditAnyPost) {
+    if (!isOwner && !canEditAnyPost) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
       return;
     }
@@ -795,10 +987,9 @@ fastify.delete('/posts/:id', async (request, reply) => {
 
     // Check ownership or admin permission
     const isOwner = post.user_id === request.user.id;
-    const isAdmin = request.user.role === 'admin';
     const canDeleteAnyPost = request.user.permissions.includes('delete_any_post');
 
-    if (!isOwner && !isAdmin && !canDeleteAnyPost) {
+    if (!isOwner && !canDeleteAnyPost) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
       return;
     }
@@ -881,8 +1072,8 @@ declare module 'fastify' {
     user: {
       id: string;
       username: string;
-      role: string;
-      permissions: string[];
+      role: string; // Now stores role name
+      permissions: string[]; // Permissions derived from the role
     } | null; // user can be null if not authenticated
   }
 }

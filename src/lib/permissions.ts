@@ -10,6 +10,7 @@ export const PERMISSION_MAP: { [key: string]: string } = {
   'delete_any_journey': 'Delete Any Journey',
   'delete_any_post': 'Delete Any Post',
   'edit_any_post': 'Edit Any Post',
+  'manage_roles': 'Manage Roles (Admin Only)', // New permission
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_MAP);

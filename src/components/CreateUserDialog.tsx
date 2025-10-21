@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,36 +12,74 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
-import { ALL_PERMISSIONS, getPermissionDisplayName } from '@/lib/permissions'; // Import from new utility
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface Role {
+  id: string;
+  name: string;
+  permissions: string[];
+}
 
 interface CreateUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onUserCreated: () => void;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
-const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose }) => {
+const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, onUserCreated }) => {
   const { token, user: currentUser } = useAuth();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [role, setRole] = useState<string>('user'); // Default role
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [loadingRoles, setLoadingRoles] = useState<boolean>(true);
 
-  const handlePermissionChange = (permission: string, checked: boolean) => {
-    setSelectedPermissions((prev) =>
-      checked ? [...prev, permission] : prev.filter((p) => p !== permission)
-    );
-  };
+  useEffect(() => {
+    const fetchRoles = async () => {
+      if (!token) return;
+      setLoadingRoles(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/roles`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch roles');
+        }
+        const data: Role[] = await response.json();
+        setRoles(data);
+        // Set default role to 'user' if available, otherwise the first role
+        const defaultUserRole = data.find(r => r.name === 'user');
+        setSelectedRoleId(defaultUserRole ? defaultUserRole.id : (data.length > 0 ? data[0].id : ''));
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+        showError('Failed to load roles for user creation.');
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchRoles();
+    }
+  }, [isOpen, token]);
 
   const handleCreateUser = async () => {
-    if (!username.trim() || !password.trim()) {
-      showError('Username and password are required.');
+    if (!username.trim() || !password.trim() || !selectedRoleId) {
+      showError('Username, password, and role are required.');
       return;
     }
 
@@ -61,8 +99,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose }) 
         body: JSON.stringify({
           username: username.trim(),
           password: password.trim(),
-          role,
-          permissions: selectedPermissions,
+          role_id: selectedRoleId,
         }),
       });
 
@@ -74,8 +111,8 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose }) 
       showSuccess(`User '${username}' created successfully!`);
       setUsername('');
       setPassword('');
-      setRole('user');
-      setSelectedPermissions([]);
+      setSelectedRoleId('');
+      onUserCreated();
       onClose();
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -96,7 +133,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose }) 
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            Create a new user account and assign their role and permissions.
+            Create a new user account and assign their role.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -131,41 +168,31 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose }) 
             <Label htmlFor="role" className="text-right">
               Role
             </Label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="col-span-3 p-2 border rounded-md bg-background text-foreground"
-              disabled={isCreating}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right mt-2">Permissions</Label>
-            <div className="col-span-3 space-y-2">
-              {ALL_PERMISSIONS.map((perm) => (
-                <div key={perm} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`perm-${perm}`}
-                    checked={selectedPermissions.includes(perm)}
-                    onCheckedChange={(checked) => handlePermissionChange(perm, !!checked)}
-                    disabled={isCreating}
-                  />
-                  <Label htmlFor={`perm-${perm}`}>
-                    {getPermissionDisplayName(perm)}
-                  </Label>
-                </div>
-              ))}
-            </div>
+            <Select value={selectedRoleId} onValueChange={setSelectedRoleId} disabled={isCreating || loadingRoles}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingRoles ? (
+                  <SelectItem value="loading" disabled>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading roles...
+                  </SelectItem>
+                ) : (
+                  roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isCreating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleCreateUser} disabled={!username.trim() || !password.trim() || isCreating} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleCreateUser} disabled={!username.trim() || !password.trim() || !selectedRoleId || isCreating} className="hover:ring-2 hover:ring-blue-500">
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
