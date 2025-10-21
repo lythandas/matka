@@ -17,13 +17,8 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { ALL_PERMISSIONS, getPermissionDisplayName } from '@/lib/permissions';
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
-  created_at: string;
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { Role } from '@/types'; // Centralized Role interface
 
 interface EditRoleDialogProps {
   isOpen: boolean;
@@ -31,8 +26,6 @@ interface EditRoleDialogProps {
   role: Role;
   onRoleUpdated: (updatedRole: Role) => void;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const EditRoleDialog: React.FC<EditRoleDialogProps> = ({ isOpen, onClose, role, onRoleUpdated }) => {
   const { token } = useAuth();

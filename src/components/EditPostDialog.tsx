@@ -17,16 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
-
-interface Post {
-  id: string;
-  title?: string;
-  message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
-  spotify_embed_url?: string;
-  coordinates?: { lat: number; lng: number };
-  created_at: string;
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { Post } from '@/types'; // Centralized Post interface
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -34,9 +27,6 @@ interface EditPostDialogProps {
   post: Post;
   onUpdate: (updatedPost: Post) => void;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate }) => {
   const [title, setTitle] = useState<string>(post.title || '');

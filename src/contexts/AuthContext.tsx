@@ -2,16 +2,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { showError, showSuccess } from '@/utils/toast';
-
-interface User {
-  id: string;
-  username: string;
-  role: string; // Now stores role name
-  permissions: string[]; // Permissions derived from the role
-  name?: string; // New
-  surname?: string; // New
-  profile_image_url?: string; // New
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { User } from '@/types'; // Centralized User interface
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -25,8 +17,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

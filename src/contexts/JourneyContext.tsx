@@ -3,12 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from './AuthContext'; // Import useAuth
-
-interface Journey {
-  id: string;
-  name: string;
-  created_at: string;
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { Journey } from '@/types'; // Centralized Journey interface
 
 interface JourneyContextType {
   journeys: Journey[];
@@ -20,8 +16,6 @@ interface JourneyContextType {
 }
 
 const JourneyContext = createContext<JourneyContextType | undefined>(undefined);
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export const JourneyProvider = ({ children }: { children: ReactNode }) => {
   const { token, isAuthenticated } = useAuth(); // Get token and isAuthenticated from AuthContext

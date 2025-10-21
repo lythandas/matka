@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import maplibregl from 'maplibre-gl'; // Corrected import path
+import { showError } from '@/utils/toast';
 import {
   Dialog,
   DialogContent,
@@ -15,8 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Image, Music, MapPin, Loader2, Trash2, Plus, Upload, XCircle } from 'lucide-react';
-import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
+import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
 
 interface AddContentDialogProps {
   onImageSelect: (file: File | null) => void;
@@ -28,8 +30,6 @@ interface AddContentDialogProps {
   currentCoordinates: { lat: number; lng: number } | null;
   children: React.ReactNode;
 }
-
-const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const AddContentDialog: React.FC<AddContentDialogProps> = ({
   onImageSelect,

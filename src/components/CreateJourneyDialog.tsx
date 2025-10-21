@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useJourneys } from '@/contexts/JourneyContext';
 import { Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 
 interface CreateJourneyDialogProps {
   isOpen: boolean;

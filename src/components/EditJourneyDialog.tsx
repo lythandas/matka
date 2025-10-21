@@ -16,20 +16,14 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import { Loader2 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Journey {
-  id: string;
-  name: string;
-  created_at: string;
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { Journey } from '@/types'; // Centralized Journey interface
 
 interface EditJourneyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   journey: Journey;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, journey }) => {
   const { token } = useAuth();

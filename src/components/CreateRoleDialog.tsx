@@ -17,14 +17,14 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { ALL_PERMISSIONS, getPermissionDisplayName } from '@/lib/permissions';
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { Role } from '@/types'; // Centralized Role interface
 
 interface CreateRoleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onRoleCreated: () => void;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const CreateRoleDialog: React.FC<CreateRoleDialogProps> = ({ isOpen, onClose, onRoleCreated }) => {
   const { token } = useAuth();

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError } from '@/utils/toast';
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 
 interface RegisterDialogProps {
   isOpen: boolean;
@@ -27,8 +28,6 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();

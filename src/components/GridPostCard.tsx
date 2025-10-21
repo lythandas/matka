@@ -6,21 +6,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-
-interface Post {
-  id: string;
-  title?: string;
-  message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
-  spotify_embed_url?: string;
-  coordinates?: { lat: number; lng: number };
-  created_at: string;
-  user_id: string;
-  author_username: string;
-  author_name?: string;
-  author_surname?: string;
-  author_profile_image_url?: string;
-}
+import { Post } from '@/types'; // Centralized Post interface
 
 interface GridPostCardProps {
   post: Post;

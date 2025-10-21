@@ -30,37 +30,8 @@ import { format } from 'date-fns';
 import { getPermissionDisplayName } from '@/lib/permissions';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-  permissions: string[];
-  name?: string; // New
-  surname?: string; // New
-  profile_image_url?: string; // New
-  created_at: string;
-}
-
-interface Journey {
-  id: string;
-  name: string;
-  user_id: string;
-  owner_username: string; // New
-  owner_name?: string; // New
-  owner_surname?: string; // New
-  owner_profile_image_url?: string; // New
-  created_at: string;
-}
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
-  created_at: string;
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { User, Journey, Role } from '@/types'; // Centralized interfaces
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -313,7 +284,7 @@ const AdminPage: React.FC = () => {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>{format(new Date(user.created_at), 'PPP')}</TableCell>
+                            <TableCell>{format(new Date(user.created_at!), 'PPP')}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end space-x-2">
                                 <Button

@@ -36,35 +36,9 @@ import AppHeader from '@/components/AppHeader';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
-
-interface Post {
-  id: string;
-  title?: string;
-  message: string;
-  image_urls?: { small?: string; medium?: string; large?: string; original?: string };
-  spotify_embed_url?: string;
-  coordinates?: { lat: number; lng: number };
-  created_at: string;
-  user_id: string;
-  author_username: string;
-  author_name?: string;
-  author_surname?: string;
-  author_profile_image_url?: string;
-}
-
-interface Journey {
-  id: string;
-  name: string;
-  created_at: string;
-  user_id: string;
-  owner_username: string;
-  owner_name?: string;
-  owner_surname?: string;
-  owner_profile_image_url?: string;
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { Post, Journey } from '@/types'; // Centralized Post and Journey interfaces
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
@@ -326,11 +300,7 @@ const Index = () => {
       <div className="max-w-3xl mx-auto">
         <AppHeader />
 
-        <div className="flex justify-end mb-4">
-          <Badge variant={backendConnected ? "default" : "destructive"}>
-            Backend: {backendConnected ? "Connected" : "Disconnected"}
-          </Badge>
-        </div>
+        {/* Removed the backend badge */}
 
         {/* NEW WELCOME SECTION FOR ADMIN REGISTRATION */}
         {!isAuthenticated && usersExist === false && (

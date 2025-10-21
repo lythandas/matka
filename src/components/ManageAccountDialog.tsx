@@ -17,25 +17,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-  permissions: string[];
-  name?: string;
-  surname?: string;
-  profile_image_url?: string;
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { User } from '@/types'; // Centralized User interface
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: User;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClose, currentUser }) => {
   const { token, updateUser } = useAuth();

@@ -25,23 +25,9 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-
-interface User {
-  id: string;
-  username: string;
-  role: string;
-  permissions: string[];
-  name?: string;
-  surname?: string;
-  profile_image_url?: string;
-  created_at: string;
-}
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { MAX_IMAGE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
+import { User, Role } from '@/types'; // Centralized User and Role interfaces
 
 interface EditUserDialogProps {
   isOpen: boolean;
@@ -49,9 +35,6 @@ interface EditUserDialogProps {
   user: User;
   onUserUpdated: (updatedUser: User) => void;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 
 const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, onUserUpdated }) => {
   const { token, user: currentUser } = useAuth();

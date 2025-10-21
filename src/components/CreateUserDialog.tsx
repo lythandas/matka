@@ -22,20 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
-}
+import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { Role } from '@/types'; // Centralized Role interface
 
 interface CreateUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onUserCreated: () => void;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, onUserCreated }) => {
   const { token, user: currentUser } = useAuth();
