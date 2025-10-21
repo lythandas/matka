@@ -5,14 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-import { Post } from '@/types'; // Centralized Post interface
+import { getAvatarInitials } from '@/lib/utils';
+import { Post } from '@/types';
 
 interface GridPostCardProps {
   post: Post;
   onClick: () => void;
   className?: string;
 }
+
+const STADIA_API_KEY = import.meta.env.VITE_STADIA_API_KEY;
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
   const media = post.image_urls;
@@ -42,6 +44,20 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         muted
         loop
         className="object-cover w-full h-full"
+      />
+    );
+  } else if (post.coordinates && STADIA_API_KEY) {
+    // If no image/video but coordinates exist, display a static map
+    const staticMapUrl = `https://tiles.stadiamaps.com/styles/outdoors.json/static/${post.coordinates.lng},${post.coordinates.lat},14/400x400@2x?api_key=${STADIA_API_KEY}&markers=${post.coordinates.lng},${post.coordinates.lat}`;
+    mediaElement = (
+      <img
+        src={staticMapUrl}
+        alt="Map location"
+        className="object-cover w-full h-full"
+        onError={(e) => {
+          e.currentTarget.src = '/placeholder.svg';
+          e.currentTarget.onerror = null;
+        }}
       />
     );
   } else {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from 'react';
-import maplibregl from 'maplibre-gl'; // Corrected import path
+import maplibregl from 'maplibre-gl';
 import { showError } from '@/utils/toast';
 
 interface MapComponentProps {
@@ -10,7 +10,7 @@ interface MapComponentProps {
   className?: string;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, className }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, className }) => { // Changed default zoom to 14
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapId] = useState(() => `map-${Math.random().toString(36).substring(2, 9)}`);
@@ -25,7 +25,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 10, cla
 
     mapRef.current = new maplibregl.Map({
       container: mapId,
-      style: 'https://tiles.stadiamaps.com/styles/outdoors.json', // Changed to outdoors.json for terrain and natural features
+      style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
       center: [coordinates.lng, coordinates.lat],
       zoom: zoom,
     });
