@@ -207,7 +207,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="media" className="mt-4 space-y-4 flex-grow overflow-y-auto">
+          <TabsContent value="media" className="p-4 space-y-4 flex-grow overflow-y-auto">
             <Label htmlFor="media-upload">Upload Image or Video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
@@ -267,7 +267,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               </div>
             )}
           </TabsContent>
-          <TabsContent value="spotify" className="mt-4 space-y-4 flex-grow overflow-y-auto">
+          <TabsContent value="spotify" className="p-4 space-y-4 flex-grow overflow-y-auto">
             <Label htmlFor="spotify-embed">Spotify Embed URL</Label>
             <Input
               id="spotify-embed"
@@ -298,7 +298,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
               </div>
             )}
           </TabsContent>
-          <TabsContent value="location" className="mt-4 space-y-4 flex-grow overflow-y-auto pb-4">
+          <TabsContent value="location" className="p-4 space-y-4 flex-grow overflow-y-auto">
             <div className="flex space-x-2"> {/* Removed mb-4 */}
               <Button
                 type="button"
