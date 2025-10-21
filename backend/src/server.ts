@@ -53,7 +53,7 @@ const start = async () => {
 
 start();
 
-// Extend FastifyRequest with a user property (already declared in auth.ts, but good to have here for clarity)
+// Extend FastifyRequest with a user property (now matching the definition in auth.ts)
 declare module 'fastify' {
   interface FastifyRequest {
     user: {
@@ -61,6 +61,9 @@ declare module 'fastify' {
       username: string;
       role: string;
       permissions: string[];
+      name?: string;
+      surname?: string;
+      profile_image_url?: string;
     } | null;
   }
 }
