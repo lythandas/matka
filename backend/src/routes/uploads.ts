@@ -29,12 +29,14 @@ const uploadsRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      const backendBaseUrl = `http://localhost:3001`; // Assuming backend is accessible at this URL
+      // Use the environment variable for the backend's internal URL
+      const backendBaseUrl = process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001'; 
       const imageUrls = await processAndSaveImage(imageBase64, imageType, backendBaseUrl, fastify.log.warn);
       
       reply.status(200).send({ imageUrls });
     } catch (error: any) {
-      fastify.log.error({ error }, 'Error uploading image to local storage');
+      // Improved error logging to include error details
+      fastify.log.error({ error: error.message, stack: error.stack }, 'Error uploading image to local storage');
       reply.status(500).send({ message: error.message || 'Failed to upload image' });
     }
   });
