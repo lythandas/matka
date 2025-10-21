@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,17 +13,20 @@ import {
 import { ChevronDown, Compass, Plus, Wrench } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
-import CreateJourneyDialog from '@/components/CreateJourneyDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJourneys } from '@/contexts/JourneyContext';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-const AppHeader: React.FC = () => {
+interface AppHeaderProps {
+  isCreateJourneyDialogOpen: boolean;
+  setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
+}
+
+const AppHeader: React.FC<AppHeaderProps> = ({ setIsCreateJourneyDialogOpen }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, loadingJourneys } = useJourneys();
-  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
 
   return (
     <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto">
@@ -94,11 +97,6 @@ const AppHeader: React.FC = () => {
         <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" />
         <UserProfileDropdown />
       </div>
-
-      <CreateJourneyDialog
-        isOpen={isCreateJourneyDialogOpen}
-        onClose={() => setIsCreateJourneyDialogOpen(false)}
-      />
     </header>
   );
 };

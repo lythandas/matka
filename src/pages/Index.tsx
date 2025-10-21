@@ -56,6 +56,7 @@ const Index = () => {
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
+  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false); // Moved here
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -298,7 +299,10 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto flex-grow w-full">
-        <AppHeader />
+        <AppHeader
+          isCreateJourneyDialogOpen={isCreateJourneyDialogOpen}
+          setIsCreateJourneyDialogOpen={setIsCreateJourneyDialogOpen}
+        />
 
         {/* NEW WELCOME SECTION FOR ADMIN REGISTRATION */}
         {!isAuthenticated && usersExist === false && (
@@ -438,7 +442,7 @@ const Index = () => {
                 <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
                   Create your first journey to start sharing your experiences.
                 </p>
-                <Button onClick={() => { /* Handled by AppHeader's CreateJourneyDialog */ }} className="hover:ring-2 hover:ring-blue-500">
+                <Button onClick={() => setIsCreateJourneyDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
                   <Plus className="mr-2 h-4 w-4" /> Create New Journey
                 </Button>
               </div>
@@ -627,6 +631,11 @@ const Index = () => {
           onClose={() => setIsLoginDialogOpen(false)}
         />
       )}
+
+      <CreateJourneyDialog
+        isOpen={isCreateJourneyDialogOpen}
+        onClose={() => setIsCreateJourneyDialogOpen(false)}
+      />
     </div>
   );
 };
