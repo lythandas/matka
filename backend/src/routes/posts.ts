@@ -207,7 +207,7 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       if (post.image_urls) {
-        await deleteImageFiles(post.image_urls, fastify.log.warn); // Use the utility function
+        await deleteImageFiles(post.image_urls, fastify.log); // Corrected: pass fastify.log
       }
 
       const result = await pgClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);
