@@ -14,7 +14,7 @@ interface GridPostCardProps {
   className?: string;
 }
 
-const STADIA_API_KEY = import.meta.env.VITE_STADIA_API_KEY;
+// Removed STADIA_API_KEY as it's no longer used for static maps
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
   const media = post.image_urls;
@@ -46,21 +46,8 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         className="object-cover w-full h-full"
       />
     );
-  } else if (post.coordinates && STADIA_API_KEY) {
-    // If no image/video but coordinates exist, display a static map
-    const staticMapUrl = `https://tiles.stadiamaps.com/styles/outdoors.json/static/${post.coordinates.lng},${post.coordinates.lat},14/400x400@2x?api_key=${STADIA_API_KEY}&markers=${post.coordinates.lng},${post.coordinates.lat}`;
-    mediaElement = (
-      <img
-        src={staticMapUrl}
-        alt="Map location"
-        className="object-cover w-full h-full"
-        onError={(e) => {
-          e.currentTarget.src = '/placeholder.svg';
-          e.currentTarget.onerror = null;
-        }}
-      />
-    );
   } else {
+    // If no image/video, and no Stadia Maps, fallback to generic placeholder
     mediaElement = (
       <img
         src={fallbackImage}
