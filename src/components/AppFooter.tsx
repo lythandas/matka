@@ -10,6 +10,9 @@ const AppFooter: React.FC = () => {
         <Compass className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <span className="font-semibold text-blue-600 dark:text-blue-400">Matka</span>
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+        Matka means 'journey' or 'trip' in Finnish, perfectly capturing the essence of your travel and life experiences.
+      </p>
       <a
         href="https://www.dyad.sh/"
         target="_blank"
