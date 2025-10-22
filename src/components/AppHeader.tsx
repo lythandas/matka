@@ -38,48 +38,50 @@ const AppHeader: React.FC<AppHeaderProps> = ({ setIsCreateJourneyDialogOpen }) =
       </div>
 
       {/* Center: Journey Dropdown */}
-      <div className="flex-grow flex justify-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "h-10 px-4 text-base font-semibold flex items-center",
-                "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                "min-w-[150px] justify-center" // Ensure consistent width and centering
+      {isAuthenticated && ( // Only show if authenticated
+        <div className="flex-grow flex justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-10 px-4 text-base font-semibold flex items-center",
+                  "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+                  "min-w-[150px] justify-center" // Ensure consistent width and centering
+                )}
+              >
+                {selectedJourney ? selectedJourney.name : "Select Journey"}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {loadingJourneys ? (
+                <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
+              ) : (
+                journeys.map((journey) => (
+                  <DropdownMenuItem
+                    key={journey.id}
+                    onClick={() => setSelectedJourney(journey)}
+                    className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
+                  >
+                    {journey.name}
+                  </DropdownMenuItem>
+                ))
               )}
-            >
-              {selectedJourney ? selectedJourney.name : "Select Journey"}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {loadingJourneys ? (
-              <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
-            ) : (
-              journeys.map((journey) => (
-                <DropdownMenuItem
-                  key={journey.id}
-                  onClick={() => setSelectedJourney(journey)}
-                  className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
-                >
-                  {journey.name}
-                </DropdownMenuItem>
-              ))
-            )}
-            {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       {/* Right: Utility Buttons */}
       <div className="flex items-center space-x-2">
