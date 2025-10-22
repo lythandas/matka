@@ -51,8 +51,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    volumes:
-      - .:/app
-
+    # Removed the conflicting 'volumes: - .:/app' line
 volumes:
   db_data:
