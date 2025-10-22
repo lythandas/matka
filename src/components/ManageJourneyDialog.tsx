@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
 import { Journey, JourneyCollaborator, User } from '@/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Keep Tabs for now, but only one content
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -285,31 +285,44 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             Update journey details or manage collaborators.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="general" className="w-full flex-grow flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="collaborators">Collaborators</TabsTrigger>
-          </TabsList>
-          <TabsContent value="general" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="journey-name" className="text-right">
-                  Journey Name
-                </Label>
-                <Input
-                  id="journey-name"
-                  value={journeyName}
-                  onChange={(e) => setJourneyName(e.target.value)}
-                  className="col-span-3"
-                  placeholder="e.g., My Summer Trip"
-                  disabled={isRenaming || !canEditJourneyName}
-                />
+        <div className="p-4 space-y-4 flex-grow overflow-y-auto"> {/* Removed Tabs, directly rendering content */}
+          {/* Journey Owner */}
+          <div className="border rounded-md p-4 bg-muted/50">
+            <h3 className="text-lg font-semibold mb-2">Journey Owner</h3>
+            <div className="flex items-center space-x-3 mb-4">
+              <Avatar className="h-10 w-10">
+                {journey.owner_profile_image_url ? (
+                  <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
+                ) : (
+                  <AvatarFallback className="bg-blue-500 text-white">
+                    {getAvatarInitials(journey.owner_name, journey.owner_username)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <p className="font-medium">{journey.owner_name || journey.owner_username}</p>
+                {journey.owner_name && <p className="text-sm text-muted-foreground">@{journey.owner_username}</p>}
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={onClose} disabled={isRenaming} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-                Cancel
-              </Button>
+            <p className="text-sm text-muted-foreground mb-4">
+              (Owner has full access and cannot be removed or have permissions modified here.)
+            </p>
+
+            {/* Journey Name input moved here */}
+            <div className="grid grid-cols-4 items-center gap-4 mb-4">
+              <Label htmlFor="journey-name" className="text-right">
+                Journey Name
+              </Label>
+              <Input
+                id="journey-name"
+                value={journeyName}
+                onChange={(e) => setJourneyName(e.target.value)}
+                className="col-span-3"
+                placeholder="e.g., My Summer Trip"
+                disabled={isRenaming || !canEditJourneyName}
+              />
+            </div>
+            <div className="flex justify-end">
               <Button onClick={handleRenameJourney} disabled={!journeyName.trim() || isRenaming || !canEditJourneyName} className="hover:ring-2 hover:ring-blue-500">
                 {isRenaming ? (
                   <>
@@ -317,171 +330,152 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                     Renaming...
                   </>
                 ) : (
-                  'Save Changes'
+                  'Save Journey Name'
                 )}
               </Button>
-            </DialogFooter>
-          </TabsContent>
-          <TabsContent value="collaborators" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            {/* Journey Owner */}
-            <div className="border rounded-md p-4 bg-muted/50">
-              <h3 className="text-lg font-semibold mb-2">Journey Owner</h3>
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
-                  {journey.owner_profile_image_url ? (
-                    <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
-                  ) : (
-                    <AvatarFallback className="bg-blue-500 text-white">
-                      {getAvatarInitials(journey.owner_name, journey.owner_username)}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <p className="font-medium">{journey.owner_name || journey.owner_username}</p>
-                  {journey.owner_name && <p className="text-sm text-muted-foreground">@{journey.owner_username}</p>}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                (Owner has full access and cannot be removed or have permissions modified here.)
-              </p>
+            </div>
+          </div>
+
+          {/* Add Collaborator Section */}
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-2">Add New Collaborator</h3>
+            <div className="flex space-x-2 mb-4">
+              <Input
+                placeholder="Search username to add..."
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
+                className="flex-grow"
+              />
+              <Button onClick={handleSearchUsers} disabled={!searchUsername.trim() || loadingSearch || isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}>
+                {loadingSearch ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                Search
+              </Button>
             </div>
 
-            {/* Add Collaborator Section */}
-            <div className="border rounded-md p-4">
-              <h3 className="text-lg font-semibold mb-2">Add New Collaborator</h3>
-              <div className="flex space-x-2 mb-4">
-                <Input
-                  placeholder="Search username to add..."
-                  value={searchUsername}
-                  onChange={(e) => setSearchUsername(e.target.value)}
+            {searchResults.length > 0 && (
+              <div className="border rounded-md mb-4 max-h-40 overflow-y-auto">
+                {searchResults.map((userResult) => (
+                  <div
+                    key={userResult.id}
+                    className={`flex items-center justify-between p-2 hover:bg-accent cursor-pointer ${selectedUserToAdd?.id === userResult.id ? 'bg-accent' : ''}`}
+                    onClick={() => setSelectedUserToAdd(userResult)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-8 w-8">
+                        {userResult.profile_image_url ? (
+                          <AvatarImage src={userResult.profile_image_url} alt={userResult.name || userResult.username} />
+                        ) : (
+                          <AvatarFallback className="bg-gray-200 text-gray-500 text-xs">
+                            {getAvatarInitials(userResult.name, userResult.username)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <span>{userResult.name || userResult.username} (@{userResult.username})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedUserToAdd && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Assign permissions for {selectedUserToAdd.name || selectedUserToAdd.username}:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {journeySpecificPermissions.map((perm) => (
+                    <div key={`new-${perm}`} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`new-perm-${perm}`}
+                        checked={newCollaboratorPermissions.includes(perm)}
+                        onCheckedChange={(checked) => handleNewCollabPermissionChange(perm, !!checked)}
+                        disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
+                      />
+                      <Label htmlFor={`new-perm-${perm}`}>
+                        {getPermissionDisplayName(perm)}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  onClick={handleAddCollaborator}
                   disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
-                  className="flex-grow"
-                />
-                <Button onClick={handleSearchUsers} disabled={!searchUsername.trim() || loadingSearch || isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}>
-                  {loadingSearch ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-                  Search
+                  className="w-full hover:ring-2 hover:ring-blue-500"
+                >
+                  {isAddingCollaborator ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                  Add Collaborator
                 </Button>
               </div>
+            )}
+          </div>
 
-              {searchResults.length > 0 && (
-                <div className="border rounded-md mb-4 max-h-40 overflow-y-auto">
-                  {searchResults.map((userResult) => (
-                    <div
-                      key={userResult.id}
-                      className={`flex items-center justify-between p-2 hover:bg-accent cursor-pointer ${selectedUserToAdd?.id === userResult.id ? 'bg-accent' : ''}`}
-                      onClick={() => setSelectedUserToAdd(userResult)}
-                    >
+          {/* Current Collaborators Section */}
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-2">Current Collaborators ({collaborators.length})</h3>
+            {loadingCollaborators ? (
+              <div className="flex justify-center items-center h-24">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                <p className="ml-2 text-gray-600 dark:text-gray-400">Loading collaborators...</p>
+              </div>
+            ) : collaborators.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No collaborators added yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {collaborators.map((collab) => (
+                  <div key={collab.user_id} className="border p-3 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
-                        <Avatar className="h-8 w-8">
-                          {userResult.profile_image_url ? (
-                            <AvatarImage src={userResult.profile_image_url} alt={userResult.name || userResult.username} />
+                        <Avatar className="h-9 w-9">
+                          {collab.profile_image_url ? (
+                            <AvatarImage src={collab.profile_image_url} alt={collab.name || collab.username} />
                           ) : (
-                            <AvatarFallback className="bg-gray-200 text-gray-500 text-xs">
-                              {getAvatarInitials(userResult.name, userResult.username)}
+                            <AvatarFallback className="bg-gray-200 text-gray-500 text-sm">
+                              {getAvatarInitials(collab.name, collab.username)}
                             </AvatarFallback>
                           )}
                         </Avatar>
-                        <span>{userResult.name || userResult.username} (@{userResult.username})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {selectedUserToAdd && (
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Assign permissions for {selectedUserToAdd.name || selectedUserToAdd.username}:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {journeySpecificPermissions.map((perm) => (
-                      <div key={`new-${perm}`} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`new-perm-${perm}`}
-                          checked={newCollaboratorPermissions.includes(perm)}
-                          onCheckedChange={(checked) => handleNewCollabPermissionChange(perm, !!checked)}
-                          disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
-                        />
-                        <Label htmlFor={`new-perm-${perm}`}>
-                          {getPermissionDisplayName(perm)}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                  <Button
-                    onClick={handleAddCollaborator}
-                    disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
-                    className="w-full hover:ring-2 hover:ring-blue-500"
-                  >
-                    {isAddingCollaborator ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                    Add Collaborator
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Current Collaborators Section */}
-            <div className="border rounded-md p-4">
-              <h3 className="text-lg font-semibold mb-2">Current Collaborators ({collaborators.length})</h3>
-              {loadingCollaborators ? (
-                <div className="flex justify-center items-center h-24">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                  <p className="ml-2 text-gray-600 dark:text-gray-400">Loading collaborators...</p>
-                </div>
-              ) : collaborators.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No collaborators added yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {collaborators.map((collab) => (
-                    <div key={collab.user_id} className="border p-3 rounded-md">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Avatar className="h-9 w-9">
-                            {collab.profile_image_url ? (
-                              <AvatarImage src={collab.profile_image_url} alt={collab.name || collab.username} />
-                            ) : (
-                              <AvatarFallback className="bg-gray-200 text-gray-500 text-sm">
-                                {getAvatarInitials(collab.name, collab.username)}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{collab.name || collab.username}</p>
-                            {collab.name && <p className="text-sm text-muted-foreground">@{collab.username}</p>}
-                          </div>
+                        <div>
+                          <p className="font-medium">{collab.name || collab.username}</p>
+                          {collab.name && <p className="text-sm text-muted-foreground">@{collab.username}</p>}
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
-                          className="hover:ring-2 hover:ring-blue-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {journeySpecificPermissions.map((perm) => (
-                          <div key={`${collab.user_id}-${perm}`} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`${collab.user_id}-${perm}`}
-                              checked={collab.permissions.includes(perm)}
-                              onCheckedChange={(checked) =>
-                                handleExistingCollabPermissionChange(collab.user_id, collab.permissions, perm, !!checked)
-                              }
-                              disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
-                            />
-                            <Label htmlFor={`${collab.user_id}-${perm}`}>
-                              {getPermissionDisplayName(perm)}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
+                        disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
+                        className="hover:ring-2 hover:ring-blue-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+                    <div className="grid grid-cols-2 gap-2">
+                      {journeySpecificPermissions.map((perm) => (
+                        <div key={`${collab.user_id}-${perm}`} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`${collab.user_id}-${perm}`}
+                            checked={collab.permissions.includes(perm)}
+                            onCheckedChange={(checked) =>
+                              handleExistingCollabPermissionChange(collab.user_id, collab.permissions, perm, !!checked)
+                            }
+                            disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
+                          />
+                          <Label htmlFor={`${collab.user_id}-${perm}`}>
+                            {getPermissionDisplayName(perm)}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
