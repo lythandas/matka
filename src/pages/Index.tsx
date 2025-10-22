@@ -236,6 +236,8 @@ const Index = () => {
     }
 
     setLocationLoading(true);
+    // Ensure the mode is set to 'current' when fetching location
+    setLocationSelectionMode('current');
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -259,6 +261,8 @@ const Index = () => {
         }
         showError(errorMessage);
         setLocationLoading(false);
+        setCoordinates(null); // Clear coordinates on error
+        setLocationSelectionMode('none'); // Reset mode on error
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -519,14 +523,20 @@ const Index = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        setLocationSelectionMode('current');
-                        setCoordinates(null); // Clear any previous selection
-                      }}
+                      onClick={handleGetLocation} // Directly call handleGetLocation
                       className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                      disabled={!canCreatePost || isUploadingMedia}
+                      disabled={!canCreatePost || isUploadingMedia || locationLoading}
                     >
-                      <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                      {locationLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Getting location...
+                        </>
+                      ) : (
+                        <>
+                          <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                        </>
+                      )}
                     </Button>
                     <Button
                       type="button"
@@ -543,30 +553,7 @@ const Index = () => {
                   </div>
 
                   {/* Conditional rendering for location input/display based on mode and if coordinates are NOT already set */}
-                  {!coordinates && locationSelectionMode === 'current' && (
-                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                      <Button
-                        type="button"
-                        onClick={handleGetLocation}
-                        disabled={locationLoading || !canCreatePost || isUploadingMedia}
-                        className="w-full hover:ring-2 hover:ring-blue-500"
-                      >
-                        {locationLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Getting location...
-                          </>
-                        ) : (
-                          <>
-                            <MapPin className="mr-2 h-4 w-4" />
-                            Get current location
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-
-                  {!coordinates && locationSelectionMode === 'search' && (
+                  {locationSelectionMode === 'search' && !coordinates && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <LocationSearch
                         onSelectLocation={setCoordinates}
