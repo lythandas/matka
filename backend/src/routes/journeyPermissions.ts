@@ -10,12 +10,12 @@ const journeyPermissionsRoutes: FastifyPluginAsync = async (fastify) => {
       return false;
     }
 
-    // Check if user is global admin with manage_roles permission
+    // 1. Global Admin Override: Admins with 'manage_roles' implicitly have all permissions
     if (request.user.role === 'admin' && request.user.permissions.includes('manage_roles')) {
       return true;
     }
 
-    // Check if user is the owner of the journey
+    // 2. Check if user is the owner of the journey
     const journeyOwnerResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journey = journeyOwnerResult.rows[0];
     if (!journey) {
@@ -26,7 +26,7 @@ const journeyPermissionsRoutes: FastifyPluginAsync = async (fastify) => {
       return true; // Journey owner has full control
     }
 
-    // Check if user has 'manage_journey_access' permission for this specific journey
+    // 3. Check if user has 'manage_journey_access' permission for this specific journey
     const journeyPermsResult = await pgClient.query(
       'SELECT permissions FROM journey_user_permissions WHERE user_id = $1 AND journey_id = $2',
       [request.user.id, journeyId]

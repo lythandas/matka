@@ -3,19 +3,23 @@
 import { User, JourneyCollaborator } from '@/types';
 
 export const PERMISSION_MAP: { [key: string]: string } = {
-  'create_post': 'Create Posts',
-  'delete_post': 'Delete Own Posts', // Refers to own posts
-  'edit_post': 'Edit Own Posts', // Refers to own posts
-  'create_journey': 'Create Journeys',
-  'delete_journey': 'Delete Own Journeys', // Refers to own journeys
-  'edit_journey': 'Edit Own Journeys', // Refers to own journeys
+  // Implicit permissions (handled by logic, not explicitly assigned to roles/collaborators)
+  // 'create_journey': 'Create Journeys', // All authenticated users can create their own journeys
+  // 'edit_own_journey': 'Edit Own Journey', // Journey owner can edit their own journey
+  // 'delete_own_journey': 'Delete Own Journey', // Journey owner can delete their own journey
+  // 'create_post': 'Create Posts', // Post author can create posts in their own journey or if collaborator
+  // 'edit_own_post': 'Edit Own Posts', // Post author can edit their own posts
+  // 'delete_own_post': 'Delete Own Posts', // Post author can delete their own posts
+
+  // Explicit permissions (assigned to roles or journey collaborators)
+  'publish_post_on_journey': 'Publish Posts on This Journey', // For collaborators
   'manage_users': 'Manage Users (Admin Only)',
+  'manage_roles': 'Manage Roles (Admin Only)',
   'edit_any_journey': 'Edit Any Journey (Admin Only)',
   'delete_any_journey': 'Delete Any Journey (Admin Only)',
-  'delete_any_post': 'Delete Any Post (Admin Only)',
   'edit_any_post': 'Edit Any Post (Admin Only)',
-  'manage_roles': 'Manage Roles (Admin Only)',
-  'manage_journey_access': 'Manage Journey Collaborators', // New permission
+  'delete_any_post': 'Delete Any Post (Admin Only)',
+  'manage_journey_access': 'Manage Journey Collaborators', // For journey owner or global admin
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_MAP);
@@ -44,51 +48,46 @@ export const userHasPermission = (
 ): boolean => {
   if (!currentUser) return false;
 
-  // 1. Global Admin Override
+  // 1. Global Admin Override: Admins with 'manage_roles' implicitly have all permissions
   if (currentUser.role === 'admin' && currentUser.permissions.includes('manage_roles')) {
-    // Admins with 'manage_roles' implicitly have all permissions
     return true;
   }
 
   // 2. Global 'any' permissions (e.g., edit_any_post, delete_any_journey)
-  if (currentUser.permissions.includes(`edit_any_${requiredPermission.split('_')[1]}`) && requiredPermission.startsWith('edit_')) {
-    return true;
-  }
-  if (currentUser.permissions.includes(`delete_any_${requiredPermission.split('_')[1]}`) && requiredPermission.startsWith('delete_')) {
-    return true;
-  }
   if (currentUser.permissions.includes(requiredPermission) && requiredPermission.includes('any')) {
     return true;
   }
 
-  // 3. Journey Owner Override
+  // 3. Journey Owner Override: Owner has full control over their own journey
   if (journeyOwnerId && currentUser.id === journeyOwnerId) {
-    // Journey owner has all permissions for their own journey
-    return true;
+    // Owner can create/edit/delete their own journey
+    if (['create_journey', 'edit_journey', 'delete_journey'].includes(requiredPermission)) return true;
+    // Owner can create/edit/delete posts in their own journey
+    if (['create_post', 'edit_post', 'delete_post'].includes(requiredPermission)) return true;
+    // Owner can manage collaborators for their own journey
+    if (requiredPermission === 'manage_journey_access') return true;
   }
 
-  // 4. Journey-specific permissions
+  // 4. Journey-specific permissions for collaborators
   const userJourneyPerms = journeyCollaborators.find(collab => collab.user_id === currentUser.id)?.permissions || [];
   if (userJourneyPerms.includes(requiredPermission)) {
     return true;
   }
 
-  // 5. Global role permissions (excluding 'any' permissions already checked)
-  if (currentUser.permissions.includes(requiredPermission)) {
-    // Special handling for 'own' permissions if a post is involved
-    if ((requiredPermission === 'delete_post' || requiredPermission === 'edit_post') && postId && postAuthorId) {
-      return currentUser.id === postAuthorId;
-    }
+  // 5. Implicit 'own' permissions for non-owners/non-admins
+  // All authenticated users can create their own journeys
+  if (requiredPermission === 'create_journey') {
+    return true;
+  }
+  // Users can edit their own posts
+  if (requiredPermission === 'edit_post' && postId && postAuthorId && currentUser.id === postAuthorId) {
+    return true;
+  }
+  // Users can delete their own posts
+  if (requiredPermission === 'delete_post' && postId && postAuthorId && currentUser.id === postAuthorId) {
     return true;
   }
 
-  // If it's an 'own' permission and no post context, or not the owner, it's false
-  if ((requiredPermission === 'delete_post' || requiredPermission === 'edit_post') && (!postId || !postAuthorId || currentUser.id !== postAuthorId)) {
-    return false;
-  }
-  if ((requiredPermission === 'delete_journey' || requiredPermission === 'edit_journey') && journeyOwnerId && currentUser.id !== journeyOwnerId) {
-    return false;
-  }
-
+  // If none of the above, permission is denied
   return false;
 };

@@ -235,8 +235,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
 
     // Check permission to edit this specific post
-    const canEdit = userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id) ||
-                    userHasPermission(currentUser, 'edit_any_post', journeyOwnerId, journeyCollaborators);
+    const canEdit = userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id);
     if (!canEdit) {
       showError('You do not have permission to edit this post.');
       return;
@@ -279,10 +278,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
   const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
 
-  const canEditPost = currentUser && (
-    userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id) ||
-    userHasPermission(currentUser, 'edit_any_post', journeyOwnerId, journeyCollaborators)
-  );
+  const canEditPost = currentUser && userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

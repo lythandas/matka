@@ -29,13 +29,9 @@ interface ManageJourneyCollaboratorsDialogProps {
   onCollaboratorsUpdated: () => void; // Callback to refresh journey data if needed
 }
 
+// Only 'publish_post_on_journey' is a journey-specific permission for collaborators
 const journeySpecificPermissions = [
-  'create_post',
-  'delete_post', // Delete own posts in this journey
-  'edit_post',   // Edit own posts in this journey
-  'edit_journey', // Edit this journey's name
-  'delete_journey', // Delete this journey
-  'manage_journey_access', // Manage collaborators for this journey
+  'publish_post_on_journey',
 ];
 
 const ManageJourneyCollaboratorsDialog: React.FC<ManageJourneyCollaboratorsDialogProps> = ({
@@ -66,6 +62,11 @@ const ManageJourneyCollaboratorsDialog: React.FC<ManageJourneyCollaboratorsDialo
         },
       });
       if (!response.ok) {
+        // If not authorized to view collaborators, just return empty
+        if (response.status === 403 || response.status === 401) {
+          setCollaborators([]);
+          return;
+        }
         throw new Error('Failed to fetch journey collaborators');
       }
       const data: JourneyCollaborator[] = await response.json();

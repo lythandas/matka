@@ -88,7 +88,7 @@ const Index = () => {
   }, []);
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
-    if (!user || !user.id || !selectedJourney || !localStorage.getItem('authToken')) {
+    if (!user || !user.id || !localStorage.getItem('authToken')) {
       setJourneyCollaborators([]);
       return;
     }
@@ -112,7 +112,7 @@ const Index = () => {
       console.error('Error fetching journey collaborators:', error);
       setJourneyCollaborators([]); // Clear on error
     }
-  }, [user, selectedJourney]);
+  }, [user]); // Removed selectedJourney from dependencies as it's not directly used here
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -278,8 +278,7 @@ const Index = () => {
       return;
     }
     // Check permission to delete post in this journey
-    if (!userHasPermission(user, 'delete_post', journeyId, journeyCollaborators, id, postAuthorId) &&
-        !userHasPermission(user, 'delete_any_post', journeyId, journeyCollaborators)) {
+    if (!userHasPermission(user, 'delete_post', journeyId, journeyCollaborators, id, postAuthorId)) {
       showError('You do not have permission to delete this post.');
       return;
     }
@@ -611,8 +610,7 @@ const Index = () => {
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
                       <div className="flex space-x-2">
                         {isAuthenticated && selectedJourney && (
-                          userHasPermission(user, 'edit_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id) ||
-                          userHasPermission(user, 'edit_any_post', selectedJourney.user_id, journeyCollaborators)
+                          userHasPermission(user, 'edit_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
                         ) && (
                           <Button
                             variant="outline"
@@ -624,8 +622,7 @@ const Index = () => {
                           </Button>
                         )}
                         {isAuthenticated && selectedJourney && (
-                          userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id) ||
-                          userHasPermission(user, 'delete_any_post', selectedJourney.user_id, journeyCollaborators)
+                          userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
                         ) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>

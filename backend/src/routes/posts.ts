@@ -5,32 +5,53 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
   const pgClient = fastify.pg;
 
   // Helper function to check combined permissions
-  const checkCombinedPermissions = async (userId: string, journeyId: string, requiredPermission: string): Promise<boolean> => {
-    // 1. Check global role permissions
+  const checkCombinedPermissions = async (userId: string, journeyId: string, requiredPermission: string, postAuthorId?: string): Promise<boolean> => {
+    // 1. Global Admin Override: Admins with 'manage_roles' implicitly have all permissions
     const userRoleResult = await pgClient.query(
       'SELECT r.permissions FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
       [userId]
     );
     const globalPermissions: string[] = userRoleResult.rows[0]?.permissions || [];
-    if (globalPermissions.includes(requiredPermission)) {
+    if (globalPermissions.includes('manage_roles')) {
       return true;
     }
 
-    // 2. Check if user is the owner of the journey
+    // 2. Global 'any' permissions (e.g., edit_any_post, delete_any_post)
+    if (globalPermissions.includes(requiredPermission) && requiredPermission.includes('any')) {
+      return true;
+    }
+
+    // 3. Journey Owner Override: Owner has full control over their own journey
     const journeyOwnerResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journeyOwnerId = journeyOwnerResult.rows[0]?.user_id;
     if (journeyOwnerId === userId) {
-      // Owners implicitly have all permissions for their own journey
-      return true;
+      // Owner can create/edit/delete posts in their own journey
+      if (['create_post', 'edit_post', 'delete_post'].includes(requiredPermission)) return true;
+      // Owner can manage collaborators for their own journey
+      if (requiredPermission === 'manage_journey_access') return true;
     }
 
-    // 3. Check journey-specific permissions
+    // 4. Journey-specific permissions for collaborators
     const journeyPermsResult = await pgClient.query(
       'SELECT permissions FROM journey_user_permissions WHERE user_id = $1 AND journey_id = $2',
       [userId, journeyId]
     );
     const journeyPermissions: string[] = journeyPermsResult.rows[0]?.permissions || [];
     if (journeyPermissions.includes(requiredPermission)) {
+      return true;
+    }
+
+    // 5. Implicit 'own' permissions for non-owners/non-admins
+    // Users can create posts if they are the journey owner or have 'publish_post_on_journey'
+    if (requiredPermission === 'create_post' && (journeyOwnerId === userId || journeyPermissions.includes('publish_post_on_journey'))) {
+      return true;
+    }
+    // Users can edit their own posts
+    if (requiredPermission === 'edit_post' && postAuthorId && userId === postAuthorId) {
+      return true;
+    }
+    // Users can delete their own posts
+    if (requiredPermission === 'delete_post' && postAuthorId && userId === postAuthorId) {
       return true;
     }
 
@@ -59,8 +80,14 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Admins or users with 'edit_any_journey' can see all posts in any journey
-      if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
-        // Non-admins/non-super-editors can only see posts in journeys they own or collaborate on
+      // For non-admins/non-super-editors, they can only see posts in journeys they own or collaborate on
+      const userRoleResult = await pgClient.query(
+        'SELECT r.permissions FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
+        [request.user.id]
+      );
+      const globalPermissions: string[] = userRoleResult.rows[0]?.permissions || [];
+
+      if (!globalPermissions.includes('edit_any_journey')) {
         const userJourneysResult = await pgClient.query(
           `SELECT id FROM journeys WHERE user_id = $1
            UNION
@@ -161,23 +188,9 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      const isOwner = post.user_id === request.user.id;
-      const canEditAnyPostGlobally = request.user.permissions.includes('edit_any_post');
-      const canEditOwnPostGlobally = request.user.permissions.includes('edit_post'); // Assuming 'edit_post' means own posts globally
-
-      // Check journey-specific permissions
-      const canEditAnyPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'edit_any_post');
-      const canEditOwnPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'edit_post');
-
-      // Determine if the user has permission to edit this post
-      let hasPermission = false;
-      if (canEditAnyPostGlobally || canEditAnyPostInJourney) {
-        hasPermission = true; // Can edit any post
-      } else if (isOwner && (canEditOwnPostGlobally || canEditOwnPostInJourney)) {
-        hasPermission = true; // Can edit own post
-      }
-
-      if (!hasPermission) {
+      // Check if user has permission to edit this specific post
+      const canEdit = await checkCombinedPermissions(request.user.id, post.journey_id, 'edit_post', post.user_id);
+      if (!canEdit) {
         reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
         return;
       }
@@ -252,23 +265,9 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      const isOwner = post.user_id === request.user.id;
-      const canDeleteAnyPostGlobally = request.user.permissions.includes('delete_any_post');
-      const canDeleteOwnPostGlobally = request.user.permissions.includes('delete_post'); // Assuming 'delete_post' means own posts globally
-
-      // Check journey-specific permissions
-      const canDeleteAnyPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'delete_any_post');
-      const canDeleteOwnPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'delete_post');
-
-      // Determine if the user has permission to delete this post
-      let hasPermission = false;
-      if (canDeleteAnyPostGlobally || canDeleteAnyPostInJourney) {
-        hasPermission = true; // Can delete any post
-      } else if (isOwner && (canDeleteOwnPostGlobally || canDeleteOwnPostInJourney)) {
-        hasPermission = true; // Can delete own post
-      }
-
-      if (!hasPermission) {
+      // Check if user has permission to delete this specific post
+      const canDelete = await checkCombinedPermissions(request.user.id, post.journey_id, 'delete_post', post.user_id);
+      if (!canDelete) {
         reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
         return;
       }

@@ -100,7 +100,7 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
-        permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post']
+        permissions JSONB DEFAULT '[]', -- e.g., ['publish_post_on_journey']
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         UNIQUE (user_id, journey_id)
       );
@@ -108,14 +108,23 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     fastify.log.info('Journey_user_permissions table created.');
 
     // Insert default roles if they don't exist
-    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post', 'manage_roles', 'edit_any_post', 'manage_journey_access']; // Added manage_journey_access
+    const adminPermissions = [
+      'manage_users',
+      'manage_roles',
+      'edit_any_journey',
+      'delete_any_journey',
+      'edit_any_post',
+      'delete_any_post',
+      'manage_journey_access'
+    ];
     await pgClient.query(
       "INSERT INTO roles (name, permissions) VALUES ('admin', $1) ON CONFLICT (name) DO NOTHING",
       [JSON.stringify(adminPermissions)]
     );
     fastify.log.info('Default admin role ensured.');
 
-    const userPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey'];
+    // User role has no explicit permissions here, as they are handled implicitly or via journey_user_permissions
+    const userPermissions: string[] = [];
     await pgClient.query(
       "INSERT INTO roles (name, permissions) VALUES ('user', $1) ON CONFLICT (name) DO NOTHING",
       [JSON.stringify(userPermissions)]

@@ -55,7 +55,7 @@ const AdminPage: React.FC = () => {
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
 
   const fetchUsers = useCallback(async () => {
-    if (!token || currentUser?.role !== 'admin' || !currentUser?.permissions.includes('manage_users')) {
+    if (!token || currentUser?.role !== 'admin' || !userHasPermission(currentUser, 'manage_users')) {
       setLoadingUsers(false);
       return;
     }
@@ -80,7 +80,7 @@ const AdminPage: React.FC = () => {
   }, [token, currentUser]);
 
   const fetchRoles = useCallback(async () => {
-    if (!token || currentUser?.role !== 'admin' || !currentUser?.permissions.includes('manage_roles')) {
+    if (!token || currentUser?.role !== 'admin' || !userHasPermission(currentUser, 'manage_roles')) {
       setLoadingRoles(false);
       return;
     }
