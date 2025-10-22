@@ -366,13 +366,13 @@ const Index = () => {
         {isAuthenticated && (
           selectedJourney ? (
             <Card className="mb-8 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-2xl font-semibold">Share Your Day in "{selectedJourney.name}"</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-end"> {/* Adjusted justify-between to justify-end */}
+                {/* Removed CardTitle */}
                 {canManageCollaborators && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsManageJourneyDialogOpen(true)} // Changed to new dialog
+                    onClick={() => setIsManageJourneyDialogOpen(true)}
                     className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                   >
                     <Users className="mr-2 h-4 w-4" /> Manage Collaborators
@@ -717,9 +717,9 @@ const Index = () => {
       )}
 
       {selectedJourney && (
-        <ManageJourneyDialog // Changed to new dialog
-          isOpen={isManageJourneyDialogOpen} // Changed state name
-          onClose={() => setIsManageJourneyDialogOpen(false)} // Changed state name
+        <ManageJourneyDialog
+          isOpen={isManageJourneyDialogOpen}
+          onClose={() => setIsManageJourneyDialogOpen(false)}
           journey={selectedJourney}
           onJourneyUpdated={() => {
             fetchJourneys(); // Refresh journeys list

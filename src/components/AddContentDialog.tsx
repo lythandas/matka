@@ -53,26 +53,22 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Effect to reset internal states when the dialog is opened
   useEffect(() => {
-    setSpotifyInput(currentSpotifyEmbedUrl);
-    // Set local preview if mediaInfo is already present (e.g., from an existing post)
-    if (uploadedMediaInfo) {
-      if (uploadedMediaInfo.type === 'image' && uploadedMediaInfo.urls.medium) {
-        setLocalPreviewUrl(uploadedMediaInfo.urls.medium);
-      } else if (uploadedMediaInfo.type === 'video' && uploadedMediaInfo.url) {
-        setLocalPreviewUrl(uploadedMediaInfo.url);
-      }
-    } else {
-      setLocalPreviewUrl(null);
-    }
-  }, [currentSpotifyEmbedUrl, uploadedMediaInfo]);
-
-  useEffect(() => {
-    // When dialog opens, if there are current coordinates, set mode to 'current', otherwise 'search'
     if (open) {
+      // Reset media states
+      setSelectedFile(null);
+      setLocalPreviewUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      
+      // Reset Spotify state
+      setSpotifyInput(currentSpotifyEmbedUrl);
+
+      // Reset Location state
       setLocationSelectionMode(currentCoordinates ? 'current' : 'search');
+      setLocationLoading(false);
     }
-  }, [open, currentCoordinates]);
+  }, [open, currentSpotifyEmbedUrl, currentCoordinates]); // Depend on open state and initial props
 
   const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
