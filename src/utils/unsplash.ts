@@ -14,7 +14,9 @@ interface UnsplashImage {
   };
 }
 
-export const fetchRandomLandscapeImage = async (): Promise<UnsplashImage | null> => {
+export const fetchRandomLandscapeImage = async (
+  queries: string[] = ['landscape'] // Default to 'landscape' if no specific queries are provided
+): Promise<UnsplashImage | null> => {
   const accessKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
 
   if (!accessKey) {
@@ -23,8 +25,11 @@ export const fetchRandomLandscapeImage = async (): Promise<UnsplashImage | null>
   }
 
   try {
+    // Randomly select one query from the provided list
+    const selectedQuery = queries[Math.floor(Math.random() * queries.length)];
+
     const response = await fetch(
-      `https://api.unsplash.com/photos/random?query=landscape&orientation=landscape&client_id=${accessKey}`
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(selectedQuery)}&orientation=landscape&client_id=${accessKey}`
     );
 
     if (!response.ok) {

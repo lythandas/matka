@@ -37,7 +37,8 @@ const LoginPage: React.FC = () => {
     const loadBackgroundImage = async () => {
       setLoadingImage(true);
       try {
-        const image = await fetchRandomLandscapeImage();
+        // Fetch image from specific biotope categories
+        const image = await fetchRandomLandscapeImage(['mountain', 'forest', 'countryside']);
         if (image) {
           setBackgroundImage({
             url: image.urls.full,
@@ -91,21 +92,21 @@ const LoginPage: React.FC = () => {
       {/* Overlay for better readability */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-      {/* Matka Logo and Name */}
+      {/* Matka Logo and Name (White) */}
       <div className="absolute top-6 left-6 flex items-center z-10">
-        <Compass className="mr-2 h-8 w-8 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400">Matka</h1>
+        <Compass className="mr-2 h-8 w-8 text-white" />
+        <h1 className="text-3xl font-extrabold text-white">Matka</h1>
       </div>
 
-      {/* Photographer Credit */}
+      {/* Photographer Credit (White with hover) */}
       {backgroundImage && (
-        <div className="absolute bottom-4 right-4 text-xs text-muted-foreground z-10">
+        <div className="absolute bottom-4 right-4 text-xs text-white/70 z-10">
           Photo by{' '}
           <a
             href={backgroundImage.photographerUrl + '?utm_source=Matka&utm_medium=referral'}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-foreground"
+            className="underline hover:text-white"
           >
             {backgroundImage.photographer}
           </a>{' '}
@@ -114,7 +115,7 @@ const LoginPage: React.FC = () => {
             href="https://unsplash.com/?utm_source=Matka&utm_medium=referral"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-foreground"
+            className="underline hover:text-white"
           >
             Unsplash
           </a>
