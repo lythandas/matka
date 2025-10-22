@@ -12,14 +12,14 @@ export const PERMISSION_MAP: { [key: string]: string } = {
   // 'delete_own_post': 'Delete Own Posts', // Post author can delete their own posts
 
   // Explicit permissions (assigned to roles or journey collaborators)
-  'publish_post_on_journey': 'Publish Posts on This Journey', // For collaborators
-  'manage_users': 'Manage Users (Admin Only)',
-  'manage_roles': 'Manage Roles (Admin Only)',
-  'edit_any_journey': 'Edit Any Journey (Admin Only)',
-  'delete_any_journey': 'Delete Any Journey (Admin Only)',
-  'edit_any_post': 'Edit Any Post (Admin Only)',
-  'delete_any_post': 'Delete Any Post (Admin Only)',
-  'manage_journey_access': 'Manage Journey Collaborators', // For journey owner or global admin
+  'publish_post_on_journey': 'Publish posts on this journey',
+  'manage_users': 'Manage users (admin only)',
+  'manage_roles': 'Manage roles (admin only)',
+  'edit_any_journey': 'Edit any journey (admin only)',
+  'delete_any_journey': 'Delete any journey (admin only)',
+  'edit_any_post': 'Edit any post (admin only)',
+  'delete_any_post': 'Delete any post (admin only)',
+  'manage_journey_access': 'Manage journey collaborators',
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_MAP);

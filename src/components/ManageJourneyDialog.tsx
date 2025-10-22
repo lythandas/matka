@@ -309,7 +309,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manage Journey: "{journey?.name}"</DialogTitle>
+          <DialogTitle>Manage journey: "{journey?.name}"</DialogTitle>
           <DialogDescription>
             Update journey details or manage collaborators.
           </DialogDescription>
@@ -317,7 +317,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         <div className="p-4 space-y-4 flex-grow overflow-y-auto"> {/* Removed Tabs, directly rendering content */}
           {/* Journey Owner */}
           <div className="border rounded-md p-4 bg-muted/50">
-            <h3 className="text-lg font-semibold mb-2">Journey Owner</h3>
+            <h3 className="text-lg font-semibold mb-2">Journey owner</h3>
             <div className="flex items-center space-x-3 mb-4">
               <Avatar className="h-10 w-10">
                 {journey.owner_profile_image_url ? (
@@ -340,14 +340,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             {/* Journey Name input moved here */}
             <div className="grid grid-cols-4 items-center gap-4 mb-4">
               <Label htmlFor="journey-name" className="text-right">
-                Journey Name
+                Journey name
               </Label>
               <Input
                 id="journey-name"
                 value={journeyName}
                 onChange={(e) => setJourneyName(e.target.value)}
                 className="col-span-3"
-                placeholder="e.g., My Summer Trip"
+                placeholder="e.g., My summer trip"
                 disabled={isRenaming || !canEditJourneyName}
               />
             </div>
@@ -359,7 +359,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                     Renaming...
                   </>
                 ) : (
-                  'Save Journey Name'
+                  'Save journey name'
                 )}
               </Button>
             </div>
@@ -367,7 +367,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
           {/* Add Collaborator Section with Autocomplete */}
           <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-2">Add New Collaborator</h3>
+            <h3 className="text-lg font-semibold mb-2">Add new collaborator</h3>
             <Command className="rounded-lg border shadow-md mb-4">
               <CommandInput
                 placeholder="Search username to add..."
@@ -436,7 +436,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   className="w-full hover:ring-2 hover:ring-blue-500"
                 >
                   {isAddingCollaborator ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Add Collaborator
+                  Add collaborator
                 </Button>
               </div>
             )}
@@ -444,7 +444,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
           {/* Current Collaborators Section */}
           <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-2">Current Collaborators ({collaborators.length})</h3>
+            <h3 className="text-lg font-semibold mb-2">Current collaborators ({collaborators.length})</h3>
             {loadingCollaborators ? (
               <div className="flex justify-center items-center h-24">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />

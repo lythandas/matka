@@ -377,7 +377,7 @@ const Index = () => {
 
                   {(uploadedMediaInfo || spotifyEmbedUrl || coordinates) && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                      <h4 className="text-lg font-semibold">Content Preview:</h4>
+                      <h4 className="text-lg font-semibold">Content preview:</h4>
                       {currentMediaPreviewUrl && (
                         <div className="relative">
                           {currentMediaType === 'image' ? (
@@ -464,7 +464,7 @@ const Index = () => {
                       currentCoordinates={coordinates}
                     >
                       <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" disabled={!canCreatePost}>
-                        <Plus className="mr-2 h-4 w-4" /> Add Content
+                        <Plus className="mr-2 h-4 w-4" /> Add content
                       </Button>
                     </AddContentDialog>
                   </div>
@@ -491,7 +491,7 @@ const Index = () => {
                     onClick={() => setIsCreateJourneyDialogOpen(true)}
                     className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
                   >
-                    <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                    <Plus className="mr-2 h-4 w-4" /> Create new journey
                   </Button>
                 )}
               </div>
@@ -515,7 +515,7 @@ const Index = () => {
             </p>
             {isAuthenticated && canCreatePost && (
               <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                Use the "Share Your Day" section above to begin.
+                Use the "Share your day" section above to begin.
               </p>
             )}
           </div>

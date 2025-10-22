@@ -68,7 +68,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }
   return (
     <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground shadow-neon-blue bg-gradient-blue-light">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Welcome! Register Your Admin Account</h2>
+        <h2 className="text-2xl font-bold">Welcome! Register your admin account</h2>
         <p className="text-sm text-muted-foreground mt-1">
           This will be the first (and only) user you can register. This user will be an administrator.
         </p>
@@ -98,7 +98,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="confirm-password">Confirm Password</Label>
+          <Label htmlFor="confirm-password">Confirm password</Label>
           <Input
             id="confirm-password"
             type="password"
@@ -117,7 +117,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }
                 Registering...
               </>
             ) : (
-              'Register Admin'
+              'Register admin'
             )}
           </Button>
         </div>

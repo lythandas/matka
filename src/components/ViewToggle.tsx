@@ -22,10 +22,10 @@ const ViewToggle: React.FC<ViewToggleProps> = ({ viewMode, onViewModeChange, cla
       className={cn("w-fit mx-auto", className)}
     >
       <ToggleGroupItem value="list" aria-label="Toggle list view">
-        <List className="h-4 w-4 mr-2" /> List View
+        <List className="h-4 w-4 mr-2" /> List view
       </ToggleGroupItem>
       <ToggleGroupItem value="grid" aria-label="Toggle grid view">
-        <Grid className="h-4 w-4 mr-2" /> Grid View
+        <Grid className="h-4 w-4 mr-2" /> Grid view
       </ToggleGroupItem>
     </ToggleGroup>
   );
