@@ -415,7 +415,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
             {selectedUserToAdd && (
               <div className="space-y-3">
-                <p className="text-sm font-medium">Assign permissions for {selectedUserToAdd.name || selectedUserToAdd.username}:</p>
+                <p className="text-sm font-medium">
+                  Assign permissions for <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span>:
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   {journeySpecificPermissions.map((perm) => (
                     <div key={`new-${perm}`} className="flex items-center space-x-2">
