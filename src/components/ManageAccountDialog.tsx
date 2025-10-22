@@ -20,6 +20,7 @@ import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_PROFILE_IMAGE_SIZE_BYTES, SUPPORTED_IMAGE_TYPES } from '@/config/constants'; // Updated import
 import { User } from '@/types'; // Centralized User interface
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
@@ -276,6 +277,12 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
               placeholder="Your last name"
               disabled={isSaving || isUploadingImage}
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right">Theme</Label>
+            <div className="col-span-3">
+              <ThemeToggle className="w-full justify-start" />
+            </div>
           </div>
         </div>
         <DialogFooter>
