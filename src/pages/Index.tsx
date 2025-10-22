@@ -368,7 +368,16 @@ const Index = () => {
             <Card className="mb-8 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-end"> {/* Adjusted justify-between to justify-end */}
                 {/* Removed CardTitle */}
-                {/* Removed "Manage Collaborators" button */}
+                {canManageCollaborators && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsManageJourneyDialogOpen(true)}
+                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  >
+                    <Users className="mr-2 h-4 w-4" /> Manage Collaborators
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -613,8 +622,6 @@ const Index = () => {
                           </Button>
                         )}
                         {isAuthenticated && selectedJourney && (
-                          userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
-                        ) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
