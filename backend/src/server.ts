@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { FastifyRequest } from 'fastify';
+import path from 'path'; // Import path module
+import fs from 'fs/promises'; // Import fs/promises for async file operations
 
 const fastify = Fastify({
   logger: true,
@@ -96,6 +98,7 @@ let posts: Post[] = [];
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey_dev';
 const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localhost:3001';
+const UPLOADS_DIR = path.join(__dirname, '../uploads'); // Define uploads directory path
 
 // --- Utility Functions ---
 const hashPassword = async (password: string): Promise<string> => {
@@ -249,7 +252,7 @@ fastify.register(async (authenticatedFastify) => {
     return { user: userWithoutHash, token: newToken };
   });
 
-  // Simulate media upload
+  // Handle media upload
   authenticatedFastify.post('/upload-media', async (request: FastifyRequest, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -260,26 +263,40 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(400).send({ message: 'File data and type are required' });
     }
 
-    // In a real app, you'd save the file and get actual URLs.
-    // Here, we'll just generate mock URLs.
     const mediaId = uuidv4();
+    const fileExtension = fileType.split('/')[1] || 'bin'; // e.g., 'jpeg', 'png', 'mp4'
+    const fileName = `${mediaId}-original.${fileExtension}`;
+    const filePath = path.join(UPLOADS_DIR, fileName);
+
+    try {
+      // Ensure the uploads directory exists
+      await fs.mkdir(UPLOADS_DIR, { recursive: true });
+      // Decode base64 and save the file
+      const buffer = Buffer.from(fileBase64, 'base64');
+      await fs.writeFile(filePath, buffer);
+    } catch (error) {
+      console.error('Error saving uploaded file:', error);
+      return reply.code(500).send({ message: 'Failed to save uploaded file' });
+    }
+
     const mockBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`; // Use external URL for frontend access
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {
+      // For images, we can simulate different sizes by just returning the original URL for all
       mediaInfo = {
         type: 'image',
         urls: {
-          small: `${mockBaseUrl}/${mediaId}-small.jpeg`,
-          medium: `${mockBaseUrl}/${mediaId}-medium.jpeg`,
-          large: `${mockBaseUrl}/${mediaId}-large.jpeg`,
-          original: `${mockBaseUrl}/${mediaId}-original.jpeg`,
+          small: `${mockBaseUrl}/${fileName}`,
+          medium: `${mockBaseUrl}/${fileName}`,
+          large: `${mockBaseUrl}/${fileName}`,
+          original: `${mockBaseUrl}/${fileName}`,
         }
       };
     } else if (fileType.startsWith('video/')) {
       mediaInfo = {
         type: 'video',
-        url: `${mockBaseUrl}/${mediaId}.mp4`,
+        url: `${mockBaseUrl}/${fileName}`,
       };
     } else {
       return reply.code(400).send({ message: 'Unsupported media type' });
@@ -913,11 +930,11 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
+    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
     const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
-    const canEditAny = request.user.role === 'admin' && request.user.permissions.includes('edit_any_post');
+    const canEditAny = request.user.role === 'admin' && request.user.permissions.includes('edit_any_any_post');
 
     if (!isPostAuthor && !isJourneyOwner && !canPublish && !canEditAny) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
