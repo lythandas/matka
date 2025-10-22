@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import anime from 'animejs';
+import * as anime from 'animejs'; // Changed import to import all as a namespace
 
 const IsometricVan: React.FC = () => {
   const vanRef = useRef<HTMLDivElement>(null);
