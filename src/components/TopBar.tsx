@@ -128,17 +128,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
       {!isMobile && isAuthenticated && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-2">
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
-          {selectedJourney && canManageSelectedJourney && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsManageJourneyDialogOpen(true)}
-              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-              title="Manage Journey"
-            >
-              <Wrench className="h-4 w-4" />
-            </Button>
-          )}
+          {/* Removed the "Manage Collaborators" button from here */}
         </div>
       )}
 
