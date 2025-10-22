@@ -90,6 +90,12 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      boxShadow: {
+        'neon-blue': '0 0 5px theme("colors.blue.400"), 0 0 15px theme("colors.blue.500"), 0 0 30px theme("colors.blue.600")',
+      },
+      backgroundImage: {
+        'gradient-blue-light': 'linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--primary) / 0.05))',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
