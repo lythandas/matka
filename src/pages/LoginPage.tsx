@@ -29,9 +29,7 @@ const LoginPage: React.FC = () => {
     return null; // Or redirect to home, but App.tsx handles routing
   }
 
-  const handleRegistrationSuccess = () => {
-    fetchUsersExist(); // Re-check user status after registration
-  };
+  // Removed handleRegistrationSuccess as it's no longer needed
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
@@ -49,7 +47,7 @@ const LoginPage: React.FC = () => {
             <p className="text-lg">Checking user status...</p>
           </div>
         ) : showRegister ? (
-          <RegisterDialog onRegistrationSuccess={handleRegistrationSuccess} />
+          <RegisterDialog />
         ) : (
           <LoginDialog />
         )}

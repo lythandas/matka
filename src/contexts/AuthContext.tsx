@@ -14,6 +14,7 @@ interface AuthContextType {
   usersExist: boolean | null; // New state to track if any users exist
   fetchUsersExist: () => Promise<void>; // Function to fetch user existence status
   updateUser: (updatedUserData: Partial<User>, newToken?: string) => void; // New function to update user in context
+  setAuthData: (user: User, token: string) => void; // New function to directly set auth data
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +33,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     showSuccess('Logged out successfully!');
     setUsersExist(true); // Assume users still exist after logout, or will be created
+  }, []);
+
+  const setAuthData = useCallback((userData: User, authToken: string) => {
+    localStorage.setItem('authToken', authToken);
+    localStorage.setItem('authUser', JSON.stringify(userData));
+    setToken(authToken);
+    setUser(userData);
+    setIsAuthenticated(true);
+    setUsersExist(true); // After successful login/registration, we know users exist
   }, []);
 
   const fetchUsersExist = useCallback(async () => {
@@ -62,16 +72,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('authUser');
     if (storedToken && storedUser) {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        setIsAuthenticated(true);
+        const parsedUser = JSON.parse(storedUser);
+        setAuthData(parsedUser, storedToken); // Use new setAuthData
       } catch (error) {
         console.error("Failed to parse stored user data:", error);
         logout(); // Clear invalid data
       }
     }
     fetchUsersExist(); // Check user existence on app load
-  }, [fetchUsersExist, logout]);
+  }, [fetchUsersExist, logout, setAuthData]); // Add setAuthData to dependencies
 
   const login = useCallback(async (username: string, password: string) => {
     try {
@@ -89,19 +98,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await response.json();
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('authUser', JSON.stringify(data.user));
-      setToken(data.token);
-      setUser(data.user);
-      setIsAuthenticated(true);
+      setAuthData(data.user, data.token); // Use new setAuthData
       showSuccess('Logged in successfully!');
-      setUsersExist(true); // After successful login, we know users exist
     } catch (error: any) {
       console.error('Login error:', error);
       showError(error.message || 'Failed to log in.');
       logout(); // Ensure state is cleared on failed login
     }
-  }, [logout]);
+  }, [logout, setAuthData]);
 
   const updateUser = useCallback((updatedUserData: Partial<User>, newToken?: string) => {
     setUser((prevUser) => {
@@ -117,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist, updateUser }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist, updateUser, setAuthData }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,11 +12,11 @@ import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 // Removed Dialog imports as it will no longer be a modal
 
 interface RegisterDialogProps {
-  onRegistrationSuccess: () => void; // New prop to notify LoginPage
+  // Removed onRegistrationSuccess prop as it's no longer needed
 }
 
-const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }) => { // Removed isOpen and onClose props
-  const { login } = useAuth(); // We'll use login to handle the token after registration
+const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen and onClose props
+  const { setAuthData } = useAuth(); // Use setAuthData directly
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
@@ -51,11 +51,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }
       }
 
       const data = await response.json();
-      // After successful registration, automatically log in the user
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('authUser', JSON.stringify(data.user));
-      // The AuthContext's useEffect will pick this up and update state
-      onRegistrationSuccess(); // Notify LoginPage to re-check user status
+      setAuthData(data.user, data.token); // Immediately log in the user
       // LoginPage will handle unmounting this component on successful login
     } catch (error: any) {
       console.error('Registration error:', error);
