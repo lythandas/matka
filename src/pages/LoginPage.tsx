@@ -5,20 +5,13 @@ import { Compass, Loader2 } from 'lucide-react';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchRandomLandscapeImage } from '@/utils/unsplash'; // Import the utility
+import { getRandomWikimediaImage, WikimediaImage } from '@/utils/wikimedia'; // Updated import
 import { showError } from '@/utils/toast';
-
-interface UnsplashImageInfo {
-  url: string;
-  alt: string;
-  photographer: string;
-  photographerUrl: string;
-}
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated, usersExist, fetchUsersExist } = useAuth();
   const [showRegister, setShowRegister] = useState<boolean>(false);
-  const [backgroundImage, setBackgroundImage] = useState<UnsplashImageInfo | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<WikimediaImage | null>(null); // Updated type
   const [loadingImage, setLoadingImage] = useState<boolean>(true);
 
   useEffect(() => {
@@ -37,19 +30,13 @@ const LoginPage: React.FC = () => {
     const loadBackgroundImage = async () => {
       setLoadingImage(true);
       try {
-        // Fetch image from specific biotope categories
-        const image = await fetchRandomLandscapeImage(['mountain', 'forest', 'countryside']);
+        const image = getRandomWikimediaImage(); // Use the new Wikimedia utility
         if (image) {
-          setBackgroundImage({
-            url: image.urls.full,
-            alt: image.alt_description || 'Random landscape',
-            photographer: image.user.name,
-            photographerUrl: image.user.links.html,
-          });
+          setBackgroundImage(image);
         } else {
           // Fallback if image fetching fails
           setBackgroundImage(null);
-          showError("Failed to load background image. Please check your Unsplash API key or network.");
+          showError("Failed to load background image from Wikimedia. Please check the utility file.");
         }
       } catch (error) {
         console.error("Error loading background image:", error);
@@ -103,7 +90,7 @@ const LoginPage: React.FC = () => {
         <div className="absolute bottom-4 right-4 text-xs text-white/70 z-10">
           Photo by{' '}
           <a
-            href={backgroundImage.photographerUrl + '?utm_source=Matka&utm_medium=referral'}
+            href={backgroundImage.photographerUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-white"
@@ -112,12 +99,12 @@ const LoginPage: React.FC = () => {
           </a>{' '}
           on{' '}
           <a
-            href="https://unsplash.com/?utm_source=Matka&utm_medium=referral"
+            href="https://commons.wikimedia.org/wiki/Main_Page"
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-white"
           >
-            Unsplash
+            Wikimedia Commons
           </a>
         </div>
       )}
