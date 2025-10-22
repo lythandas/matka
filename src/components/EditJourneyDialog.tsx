@@ -16,17 +16,19 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import { Loader2 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { Journey } from '@/types'; // Centralized Journey interface
+import { API_BASE_URL } from '@/config/api';
+import { Journey, JourneyCollaborator } from '@/types';
+import { userHasPermission } from '@/lib/permissions'; // Import the new permission utility
 
 interface EditJourneyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   journey: Journey;
+  journeyCollaborators: JourneyCollaborator[]; // New prop
 }
 
-const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, journey }) => {
-  const { token } = useAuth();
+const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, journey, journeyCollaborators }) => {
+  const { token, user: currentUser } = useAuth();
   const { fetchJourneys, setSelectedJourney } = useJourneys();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
@@ -40,8 +42,14 @@ const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, 
       showError('Journey name cannot be empty.');
       return;
     }
-    if (!token) {
+    if (!token || !currentUser) {
       showError('Authentication required to update a journey.');
+      return;
+    }
+
+    // Check permission to edit this specific journey
+    if (!userHasPermission(currentUser, 'edit_journey', journey.user_id, journeyCollaborators)) {
+      showError('You do not have permission to edit this journey.');
       return;
     }
 
@@ -74,6 +82,8 @@ const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, 
     }
   };
 
+  const canEditJourney = currentUser && userHasPermission(currentUser, 'edit_journey', journey.user_id, journeyCollaborators);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -94,7 +104,7 @@ const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, 
               onChange={(e) => setJourneyName(e.target.value)}
               className="col-span-3"
               placeholder="e.g., My Summer Trip"
-              disabled={isUpdating}
+              disabled={isUpdating || !canEditJourney}
             />
           </div>
         </div>
@@ -102,7 +112,7 @@ const EditJourneyDialog: React.FC<EditJourneyDialogProps> = ({ isOpen, onClose, 
           <Button variant="outline" onClick={onClose} disabled={isUpdating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleUpdate} disabled={!journeyName.trim() || isUpdating} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleUpdate} disabled={!journeyName.trim() || isUpdating || !canEditJourney} className="hover:ring-2 hover:ring-blue-500">
             {isUpdating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

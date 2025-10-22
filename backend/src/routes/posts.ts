@@ -1,8 +1,41 @@
 import { FastifyPluginAsync } from 'fastify';
-import { deleteMediaFiles } from '../utils/mediaProcessor'; // Updated import
+import { deleteMediaFiles } from '../utils/mediaProcessor';
 
 const postsRoutes: FastifyPluginAsync = async (fastify) => {
   const pgClient = fastify.pg;
+
+  // Helper function to check combined permissions
+  const checkCombinedPermissions = async (userId: string, journeyId: string, requiredPermission: string): Promise<boolean> => {
+    // 1. Check global role permissions
+    const userRoleResult = await pgClient.query(
+      'SELECT r.permissions FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
+      [userId]
+    );
+    const globalPermissions: string[] = userRoleResult.rows[0]?.permissions || [];
+    if (globalPermissions.includes(requiredPermission)) {
+      return true;
+    }
+
+    // 2. Check if user is the owner of the journey
+    const journeyOwnerResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyOwnerId = journeyOwnerResult.rows[0]?.user_id;
+    if (journeyOwnerId === userId) {
+      // Owners implicitly have all permissions for their own journey
+      return true;
+    }
+
+    // 3. Check journey-specific permissions
+    const journeyPermsResult = await pgClient.query(
+      'SELECT permissions FROM journey_user_permissions WHERE user_id = $1 AND journey_id = $2',
+      [userId, journeyId]
+    );
+    const journeyPermissions: string[] = journeyPermsResult.rows[0]?.permissions || [];
+    if (journeyPermissions.includes(requiredPermission)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Get all posts for a specific journey (or all if no journeyId provided)
   fastify.get('/posts', async (request, reply) => {
@@ -25,9 +58,26 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         params.push(journeyId);
       }
 
-      if (!request.user.permissions.includes('edit_any_journey')) {
-        query += `${params.length > 0 ? ' AND' : ' WHERE'} p.user_id = $${paramIndex++}`;
-        params.push(request.user.id);
+      // Admins or users with 'edit_any_journey' can see all posts in any journey
+      if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
+        // Non-admins/non-super-editors can only see posts in journeys they own or collaborate on
+        const userJourneysResult = await pgClient.query(
+          `SELECT id FROM journeys WHERE user_id = $1
+           UNION
+           SELECT journey_id FROM journey_user_permissions WHERE user_id = $1`,
+          [request.user.id]
+        );
+        const accessibleJourneyIds = userJourneysResult.rows.map(row => row.id);
+
+        if (accessibleJourneyIds.length === 0) {
+          reply.status(200).send([]); // No accessible journeys, no posts
+          return;
+        }
+
+        const journeyIdPlaceholders = accessibleJourneyIds.map((_, i) => `$${paramIndex + i}`).join(',');
+        query += `${params.length > 0 ? ' AND' : ' WHERE'} p.journey_id IN (${journeyIdPlaceholders})`;
+        params.push(...accessibleJourneyIds);
+        paramIndex += accessibleJourneyIds.length;
       }
       
       query += ' ORDER BY p.created_at DESC';
@@ -45,16 +95,12 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       reply.status(401).send({ message: 'Authentication required.' });
       return;
     }
-    if (!request.user.permissions.includes('create_post')) {
-      reply.status(403).send({ message: 'Forbidden: You do not have permission to create posts.' });
-      return;
-    }
 
     try {
       const { title, message, mediaInfo, spotifyEmbedUrl, coordinates, journeyId } = request.body as { 
         title?: string; 
         message: string; 
-        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string }; // Updated to mediaInfo
+        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string };
         spotifyEmbedUrl?: string; 
         coordinates?: { lat: number; lng: number };
         journeyId: string;
@@ -65,31 +111,22 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      if (!message.trim() && !mediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to mediaInfo
+      if (!message.trim() && !mediaInfo && !spotifyEmbedUrl && !coordinates) {
         reply.status(400).send({ message: 'At least a message, media, Spotify URL, or coordinates are required.' });
         return;
       }
       
-      const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
-      const journey = journeyResult.rows[0];
-
-      if (!journey) {
-        reply.status(404).send({ message: 'Journey not found.' });
-        return;
-      }
-
-      const isOwner = journey.user_id === request.user.id;
-      const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
-
-      if (!isOwner && !canEditAnyJourney) {
-        reply.status(403).send({ message: 'Forbidden: You do not have permission to post to this journey.' });
+      // Check if user has permission to create posts in this specific journey
+      const canCreatePost = await checkCombinedPermissions(request.user.id, journeyId, 'create_post');
+      if (!canCreatePost) {
+        reply.status(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
         return;
       }
 
       fastify.log.info('Inserting post into database.');
       const result = await pgClient.query(
         'INSERT INTO posts (journey_id, user_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-        [journeyId, request.user.id, title || null, message, mediaInfo ? JSON.stringify(mediaInfo) : null, spotifyEmbedUrl || null, coordinates || null] // Store mediaInfo as JSONB
+        [journeyId, request.user.id, title || null, message, mediaInfo ? JSON.stringify(mediaInfo) : null, spotifyEmbedUrl || null, coordinates || null]
       );
       fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
       reply.status(201).send(result.rows[0]);
@@ -111,12 +148,12 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       const { title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
         title?: string;
         message?: string;
-        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string } | null; // Updated to mediaInfo
+        mediaInfo?: { type: 'image'; urls: { [key: string]: string } } | { type: 'video'; url: string } | null;
         spotifyEmbedUrl?: string | null;
         coordinates?: { lat: number; lng: number } | null;
       };
 
-      const getPostResult = await pgClient.query('SELECT user_id, image_urls FROM posts WHERE id = $1', [id]); // Also fetch old image_urls
+      const getPostResult = await pgClient.query('SELECT user_id, journey_id, image_urls FROM posts WHERE id = $1', [id]);
       const post = getPostResult.rows[0];
 
       if (!post) {
@@ -125,9 +162,22 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const isOwner = post.user_id === request.user.id;
-      const canEditAnyPost = request.user.permissions.includes('edit_any_post');
+      const canEditAnyPostGlobally = request.user.permissions.includes('edit_any_post');
+      const canEditOwnPostGlobally = request.user.permissions.includes('edit_post'); // Assuming 'edit_post' means own posts globally
 
-      if (!isOwner && !canEditAnyPost) {
+      // Check journey-specific permissions
+      const canEditAnyPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'edit_any_post');
+      const canEditOwnPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'edit_post');
+
+      // Determine if the user has permission to edit this post
+      let hasPermission = false;
+      if (canEditAnyPostGlobally || canEditAnyPostInJourney) {
+        hasPermission = true; // Can edit any post
+      } else if (isOwner && (canEditOwnPostGlobally || canEditOwnPostInJourney)) {
+        hasPermission = true; // Can edit own post
+      }
+
+      if (!hasPermission) {
         reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
         return;
       }
@@ -193,7 +243,7 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string };
       fastify.log.info(`Attempting to delete post with ID: ${id}`);
 
-      const getPostResult = await pgClient.query('SELECT image_urls, user_id FROM posts WHERE id = $1', [id]);
+      const getPostResult = await pgClient.query('SELECT image_urls, user_id, journey_id FROM posts WHERE id = $1', [id]);
       const post = getPostResult.rows[0];
 
       if (!post) {
@@ -203,15 +253,28 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const isOwner = post.user_id === request.user.id;
-      const canDeleteAnyPost = request.user.permissions.includes('delete_any_post');
+      const canDeleteAnyPostGlobally = request.user.permissions.includes('delete_any_post');
+      const canDeleteOwnPostGlobally = request.user.permissions.includes('delete_post'); // Assuming 'delete_post' means own posts globally
 
-      if (!isOwner && !canDeleteAnyPost) {
+      // Check journey-specific permissions
+      const canDeleteAnyPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'delete_any_post');
+      const canDeleteOwnPostInJourney = await checkCombinedPermissions(request.user.id, post.journey_id, 'delete_post');
+
+      // Determine if the user has permission to delete this post
+      let hasPermission = false;
+      if (canDeleteAnyPostGlobally || canDeleteAnyPostInJourney) {
+        hasPermission = true; // Can delete any post
+      } else if (isOwner && (canDeleteOwnPostGlobally || canDeleteOwnPostInJourney)) {
+        hasPermission = true; // Can delete own post
+      }
+
+      if (!hasPermission) {
         reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
         return;
       }
 
       if (post.image_urls) {
-        await deleteMediaFiles(post.image_urls, fastify.log); // Corrected: pass fastify.log
+        await deleteMediaFiles(post.image_urls, fastify.log);
       }
 
       const result = await pgClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);

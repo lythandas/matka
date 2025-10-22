@@ -3,7 +3,40 @@ import { FastifyPluginAsync } from 'fastify';
 const journeysRoutes: FastifyPluginAsync = async (fastify) => {
   const pgClient = fastify.pg;
 
-  // Get all journeys (now filtered by user_id or all for admin)
+  // Helper function to check combined permissions
+  const checkCombinedPermissions = async (userId: string, journeyId: string, requiredPermission: string): Promise<boolean> => {
+    // 1. Check global role permissions
+    const userRoleResult = await pgClient.query(
+      'SELECT r.permissions FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = $1',
+      [userId]
+    );
+    const globalPermissions: string[] = userRoleResult.rows[0]?.permissions || [];
+    if (globalPermissions.includes(requiredPermission)) {
+      return true;
+    }
+
+    // 2. Check if user is the owner of the journey
+    const journeyOwnerResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyOwnerId = journeyOwnerResult.rows[0]?.user_id;
+    if (journeyOwnerId === userId) {
+      // Owners implicitly have all permissions for their own journey
+      return true;
+    }
+
+    // 3. Check journey-specific permissions
+    const journeyPermsResult = await pgClient.query(
+      'SELECT permissions FROM journey_user_permissions WHERE user_id = $1 AND journey_id = $2',
+      [userId, journeyId]
+    );
+    const journeyPermissions: string[] = journeyPermsResult.rows[0]?.permissions || [];
+    if (journeyPermissions.includes(requiredPermission)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Get all journeys (now filtered by user_id or all for admin/edit_any_journey)
   fastify.get('/journeys', async (request, reply) => {
     if (!request.user) {
       reply.status(401).send({ message: 'Authentication required.' });
@@ -18,9 +51,11 @@ const journeysRoutes: FastifyPluginAsync = async (fastify) => {
       const params: string[] = [];
       let paramIndex = 1;
 
+      // Admins or users with 'edit_any_journey' can see all journeys
       if (request.user.role !== 'admin' && !request.user.permissions.includes('edit_any_journey')) {
-        query += ` WHERE j.user_id = $${paramIndex++}`;
-        params.push(request.user.id);
+        // Non-admins/non-super-editors can only see their own journeys or journeys they are collaborators on
+        query += ` WHERE j.user_id = $${paramIndex++} OR j.id IN (SELECT journey_id FROM journey_user_permissions WHERE user_id = $${paramIndex++})`;
+        params.push(request.user.id, request.user.id);
       }
       query += ' ORDER BY j.created_at ASC';
       const result = await pgClient.query(query, params);
@@ -37,6 +72,7 @@ const journeysRoutes: FastifyPluginAsync = async (fastify) => {
       reply.status(401).send({ message: 'Authentication required.' });
       return;
     }
+    // Check global permission for creating a journey
     if (!request.user.permissions.includes('create_journey')) {
       reply.status(403).send({ message: 'Forbidden: You do not have permission to create journeys.' });
       return;
@@ -75,18 +111,9 @@ const journeysRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
-      const journey = journeyResult.rows[0];
-
-      if (!journey) {
-        reply.status(404).send({ message: 'Journey not found.' });
-        return;
-      }
-
-      const isOwner = journey.user_id === request.user.id;
-      const canEditAnyJourney = request.user.permissions.includes('edit_any_journey');
-
-      if (!isOwner && !canEditAnyJourney) {
+      // Check if user has permission to edit this specific journey
+      const canEdit = await checkCombinedPermissions(request.user.id, id, 'edit_journey');
+      if (!canEdit && !request.user.permissions.includes('edit_any_journey')) { // Global 'edit_any_journey' still applies
         reply.status(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
         return;
       }
@@ -117,18 +144,9 @@ const journeysRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const { id } = request.params as { id: string };
 
-      const journeyResult = await pgClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
-      const journey = journeyResult.rows[0];
-
-      if (!journey) {
-        reply.status(404).send({ message: 'Journey not found.' });
-        return;
-      }
-
-      const isOwner = journey.user_id === request.user.id;
-      const canDeleteAnyJourney = request.user.permissions.includes('delete_any_journey');
-
-      if (!isOwner && !canDeleteAnyJourney) {
+      // Check if user has permission to delete this specific journey
+      const canDelete = await checkCombinedPermissions(request.user.id, id, 'delete_journey');
+      if (!canDelete && !request.user.permissions.includes('delete_any_journey')) { // Global 'delete_any_journey' still applies
         reply.status(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
         return;
       }

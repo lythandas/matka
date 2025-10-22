@@ -14,34 +14,39 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle, Video, LocateFixed, Search } from 'lucide-react'; // Added Video, LocateFixed, Search icons
+import { Image, Music, MapPin, Loader2, Trash2, Upload, XCircle, Video, LocateFixed, Search } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
-import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants'; // Updated import
-import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interfaces
-import LocationSearch from './LocationSearch'; // Import the new LocationSearch component
+import { API_BASE_URL } from '@/config/api';
+import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
+import { Post, MediaInfo, JourneyCollaborator } from '@/types';
+import LocationSearch from './LocationSearch';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { userHasPermission } from '@/lib/permissions'; // Import the new permission utility
 
 interface EditPostDialogProps {
   isOpen: boolean;
   onClose: () => void;
   post: Post;
   onUpdate: (updatedPost: Post) => void;
+  journeyOwnerId: string; // New prop
+  journeyCollaborators: JourneyCollaborator[]; // New prop
 }
 
-const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate }) => {
+const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
+  const { user: currentUser } = useAuth(); // Get current user
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(post.image_urls || null); // Updated to MediaInfo
-  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null); // For local file preview
-  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false); // Changed to isUploadingMedia
+  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(post.image_urls || null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>(post.spotify_embed_url || '');
   const [coordinates, setCoordinates] = useState<typeof post.coordinates>(post.coordinates || null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
   const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>(
-    post.coordinates ? 'current' : 'search' // Default to current if coords exist, else search
+    post.coordinates ? 'current' : 'search'
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,8 +56,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     setUploadedMediaInfo(post.image_urls || null);
     setSpotifyEmbedUrl(post.spotify_embed_url || '');
     setCoordinates(post.coordinates || null);
-    setSelectedFile(null); // Clear selected file on new post prop
-    // Set local preview if mediaInfo is already present (e.g., from an existing post)
+    setSelectedFile(null);
     if (post.image_urls) {
       if (post.image_urls.type === 'image' && post.image_urls.urls.medium) {
         setLocalPreviewUrl(post.image_urls.urls.medium);
@@ -62,11 +66,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     } else {
       setLocalPreviewUrl(null);
     }
-    // Set location mode based on existing coordinates
     setLocationSelectionMode(post.coordinates ? 'current' : 'search');
   }, [post]);
 
-  const uploadMediaToServer = async (file: File) => { // Changed to uploadMediaToServer
+  const uploadMediaToServer = async (file: File) => {
     setIsUploadingMedia(true);
     try {
       const reader = new FileReader();
@@ -85,13 +88,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-media`, { // Updated endpoint
+      const response = await fetch(`${API_BASE_URL}/upload-media`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
-        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }), // Pass isProfileImage: false
+        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
       });
 
       if (!response.ok) {
@@ -100,8 +103,8 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       }
 
       const data = await response.json();
-      setUploadedMediaInfo(data.mediaInfo); // Set the structured mediaInfo
-      setLocalPreviewUrl(null); // Clear local preview once server URL is available
+      setUploadedMediaInfo(data.mediaInfo);
+      setLocalPreviewUrl(null);
       showSuccess('Media uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading media:', error);
@@ -114,11 +117,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
   };
 
-  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => { // Changed to handleMediaFileChange
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
 
-      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) { // Use new constant
+      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
         showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setLocalPreviewUrl(null);
@@ -137,7 +140,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       }
 
       setSelectedFile(file);
-      setLocalPreviewUrl(URL.createObjectURL(file)); // Set local preview
+      setLocalPreviewUrl(URL.createObjectURL(file));
       uploadMediaToServer(file);
     } else {
       setSelectedFile(null);
@@ -146,7 +149,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
   };
 
-  const handleClearMedia = () => { // Changed to handleClearMedia
+  const handleClearMedia = () => {
     setSelectedFile(null);
     setLocalPreviewUrl(null);
     setUploadedMediaInfo(null);
@@ -218,12 +221,24 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   };
 
   const handleSave = async () => {
-    if (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to uploadedMediaInfo
+    if (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) {
       showError('At least a message, media, Spotify URL, or coordinates are required.');
       return;
     }
-    if (isUploadingMedia) { // Updated to isUploadingMedia
+    if (isUploadingMedia) {
       showError('Please wait for the media to finish uploading.');
+      return;
+    }
+    if (!currentUser) {
+      showError('Authentication required to update post.');
+      return;
+    }
+
+    // Check permission to edit this specific post
+    const canEdit = userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id) ||
+                    userHasPermission(currentUser, 'edit_any_post', journeyOwnerId, journeyCollaborators);
+    if (!canEdit) {
+      showError('You do not have permission to edit this post.');
       return;
     }
 
@@ -238,7 +253,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         body: JSON.stringify({
           title: title.trim() || null,
           message: message.trim(),
-          mediaInfo: uploadedMediaInfo, // Send the structured mediaInfo
+          mediaInfo: uploadedMediaInfo,
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || null,
           coordinates: coordinates || null,
         }),
@@ -264,6 +279,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const currentMediaPreviewUrl = localPreviewUrl || (uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null);
   const currentMediaType = selectedFile?.type.startsWith('video/') ? 'video' : (uploadedMediaInfo?.type === 'video' ? 'video' : 'image');
 
+  const canEditPost = currentUser && (
+    userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id) ||
+    userHasPermission(currentUser, 'edit_any_post', journeyOwnerId, journeyCollaborators)
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] min-h-[600px] flex flex-col">
@@ -280,7 +300,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             placeholder="Add a title (optional)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={isSaving || isUploadingMedia}
+            disabled={isSaving || isUploadingMedia || !canEditPost}
           />
           <Label htmlFor="message">Message</Label>
           <Textarea
@@ -290,18 +310,18 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             className="resize-none"
-            disabled={isSaving || isUploadingMedia}
+            disabled={isSaving || isUploadingMedia || !canEditPost}
           />
         </div>
-        <Tabs defaultValue="media" className="w-full flex-grow flex flex-col"> {/* Changed default to media */}
+        <Tabs defaultValue="media" className="w-full flex-grow flex flex-col">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="media">
+            <TabsTrigger value="media" disabled={!canEditPost}>
               <Image className="h-4 w-4 mr-2" /> Media
             </TabsTrigger>
-            <TabsTrigger value="spotify">
+            <TabsTrigger value="spotify" disabled={!canEditPost}>
               <Music className="h-4 w-4 mr-2" /> Spotify
             </TabsTrigger>
-            <TabsTrigger value="location">
+            <TabsTrigger value="location" disabled={!canEditPost}>
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
@@ -311,18 +331,18 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               <Input
                 id="media-upload"
                 type="file"
-                accept={SUPPORTED_MEDIA_TYPES} // Use new constant
+                accept={SUPPORTED_MEDIA_TYPES}
                 onChange={handleMediaFileChange}
                 ref={fileInputRef}
                 className="hidden"
-                disabled={isSaving || isUploadingMedia}
+                disabled={isSaving || isUploadingMedia || !canEditPost}
               />
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
-                disabled={isSaving || isUploadingMedia}
+                disabled={isSaving || isUploadingMedia || !canEditPost}
               >
                 {isUploadingMedia ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -338,7 +358,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   size="icon"
                   onClick={handleClearMedia}
                   className="ml-2 hover:ring-2 hover:ring-blue-500 ring-inset"
-                  disabled={isSaving || isUploadingMedia}
+                  disabled={isSaving || isUploadingMedia || !canEditPost}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -372,15 +392,15 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               placeholder="e.g., https://open.spotify.com/embed/track/..."
               value={spotifyEmbedUrl}
               onChange={handleSpotifyInputChange}
-              disabled={isSaving || isUploadingMedia}
+              disabled={isSaving || isUploadingMedia || !canEditPost}
             />
             <div className="flex justify-end space-x-2">
               {spotifyEmbedUrl && (
-                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingMedia}>
+                <Button type="button" variant="outline" onClick={handleClearSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500 ring-inset" disabled={isSaving || isUploadingMedia || !canEditPost}>
                   Clear Spotify
                 </Button>
               )}
-              <Button type="button" onClick={handleAddSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500" disabled={isSaving || isUploadingMedia}>
+              <Button type="button" onClick={handleAddSpotifyEmbed} className="hover:ring-2 hover:ring-blue-500" disabled={isSaving || isUploadingMedia || !canEditPost}>
                 {spotifyEmbedUrl ? 'Update Spotify' : 'Add Spotify'}
               </Button>
             </div>
@@ -398,16 +418,16 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
           <TabsContent value="location" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <div className="flex space-x-2"> {/* Removed mb-4 */}
+            <div className="flex space-x-2">
               <Button
                 type="button"
                 variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
                 onClick={() => {
                   setLocationSelectionMode('current');
-                  setCoordinates(null); // Clear search selection when switching
+                  setCoordinates(null);
                 }}
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia}
+                disabled={isSaving || isUploadingMedia || !canEditPost}
               >
                 <LocateFixed className="mr-2 h-4 w-4" /> Get Current Location
               </Button>
@@ -416,21 +436,21 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 variant={locationSelectionMode === 'search' ? 'default' : 'outline'}
                 onClick={() => {
                   setLocationSelectionMode('search');
-                  setCoordinates(null); // Clear current location when switching
+                  setCoordinates(null);
                 }}
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia}
+                disabled={isSaving || isUploadingMedia || !canEditPost}
               >
                 <Search className="mr-2 h-4 w-4" /> Search Location
               </Button>
             </div>
 
             {locationSelectionMode === 'current' && (
-              <div className="space-y-4"> {/* Added wrapper div with space-y-4 */}
+              <div className="space-y-4">
                 <Button
                   type="button"
                   onClick={handleGetLocation}
-                  disabled={locationLoading || isSaving || isUploadingMedia}
+                  disabled={locationLoading || isSaving || isUploadingMedia || !canEditPost}
                   className="w-full hover:ring-2 hover:ring-blue-500"
                 >
                   {locationLoading ? (
@@ -451,7 +471,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
                     </p>
                     <MapComponent coordinates={coordinates} className="h-48" />
-                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset">
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPost}>
                       Clear Location
                     </Button>
                   </>
@@ -463,7 +483,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               <LocationSearch
                 onSelectLocation={setCoordinates}
                 currentCoordinates={coordinates}
-                disabled={isSaving || isUploadingMedia}
+                disabled={isSaving || isUploadingMedia || !canEditPost}
               />
             )}
           </TabsContent>
@@ -472,7 +492,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates)} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) || !canEditPost} className="hover:ring-2 hover:ring-blue-500">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

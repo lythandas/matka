@@ -27,11 +27,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
-import { getPermissionDisplayName } from '@/lib/permissions';
+import { getPermissionDisplayName, userHasPermission } from '@/lib/permissions'; // Import userHasPermission
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { User, Journey, Role } from '@/types'; // Centralized interfaces
+import { getAvatarInitials } from '@/lib/utils';
+import { API_BASE_URL } from '@/config/api';
+import { User, Journey, Role, JourneyCollaborator } from '@/types';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -52,6 +52,7 @@ const AdminPage: React.FC = () => {
 
   const [isEditJourneyDialogOpen, setIsEditJourneyDialogOpen] = useState<boolean>(false);
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
+  const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
 
   const fetchUsers = useCallback(async () => {
     if (!token || currentUser?.role !== 'admin' || !currentUser?.permissions.includes('manage_users')) {
@@ -103,6 +104,33 @@ const AdminPage: React.FC = () => {
     }
   }, [token, currentUser]);
 
+  const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
+    if (!token || !currentUser || !journeyId) {
+      setJourneyCollaborators([]);
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        // If not authorized to view collaborators, just return empty
+        if (response.status === 403 || response.status === 401) {
+          setJourneyCollaborators([]);
+          return;
+        }
+        throw new Error('Failed to fetch journey collaborators');
+      }
+      const data: JourneyCollaborator[] = await response.json();
+      setJourneyCollaborators(data);
+    } catch (error) {
+      console.error('Error fetching journey collaborators:', error);
+      setJourneyCollaborators([]); // Clear on error
+    }
+  }, [token, currentUser]);
+
   useEffect(() => {
     if (currentUser?.role === 'admin') {
       fetchUsers();
@@ -113,6 +141,15 @@ const AdminPage: React.FC = () => {
       navigate('/');
     }
   }, [currentUser, navigate, fetchUsers, fetchRoles, fetchJourneys]);
+
+  // When a journey is selected for editing, fetch its collaborators
+  useEffect(() => {
+    if (isEditJourneyDialogOpen && selectedJourney) {
+      fetchJourneyCollaborators(selectedJourney.id);
+    } else {
+      setJourneyCollaborators([]);
+    }
+  }, [isEditJourneyDialogOpen, selectedJourney, fetchJourneyCollaborators]);
 
   const handleUserUpdated = (updatedUser: User) => {
     setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
@@ -176,11 +213,18 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const handleDeleteJourney = async (journeyId: string) => {
-    if (!token) {
+  const handleDeleteJourney = async (journeyId: string, ownerId: string) => {
+    if (!token || !currentUser) {
       showError('Authentication required to delete a journey.');
       return;
     }
+
+    // Admin page allows deleting any journey, but still use the permission utility for consistency
+    if (!userHasPermission(currentUser, 'delete_any_journey', ownerId, journeyCollaborators)) {
+      showError('You do not have permission to delete this journey.');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}`, {
         method: 'DELETE',
@@ -207,11 +251,9 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full"> {/* Adjusted top-level div */}
+    <div className="w-full">
       <div className="flex items-center justify-between mb-8">
-        {/* Removed "Back to Journeys" button, navigation is now via sidebar */}
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        {/* Removed the empty div placeholder */}
       </div>
 
       <Tabs defaultValue="users" className="w-full">
@@ -240,7 +282,7 @@ const AdminPage: React.FC = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>User</TableHead> {/* Combined for avatar, name, username */}
+                        <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Permissions</TableHead>
                         <TableHead>Created At</TableHead>
@@ -342,7 +384,7 @@ const AdminPage: React.FC = () => {
             <CardContent>
               {loadingRoles ? (
                 <div className="flex justify-center items-center h-48">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                   <p className="ml-2 text-gray-600 dark:text-gray-400">Loading roles...</p>
                 </div>
               ) : (
@@ -431,7 +473,7 @@ const AdminPage: React.FC = () => {
             <CardContent>
               {loadingJourneys ? (
                 <div className="flex justify-center items-center h-48">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
                   <p className="ml-2 text-gray-600 dark:text-gray-400">Loading journeys...</p>
                 </div>
               ) : (
@@ -440,7 +482,7 @@ const AdminPage: React.FC = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead>Owner</TableHead> {/* Changed to display owner info */}
+                        <TableHead>Owner</TableHead>
                         <TableHead>Created At</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -492,7 +534,7 @@ const AdminPage: React.FC = () => {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteJourney(journey.id)}>
+                                    <AlertDialogAction onClick={() => handleDeleteJourney(journey.id, journey.user_id)}>
                                       Continue
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
@@ -546,6 +588,7 @@ const AdminPage: React.FC = () => {
           isOpen={isEditJourneyDialogOpen}
           onClose={() => { setIsEditJourneyDialogOpen(false); setSelectedJourney(null); }}
           journey={selectedJourney}
+          journeyCollaborators={journeyCollaborators} // Pass collaborators
         />
       )}
     </div>

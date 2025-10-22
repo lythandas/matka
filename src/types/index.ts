@@ -48,3 +48,14 @@ export interface Role {
   permissions: string[];
   created_at: string;
 }
+
+// New: Interface for a user's permissions within a specific journey
+export interface JourneyCollaborator {
+  id: string; // ID of the journey_user_permissions entry
+  user_id: string;
+  username: string;
+  name?: string;
+  surname?: string;
+  profile_image_url?: string;
+  permissions: string[]; // Permissions specific to this journey
+}

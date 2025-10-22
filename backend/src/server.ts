@@ -8,7 +8,8 @@ import usersRoutes from './routes/users';
 import rolesRoutes from './routes/roles';
 import journeysRoutes from './routes/journeys';
 import postsRoutes from './routes/posts';
-import uploadsRoutes from './routes/uploads'; // Updated import
+import uploadsRoutes from './routes/uploads';
+import journeyPermissionsRoutes from './routes/journeyPermissions'; // New import
 
 const fastify = Fastify({
   logger: true,
@@ -34,6 +35,7 @@ fastify.register(rolesRoutes);
 fastify.register(journeysRoutes);
 fastify.register(postsRoutes);
 fastify.register(uploadsRoutes);
+fastify.register(journeyPermissionsRoutes); // New: Register journey permissions routes
 
 // Root route
 fastify.get('/', async (request, reply) => {

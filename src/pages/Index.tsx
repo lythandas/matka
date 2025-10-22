@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit } from 'lucide-react';
+import { Trash2, Plus, XCircle, Compass, Edit, Users } from 'lucide-react'; // Added Users icon
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import AddContentDialog from '@/components/AddContentDialog';
@@ -35,20 +35,22 @@ import EditPostDialog from '@/components/EditPostDialog';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
-import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
-import { Post, Journey, MediaInfo } from '@/types'; // Centralized Post and Journey interfaces
-import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext'; // New import
+import { API_BASE_URL } from '@/config/api';
+import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants';
+import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
+import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
+import { userHasPermission } from '@/lib/permissions'; // Import the new permission utility
+import ManageJourneyCollaboratorsDialog from '@/components/ManageJourneyCollaboratorsDialog'; // New import
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
-  const { selectedJourney, loadingJourneys, journeys } = useJourneys();
-  const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog(); // Use context setter
+  const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
+  const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(null); // Updated to MediaInfo
-  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false); // Changed to isUploadingMedia
+  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
   const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -66,6 +68,9 @@ const Index = () => {
   const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
+  const [isManageCollaboratorsDialogOpen, setIsManageCollaboratorsDialogOpen] = useState<boolean>(false);
+  const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
+
   // Effect to check backend connectivity
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -81,6 +86,33 @@ const Index = () => {
     const interval = setInterval(checkBackendStatus, 10000); // Check every 10 seconds
     return () => clearInterval(interval);
   }, []);
+
+  const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
+    if (!user || !user.id || !selectedJourney || !localStorage.getItem('authToken')) {
+      setJourneyCollaborators([]);
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (!response.ok) {
+        // If not authorized to view collaborators, just return empty
+        if (response.status === 403 || response.status === 401) {
+          setJourneyCollaborators([]);
+          return;
+        }
+        throw new Error('Failed to fetch journey collaborators');
+      }
+      const data: JourneyCollaborator[] = await response.json();
+      setJourneyCollaborators(data);
+    } catch (error) {
+      console.error('Error fetching journey collaborators:', error);
+      setJourneyCollaborators([]); // Clear on error
+    }
+  }, [user, selectedJourney]);
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -106,13 +138,15 @@ const Index = () => {
   useEffect(() => {
     if (selectedJourney) {
       fetchPosts(selectedJourney.id);
+      fetchJourneyCollaborators(selectedJourney.id); // Fetch collaborators when journey changes
     } else {
       setPosts([]);
       setLoadingPosts(false);
+      setJourneyCollaborators([]);
     }
-  }, [selectedJourney, isAuthenticated]);
+  }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators]);
 
-  const uploadMediaToServer = async (file: File) => { // Changed to uploadMediaToServer
+  const uploadMediaToServer = async (file: File) => {
     setIsUploadingMedia(true);
     try {
       const reader = new FileReader();
@@ -131,13 +165,13 @@ const Index = () => {
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-media`, { // Updated endpoint
+      const response = await fetch(`${API_BASE_URL}/upload-media`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
-        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }), // Pass isProfileImage: false
+        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
       });
 
       if (!response.ok) {
@@ -146,7 +180,7 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setUploadedMediaInfo(data.mediaInfo); // Set the structured mediaInfo
+      setUploadedMediaInfo(data.mediaInfo);
       showSuccess('Media uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading media:', error);
@@ -158,10 +192,10 @@ const Index = () => {
     }
   };
 
-  const handleMediaSelect = (file: File | null) => { // Changed to handleMediaSelect
+  const handleMediaSelect = (file: File | null) => {
     setSelectedFile(file);
     if (file) {
-      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) { // Use new constant
+      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
         showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
         setSelectedFile(null);
         setUploadedMediaInfo(null);
@@ -186,11 +220,17 @@ const Index = () => {
       return;
     }
 
-    if (!title.trim() && !message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) { // Updated to uploadedMediaInfo
+    // Check permission to create post in this journey
+    if (!userHasPermission(user, 'create_post', selectedJourney.user_id, journeyCollaborators)) {
+      showError('You do not have permission to create posts in this journey.');
+      return;
+    }
+
+    if (!title.trim() && !message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) {
       showError('Please enter a title, message, or add some content (media, Spotify, location).');
       return;
     }
-    if (isUploadingMedia) { // Updated to isUploadingMedia
+    if (isUploadingMedia) {
       showError('Please wait for the media to finish uploading.');
       return;
     }
@@ -206,7 +246,7 @@ const Index = () => {
           journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),
-          mediaInfo: uploadedMediaInfo, // Send the structured mediaInfo
+          mediaInfo: uploadedMediaInfo,
           spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
           coordinates: coordinates || undefined,
         }),
@@ -232,7 +272,18 @@ const Index = () => {
     }
   };
 
-  const handleDeletePost = async (id: string) => {
+  const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string) => {
+    if (!isAuthenticated) {
+      showError('You must be logged in to delete a post.');
+      return;
+    }
+    // Check permission to delete post in this journey
+    if (!userHasPermission(user, 'delete_post', journeyId, journeyCollaborators, id, postAuthorId) &&
+        !userHasPermission(user, 'delete_any_post', journeyId, journeyCollaborators)) {
+      showError('You do not have permission to delete this post.');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
@@ -294,18 +345,15 @@ const Index = () => {
     }
   };
 
-  const showMatkaAsMainTitle = !selectedJourney && !loadingJourneys && journeys.length === 0;
-
-  // Corrected: Removed localPreviewUrl reference as it's not a state in Index.tsx
   const currentMediaPreviewUrl = uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null;
-  const currentMediaType = uploadedMediaInfo?.type === 'video' ? 'video' : 'image'; // Simplified based on uploadedMediaInfo
+  const currentMediaType = uploadedMediaInfo?.type === 'video' ? 'video' : 'image';
+
+  const canManageCollaborators = isAuthenticated && selectedJourney && userHasPermission(user, 'manage_journey_access', selectedJourney.user_id, journeyCollaborators);
+  const canCreatePost = isAuthenticated && selectedJourney && userHasPermission(user, 'create_post', selectedJourney.user_id, journeyCollaborators);
 
   return (
-    <div className="min-h-screen flex flex-col w-full"> {/* Adjusted top-level div */}
+    <div className="min-h-screen flex flex-col w-full">
       <div className="max-w-3xl mx-auto flex-grow w-full">
-        {/* AppHeader is now handled by AppLayout */}
-
-        {/* NEW WELCOME SECTION FOR ADMIN REGISTRATION */}
         {!isAuthenticated && usersExist === false && (
           <div className="text-center py-12">
             <Compass className="h-32 w-32 mx-auto text-blue-600 dark:text-blue-400 mb-6" />
@@ -313,15 +361,24 @@ const Index = () => {
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
               It looks like you're just getting started. Please register your first admin account to begin your journey.
             </p>
-            {/* The UserProfileDropdown in TopBar will handle opening the RegisterDialog */}
           </div>
         )}
 
         {isAuthenticated && (
           selectedJourney ? (
             <Card className="mb-8 shadow-lg">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-2xl font-semibold">Share Your Day in "{selectedJourney.name}"</CardTitle>
+                {canManageCollaborators && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsManageCollaboratorsDialogOpen(true)}
+                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  >
+                    <Users className="mr-2 h-4 w-4" /> Manage Collaborators
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -330,6 +387,7 @@ const Index = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full"
+                    disabled={!canCreatePost}
                   />
                   <Textarea
                     placeholder="What's on your mind today?"
@@ -337,9 +395,9 @@ const Index = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     rows={4}
                     className="w-full resize-none"
+                    disabled={!canCreatePost}
                   />
 
-                  {/* Content Previews - Adjusted order */}
                   {(uploadedMediaInfo || spotifyEmbedUrl || coordinates) && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <h4 className="text-lg font-semibold">Content Preview:</h4>
@@ -428,13 +486,13 @@ const Index = () => {
                       currentSpotifyEmbedUrl={spotifyEmbedUrl}
                       currentCoordinates={coordinates}
                     >
-                      <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                      <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" disabled={!canCreatePost}>
                         <Plus className="mr-2 h-4 w-4" /> Add Content
                       </Button>
                     </AddContentDialog>
                   </div>
                   <div className="flex justify-center">
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !selectedJourney}>
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePost}>
                       Post
                     </Button>
                   </div>
@@ -451,7 +509,7 @@ const Index = () => {
                 <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
                   Start by creating your first journey.
                 </p>
-                {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+                {isAuthenticated && userHasPermission(user, 'create_journey') && (
                   <Button
                     onClick={() => setIsCreateJourneyDialogOpen(true)}
                     className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
@@ -478,7 +536,7 @@ const Index = () => {
             <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
               Your journey awaits! Start by adding your first post.
             </p>
-            {isAuthenticated && (
+            {isAuthenticated && canCreatePost && (
               <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
                 Use the "Share Your Day" section above to begin.
               </p>
@@ -552,7 +610,10 @@ const Index = () => {
                     <div className="flex justify-between items-start mb-2">
                       <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
                       <div className="flex space-x-2">
-                        {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('edit_any_post') || user?.role === 'admin') && (
+                        {isAuthenticated && selectedJourney && (
+                          userHasPermission(user, 'edit_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id) ||
+                          userHasPermission(user, 'edit_any_post', selectedJourney.user_id, journeyCollaborators)
+                        ) && (
                           <Button
                             variant="outline"
                             size="icon"
@@ -562,7 +623,10 @@ const Index = () => {
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        {isAuthenticated && (user?.id === post.user_id || user?.permissions.includes('delete_any_post') || user?.role === 'admin') && (
+                        {isAuthenticated && selectedJourney && (
+                          userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id) ||
+                          userHasPermission(user, 'delete_any_post', selectedJourney.user_id, journeyCollaborators)
+                        ) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
@@ -579,7 +643,7 @@ const Index = () => {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeletePost(post.id)}>
+                                <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
                                   Continue
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -588,7 +652,7 @@ const Index = () => {
                         )}
                       </div>
                     </div>
-                    {post.coordinates && ( // Moved coordinates to the bottom
+                    {post.coordinates && (
                       <div className="mt-4">
                         <MapComponent coordinates={post.coordinates} />
                       </div>
@@ -625,12 +689,14 @@ const Index = () => {
         />
       )}
 
-      {postToEdit && (
+      {postToEdit && selectedJourney && (
         <EditPostDialog
           isOpen={isEditPostDialogOpen}
           onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
           post={postToEdit}
           onUpdate={handlePostUpdated}
+          journeyOwnerId={selectedJourney.user_id} // Pass journey owner ID
+          journeyCollaborators={journeyCollaborators} // Pass journey collaborators
         />
       )}
 
@@ -650,6 +716,18 @@ const Index = () => {
         <LoginDialog
           isOpen={isLoginDialogOpen}
           onClose={() => setIsLoginDialogOpen(false)}
+        />
+      )}
+
+      {selectedJourney && (
+        <ManageJourneyCollaboratorsDialog
+          isOpen={isManageCollaboratorsDialogOpen}
+          onClose={() => setIsManageCollaboratorsDialogOpen(false)}
+          journey={selectedJourney}
+          onCollaboratorsUpdated={() => {
+            fetchJourneyCollaborators(selectedJourney.id); // Refresh collaborators
+            fetchPosts(selectedJourney.id); // Refresh posts in case permissions changed visibility
+          }}
         />
       )}
     </div>

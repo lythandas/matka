@@ -34,11 +34,12 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
   // Ensure database tables exist and set up default roles
   async function ensureDbTable() {
     // Drop tables in correct order to avoid foreign key constraints issues
+    await pgClient.query('DROP TABLE IF EXISTS journey_user_permissions CASCADE;'); // New: Drop journey_user_permissions first
     await pgClient.query('DROP TABLE IF EXISTS posts CASCADE;');
     await pgClient.query('DROP TABLE IF EXISTS journeys CASCADE;');
     await pgClient.query('DROP TABLE IF EXISTS users CASCADE;');
     await pgClient.query('DROP TABLE IF EXISTS roles CASCADE;');
-    fastify.log.info('Existing posts, journeys, users, and roles tables dropped (if any).');
+    fastify.log.info('Existing posts, journeys, users, roles, and journey_user_permissions tables dropped (if any).');
 
     // Create roles table
     await pgClient.query(`
@@ -93,8 +94,21 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     `);
     fastify.log.info('Posts table created.');
 
+    // New: Create journey_user_permissions table
+    await pgClient.query(`
+      CREATE TABLE journey_user_permissions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        journey_id UUID NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
+        permissions JSONB DEFAULT '[]', -- e.g., ['create_post', 'delete_post']
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (user_id, journey_id)
+      );
+    `);
+    fastify.log.info('Journey_user_permissions table created.');
+
     // Insert default roles if they don't exist
-    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post', 'manage_roles', 'edit_any_post'];
+    const adminPermissions = ['create_post', 'delete_post', 'create_journey', 'delete_journey', 'manage_users', 'edit_any_journey', 'delete_any_journey', 'delete_any_post', 'manage_roles', 'edit_any_post', 'manage_journey_access']; // Added manage_journey_access
     await pgClient.query(
       "INSERT INTO roles (name, permissions) VALUES ('admin', $1) ON CONFLICT (name) DO NOTHING",
       [JSON.stringify(adminPermissions)]
