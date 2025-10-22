@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react'; // Added Upload, MapPin, LocateFixed, Search, Loader2 icons
+import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import MapComponent from '@/components/MapComponent';
@@ -40,7 +40,7 @@ import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import { userHasPermission } from '@/lib/permissions';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
-import LocationSearch from '@/components/LocationSearch'; // Import LocationSearch
+import LocationSearch from '@/components/LocationSearch';
 
 const Index = () => {
   const { isAuthenticated, user } = useAuth();
@@ -48,8 +48,8 @@ const Index = () => {
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // For multiple files
-  const [uploadedMediaItems, setUploadedMediaItems] = useState<MediaInfo[]>([]); // Array of uploaded media info
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadedMediaItems, setUploadedMediaItems] = useState<MediaInfo[]>([]);
   const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -67,15 +67,14 @@ const Index = () => {
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
 
-  const [locationSelectionMode, setLocationSelectionMode] = useState<'none' | 'current' | 'search'>('none'); // Default to 'none'
-  const [locationLoading, setLocationLoading] = useState<boolean>(false);
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'none' | 'current' | 'search'>('none');
+  const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Effect to check backend connectivity
   useEffect(() => {
     const checkBackendStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/`); // Ping the root endpoint
+        const response = await fetch(`${API_BASE_URL}/`);
         setBackendConnected(response.ok);
       } catch (error) {
         console.error('Backend connection check failed:', error);
@@ -83,7 +82,7 @@ const Index = () => {
       }
     };
     checkBackendStatus();
-    const interval = setInterval(checkBackendStatus, 10000); // Check every 10 seconds
+    const interval = setInterval(checkBackendStatus, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -184,7 +183,7 @@ const Index = () => {
         newUploadedMedia.push(data.mediaInfo);
       }
       setUploadedMediaItems((prev) => [...prev, ...newUploadedMedia]);
-      setSelectedFiles([]); // Clear selected files after upload
+      setSelectedFiles([]);
       showSuccess('Media uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading media:', error);
@@ -221,7 +220,7 @@ const Index = () => {
     } else {
       setSelectedFiles([]);
     }
-    if (mediaFileInputRef.current) mediaFileInputRef.current.value = ''; // Clear input
+    if (mediaFileInputRef.current) mediaFileInputRef.current.value = '';
   };
 
   const handleRemoveMediaItem = (indexToRemove: number) => {
@@ -235,15 +234,14 @@ const Index = () => {
       return;
     }
 
-    setLocationLoading(true);
-    // Ensure the mode is set to 'current' when fetching location
+    setLoadingLocation(true);
     setLocationSelectionMode('current');
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
         showSuccess('Location retrieved successfully!');
-        setLocationLoading(false);
+        setLoadingLocation(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
@@ -260,9 +258,9 @@ const Index = () => {
             break;
         }
         showError(errorMessage);
-        setLocationLoading(false);
-        setCoordinates(null); // Clear coordinates on error
-        setLocationSelectionMode('none'); // Reset mode on error
+        setLoadingLocation(false);
+        setCoordinates(null);
+        setLocationSelectionMode('none');
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -270,7 +268,7 @@ const Index = () => {
 
   const handleClearLocation = () => {
     setCoordinates(null);
-    setLocationSelectionMode('none'); // Reset mode when clearing location
+    setLocationSelectionMode('none');
     showSuccess('Location cleared.');
   };
 
@@ -312,7 +310,7 @@ const Index = () => {
           journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),
-          media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined, // Use media_items
+          media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
           coordinates: coordinates || undefined,
         }),
       });
@@ -329,7 +327,7 @@ const Index = () => {
       setSelectedFiles([]);
       setUploadedMediaItems([]);
       setCoordinates(null);
-      setLocationSelectionMode('none'); // Reset mode after successful post
+      setLocationSelectionMode('none');
       showSuccess('Post created successfully!');
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -413,7 +411,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <div className="max-w-3xl mx-auto flex-grow w-full">
-        {isAuthenticated && (
+        {isAuthenticated ? (
           selectedJourney ? (
             <Card className="mb-8 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-end">
@@ -523,7 +521,7 @@ const Index = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={handleGetLocation} // Directly call handleGetLocation
+                      onClick={handleGetLocation}
                       className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       disabled={!canCreatePost || isUploadingMedia || locationLoading}
                     >
@@ -543,7 +541,7 @@ const Index = () => {
                       variant="outline"
                       onClick={() => {
                         setLocationSelectionMode('search');
-                        setCoordinates(null); // Clear any previous selection
+                        setCoordinates(null);
                       }}
                       className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       disabled={!canCreatePost || isUploadingMedia}
@@ -552,12 +550,11 @@ const Index = () => {
                     </Button>
                   </div>
 
-                  {/* Conditional rendering for location input/display based on mode and if coordinates are NOT already set */}
                   {locationSelectionMode === 'search' && !coordinates && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <LocationSearch
                         onSelectLocation={setCoordinates}
-                        currentCoordinates={coordinates} // This will be null here
+                        currentCoordinates={coordinates}
                         disabled={!canCreatePost || isUploadingMedia}
                       />
                     </div>
@@ -572,7 +569,7 @@ const Index = () => {
               </CardContent>
             </Card>
           ) : (
-            isAuthenticated && !loadingJourneys && journeys.length === 0 && (
+            !loadingJourneys && journeys.length === 0 && (
               <div className="text-center py-12">
                 <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
                 <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
@@ -592,7 +589,7 @@ const Index = () => {
               </div>
             )
           )
-        )}
+        ) : null}
 
         {posts.length > 0 && (
           <div className="mb-6">
@@ -651,7 +648,7 @@ const Index = () => {
                     {post.media_items && post.media_items.length > 0 && (
                       <div className={
                         post.media_items.length === 1
-                          ? "mb-4" // No grid, just margin-bottom
+                          ? "mb-4"
                           : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
                       }>
                         {post.media_items.map((mediaItem, mediaIndex) => (
@@ -717,10 +714,11 @@ const Index = () => {
                                   <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
                                     Continue
                                   </AlertDialogAction>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          )}
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
                       </div>
                     </div>
                     {post.coordinates && (
