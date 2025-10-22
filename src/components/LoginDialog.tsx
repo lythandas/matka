@@ -24,10 +24,10 @@ const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
   };
 
   return (
-    <div className="p-8 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-2xl max-w-sm w-full">
+    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Login to Your Account</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <h2 className="text-2xl font-bold">Login to Your Account</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Enter your credentials to access your journeys and posts.
         </p>
       </div>

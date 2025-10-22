@@ -66,10 +66,10 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }
   };
 
   return (
-    <div className="p-8 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-2xl max-w-sm w-full">
+    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome! Register Your Admin Account</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <h2 className="text-2xl font-bold">Welcome! Register Your Admin Account</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           This will be the first (and only) user you can register. This user will be an administrator.
         </p>
       </div>
