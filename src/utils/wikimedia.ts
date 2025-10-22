@@ -11,44 +11,65 @@ const WIKIMEDIA_API_URL = "https://commons.wikimedia.org/w/api.php";
 
 export const fetchRandomWikimediaLandscapeImage = async (): Promise<WikimediaImage | null> => {
   try {
-    // Search for images with "landscape" in their title or description
-    const searchResponse = await fetch(
-      `${WIKIMEDIA_API_URL}?action=query&list=allimages&aifrom=Landscape&aiprop=url|user|comment&ailimit=500&format=json&origin=*`
+    // Step 1: Get a list of image titles from a relevant category (e.g., 'Landscape photographs')
+    const categoryResponse = await fetch(
+      `${WIKIMEDIA_API_URL}?action=query&generator=categorymembers&gcmtitle=Category:Landscape_photographs&gcmlimit=500&format=json&origin=*`
     );
-    const searchData = await searchResponse.json();
+    const categoryData = await categoryResponse.json();
 
-    if (!searchData.query || !searchData.query.allimages || searchData.query.allimages.length === 0) {
-      console.warn("No landscape images found from Wikimedia API.");
+    if (!categoryData.query || !categoryData.query.pages) {
+      console.warn("No landscape images found in category from Wikimedia API.");
       return null;
     }
 
-    // Filter for images that have a direct URL and are likely suitable
-    const suitableImages = searchData.query.allimages.filter(
-      (img: any) => img.url && img.url.match(/\.(jpeg|jpg|png|gif|webp)$/i)
-    );
+    const pages = Object.values(categoryData.query.pages) as any[];
+    const imageTitles = pages
+      .filter(page => page.title.startsWith('File:'))
+      .map(page => page.title);
 
-    if (suitableImages.length === 0) {
-      console.warn("No suitable landscape images found after filtering.");
+    if (imageTitles.length === 0) {
+      console.warn("No suitable image titles found after filtering.");
       return null;
     }
 
-    // Pick a random image from the suitable ones
-    const randomIndex = Math.floor(Math.random() * suitableImages.length);
-    const selectedImage = suitableImages[randomIndex];
+    // Pick a random image title
+    const randomTitle = imageTitles[Math.floor(Math.random() * imageTitles.length)];
 
-    // Construct the photographer URL (Wikimedia user page)
-    const photographerUrl = `https://commons.wikimedia.org/wiki/User:${encodeURIComponent(selectedImage.user)}`;
+    // Step 2: Get image information and a scaled URL for the selected image
+    const imageInfoResponse = await fetch(
+      `${WIKIMEDIA_API_URL}?action=query&titles=${encodeURIComponent(randomTitle)}&prop=imageinfo&iiprop=url|user|comment|extmetadata&iiurlwidth=1920&format=json&origin=*`
+    );
+    const imageInfoData = await imageInfoResponse.json();
+
+    if (!imageInfoData.query || !imageInfoData.query.pages) {
+      console.warn("Failed to get image info for selected title from Wikimedia API.");
+      return null;
+    }
+
+    const imagePage = Object.values(imageInfoData.query.pages)[0] as any;
+    const imageInfo = imagePage.imageinfo?.[0];
+
+    if (!imageInfo || !imageInfo.thumburl) {
+      console.warn("No thumbnail URL found for the selected image.");
+      return null;
+    }
+
+    // Extract photographer and alt text from extmetadata if available, or fallback
+    const extMetadata = imageInfo.extmetadata;
+    const photographer = extMetadata?.Artist?.value?.replace(/<[^>]*>?/gm, '') || imageInfo.user || "Unknown";
+    const photographerUrl = extMetadata?.Artist?.value?.includes('href="')
+      ? extMetadata.Artist.value.match(/href="([^"]*)"/)?.[1]
+      : `https://commons.wikimedia.org/wiki/User:${encodeURIComponent(imageInfo.user)}`;
+    const alt = extMetadata?.ImageDescription?.value?.replace(/<[^>]*>?/gm, '') || imageInfo.comment || imagePage.title.replace('File:', '').replace(/_/g, ' ');
 
     return {
-      url: selectedImage.url,
-      alt: selectedImage.comment || selectedImage.title || "Wikimedia landscape image",
-      photographer: selectedImage.user || "Unknown",
-      photographerUrl: photographerUrl,
+      url: imageInfo.thumburl, // Use the scaled thumbnail URL
+      alt: alt,
+      photographer: photographer,
+      photographerUrl: photographerUrl || "https://commons.wikimedia.org/wiki/Main_Page",
     };
   } catch (error) {
     console.error("Error fetching random Wikimedia landscape image:", error);
     return null;
   }
 };
-
-// Removed getRandomWikimediaImage as it's no longer needed

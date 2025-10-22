@@ -82,8 +82,7 @@ const LoginPage: React.FC = () => {
         <div className="absolute inset-0 bg-background" />
       )}
 
-      {/* Overlay for better readability */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Removed the overlay div */}
 
       {/* Matka Logo and Name (White) */}
       <div className="absolute top-6 left-6 flex items-center z-10">
