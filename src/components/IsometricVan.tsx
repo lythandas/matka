@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import anime from 'animejs'; // Changed import to directly import the default export
+import * as anime from 'animejs'; // Reverted to import as namespace
 
 const IsometricVan: React.FC = () => {
   const vanRef = useRef<HTMLDivElement>(null);
@@ -12,14 +12,14 @@ const IsometricVan: React.FC = () => {
     if (!vanRef.current) return;
 
     // Initial position off-screen left
-    anime.set(vanRef.current, {
+    anime.default.set(vanRef.current, { // Changed to anime.default.set
       translateX: '-100%', // Start completely off-screen left
       translateY: '0px',
       rotate: '0deg',
     });
 
     // Main driving animation
-    animationRef.current = anime({
+    animationRef.current = anime.default({ // Changed to anime.default
       targets: vanRef.current,
       translateX: ['-100%', '110vw'], // Drive across the screen and off to the right
       duration: 10000, // 10 seconds for one trip
@@ -28,7 +28,7 @@ const IsometricVan: React.FC = () => {
     });
 
     // Subtle bounce and rotation for realism
-    bounceAnimationRef.current = anime({
+    bounceAnimationRef.current = anime.default({ // Changed to anime.default
       targets: vanRef.current,
       translateY: [
         { value: -5, duration: 500, easing: 'easeInOutSine' },
