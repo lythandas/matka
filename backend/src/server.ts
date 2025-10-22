@@ -1,9 +1,9 @@
-import Fastify, { FastifyReply } from 'fastify'; // Import FastifyReply directly
+import Fastify, { FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { FastifyRequest } from 'fastify'; // Import FastifyRequest
+import { FastifyRequest } from 'fastify';
 
 const fastify = Fastify({
   logger: true
@@ -49,7 +49,7 @@ interface Journey {
 
 interface JourneyCollaborator {
   id: string; // ID of the journey_user_permissions entry
-  journey_id: string; // Added this property
+  journey_id: string;
   user_id: string;
   username: string;
   name?: string;
@@ -59,7 +59,7 @@ interface JourneyCollaborator {
 }
 
 type MediaInfo =
-  | { type: 'image'; urls: { small?: string; medium?: string; large?: string; original?: string } } // Corrected 'string' to 'large'
+  | { type: 'image'; urls: { small?: string; medium?: string; large?: string; original?: string } }
   | { type: 'video'; url: string };
 
 interface Post {
@@ -301,7 +301,7 @@ fastify.post('/upload-media', async (request: FastifyRequest, reply) => {
 
 // Get all users (Admin only)
 fastify.get('/users', async (request: FastifyRequest, reply) => {
-  if (!request.user?.role !== 'admin') {
+  if (request.user?.role !== 'admin') { // Corrected: Removed '!' before request.user?.role
     return reply.code(403).send({ message: 'Forbidden' });
   }
   return users.map(u => {
@@ -677,14 +677,14 @@ fastify.get('/journeys/:id/collaborators', async (request: FastifyRequest, reply
       if (user) {
         return {
           id: jup.id,
-          journey_id: jup.journey_id, // Added missing journey_id
+          journey_id: jup.journey_id,
           user_id: user.id,
           username: user.username,
           name: user.name,
           surname: user.surname,
           profile_image_url: user.profile_image_url,
           permissions: jup.permissions,
-        };
+        } as JourneyCollaborator; // Explicitly cast to JourneyCollaborator
       }
       return null;
     })
@@ -913,7 +913,7 @@ fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     return reply.code(404).send({ message: 'Associated journey not found' });
   }
 
-  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
+  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
   const isPostAuthor = existingPost.user_id === request.user.id;
   const isJourneyOwner = journey.user_id === request.user.id;
   const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
