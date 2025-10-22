@@ -18,10 +18,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit, Users } from 'lucide-react'; // Added Users icon
+import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react'; // Added Upload, MapPin, LocateFixed, Search, Loader2 icons
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
-import AddContentDialog from '@/components/AddContentDialog';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
 import ShineCard from '@/components/ShineCard';
@@ -36,27 +35,26 @@ import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api';
-import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants';
+import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
-import { userHasPermission } from '@/lib/permissions'; // Import the new permission utility
-import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // New import
+import { userHasPermission } from '@/lib/permissions';
+import ManageJourneyDialog from '@/components/ManageJourneyDialog';
+import LocationSearch from '@/components/LocationSearch'; // Import LocationSearch
 
 const Index = () => {
-  const { isAuthenticated, user } = useAuth(); // Removed usersExist as it's handled by LoginPage
+  const { isAuthenticated, user } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadedMediaInfo, setUploadedMediaInfo] = useState<MediaInfo | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // For multiple files
+  const [uploadedMediaItems, setUploadedMediaItems] = useState<MediaInfo[]>([]); // Array of uploaded media info
   const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
-  const [spotifyEmbedUrl, setSpotifyEmbedUrl] = useState<string>('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
-  // Removed isCreateUserDialogOpen, isLoginDialogOpen, isRegisterDialogOpen as they are handled by LoginPage
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -66,8 +64,12 @@ const Index = () => {
   const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
-  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false); // Changed from isManageCollaboratorsDialogOpen
-  const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
+  const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
+
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>('search'); // Default to search
+  const [locationLoading, setLocationLoading] = useState<boolean>(false);
+  const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
   // Effect to check backend connectivity
   useEffect(() => {
@@ -97,7 +99,6 @@ const Index = () => {
         },
       });
       if (!response.ok) {
-        // If not authorized to view collaborators, just return empty
         if (response.status === 403 || response.status === 401) {
           setJourneyCollaborators([]);
           return;
@@ -108,9 +109,9 @@ const Index = () => {
       setJourneyCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
-      setJourneyCollaborators([]); // Clear on error
+      setJourneyCollaborators([]);
     }
-  }, [user]); // Removed selectedJourney from dependencies as it's not directly used here
+  }, [user]);
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -136,7 +137,7 @@ const Index = () => {
   useEffect(() => {
     if (selectedJourney) {
       fetchPosts(selectedJourney.id);
-      fetchJourneyCollaborators(selectedJourney.id); // Fetch collaborators when journey changes
+      fetchJourneyCollaborators(selectedJourney.id);
     } else {
       setPosts([]);
       setLoadingPosts(false);
@@ -144,65 +145,128 @@ const Index = () => {
     }
   }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators]);
 
-  const uploadMediaToServer = async (file: File) => {
+  const uploadMediaToServer = async (files: File[]) => {
     setIsUploadingMedia(true);
+    const newUploadedMedia: MediaInfo[] = [];
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      const base64Data: string = await new Promise((resolve, reject) => {
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            resolve(reader.result.split(',')[1]);
-          } else {
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        const base64Data: string = await new Promise((resolve, reject) => {
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              resolve(reader.result.split(',')[1]);
+            } else {
+              reject(new Error("Failed to read file."));
+            }
+          };
+          reader.onerror = (error) => {
+            console.error("FileReader error:", error);
             reject(new Error("Failed to read file."));
-          }
-        };
-        reader.onerror = (error) => {
-          console.error("FileReader error:", error);
-          reject(new Error("Failed to read file."));
-        };
-      });
+          };
+        });
 
-      const response = await fetch(`${API_BASE_URL}/upload-media`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
-      });
+        const response = await fetch(`${API_BASE_URL}/upload-media`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          },
+          body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to upload media');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to upload media: ${file.name}`);
+        }
+
+        const data = await response.json();
+        newUploadedMedia.push(data.mediaInfo);
       }
-
-      const data = await response.json();
-      setUploadedMediaInfo(data.mediaInfo);
+      setUploadedMediaItems((prev) => [...prev, ...newUploadedMedia]);
+      setSelectedFiles([]); // Clear selected files after upload
       showSuccess('Media uploaded successfully!');
     } catch (error: any) {
       console.error('Error uploading media:', error);
       showError(error.message || 'Failed to upload media.');
-      setSelectedFile(null);
-      setUploadedMediaInfo(null);
+      setSelectedFiles([]);
     } finally {
       setIsUploadingMedia(false);
     }
   };
 
-  const handleMediaSelect = (file: File | null) => {
-    setSelectedFile(file);
-    if (file) {
-      if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
-        showError(`File size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
-        setSelectedFile(null);
-        setUploadedMediaInfo(null);
-        return;
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const files = Array.from(event.target.files);
+      const validFiles: File[] = [];
+
+      for (const file of files) {
+        if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
+          showError(`File '${file.name}' size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+          continue;
+        }
+        if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+          showError(`File '${file.name}' is not an image or video.`);
+          continue;
+        }
+        validFiles.push(file);
       }
-      uploadMediaToServer(file);
+
+      if (validFiles.length > 0) {
+        setSelectedFiles(validFiles);
+        uploadMediaToServer(validFiles);
+      } else {
+        setSelectedFiles([]);
+      }
     } else {
-      setUploadedMediaInfo(null);
+      setSelectedFiles([]);
     }
+    if (mediaFileInputRef.current) mediaFileInputRef.current.value = ''; // Clear input
+  };
+
+  const handleRemoveMediaItem = (indexToRemove: number) => {
+    setUploadedMediaItems((prev) => prev.filter((_, index) => index !== indexToRemove));
+    showSuccess('Media item removed.');
+  };
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      showError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ lat: latitude, lng: longitude });
+        showSuccess('Location retrieved successfully!');
+        setLocationLoading(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        let errorMessage = 'Failed to get your location.';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permission to access location was denied. Please enable it in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'The request to get user location timed out.';
+            break;
+        }
+        showError(errorMessage);
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleClearLocation = () => {
+    setCoordinates(null);
+    showSuccess('Location cleared.');
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -218,18 +282,17 @@ const Index = () => {
       return;
     }
 
-    // Check permission to create post in this journey
     if (!userHasPermission(user, 'create_post', selectedJourney.user_id, journeyCollaborators)) {
       showError('You do not have permission to create posts in this journey.');
       return;
     }
 
-    if (!title.trim() && !message.trim() && !uploadedMediaInfo && !spotifyEmbedUrl && !coordinates) {
-      showError('Please enter a title, message, or add some content (media, Spotify, location).');
+    if (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) {
+      showError('Please enter a title, message, or add some content (media, location).');
       return;
     }
     if (isUploadingMedia) {
-      showError('Please wait for the media to finish uploading.');
+      showError('Please wait for media uploads to finish.');
       return;
     }
 
@@ -244,8 +307,7 @@ const Index = () => {
           journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),
-          mediaInfo: uploadedMediaInfo,
-          spotifyEmbedUrl: spotifyEmbedUrl.trim() || undefined,
+          media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined, // Use media_items
           coordinates: coordinates || undefined,
         }),
       });
@@ -259,9 +321,8 @@ const Index = () => {
       setPosts([newPost, ...posts]);
       setTitle('');
       setMessage('');
-      setSelectedFile(null); // Clear selected file
-      setUploadedMediaInfo(null); // Clear uploaded media info
-      setSpotifyEmbedUrl('');
+      setSelectedFiles([]);
+      setUploadedMediaItems([]);
       setCoordinates(null);
       showSuccess('Post created successfully!');
     } catch (error: any) {
@@ -275,7 +336,6 @@ const Index = () => {
       showError('You must be logged in to delete a post.');
       return;
     }
-    // Check permission to delete post in this journey
     if (!userHasPermission(user, 'delete_post', journeyId, journeyCollaborators, id, postAuthorId)) {
       showError('You do not have permission to delete this post.');
       return;
@@ -342,10 +402,6 @@ const Index = () => {
     }
   };
 
-  const currentMediaPreviewUrl = uploadedMediaInfo?.type === 'image' ? uploadedMediaInfo.urls.medium : uploadedMediaInfo?.type === 'video' ? uploadedMediaInfo.url : null;
-  const currentMediaType = uploadedMediaInfo?.type === 'video' ? 'video' : 'image';
-
-  const canManageCollaborators = isAuthenticated && selectedJourney && userHasPermission(user, 'manage_journey_access', selectedJourney.user_id, journeyCollaborators);
   const canCreatePost = isAuthenticated && selectedJourney && userHasPermission(user, 'create_post', selectedJourney.user_id, journeyCollaborators);
 
   return (
@@ -375,25 +431,25 @@ const Index = () => {
                     disabled={!canCreatePost}
                   />
 
-                  {(uploadedMediaInfo || spotifyEmbedUrl || coordinates) && (
+                  {(uploadedMediaItems.length > 0 || coordinates) && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <h4 className="text-lg font-semibold">Content preview:</h4>
-                      {currentMediaPreviewUrl && (
-                        <div className="relative">
-                          {currentMediaType === 'image' ? (
+                      {uploadedMediaItems.map((mediaItem, index) => (
+                        <div key={index} className="relative">
+                          {mediaItem.type === 'image' ? (
                             <img
-                              src={currentMediaPreviewUrl}
-                              alt="Media preview"
+                              src={mediaItem.urls.medium || '/placeholder.svg'}
+                              alt={`Media preview ${index + 1}`}
                               className="w-full h-auto max-h-64 object-cover rounded-md"
                               onError={(e) => {
                                 e.currentTarget.src = '/placeholder.svg';
                                 e.currentTarget.onerror = null;
-                                console.error(`Failed to load media: ${currentMediaPreviewUrl}`);
+                                console.error(`Failed to load media: ${mediaItem.urls.medium}`);
                               }}
                             />
                           ) : (
                             <video
-                              src={currentMediaPreviewUrl}
+                              src={mediaItem.url}
                               controls
                               className="w-full h-auto max-h-64 object-cover rounded-md"
                             />
@@ -402,36 +458,15 @@ const Index = () => {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleMediaSelect(null)}
-                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                          >
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </Button>
-                          {isUploadingMedia && (
-                            <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
-                          )}
-                        </div>
-                      )}
-                      {spotifyEmbedUrl && (
-                        <div className="relative w-full aspect-video">
-                          <iframe
-                            src={spotifyEmbedUrl}
-                            width="100%"
-                            height="100%"
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                            loading="lazy"
-                            className="rounded-md"
-                          ></iframe>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setSpotifyEmbedUrl('')}
+                            onClick={() => handleRemoveMediaItem(index)}
                             className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                           >
                             <XCircle className="h-5 w-5 text-red-500" />
                           </Button>
                         </div>
+                      ))}
+                      {isUploadingMedia && (
+                        <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
                       )}
                       {coordinates && (
                         <div className="relative">
@@ -443,7 +478,7 @@ const Index = () => {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => setCoordinates(null)}
+                            onClick={handleClearLocation}
                             className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                           >
                             <XCircle className="h-5 w-5 text-red-500" />
@@ -453,23 +488,87 @@ const Index = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-center">
-                    <AddContentDialog
-                      onMediaSelect={handleMediaSelect}
-                      onSpotifyEmbedChange={setSpotifyEmbedUrl}
-                      onCoordinatesChange={setCoordinates}
-                      uploadedMediaInfo={uploadedMediaInfo}
-                      isUploadingMedia={isUploadingMedia}
-                      currentSpotifyEmbedUrl={spotifyEmbedUrl}
-                      currentCoordinates={coordinates}
+                  <div className="flex justify-center space-x-2">
+                    <Input
+                      id="media-upload"
+                      type="file"
+                      accept={SUPPORTED_MEDIA_TYPES}
+                      onChange={handleMediaFileChange}
+                      ref={mediaFileInputRef}
+                      className="hidden"
+                      multiple
+                      disabled={!canCreatePost || isUploadingMedia}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => mediaFileInputRef.current?.click()}
+                      variant="outline"
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePost || isUploadingMedia}
                     >
-                      <Button type="button" variant="outline" className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit" disabled={!canCreatePost}>
-                        <Plus className="mr-2 h-4 w-4" /> Add content
-                      </Button>
-                    </AddContentDialog>
+                      {isUploadingMedia ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-2 h-4 w-4" />
+                      )}
+                      Upload Media
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setLocationSelectionMode('current')}
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePost || isUploadingMedia}
+                    >
+                      <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setLocationSelectionMode('search')}
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePost || isUploadingMedia}
+                    >
+                      <Search className="mr-2 h-4 w-4" /> Search Location
+                    </Button>
                   </div>
+
+                  {locationSelectionMode === 'current' && !coordinates && (
+                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                      <Button
+                        type="button"
+                        onClick={handleGetLocation}
+                        disabled={locationLoading || !canCreatePost || isUploadingMedia}
+                        className="w-full hover:ring-2 hover:ring-blue-500"
+                      >
+                        {locationLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Getting location...
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="mr-2 h-4 w-4" />
+                            Get current location
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {locationSelectionMode === 'search' && !coordinates && (
+                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                      <LocationSearch
+                        onSelectLocation={setCoordinates}
+                        currentCoordinates={coordinates}
+                        disabled={!canCreatePost || isUploadingMedia}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex justify-center">
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePost}>
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePost || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
                       Post
                     </Button>
                   </div>
@@ -553,35 +652,31 @@ const Index = () => {
                     {post.title && (
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                    {post.image_urls?.type === 'image' && post.image_urls.urls.large && (
-                      <img
-                        src={post.image_urls.urls.large}
-                        alt="Post image"
-                        className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                          e.currentTarget.onerror = null;
-                          console.error(`Failed to load image: ${post.image_urls?.urls.large}`);
-                        }}
-                      />
-                    )}
-                    {post.image_urls?.type === 'video' && post.image_urls.url && (
-                      <video
-                        src={post.image_urls.url}
-                        controls
-                        className="w-full h-auto max-h-96 object-cover rounded-md mb-4"
-                      />
-                    )}
-                    {post.spotify_embed_url && (
-                      <div className="w-full aspect-video mb-4">
-                        <iframe
-                          src={post.spotify_embed_url}
-                          width="100%"
-                          height="100%"
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          className="rounded-md"
-                        ></iframe>
+                    {post.media_items && post.media_items.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        {post.media_items.map((mediaItem, mediaIndex) => (
+                          <div key={mediaIndex} className="relative">
+                            {mediaItem.type === 'image' && mediaItem.urls.large && (
+                              <img
+                                src={mediaItem.urls.large}
+                                alt={`Post image ${mediaIndex + 1}`}
+                                className="w-full h-auto max-h-96 object-cover rounded-md"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                  e.currentTarget.onerror = null;
+                                  console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                }}
+                              />
+                            )}
+                            {mediaItem.type === 'video' && mediaItem.url && (
+                              <video
+                                src={mediaItem.url}
+                                controls
+                                className="w-full h-auto max-h-96 object-cover rounded-md"
+                              />
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                     <div className="flex justify-between items-start mb-2">
@@ -602,7 +697,7 @@ const Index = () => {
                         {isAuthenticated && selectedJourney && (
                           userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
                         ) && (
-                          <div onClick={(e) => e.stopPropagation()}> {/* Wrap AlertDialog in a div to stop propagation */}
+                          <div onClick={(e) => e.stopPropagation()}>
                             <AlertDialog key={`delete-dialog-${post.id}`}>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
@@ -672,8 +767,8 @@ const Index = () => {
           onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
           post={postToEdit}
           onUpdate={handlePostUpdated}
-          journeyOwnerId={selectedJourney.user_id} // Pass journey owner ID
-          journeyCollaborators={journeyCollaborators} // Pass journey collaborators
+          journeyOwnerId={selectedJourney.user_id}
+          journeyCollaborators={journeyCollaborators}
         />
       )}
 
@@ -683,9 +778,9 @@ const Index = () => {
           onClose={() => setIsManageJourneyDialogOpen(false)}
           journey={selectedJourney}
           onJourneyUpdated={() => {
-            fetchJourneys(); // Refresh journeys list
-            fetchJourneyCollaborators(selectedJourney.id); // Refresh collaborators
-            fetchPosts(selectedJourney.id); // Refresh posts in case permissions changed visibility
+            fetchJourneys();
+            fetchJourneyCollaborators(selectedJourney.id);
+            fetchPosts(selectedJourney.id);
           }}
         />
       )}

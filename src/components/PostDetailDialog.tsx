@@ -10,7 +10,7 @@ import { showError } from '@/utils/toast';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-import { Post } from '@/types'; // Centralized Post interface
+import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interface
 
 interface PostDetailDialogProps {
   post: Post;
@@ -31,25 +31,23 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const imageRef = useRef<HTMLImageElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null); // New ref for video
-  const [isMediaFullscreen, setIsMediaFullscreen] = useState(false); // Changed to isMediaFullscreen
+  const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
+  const [isMediaFullscreen, setIsMediaFullscreen] = useState(false);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0); // For cycling through multiple media items
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
 
-  const handleToggleFullscreen = () => {
+  const handleToggleFullscreen = (mediaElement: HTMLImageElement | HTMLVideoElement | null) => {
     if (!document.fullscreenEnabled) {
       showError("Fullscreen mode is not supported by your browser.");
       return;
     }
 
-    const targetElement = post.image_urls?.type === 'image' ? imageRef.current : videoRef.current;
-
-    if (document.fullscreenElement === targetElement) {
+    if (document.fullscreenElement === mediaElement) {
       document.exitFullscreen();
     } else {
-      targetElement?.requestFullscreen().catch((err) => {
+      mediaElement?.requestFullscreen().catch((err) => {
         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
         showError("Failed to enter full-screen mode.");
       });
@@ -58,49 +56,22 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const targetElement = post.image_urls?.type === 'image' ? imageRef.current : videoRef.current;
-      setIsMediaFullscreen(document.fullscreenElement === targetElement);
+      setIsMediaFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [post.image_urls]);
+  }, []);
+
+  useEffect(() => {
+    setCurrentMediaIndex(0); // Reset media index when post changes
+  }, [post]);
 
   const displayName = post.author_name || post.author_username;
-
-  let mediaElement: React.ReactNode = null;
-  let mediaFullscreenUrl: string | undefined;
-
-  if (post.image_urls?.type === 'image') {
-    const dialogImageUrl = post.image_urls.urls.large || '/placeholder.svg';
-    mediaFullscreenUrl = post.image_urls.urls.original || post.image_urls.urls.large || '/placeholder.svg';
-    mediaElement = (
-      <img
-        ref={imageRef}
-        src={isMediaFullscreen ? mediaFullscreenUrl : dialogImageUrl}
-        alt={post.title || "Post image"}
-        className="w-full h-auto object-cover rounded-md"
-        onError={(e) => {
-          e.currentTarget.src = '/placeholder.svg';
-          e.currentTarget.onerror = null;
-          console.error(`Failed to load image: ${isMediaFullscreen ? mediaFullscreenUrl : dialogImageUrl}`);
-        }}
-      />
-    );
-  } else if (post.image_urls?.type === 'video') {
-    const videoUrl = post.image_urls.url;
-    mediaFullscreenUrl = videoUrl; // For videos, the original URL is used for fullscreen
-    mediaElement = (
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        controls
-        className="w-full h-auto object-cover rounded-md"
-      />
-    );
-  }
+  const mediaItems = post.media_items || [];
+  const currentMedia = mediaItems[currentMediaIndex];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -125,10 +96,31 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </div>
         </DialogHeader>
         <div className="relative p-6 pt-4">
-          {post.image_urls && (
+          {mediaItems.length > 0 && (
             <div className="relative mb-4">
-              {mediaElement}
-              {document.fullscreenEnabled && (post.image_urls.type === 'image' || post.image_urls.type === 'video') && (
+              {currentMedia?.type === 'image' && (
+                <img
+                  ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                  src={currentMedia.urls.large || '/placeholder.svg'}
+                  alt={post.title || "Post image"}
+                  className="w-full h-auto object-cover rounded-md"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.svg';
+                    e.currentTarget.onerror = null;
+                    console.error(`Failed to load image: ${currentMedia.urls.large}`);
+                  }}
+                />
+              )}
+              {currentMedia?.type === 'video' && (
+                <video
+                  ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                  src={currentMedia.url}
+                  controls
+                  className="w-full h-auto object-cover rounded-md"
+                />
+              )}
+
+              {document.fullscreenEnabled && currentMedia && (
                 <Button
                   variant="outline"
                   size="icon"
@@ -136,30 +128,52 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
                     isMediaFullscreen ? "fixed z-[1000]" : "absolute"
                   )}
-                  onClick={handleToggleFullscreen}
+                  onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
                 >
                   {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                 </Button>
               )}
+
+              {mediaItems.length > 1 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
+                    disabled={isMediaFullscreen}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
+                    disabled={isMediaFullscreen}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+                    {mediaItems.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={cn(
+                          "h-2 w-2 rounded-full bg-white/50",
+                          idx === currentMediaIndex && "bg-white"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
-          {post.spotify_embed_url && (
-            <div className="w-full aspect-video mb-4">
-              <iframe
-                src={post.spotify_embed_url}
-                width="100%"
-                height="100%"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-                className="rounded-md"
-              ></iframe>
-            </div>
-          )}
-          <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4"> {/* Added mb-4 for spacing */}
+          <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
             {post.message}
           </p>
-          {post.coordinates && ( // Moved coordinates to the bottom
-            <div className="w-full h-64 rounded-md overflow-hidden"> {/* Removed mb-4 */}
+          {post.coordinates && (
+            <div className="w-full h-64 rounded-md overflow-hidden">
               <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
             </div>
           )}

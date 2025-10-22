@@ -72,8 +72,7 @@ interface Post {
   author_profile_image_url?: string;
   title?: string;
   message: string;
-  image_urls?: MediaInfo;
-  spotify_embed_url?: string;
+  media_items?: MediaInfo[]; // Changed to an array of MediaInfo
   coordinates?: { lat: number; lng: number };
   created_at: string;
 }
@@ -837,12 +836,11 @@ fastify.register(async (authenticatedFastify) => {
 
   // Create a new post
   authenticatedFastify.post('/posts', async (request: FastifyRequest, reply) => {
-    const { journeyId, title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
+    const { journeyId, title, message, media_items, coordinates } = request.body as { // Changed from mediaInfo to media_items, removed spotifyEmbedUrl
       journeyId?: string;
       title?: string;
       message?: string;
-      mediaInfo?: MediaInfo;
-      spotifyEmbedUrl?: string;
+      media_items?: MediaInfo[]; // Changed to MediaInfo[]
       coordinates?: { lat: number; lng: number };
     };
 
@@ -853,8 +851,8 @@ fastify.register(async (authenticatedFastify) => {
     if (!journeyId) {
       return reply.code(400).send({ message: 'journeyId is required' });
     }
-    if (!title && !message && !mediaInfo && !spotifyEmbedUrl && !coordinates) {
-      return reply.code(400).send({ message: 'At least a title, message, media, Spotify URL, or coordinates are required' });
+    if (!title && !message && (!media_items || media_items.length === 0) && !coordinates) { // Updated check
+      return reply.code(400).send({ message: 'At least a title, message, media, or coordinates are required' });
     }
 
     const journey = journeys.find(j => j.id === journeyId);
@@ -881,8 +879,7 @@ fastify.register(async (authenticatedFastify) => {
       author_profile_image_url: request.user.profile_image_url,
       title: title || undefined,
       message: message || '',
-      image_urls: mediaInfo || undefined,
-      spotify_embed_url: spotifyEmbedUrl || undefined,
+      media_items: media_items && media_items.length > 0 ? media_items : undefined, // Changed to media_items
       coordinates: coordinates || undefined,
       created_at: new Date().toISOString(),
     };
@@ -893,11 +890,10 @@ fastify.register(async (authenticatedFastify) => {
   // Update a post
   authenticatedFastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
+    const { title, message, media_items, coordinates } = request.body as { // Changed from mediaInfo to media_items, removed spotifyEmbedUrl
       title?: string;
       message?: string;
-      mediaInfo?: MediaInfo;
-      spotifyEmbedUrl?: string;
+      media_items?: MediaInfo[]; // Changed to MediaInfo[]
       coordinates?: { lat: number; lng: number };
     };
 
@@ -930,8 +926,7 @@ fastify.register(async (authenticatedFastify) => {
       ...existingPost,
       title: title === null ? undefined : (title || existingPost.title),
       message: message || existingPost.message,
-      image_urls: mediaInfo === null ? undefined : (mediaInfo || existingPost.image_urls),
-      spotify_embed_url: spotifyEmbedUrl === null ? undefined : (spotifyEmbedUrl || existingPost.spotify_embed_url),
+      media_items: media_items === null ? undefined : (media_items && media_items.length > 0 ? media_items : undefined), // Changed to media_items
       coordinates: coordinates === null ? undefined : (coordinates || existingPost.coordinates),
     };
     return posts[postIndex];

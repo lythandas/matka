@@ -23,7 +23,7 @@ export interface Journey {
 }
 
 // Define the structure for media content
-export type MediaInfo = 
+export type MediaInfo =
   | { type: 'image'; urls: { small?: string; medium?: string; large?: string; original?: string } }
   | { type: 'video'; url: string };
 
@@ -31,8 +31,7 @@ export interface Post {
   id: string;
   title?: string;
   message: string;
-  image_urls?: MediaInfo; // Updated to use MediaInfo type
-  spotify_embed_url?: string;
+  media_items?: MediaInfo[]; // Changed to an array of MediaInfo
   coordinates?: { lat: number; lng: number };
   created_at: string;
   user_id: string;

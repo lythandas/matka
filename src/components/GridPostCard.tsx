@@ -16,15 +16,15 @@ interface GridPostCardProps {
 }
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
-  const media = post.image_urls;
+  const firstMedia = post.media_items?.[0]; // Get the first media item
   const displayName = post.author_name || post.author_username;
 
   let mediaElement: React.ReactNode = null;
 
-  if (media?.type === 'image') {
+  if (firstMedia?.type === 'image') {
     mediaElement = (
       <img
-        src={media.urls.medium || '/placeholder.svg'}
+        src={firstMedia.urls.medium || '/placeholder.svg'}
         alt={post.title || "Post image"}
         className="object-cover w-full h-full"
         onError={(e) => {
@@ -33,10 +33,10 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         }}
       />
     );
-  } else if (media?.type === 'video') {
+  } else if (firstMedia?.type === 'video') {
     mediaElement = (
       <video
-        src={media.url}
+        src={firstMedia.url}
         controls={false} // No controls for grid card, maybe show play icon overlay
         muted
         loop
