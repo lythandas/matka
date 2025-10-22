@@ -368,7 +368,16 @@ const Index = () => {
             <Card className="mb-8 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-end"> {/* Adjusted justify-between to justify-end */}
                 {/* Removed CardTitle */}
-                {/* Removed the "Manage Collaborators" button */}
+                {canManageCollaborators && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsManageJourneyDialogOpen(true)}
+                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  >
+                    <Users className="mr-2 h-4 w-4" /> Manage Collaborators
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -615,28 +624,30 @@ const Index = () => {
                         {isAuthenticated && selectedJourney && (
                           userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
                         ) && (
-                          <AlertDialog key={`delete-dialog-${post.id}`}> {/* Added key prop */}
-                            <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete your post
-                                  and remove its data from our servers.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <div onClick={(e) => e.stopPropagation()}> {/* Wrap AlertDialog in a div to stop propagation */}
+                            <AlertDialog key={`delete-dialog-${post.id}`}>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your post
+                                    and remove its data from our servers.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         )}
                       </div>
                     </div>
