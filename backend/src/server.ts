@@ -11,7 +11,7 @@ const fastify = Fastify({
 
 // Register CORS plugin
 fastify.register(cors, {
-  origin: '*', // Allow all origins for now, refine in production
+  origin: ['http://localhost:8080', 'http://127.0.0.1:8080', '*'], // Explicitly allow frontend origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 });
