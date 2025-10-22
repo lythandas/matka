@@ -33,6 +33,7 @@ const LoginPage: React.FC = () => {
         const image = getRandomWikimediaImage(); // Use the new Wikimedia utility
         if (image) {
           setBackgroundImage(image);
+          console.log("Attempting to load background image from URL:", image.url); // Log the URL
         } else {
           // Fallback if image fetching fails
           setBackgroundImage(null);
@@ -71,6 +72,11 @@ const LoginPage: React.FC = () => {
           alt={backgroundImage.alt}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
           style={{ opacity: 1 }}
+          onError={(e) => { // Added onError handler
+            console.error("Failed to load background image:", e.currentTarget.src);
+            showError("Failed to load background image. Please check the console for details.");
+            setBackgroundImage(null); // Fallback to plain background on error
+          }}
         />
       ) : (
         <div className="absolute inset-0 bg-background" />
