@@ -313,11 +313,11 @@ fastify.get('/users', async (request: FastifyRequest, reply) => {
 
 // Create a new user (Admin only)
 fastify.post('/users', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
-    return reply.code(403).send({ message: 'Forbidden' });
-  }
   const { username, password, role_id, name, surname } = request.body as { username?: string; password?: string; role_id?: string; name?: string; surname?: string };
 
+  if (!request.user || request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Forbidden' });
+  }
   if (!username || !password || !role_id) {
     return reply.code(400).send({ message: 'Username, password, and role are required' });
   }
@@ -351,11 +351,12 @@ fastify.post('/users', async (request: FastifyRequest, reply) => {
 
 // Update a user (Admin only)
 fastify.put('/users/:id', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
-    return reply.code(403).send({ message: 'Forbidden' });
-  }
   const { id } = request.params as { id: string };
   const { username, role_id, name, surname, profile_image_url } = request.body as { username?: string; role_id?: string; name?: string; surname?: string; profile_image_url?: string };
+
+  if (!request.user || request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Forbidden' });
+  }
 
   const userIndex = users.findIndex(u => u.id === id);
   if (userIndex === -1) {
@@ -397,10 +398,11 @@ fastify.put('/users/:id', async (request: FastifyRequest, reply) => {
 
 // Delete a user (Admin only)
 fastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
+  const { id } = request.params as { id: string };
+
+  if (!request.user || request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
-  const { id } = request.params as { id: string };
 
   const initialLength = users.length;
   users = users.filter(u => u.id !== id);
@@ -418,10 +420,11 @@ fastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
 
 // Search users (Admin only)
 fastify.get('/users/search', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
+  const { query } = request.query as { query: string };
+
+  if (!request.user || request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
-  const { query } = request.query as { query: string };
   if (!query) {
     return reply.code(400).send({ message: 'Search query is required' });
   }
@@ -443,7 +446,7 @@ fastify.get('/users/search', async (request: FastifyRequest, reply) => {
 
 // Get all roles (Admin only)
 fastify.get('/roles', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
+  if (!request.user || request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
   return roles;
@@ -451,11 +454,11 @@ fastify.get('/roles', async (request: FastifyRequest, reply) => {
 
 // Create a new role (Admin only)
 fastify.post('/roles', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
-    return reply.code(403).send({ message: 'Forbidden' });
-  }
   const { name, permissions } = request.body as { name?: string; permissions?: string[] };
 
+  if (!request.user || request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Forbidden' });
+  }
   if (!name || !permissions) {
     return reply.code(400).send({ message: 'Role name and permissions are required' });
   }
@@ -475,11 +478,12 @@ fastify.post('/roles', async (request: FastifyRequest, reply) => {
 
 // Update a role (Admin only)
 fastify.put('/roles/:id', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
-    return reply.code(403).send({ message: 'Forbidden' });
-  }
   const { id } = request.params as { id: string };
   const { name, permissions } = request.body as { name?: string; permissions?: string[] };
+
+  if (!request.user || request.user.role !== 'admin') {
+    return reply.code(403).send({ message: 'Forbidden' });
+  }
 
   const roleIndex = roles.findIndex(r => r.id === id);
   if (roleIndex === -1) {
@@ -514,10 +518,11 @@ fastify.put('/roles/:id', async (request: FastifyRequest, reply) => {
 
 // Delete a role (Admin only)
 fastify.delete('/roles/:id', async (request: FastifyRequest, reply) => {
-  if (request.user?.role !== 'admin') {
+  const { id } = request.params as { id: string };
+
+  if (!request.user || request.user.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
-  const { id } = request.params as { id: string };
 
   const roleToDelete = roles.find(r => r.id === id);
   if (!roleToDelete) {
@@ -585,11 +590,12 @@ fastify.post('/journeys', async (request: FastifyRequest, reply) => {
 
 // Update a journey
 fastify.put('/journeys/:id', async (request: FastifyRequest, reply) => {
+  const { id } = request.params as { id: string };
+  const { name } = request.body as { name?: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { id } = request.params as { id: string };
-  const { name } = request.body as { name?: string };
 
   const journeyIndex = journeys.findIndex(j => j.id === id);
   if (journeyIndex === -1) {
@@ -615,10 +621,11 @@ fastify.put('/journeys/:id', async (request: FastifyRequest, reply) => {
 
 // Delete a journey
 fastify.delete('/journeys/:id', async (request: FastifyRequest, reply) => {
+  const { id } = request.params as { id: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { id } = request.params as { id: string };
 
   const journeyIndex = journeys.findIndex(j => j.id === id);
   if (journeyIndex === -1) {
@@ -644,10 +651,11 @@ fastify.delete('/journeys/:id', async (request: FastifyRequest, reply) => {
 
 // Get journey collaborators
 fastify.get('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
+  const { id: journeyId } = request.params as { id: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { id: journeyId } = request.params as { id: string };
 
   const journey = journeys.find(j => j.id === journeyId);
   if (!journey) {
@@ -686,11 +694,12 @@ fastify.get('/journeys/:id/collaborators', async (request: FastifyRequest, reply
 
 // Add a collaborator to a journey
 fastify.post('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
+  const { id: journeyId } = request.params as { id: string };
+  const { username, permissions } = request.body as { username: string; permissions: string[] };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { id: journeyId } = request.params as { id: string };
-  const { username, permissions } = request.body as { username: string; permissions: string[] };
 
   const journey = journeys.find(j => j.id === journeyId);
   if (!journey) {
@@ -732,11 +741,12 @@ fastify.post('/journeys/:id/collaborators', async (request: FastifyRequest, repl
 
 // Update collaborator permissions
 fastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
+  const { journeyId, userId } = request.params as { journeyId: string; userId: string };
+  const { permissions } = request.body as { permissions: string[] };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { journeyId, userId } = request.params as { journeyId: string; userId: string };
-  const { permissions } = request.body as { permissions: string[] };
 
   const journey = journeys.find(j => j.id === journeyId);
   if (!journey) {
@@ -762,10 +772,11 @@ fastify.put('/journeys/:journeyId/collaborators/:userId', async (request: Fastif
 
 // Remove a collaborator from a journey
 fastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
+  const { journeyId, userId } = request.params as { journeyId: string; userId: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { journeyId, userId } = request.params as { journeyId: string; userId: string };
 
   const journey = journeys.find(j => j.id === journeyId);
   if (!journey) {
@@ -793,10 +804,11 @@ fastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: Fas
 
 // Get posts for a specific journey
 fastify.get('/posts', async (request: FastifyRequest, reply) => {
+  const { journeyId } = request.query as { journeyId: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { journeyId } = request.query as { journeyId: string };
 
   if (!journeyId) {
     return reply.code(400).send({ message: 'journeyId is required' });
@@ -821,9 +833,6 @@ fastify.get('/posts', async (request: FastifyRequest, reply) => {
 
 // Create a new post
 fastify.post('/posts', async (request: FastifyRequest, reply) => {
-  if (!request.user) {
-    return reply.code(401).send({ message: 'Unauthorized' });
-  }
   const { journeyId, title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
     journeyId?: string;
     title?: string;
@@ -832,6 +841,10 @@ fastify.post('/posts', async (request: FastifyRequest, reply) => {
     spotifyEmbedUrl?: string;
     coordinates?: { lat: number; lng: number };
   };
+
+  if (!request.user) {
+    return reply.code(401).send({ message: 'Unauthorized' });
+  }
 
   if (!journeyId) {
     return reply.code(400).send({ message: 'journeyId is required' });
@@ -875,9 +888,6 @@ fastify.post('/posts', async (request: FastifyRequest, reply) => {
 
 // Update a post
 fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
-  if (!request.user) {
-    return reply.code(401).send({ message: 'Unauthorized' });
-  }
   const { id } = request.params as { id: string };
   const { title, message, mediaInfo, spotifyEmbedUrl, coordinates } = request.body as {
     title?: string;
@@ -886,6 +896,10 @@ fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     spotifyEmbedUrl?: string;
     coordinates?: { lat: number; lng: number };
   };
+
+  if (!request.user) {
+    return reply.code(401).send({ message: 'Unauthorized' });
+  }
 
   const postIndex = posts.findIndex(p => p.id === id);
   if (postIndex === -1) {
@@ -898,7 +912,7 @@ fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     return reply.code(404).send({ message: 'Associated journey not found' });
   }
 
-  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
+  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
   const isPostAuthor = existingPost.user_id === request.user.id;
   const isJourneyOwner = journey.user_id === request.user.id;
   const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
@@ -921,10 +935,11 @@ fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
 
 // Delete a post
 fastify.delete('/posts/:id', async (request: FastifyRequest, reply) => {
+  const { id } = request.params as { id: string };
+
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
-  const { id } = request.params as { id: string };
 
   const postIndex = posts.findIndex(p => p.id === id);
   if (postIndex === -1) {
