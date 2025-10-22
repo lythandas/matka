@@ -649,7 +649,11 @@ const Index = () => {
                       <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
                     {post.media_items && post.media_items.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      <div className={
+                        post.media_items.length === 1
+                          ? "mb-4" // No grid, just margin-bottom
+                          : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                      }>
                         {post.media_items.map((mediaItem, mediaIndex) => (
                           <div key={mediaIndex} className="relative">
                             {mediaItem.type === 'image' && mediaItem.urls.large && (
@@ -713,11 +717,10 @@ const Index = () => {
                                   <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
                                     Continue
                                   </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
                       </div>
                     </div>
                     {post.coordinates && (
