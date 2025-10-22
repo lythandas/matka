@@ -128,7 +128,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSearchUsername('');
       setSearchResults([]);
       setSelectedUserToAdd(null);
-      setNewCollaboratorPermissions([]);
+      setNewCollaboratorPermissions([]); // Reset permissions for new collaborator
     }
   }, [isOpen, journey, fetchCollaborators]);
 
@@ -391,6 +391,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         setSelectedUserToAdd(userResult);
                         setSearchUsername(userResult.username); // Keep selected username in input
                         setSearchResults([]); // Clear results after selection
+                        setNewCollaboratorPermissions(['publish_post_on_journey']); // Set default permission
                       }}
                       className="flex items-center justify-between"
                     >
