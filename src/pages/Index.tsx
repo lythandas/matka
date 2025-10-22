@@ -43,7 +43,7 @@ import { userHasPermission } from '@/lib/permissions'; // Import the new permiss
 import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // New import
 
 const Index = () => {
-  const { isAuthenticated, user, usersExist } = useAuth();
+  const { isAuthenticated, user } = useAuth(); // Removed usersExist as it's handled by LoginPage
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const [title, setTitle] = useState<string>('');
@@ -56,9 +56,7 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
-  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
+  // Removed isCreateUserDialogOpen, isLoginDialogOpen, isRegisterDialogOpen as they are handled by LoginPage
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -353,20 +351,10 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <div className="max-w-3xl mx-auto flex-grow w-full">
-        {!isAuthenticated && usersExist === false && (
-          <div className="text-center py-12">
-            <Compass className="h-32 w-32 mx-auto text-blue-600 dark:text-blue-400 mb-6" />
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">Welcome to Matka!</h2>
-            <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-              It looks like you're just getting started. Please register your first admin account to begin your journey.
-            </p>
-          </div>
-        )}
-
         {isAuthenticated && (
           selectedJourney ? (
             <Card className="mb-8 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-end"> {/* Adjusted justify-between to justify-end */}
+              <CardHeader className="flex flex-row items-center justify-end">
                 {/* Removed the "Manage Collaborators" button from here */}
               </CardHeader>
               <CardContent>
@@ -686,25 +674,6 @@ const Index = () => {
           onUpdate={handlePostUpdated}
           journeyOwnerId={selectedJourney.user_id} // Pass journey owner ID
           journeyCollaborators={journeyCollaborators} // Pass journey collaborators
-        />
-      )}
-
-      <CreateUserDialog
-        isOpen={isCreateUserDialogOpen}
-        onClose={() => setIsCreateUserDialogOpen(false)}
-      />
-
-      {usersExist === false && (
-        <RegisterDialog
-          isOpen={isRegisterDialogOpen}
-          onClose={() => setIsRegisterDialogOpen(false)}
-        />
-      )}
-
-      {usersExist === true && !isAuthenticated && (
-        <LoginDialog
-          isOpen={isLoginDialogOpen}
-          onClose={() => setIsLoginDialogOpen(false)}
         />
       )}
 
