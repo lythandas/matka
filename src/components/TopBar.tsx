@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react'; // Added Users icon back for clarity, though not used here
+import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -98,8 +98,8 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <div className="p-4 border-b dark:border-gray-800 flex items-center">
-                <Compass className="mr-2 h-6 w-6 text-border dark:text-foreground" />
-                <h1 className="text-xl font-extrabold text-border dark:text-foreground">Matka</h1>
+                <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
+                <h1 className="text-xl font-extrabold text-blue-600 dark:text-foreground">Matka</h1>
               </div>
               <nav className="flex-grow p-4 space-y-2">
                 {isAuthenticated && (
@@ -129,8 +129,8 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
         )}
         {!isMobile && (
           <div className="flex items-center">
-            <Compass className="mr-2 h-6 w-6 text-border dark:text-foreground" />
-            <h1 className="text-2xl font-extrabold text-border dark:text-foreground">Matka</h1>
+            <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
+            <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">Matka</h1>
           </div>
         )}
       </div>
