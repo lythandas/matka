@@ -6,6 +6,7 @@ import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError } from '@/utils/toast'; // Keep showError for other potential issues
+import IsometricVan from '@/components/IsometricVan'; // Import the new component
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated, usersExist, fetchUsersExist } = useAuth();
@@ -34,6 +35,8 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
+      <IsometricVan /> {/* Add the animated van here */}
+
       {/* Matka Logo and Name */}
       <div className="absolute top-6 left-6 flex items-center z-10">
         <Compass className="mr-2 h-8 w-8 text-blue-600 dark:text-foreground" />
