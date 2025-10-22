@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { Menu, Compass, Plus, ChevronDown, Wrench } from 'lucide-react'; // Added Wrench icon for Admin
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -21,11 +21,11 @@ import {
 import { cn } from '@/lib/utils';
 
 interface TopBarProps {
-  onOpenMobileSidebar: (open: boolean) => void;
+  // Removed onOpenMobileSidebar prop
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourneyDialogOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -58,7 +58,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
               key={journey.id}
               onClick={() => {
                 setSelectedJourney(journey);
-                if (isMobileView) onOpenMobileSidebar(false);
+                // Removed onOpenMobileSidebar(false) as sidebar is removed
               }}
               className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
             >
@@ -71,7 +71,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
               setIsCreateJourneyDialogOpen(true);
-              if (isMobileView) onOpenMobileSidebar(false);
+              // Removed onOpenMobileSidebar(false) as sidebar is removed
             }}>
               <Plus className="mr-2 h-4 w-4" /> Create New Journey
             </DropdownMenuItem>
@@ -85,11 +85,11 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
     <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 relative">
       <div className="flex items-center space-x-4">
         {isMobile && (
-          <Sheet onOpenChange={onOpenMobileSidebar}>
+          <Sheet> {/* Removed onOpenChange as sidebar is removed */}
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
                 <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle sidebar</span>
+                <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
@@ -103,7 +103,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-lg font-semibold"
-                      onClick={() => { navigate('/'); onOpenMobileSidebar(false); }}
+                      onClick={() => { navigate('/'); /* Removed onOpenMobileSidebar(false) */ }}
                     >
                       Journeys
                     </Button>
@@ -111,9 +111,9 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
                       <Button
                         variant="ghost"
                         className="w-full justify-start text-lg font-semibold"
-                        onClick={() => { navigate('/admin'); onOpenMobileSidebar(false); }}
+                        onClick={() => { navigate('/admin'); /* Removed onOpenMobileSidebar(false) */ }}
                       >
-                        Admin Dashboard
+                        <Wrench className="mr-2 h-4 w-4" /> Admin Dashboard
                       </Button>
                     )}
                     {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
@@ -132,7 +132,16 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
       </div>
 
       {!isMobile && isAuthenticated && (
-        <div className="absolute left-1/2 -translate-x-1/2">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-4"> {/* Added flex and space-x-4 */}
+          {user?.role === 'admin' && (
+            <Button
+              variant="ghost"
+              className="text-base font-semibold hover:bg-accent hover:text-accent-foreground hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              onClick={() => navigate('/admin')}
+            >
+              <Wrench className="mr-2 h-4 w-4" /> Admin Dashboard
+            </Button>
+          )}
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
         </div>
       )}

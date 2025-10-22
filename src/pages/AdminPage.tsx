@@ -211,7 +211,7 @@ const AdminPage: React.FC = () => {
       <div className="flex items-center justify-between mb-8">
         {/* Removed "Back to Journeys" button, navigation is now via sidebar */}
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div></div> {/* Placeholder for spacing */}
+        {/* Removed the empty div placeholder */}
       </div>
 
       <Tabs defaultValue="users" className="w-full">
