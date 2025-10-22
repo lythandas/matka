@@ -624,8 +624,8 @@ const Index = () => {
                         {isAuthenticated && selectedJourney && (
                           userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
                         ) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}> {/* Moved stopPropagation here */}
+                          <AlertDialog key={`delete-dialog-${post.id}`}> {/* Added key prop */}
+                            <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
                               <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
