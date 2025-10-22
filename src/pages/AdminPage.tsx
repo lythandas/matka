@@ -207,67 +207,63 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <Button variant="outline" onClick={() => navigate('/')} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Journeys
-          </Button>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <div></div>
-        </div>
+    <div className="w-full"> {/* Adjusted top-level div */}
+      <div className="flex items-center justify-between mb-8">
+        {/* Removed "Back to Journeys" button, navigation is now via sidebar */}
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div></div> {/* Placeholder for spacing */}
+      </div>
 
-        <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="roles">Role Management</TabsTrigger>
-            <TabsTrigger value="journeys">Journey Management</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="roles">Role Management</TabsTrigger>
+          <TabsTrigger value="journeys">Journey Management</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="users" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-2xl font-bold">Manage Users</CardTitle>
-                <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-                  <Plus className="mr-2 h-4 w-4" /> Create New User
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {loadingUsers ? (
-                  <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="ml-2 text-gray-600 dark:text-gray-400">Loading users...</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead> {/* Combined for avatar, name, username */}
-                          <TableHead>Role</TableHead>
-                          <TableHead>Permissions</TableHead>
-                          <TableHead>Created At</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {users.map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center">
-                                <Avatar className="h-9 w-9 mr-3">
-                                  {user.profile_image_url ? (
-                                    <AvatarImage src={user.profile_image_url} alt={user.name || user.username} />
-                                  ) : (
-                                    <AvatarFallback className="bg-blue-500 text-white">
-                                      {getAvatarInitials(user.name, user.username)}
-                                    </AvatarFallback>
-                                  )}
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium">{user.name || user.username}</p>
-                                  {user.name && <p className="text-sm text-muted-foreground">@{user.username}</p>}
-                                </div>
+        <TabsContent value="users" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-2xl font-bold">Manage Users</CardTitle>
+              <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+                <Plus className="mr-2 h-4 w-4" /> Create New User
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loadingUsers ? (
+                <div className="flex justify-center items-center h-48">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <p className="ml-2 text-gray-600 dark:text-gray-400">Loading users...</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead> {/* Combined for avatar, name, username */}
+                        <TableHead>Role</TableHead>
+                        <TableHead>Permissions</TableHead>
+                        <TableHead>Created At</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center">
+                              <Avatar className="h-9 w-9 mr-3">
+                                {user.profile_image_url ? (
+                                  <AvatarImage src={user.profile_image_url} alt={user.name || user.username} />
+                                ) : (
+                                  <AvatarFallback className="bg-blue-500 text-white">
+                                    {getAvatarInitials(user.name, user.username)}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{user.name || user.username}</p>
+                                {user.name && <p className="text-sm text-muted-foreground">@{user.username}</p>}
                               </div>
                             </TableCell>
                             <TableCell>{user.role}</TableCell>

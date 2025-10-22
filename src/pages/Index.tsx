@@ -32,14 +32,13 @@ import CreateUserDialog from '@/components/CreateUserDialog';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import EditPostDialog from '@/components/EditPostDialog';
-import AppHeader from '@/components/AppHeader';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
 import { Post, Journey, MediaInfo } from '@/types'; // Centralized Post and Journey interfaces
-import CreateJourneyDialog from '@/components/CreateJourneyDialog'; // Ensure this import is present
+// CreateJourneyDialog is now managed by AppLayout
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
@@ -57,7 +56,7 @@ const Index = () => {
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
-  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false); // Moved here
+  // isCreateJourneyDialogOpen is now managed by AppLayout
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -302,12 +301,9 @@ const Index = () => {
   const currentMediaType = uploadedMediaInfo?.type === 'video' ? 'video' : 'image'; // Simplified based on uploadedMediaInfo
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen flex flex-col w-full"> {/* Adjusted top-level div */}
       <div className="max-w-3xl mx-auto flex-grow w-full">
-        <AppHeader
-          isCreateJourneyDialogOpen={isCreateJourneyDialogOpen}
-          setIsCreateJourneyDialogOpen={setIsCreateJourneyDialogOpen}
-        />
+        {/* AppHeader is now handled by AppLayout */}
 
         {/* NEW WELCOME SECTION FOR ADMIN REGISTRATION */}
         {!isAuthenticated && usersExist === false && (
@@ -317,7 +313,7 @@ const Index = () => {
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
               It looks like you're just getting started. Please register your first admin account to begin your journey.
             </p>
-            {/* The UserProfileDropdown in AppHeader will handle opening the RegisterDialog */}
+            {/* The UserProfileDropdown in TopBar will handle opening the RegisterDialog */}
           </div>
         )}
 
@@ -452,12 +448,10 @@ const Index = () => {
                 <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
                   You don't have any journeys yet!
                 </p>
-                <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
-                  Create your first journey to start sharing your experiences.
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  Use the "Share Your Day" section above to begin.
                 </p>
-                <Button onClick={() => setIsCreateJourneyDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-                  <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                </Button>
+                {/* Create Journey button is now in the Sidebar/TopBar */}
               </div>
             )
           )
@@ -651,12 +645,7 @@ const Index = () => {
           onClose={() => setIsLoginDialogOpen(false)}
         />
       )}
-
-      <CreateJourneyDialog
-        key="create-journey-dialog" // Added a key here
-        isOpen={isCreateJourneyDialogOpen}
-        onClose={() => setIsCreateJourneyDialogOpen(false)}
-      />
+      {/* CreateJourneyDialog is now managed by AppLayout */}
     </div>
   );
 };
