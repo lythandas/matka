@@ -23,7 +23,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ setIsCreateJourneyDialogOpen }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { journeys, selectedJourney, setSelectedJourney, loadingJourneys } = useJourneys();
+  // Removed useJourneys hook as journey selection is now in TopBar
 
   if (!isAuthenticated) {
     return null; // Don't render sidebar if not authenticated
@@ -48,47 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             Admin Dashboard
           </Button>
         )}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-between text-base font-semibold flex items-center mt-4",
-                "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90",
-                "hover:ring-2 hover:ring-sidebar-ring hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-              )}
-            >
-              {selectedJourney ? selectedJourney.name : "Select Journey"}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="start">
-            <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {loadingJourneys ? (
-              <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
-            ) : (
-              journeys.map((journey) => (
-                <DropdownMenuItem
-                  key={journey.id}
-                  onClick={() => setSelectedJourney(journey)}
-                  className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
-                >
-                  {journey.name}
-                </DropdownMenuItem>
-              ))
-            )}
-            {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsCreateJourneyDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Journey Dropdown removed from here */}
       </nav>
     </aside>
   );

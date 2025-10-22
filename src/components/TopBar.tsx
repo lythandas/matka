@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Wrench, Plus } from 'lucide-react';
+import { Menu, Compass, Plus, ChevronDown } from 'lucide-react'; // Added ChevronDown
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -30,6 +30,56 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { journeys, selectedJourney, setSelectedJourney, loadingJourneys } = useJourneys();
+
+  const renderJourneyDropdown = (isMobileView: boolean) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "justify-between text-base font-semibold flex items-center",
+            isMobileView ? "w-full" : "min-w-[150px]", // Adjust width for mobile vs desktop
+            "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+            "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          )}
+        >
+          {selectedJourney ? selectedJourney.name : "Select Journey"}
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className={isMobileView ? "w-full" : "w-56"} align={isMobileView ? "start" : "end"}>
+        <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {loadingJourneys ? (
+          <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
+        ) : (
+          journeys.map((journey) => (
+            <DropdownMenuItem
+              key={journey.id}
+              onClick={() => {
+                setSelectedJourney(journey);
+                if (isMobileView) onOpenMobileSidebar(false);
+              }}
+              className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
+            >
+              {journey.name}
+            </DropdownMenuItem>
+          ))
+        )}
+        {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => {
+              setIsCreateJourneyDialogOpen(true);
+              if (isMobileView) onOpenMobileSidebar(false);
+            }}>
+              <Plus className="mr-2 h-4 w-4" /> Create New Journey
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
@@ -66,45 +116,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
                         Admin Dashboard
                       </Button>
                     )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-start text-lg font-semibold flex items-center",
-                            "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                          )}
-                        >
-                          {selectedJourney ? selectedJourney.name : "Select Journey"}
-                          <ChevronDown className="ml-auto h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-full" align="start">
-                        <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {loadingJourneys ? (
-                          <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
-                        ) : (
-                          journeys.map((journey) => (
-                            <DropdownMenuItem
-                              key={journey.id}
-                              onClick={() => { setSelectedJourney(journey); onOpenMobileSidebar(false); }}
-                              className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
-                            >
-                              {journey.name}
-                            </DropdownMenuItem>
-                          ))
-                        )}
-                        {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => { setIsCreateJourneyDialogOpen(true); onOpenMobileSidebar(false); }}>
-                              <Plus className="mr-2 h-4 w-4" /> Create New Journey
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
                   </>
                 )}
               </nav>
@@ -120,6 +132,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
       </div>
 
       <div className="flex items-center space-x-2">
+        {!isMobile && isAuthenticated && renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
         <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" />
         <UserProfileDropdown />
       </div>
