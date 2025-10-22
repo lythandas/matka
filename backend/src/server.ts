@@ -664,7 +664,7 @@ fastify.register(async (authenticatedFastify) => {
 
     // Check if user is owner or has 'delete_any_journey' permission
     const isOwner = existingJourney.user_id === request.user.id;
-    const canDeleteAny = request.user.role === 'admin' && request.user.permissions.includes('delete_any_journey');
+    const canDeleteAny = request.user.role === 'admin' && request.user.permissions.includes('delete_any_any_journey');
 
     if (!isOwner && !canDeleteAny) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
@@ -888,7 +888,7 @@ fastify.register(async (authenticatedFastify) => {
 
     // Check if user is owner or collaborator with 'publish_post_on_journey' or admin
     const isOwner = journey.user_id === request.user.id;
-    const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journeyId && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
+    const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
     const isAdmin = request.user.role === 'admin';
 
     if (!isOwner && !canPublish && !isAdmin) {
@@ -938,13 +938,13 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
+    // Check if user is owner of the post, owner of the journey, or admin with 'edit_any_post'
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
+    // Removed canPublish from this check: const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
     const canEditAny = request.user.role === 'admin' && request.user.permissions.includes('edit_any_post');
 
-    if (!isPostAuthor && !isJourneyOwner && !canPublish && !canEditAny) {
+    if (!isPostAuthor && !isJourneyOwner && !canEditAny) { // Updated condition
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
     }
 
@@ -982,7 +982,7 @@ fastify.register(async (authenticatedFastify) => {
     const isJourneyOwner = journey.user_id === request.user.id;
     const canDeleteAny = request.user.role === 'admin' && request.user.permissions.includes('delete_any_post');
 
-    if (!isPostAuthor && !isJourneyOwner && !canDeleteAny) {
+    if (!isPostAuthor && !isJourneyOwner && !canDeleteAny) { // Updated condition
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
     }
 
