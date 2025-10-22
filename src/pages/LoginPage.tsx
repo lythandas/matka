@@ -67,6 +67,10 @@ const LoginPage: React.FC = () => {
     return null; // Or redirect to home, but App.tsx handles routing
   }
 
+  const handleRegistrationSuccess = () => {
+    fetchUsersExist(); // Re-check user status after registration
+  };
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
       {loadingImage ? (
@@ -125,21 +129,9 @@ const LoginPage: React.FC = () => {
             <p className="text-lg text-gray-700 dark:text-gray-300">Checking user status...</p>
           </div>
         ) : showRegister ? (
-          <RegisterDialog
-            isOpen={true} // Always open when rendered
-            onClose={() => {
-              // After registration, force a re-check of usersExist
-              fetchUsersExist();
-              setShowRegister(false); // Attempt to close, though it will re-open as login
-            }}
-          />
+          <RegisterDialog onRegistrationSuccess={handleRegistrationSuccess} />
         ) : (
-          <LoginDialog
-            isOpen={true} // Always open when rendered
-            onClose={() => {
-              // After login, this component will unmount due to isAuthenticated check
-            }}
-          />
+          <LoginDialog />
         )}
       </div>
     </div>

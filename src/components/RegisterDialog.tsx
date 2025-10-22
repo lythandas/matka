@@ -1,14 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,12 +9,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { showError } from '@/utils/toast';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 
+// Removed Dialog imports as it will no longer be a modal
+
 interface RegisterDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  onRegistrationSuccess: () => void; // New prop to notify LoginPage
 }
 
-const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
+const RegisterDialog: React.FC<RegisterDialogProps> = ({ onRegistrationSuccess }) => { // Removed isOpen and onClose props
   const { login } = useAuth(); // We'll use login to handle the token after registration
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -62,8 +55,8 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('authUser', JSON.stringify(data.user));
       // The AuthContext's useEffect will pick this up and update state
-      onClose(); // Close the dialog
-      window.location.reload(); // Reload to ensure all contexts and data are fresh
+      onRegistrationSuccess(); // Notify LoginPage to re-check user status
+      // LoginPage will handle unmounting this component on successful login
     } catch (error: any) {
       console.error('Registration error:', error);
       showError(error.message || 'Failed to register.');
@@ -73,74 +66,63 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Welcome! Register Your Admin Account</DialogTitle>
-          <DialogDescription>
-            This will be the first (and only) user you can register. This user will be an administrator.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleRegister} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., admin"
-              disabled={isRegistering}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="password" className="text-right">
-              Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="col-span-3"
-              placeholder="••••••••"
-              disabled={isRegistering}
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="confirm-password" className="text-right">
-              Confirm Password
-            </Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="col-span-3"
-              placeholder="••••••••"
-              disabled={isRegistering}
-              required
-            />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={!username.trim() || !password.trim() || !confirmPassword.trim() || isRegistering} className="hover:ring-2 hover:ring-blue-500">
-              {isRegistering ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Registering...
-                </>
-              ) : (
-                'Register Admin'
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <div className="p-8 bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-2xl max-w-sm w-full">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome! Register Your Admin Account</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          This will be the first (and only) user you can register. This user will be an administrator.
+        </p>
+      </div>
+      <form onSubmit={handleRegister} className="grid gap-4 py-4">
+        <div className="grid gap-2">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="e.g., admin"
+            disabled={isRegistering}
+            required
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            disabled={isRegistering}
+            required
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="confirm-password">Confirm Password</Label>
+          <Input
+            id="confirm-password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+            disabled={isRegistering}
+            required
+          />
+        </div>
+        <div className="flex justify-end mt-2">
+          <Button type="submit" disabled={!username.trim() || !password.trim() || !confirmPassword.trim() || isRegistering} className="w-full hover:ring-2 hover:ring-blue-500">
+            {isRegistering ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              'Register Admin'
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };
 
