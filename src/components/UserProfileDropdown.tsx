@@ -12,14 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { LogOut, Settings, User as UserIcon, Wrench } from 'lucide-react'; // Added Wrench icon
 import LoginDialog from './LoginDialog';
 import RegisterDialog from './RegisterDialog';
-import ManageAccountDialog from './ManageAccountDialog'; // Will create this next
-import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
+import ManageAccountDialog from './ManageAccountDialog';
+import { getAvatarInitials } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const UserProfileDropdown: React.FC = () => {
   const { isAuthenticated, user, logout, usersExist } = useAuth();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
   const [isManageAccountDialogOpen, setIsManageAccountDialogOpen] = useState<boolean>(false);
@@ -85,6 +87,12 @@ const UserProfileDropdown: React.FC = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {user?.role === 'admin' && (
+            <DropdownMenuItem onClick={() => navigate('/admin')}>
+              <Wrench className="mr-2 h-4 w-4" />
+              <span>Admin Dashboard</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Manage Account</span>

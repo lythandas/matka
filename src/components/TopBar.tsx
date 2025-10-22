@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown, Wrench } from 'lucide-react'; // Added Wrench icon for Admin
+import { Menu, Compass, Plus, ChevronDown, Wrench } from 'lucide-react'; // Wrench icon still needed for UserProfileDropdown
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -21,7 +21,6 @@ import {
 import { cn } from '@/lib/utils';
 
 interface TopBarProps {
-  // Removed onOpenMobileSidebar prop
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
 }
 
@@ -58,7 +57,6 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               key={journey.id}
               onClick={() => {
                 setSelectedJourney(journey);
-                // Removed onOpenMobileSidebar(false) as sidebar is removed
               }}
               className={selectedJourney?.id === journey.id ? "bg-accent text-accent-foreground" : ""}
             >
@@ -71,7 +69,6 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
               setIsCreateJourneyDialogOpen(true);
-              // Removed onOpenMobileSidebar(false) as sidebar is removed
             }}>
               <Plus className="mr-2 h-4 w-4" /> Create New Journey
             </DropdownMenuItem>
@@ -85,7 +82,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
     <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 relative">
       <div className="flex items-center space-x-4">
         {isMobile && (
-          <Sheet> {/* Removed onOpenChange as sidebar is removed */}
+          <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
                 <Menu className="h-6 w-6" />
@@ -103,19 +100,11 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-lg font-semibold"
-                      onClick={() => { navigate('/'); /* Removed onOpenMobileSidebar(false) */ }}
+                      onClick={() => { navigate('/'); }}
                     >
                       Journeys
                     </Button>
-                    {user?.role === 'admin' && (
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-lg font-semibold"
-                        onClick={() => { navigate('/admin'); /* Removed onOpenMobileSidebar(false) */ }}
-                      >
-                        <Wrench className="mr-2 h-4 w-4" /> Admin Dashboard
-                      </Button>
-                    )}
+                    {/* Admin Dashboard button moved to UserProfileDropdown */}
                     {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
                   </>
                 )}
@@ -132,16 +121,8 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
       </div>
 
       {!isMobile && isAuthenticated && (
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-4"> {/* Added flex and space-x-4 */}
-          {user?.role === 'admin' && (
-            <Button
-              variant="ghost"
-              className="text-base font-semibold hover:bg-accent hover:text-accent-foreground hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-              onClick={() => navigate('/admin')}
-            >
-              <Wrench className="mr-2 h-4 w-4" /> Admin Dashboard
-            </Button>
-          )}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-4">
+          {/* Admin Dashboard button moved to UserProfileDropdown */}
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
         </div>
       )}
