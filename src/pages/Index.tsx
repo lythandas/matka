@@ -368,16 +368,7 @@ const Index = () => {
             <Card className="mb-8 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-end"> {/* Adjusted justify-between to justify-end */}
                 {/* Removed CardTitle */}
-                {canManageCollaborators && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsManageJourneyDialogOpen(true)}
-                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                  >
-                    <Users className="mr-2 h-4 w-4" /> Manage Collaborators
-                  </Button>
-                )}
+                {/* Removed the "Manage Collaborators" button */}
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
