@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { FastifyRequest } from 'fastify';
 import path from 'path'; // Import path module
 import fs from 'fs/promises'; // Import fs/promises for async file operations
+import fastifyStatic from '@fastify/static'; // Import the static plugin
 
 const fastify = Fastify({
   logger: true,
@@ -17,6 +18,13 @@ fastify.register(cors, {
   origin: ['http://localhost:8080', 'http://127.0.0.1:8080', '*'], // Explicitly allow frontend origin
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
+});
+
+// Register @fastify/static to serve uploaded files from the 'uploads' directory
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../uploads'), // Path to your uploads directory
+  prefix: '/uploads/', // URL prefix for serving static files (e.g., http://localhost:3001/uploads/image.jpg)
+  decorateReply: false // Do not decorate reply with .sendFile, we'll handle URLs manually
 });
 
 // --- In-memory Data Stores (for demonstration purposes) ---
@@ -930,11 +938,11 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
+    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
     const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
-    const canEditAny = request.user.role === 'admin' && request.user.permissions.includes('edit_any_any_post');
+    const canEditAny = request.user.role === 'admin' && request.user.permissions.includes('edit_any_post');
 
     if (!isPostAuthor && !isJourneyOwner && !canPublish && !canEditAny) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
