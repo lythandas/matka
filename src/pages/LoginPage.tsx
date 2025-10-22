@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
       {/* Large, blurred compass icon in the background */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <Compass className="h-[50vh] w-[50vh] text-blue-600/10 dark:text-blue-400/10 blur-lg" />
+        <Compass className="h-[70vh] w-[70vh] text-blue-600/10 dark:text-blue-400/10 blur-md" /> {/* Increased size and reduced blur */}
       </div>
 
       {/* Matka Logo and Name (White) */}
