@@ -5,7 +5,7 @@ import { Compass, Loader2 } from 'lucide-react';
 import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { getRandomWikimediaImage, WikimediaImage } from '@/utils/wikimedia'; // Updated import
+import { fetchRandomWikimediaLandscapeImage, WikimediaImage } from '@/utils/wikimedia'; // Updated import
 import { showError } from '@/utils/toast';
 
 const LoginPage: React.FC = () => {
@@ -30,7 +30,7 @@ const LoginPage: React.FC = () => {
     const loadBackgroundImage = async () => {
       setLoadingImage(true);
       try {
-        const image = getRandomWikimediaImage(); // Use the new Wikimedia utility
+        const image = await fetchRandomWikimediaLandscapeImage(); // Use the new async utility
         if (image) {
           setBackgroundImage(image);
           console.log("Attempting to load background image from URL:", image.url); // Log the URL
