@@ -5,6 +5,7 @@ import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CreateJourneyDialog from './CreateJourneyDialog'; // Import CreateJourneyDialog
+import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext'; // New import
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen] = useState<boolean>(false);
+  const { isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen } = useCreateJourneyDialog(); // Use context
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">

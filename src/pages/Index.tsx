@@ -38,11 +38,12 @@ import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants'; // Centralized MAX_IMAGE_SIZE_BYTES
 import { Post, Journey, MediaInfo } from '@/types'; // Centralized Post and Journey interfaces
-// CreateJourneyDialog is now managed by AppLayout
+import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext'; // New import
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
   const { selectedJourney, loadingJourneys, journeys } = useJourneys();
+  const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog(); // Use context setter
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -56,7 +57,6 @@ const Index = () => {
   const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState<boolean>(false);
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
-  // isCreateJourneyDialogOpen is now managed by AppLayout
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -448,10 +448,17 @@ const Index = () => {
                 <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
                   You don't have any journeys yet!
                 </p>
-                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                  Use the "Share Your Day" section above to begin.
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
+                  Start by creating your first journey.
                 </p>
-                {/* Create Journey button is now in the Sidebar/TopBar */}
+                {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+                  <Button
+                    onClick={() => setIsCreateJourneyDialogOpen(true)}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Create New Journey
+                  </Button>
+                )}
               </div>
             )
           )
@@ -645,7 +652,6 @@ const Index = () => {
           onClose={() => setIsLoginDialogOpen(false)}
         />
       )}
-      {/* CreateJourneyDialog is now managed by AppLayout */}
     </div>
   );
 };

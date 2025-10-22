@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage"; // Import AdminPage
 import AppLayout from "./components/AppLayout"; // Import the new AppLayout
+import { CreateJourneyDialogProvider } from "./contexts/CreateJourneyDialogContext"; // New import
 
 const queryClient = new QueryClient();
 
@@ -14,14 +15,16 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-        <AppLayout> {/* Wrap Routes with AppLayout */}
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<AdminPage />} /> {/* New Admin Route */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppLayout>
+        <CreateJourneyDialogProvider> {/* Wrap AppLayout with the new provider */}
+          <AppLayout> {/* Wrap Routes with AppLayout */}
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/admin" element={<AdminPage />} /> {/* New Admin Route */}
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppLayout>
+        </CreateJourneyDialogProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
