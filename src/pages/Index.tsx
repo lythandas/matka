@@ -622,9 +622,11 @@ const Index = () => {
                           </Button>
                         )}
                         {isAuthenticated && selectedJourney && (
+                          userHasPermission(user, 'delete_post', selectedJourney.user_id, journeyCollaborators, post.id, post.user_id)
+                        ) && (
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500" onClick={(e) => e.stopPropagation()}>
+                            <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}> {/* Moved stopPropagation here */}
+                              <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
