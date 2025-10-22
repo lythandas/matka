@@ -12,10 +12,10 @@ const WIKIMEDIA_API_URL = "https://commons.wikimedia.org/w/api.php";
 export const fetchRandomWikimediaLandscapeImage = async (): Promise<WikimediaImage | null> => {
   try {
     // Step 1: Get a list of image titles from the 'Landscape photographs' category
-    // We use generator=categorymembers to get pages from a category.
-    // gcmlimit=500 to get a decent pool of images to choose from.
+    // Add a cache-busting timestamp to ensure a fresh list is fetched
+    const cacheBuster = Date.now();
     const categoryResponse = await fetch(
-      `${WIKIMEDIA_API_URL}?action=query&generator=categorymembers&gcmtitle=Category:Landscape_photographs&gcmlimit=500&format=json&origin=*`
+      `${WIKIMEDIA_API_URL}?action=query&generator=categorymembers&gcmtitle=Category:Landscape_photographs&gcmlimit=500&format=json&origin=*&cb=${cacheBuster}`
     );
     const categoryData = await categoryResponse.json();
 
@@ -40,7 +40,7 @@ export const fetchRandomWikimediaLandscapeImage = async (): Promise<WikimediaIma
     // Step 2: Get image information and a scaled URL for the selected image
     // iiurlwidth=1920 requests a thumbnail with a maximum width of 1920px
     const imageInfoResponse = await fetch(
-      `${WIKIMEDIA_API_URL}?action=query&titles=${encodeURIComponent(randomTitle)}&prop=imageinfo&iiprop=url|user|comment|extmetadata&iiurlwidth=1920&format=json&origin=*`
+      `${WIKIMEDIA_API_URL}?action=query&titles=${encodeURIComponent(randomTitle)}&prop=imageinfo&iiprop=url|user|comment|extmetadata&iiurlwidth=1920&format=json&origin=*&cb=${cacheBuster}`
     );
     const imageInfoData = await imageInfoResponse.json();
 
