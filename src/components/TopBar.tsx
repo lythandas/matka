@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown, Wrench } from 'lucide-react'; // Wrench icon still needed for UserProfileDropdown
+import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react'; // Added Users icon back for clarity, though not used here
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -19,8 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
-import ManageJourneyDialog from './ManageJourneyDialog'; // Import the new dialog
-import { userHasPermission } from '@/lib/permissions'; // Import permission utility
+import ManageJourneyDialog from './ManageJourneyDialog';
+import { userHasPermission } from '@/lib/permissions';
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
@@ -34,6 +34,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
 
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
 
+  // Check if the current user has permission to manage the selected journey
   const canManageSelectedJourney = isAuthenticated && selectedJourney && userHasPermission(user, 'manage_journey_access', selectedJourney.user_id);
 
   const renderJourneyDropdown = (isMobileView: boolean) => (
@@ -43,7 +44,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
           variant="outline"
           className={cn(
             "justify-between text-base font-semibold flex items-center",
-            isMobileView ? "w-full" : "min-w-[150px]", // Adjust width for mobile vs desktop
+            isMobileView ? "w-full" : "min-w-[150px]",
             "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
             "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
           )}
@@ -111,6 +112,15 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                       Journeys
                     </Button>
                     {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
+                    {canManageSelectedJourney && (
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-lg font-semibold"
+                        onClick={() => setIsManageJourneyDialogOpen(true)}
+                      >
+                        <Wrench className="mr-2 h-4 w-4" /> Manage Journey
+                      </Button>
+                    )}
                   </>
                 )}
               </nav>
@@ -128,7 +138,17 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
       {!isMobile && isAuthenticated && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-2">
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
-          {/* Removed the "Manage Collaborators" button from here */}
+          {canManageSelectedJourney && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsManageJourneyDialogOpen(true)}
+              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+            >
+              <Wrench className="h-4 w-4" />
+              <span className="sr-only">Manage Journey</span>
+            </Button>
+          )}
         </div>
       )}
 
