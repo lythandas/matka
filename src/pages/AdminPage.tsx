@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useJourneys } from '@/contexts/JourneyContext';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import EditUserDialog from '@/components/EditUserDialog';
-import EditJourneyDialog from '@/components/EditJourneyDialog';
+import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // Changed to new dialog
 import CreateRoleDialog from '@/components/CreateRoleDialog';
 import EditRoleDialog from '@/components/EditRoleDialog';
 import {
@@ -50,7 +50,7 @@ const AdminPage: React.FC = () => {
   const [isEditRoleDialogOpen, setIsEditRoleDialogOpen] = useState<boolean>(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
 
-  const [isEditJourneyDialogOpen, setIsEditJourneyDialogOpen] = useState<boolean>(false);
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false); // Changed from isEditJourneyDialogOpen
   const [selectedJourney, setSelectedJourney] = useState<Journey | null>(null);
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
 
@@ -144,12 +144,12 @@ const AdminPage: React.FC = () => {
 
   // When a journey is selected for editing, fetch its collaborators
   useEffect(() => {
-    if (isEditJourneyDialogOpen && selectedJourney) {
+    if (isManageJourneyDialogOpen && selectedJourney) { // Changed state name
       fetchJourneyCollaborators(selectedJourney.id);
     } else {
       setJourneyCollaborators([]);
     }
-  }, [isEditJourneyDialogOpen, selectedJourney, fetchJourneyCollaborators]);
+  }, [isManageJourneyDialogOpen, selectedJourney, fetchJourneyCollaborators]); // Changed state name
 
   const handleUserUpdated = (updatedUser: User) => {
     setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
@@ -513,7 +513,7 @@ const AdminPage: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                onClick={() => { setSelectedJourney(journey); setIsEditJourneyDialogOpen(true); }}
+                                onClick={() => { setSelectedJourney(journey); setIsManageJourneyDialogOpen(true); }} // Changed to new dialog
                                 className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                               >
                                 <Edit className="h-4 w-4" />
@@ -570,7 +570,7 @@ const AdminPage: React.FC = () => {
 
       <CreateRoleDialog
         isOpen={isCreateRoleDialogOpen}
-        onClose={() => { setIsCreateRoleDialogOpen(false); fetchRoles(); }}
+        onClose={() => { setIsRoleDialogOpen(false); fetchRoles(); }}
         onRoleCreated={fetchRoles}
       />
 
@@ -584,11 +584,14 @@ const AdminPage: React.FC = () => {
       )}
 
       {selectedJourney && (
-        <EditJourneyDialog
-          isOpen={isEditJourneyDialogOpen}
-          onClose={() => { setIsEditJourneyDialogOpen(false); setSelectedJourney(null); }}
+        <ManageJourneyDialog // Changed to new dialog
+          isOpen={isManageJourneyDialogOpen} // Changed state name
+          onClose={() => { setIsManageJourneyDialogOpen(false); setSelectedJourney(null); }} // Changed state name
           journey={selectedJourney}
-          journeyCollaborators={journeyCollaborators} // Pass collaborators
+          onJourneyUpdated={() => {
+            fetchJourneys(); // Refresh journeys list
+            fetchJourneyCollaborators(selectedJourney.id); // Refresh collaborators
+          }}
         />
       )}
     </div>

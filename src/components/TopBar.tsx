@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Compass, Plus, ChevronDown, Wrench } from 'lucide-react'; // Wrench icon still needed for UserProfileDropdown
@@ -19,6 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
+import ManageJourneyDialog from './ManageJourneyDialog'; // Import the new dialog
+import { userHasPermission } from '@/lib/permissions'; // Import permission utility
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
@@ -28,7 +30,11 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const { journeys, selectedJourney, setSelectedJourney, loadingJourneys } = useJourneys();
+  const { journeys, selectedJourney, setSelectedJourney, loadingJourneys, fetchJourneys } = useJourneys();
+
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
+
+  const canManageSelectedJourney = isAuthenticated && selectedJourney && userHasPermission(user, 'manage_journey_access', selectedJourney.user_id);
 
   const renderJourneyDropdown = (isMobileView: boolean) => (
     <DropdownMenu>
@@ -64,7 +70,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             </DropdownMenuItem>
           ))
         )}
-        {isAuthenticated && (user?.permissions.includes('create_journey') || user?.role === 'admin') && (
+        {isAuthenticated && (userHasPermission(user, 'create_journey')) && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
@@ -120,15 +126,37 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
       </div>
 
       {!isMobile && isAuthenticated && (
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-4">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-2">
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
+          {selectedJourney && canManageSelectedJourney && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsManageJourneyDialogOpen(true)}
+              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              title="Manage Journey"
+            >
+              <Wrench className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
 
       <div className="flex items-center space-x-2">
-        {/* ThemeToggle moved to UserProfileDropdown */}
         <UserProfileDropdown />
       </div>
+
+      {selectedJourney && (
+        <ManageJourneyDialog
+          isOpen={isManageJourneyDialogOpen}
+          onClose={() => setIsManageJourneyDialogOpen(false)}
+          journey={selectedJourney}
+          onJourneyUpdated={() => {
+            fetchJourneys(); // Refresh journeys list
+            // No need to fetch collaborators here, as ManageJourneyDialog handles its own collaborator fetching
+          }}
+        />
+      )}
     </div>
   );
 };

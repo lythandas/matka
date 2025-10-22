@@ -140,12 +140,25 @@ const postsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       fastify.log.info('Inserting post into database.');
-      const result = await pgClient.query(
-        'INSERT INTO posts (journey_id, user_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      // Insert the post
+      const insertResult = await pgClient.query(
+        'INSERT INTO posts (journey_id, user_id, title, message, image_urls, spotify_embed_url, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
         [journeyId, request.user.id, title || null, message, mediaInfo ? JSON.stringify(mediaInfo) : null, spotifyEmbedUrl || null, coordinates || null]
       );
-      fastify.log.info(`Post inserted successfully. New post ID: ${result.rows[0].id}`);
-      reply.status(201).send(result.rows[0]);
+      const newPostId = insertResult.rows[0].id;
+
+      // Fetch the newly created post with author details
+      const fetchResult = await pgClient.query(
+        `SELECT p.*, u.username AS author_username, u.name AS author_name, u.surname AS author_surname, u.profile_image_url AS author_profile_image_url
+         FROM posts p
+         JOIN users u ON p.user_id = u.id
+         WHERE p.id = $1`,
+        [newPostId]
+      );
+      const newPostWithAuthor = fetchResult.rows[0];
+
+      fastify.log.info(`Post inserted successfully. New post ID: ${newPostId}`);
+      reply.status(201).send(newPostWithAuthor); // Send the full post object
     } catch (error) {
       fastify.log.error({ error }, 'Error creating post');
       reply.status(500).send({ message: 'Failed to create post' });

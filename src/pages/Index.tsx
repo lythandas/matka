@@ -40,7 +40,7 @@ import { MAX_CONTENT_FILE_SIZE_BYTES } from '@/config/constants';
 import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import { userHasPermission } from '@/lib/permissions'; // Import the new permission utility
-import ManageJourneyCollaboratorsDialog from '@/components/ManageJourneyCollaboratorsDialog'; // New import
+import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // New import
 
 const Index = () => {
   const { isAuthenticated, user, usersExist } = useAuth();
@@ -68,7 +68,7 @@ const Index = () => {
   const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
   const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
-  const [isManageCollaboratorsDialogOpen, setIsManageCollaboratorsDialogOpen] = useState<boolean>(false);
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false); // Changed from isManageCollaboratorsDialogOpen
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]); // New state for journey collaborators
 
   // Effect to check backend connectivity
@@ -261,8 +261,8 @@ const Index = () => {
       setPosts([newPost, ...posts]);
       setTitle('');
       setMessage('');
-      setSelectedFile(null);
-      setUploadedMediaInfo(null);
+      setSelectedFile(null); // Clear selected file
+      setUploadedMediaInfo(null); // Clear uploaded media info
       setSpotifyEmbedUrl('');
       setCoordinates(null);
       showSuccess('Post created successfully!');
@@ -372,7 +372,7 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsManageCollaboratorsDialogOpen(true)}
+                    onClick={() => setIsManageJourneyDialogOpen(true)} // Changed to new dialog
                     className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                   >
                     <Users className="mr-2 h-4 w-4" /> Manage Collaborators
@@ -717,11 +717,12 @@ const Index = () => {
       )}
 
       {selectedJourney && (
-        <ManageJourneyCollaboratorsDialog
-          isOpen={isManageCollaboratorsDialogOpen}
-          onClose={() => setIsManageCollaboratorsDialogOpen(false)}
+        <ManageJourneyDialog // Changed to new dialog
+          isOpen={isManageJourneyDialogOpen} // Changed state name
+          onClose={() => setIsManageJourneyDialogOpen(false)} // Changed state name
           journey={selectedJourney}
-          onCollaboratorsUpdated={() => {
+          onJourneyUpdated={() => {
+            fetchJourneys(); // Refresh journeys list
             fetchJourneyCollaborators(selectedJourney.id); // Refresh collaborators
             fetchPosts(selectedJourney.id); // Refresh posts in case permissions changed visibility
           }}
