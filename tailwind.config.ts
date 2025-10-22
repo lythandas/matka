@@ -92,6 +92,7 @@ export default {
       },
       boxShadow: {
         'neon-blue': '0 0 5px theme("colors.blue.400"), 0 0 15px theme("colors.blue.500"), 0 0 30px theme("colors.blue.600")',
+        'neon-blue-intense': '0 0 8px theme("colors.blue.400"), 0 0 20px theme("colors.blue.500"), 0 0 40px theme("colors.blue.600")',
       },
       backgroundImage: {
         'gradient-blue-light': 'linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--primary) / 0.05))',
