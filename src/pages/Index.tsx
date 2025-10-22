@@ -413,7 +413,7 @@ const Index = () => {
       <div className="max-w-3xl mx-auto flex-grow w-full">
         {isAuthenticated ? (
           selectedJourney ? (
-            <Card className="mb-8 shadow-lg">
+            <Card className="mb-8 shadow-lg shadow-neon-blue"> {/* Added shadow-neon-blue here */}
               <CardHeader className="flex flex-row items-center justify-end">
                 {/* Removed the "Manage Collaborators" button from here */}
               </CardHeader>
