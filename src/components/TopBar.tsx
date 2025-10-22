@@ -82,7 +82,7 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
   );
 
   return (
-    <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
+    <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 relative">
       <div className="flex items-center space-x-4">
         {isMobile && (
           <Sheet onOpenChange={onOpenMobileSidebar}>
@@ -131,8 +131,13 @@ const TopBar: React.FC<TopBarProps> = ({ onOpenMobileSidebar, setIsCreateJourney
         )}
       </div>
 
+      {!isMobile && isAuthenticated && (
+        <div className="absolute left-1/2 -translate-x-1/2">
+          {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
+        </div>
+      )}
+
       <div className="flex items-center space-x-2">
-        {!isMobile && isAuthenticated && renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
         <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" />
         <UserProfileDropdown />
       </div>
