@@ -225,6 +225,33 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // Search users by username, name, or surname (for adding collaborators)
+  fastify.get('/users/search', async (request, reply) => {
+    if (!request.user || !request.user.id) {
+      reply.status(401).send({ message: 'Authentication required.' });
+      return;
+    }
+    try {
+      const { query } = request.query as { query: string };
+      if (!query || query.trim().length < 2) { // Require at least 2 characters for search
+        return []; // Return empty array if query is too short
+      }
+
+      const searchQuery = `%${query.trim().toLowerCase()}%`;
+      const result = await pgClient.query(
+        `SELECT id, username, name, surname, profile_image_url
+         FROM users
+         WHERE LOWER(username) LIKE $1 OR LOWER(name) LIKE $1 OR LOWER(surname) LIKE $1
+         LIMIT 10`, // Limit results for performance
+        [searchQuery]
+      );
+      return result.rows;
+    } catch (error) {
+      fastify.log.error({ error }, 'Error searching users');
+      reply.status(500).send({ message: 'Failed to search users' });
+    }
+  });
+
   // Update a user (Admin only)
   fastify.put('/users/:id', async (request, reply) => {
     if (!request.user || request.user.role !== 'admin' || !request.user.permissions.includes('manage_users')) {

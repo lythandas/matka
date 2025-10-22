@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
 import { Journey, JourneyCollaborator, User } from '@/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Keep Tabs for now, but only one content
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command"; // Import Command components
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -56,6 +63,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [newCollaboratorPermissions, setNewCollaboratorPermissions] = useState<string[]>([]);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
 
+  const debounceTimeoutRef = useRef<number | null>(null);
+
   const fetchCollaborators = useCallback(async () => {
     if (!token || !journey?.id) return;
     setLoadingCollaborators(true);
@@ -82,6 +91,36 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   }, [token, journey]);
 
+  const searchUsers = useCallback(async (query: string) => {
+    if (!query.trim() || query.trim().length < 2 || !token) {
+      setSearchResults([]);
+      return;
+    }
+    setLoadingSearch(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/search?query=${encodeURIComponent(query.trim())}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to search users');
+      }
+      const data: User[] = await response.json();
+      // Filter out current collaborators and the journey owner
+      const filteredData = data.filter(u =>
+        !collaborators.some(collab => collab.user_id === u.id) && u.id !== journey.user_id
+      );
+      setSearchResults(filteredData);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      showError('Failed to search for users.');
+      setSearchResults([]);
+    } finally {
+      setLoadingSearch(false);
+    }
+  }, [token, collaborators, journey.user_id]);
+
   useEffect(() => {
     if (isOpen && journey) {
       setJourneyName(journey.name); // Reset journey name when dialog opens
@@ -92,6 +131,22 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setNewCollaboratorPermissions([]);
     }
   }, [isOpen, journey, fetchCollaborators]);
+
+  // Debounce searchUsername changes
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = window.setTimeout(() => {
+      searchUsers(searchUsername);
+    }, 300); // 300ms debounce
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [searchUsername, searchUsers]);
 
   const handleRenameJourney = async () => {
     if (!journeyName.trim()) {
@@ -134,37 +189,11 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
-  const handleSearchUsers = useCallback(async () => {
-    if (!searchUsername.trim() || !token) return;
-    setLoadingSearch(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/users?username=${searchUsername.trim()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to search users');
-      }
-      const data: User[] = await response.json();
-      // Filter out current collaborators and the journey owner
-      const filteredData = data.filter(u =>
-        !collaborators.some(collab => collab.user_id === u.id) && u.id !== journey.user_id
-      );
-      setSearchResults(filteredData);
-      if (filteredData.length === 0) {
-        showError('No new users found matching your search.');
-      }
-    } catch (error) {
-      console.error('Error searching users:', error);
-      showError('Failed to search for users.');
-    } finally {
-      setLoadingSearch(false);
-    }
-  }, [searchUsername, token, collaborators, journey.user_id]);
-
   const handleAddCollaborator = async () => {
-    if (!selectedUserToAdd || !token) return;
+    if (!selectedUserToAdd || !token) {
+      showError('Please select a user to add as a collaborator.');
+      return;
+    }
     setIsAddingCollaborator(true);
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators`, {
@@ -336,47 +365,52 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             </div>
           </div>
 
-          {/* Add Collaborator Section */}
+          {/* Add Collaborator Section with Autocomplete */}
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold mb-2">Add New Collaborator</h3>
-            <div className="flex space-x-2 mb-4">
-              <Input
+            <Command className="rounded-lg border shadow-md mb-4">
+              <CommandInput
                 placeholder="Search username to add..."
                 value={searchUsername}
-                onChange={(e) => setSearchUsername(e.target.value)}
+                onValueChange={setSearchUsername}
                 disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
-                className="flex-grow"
               />
-              <Button onClick={handleSearchUsers} disabled={!searchUsername.trim() || loadingSearch || isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}>
-                {loadingSearch ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-                Search
-              </Button>
-            </div>
-
-            {searchResults.length > 0 && (
-              <div className="border rounded-md mb-4 max-h-40 overflow-y-auto">
-                {searchResults.map((userResult) => (
-                  <div
-                    key={userResult.id}
-                    className={`flex items-center justify-between p-2 hover:bg-accent cursor-pointer ${selectedUserToAdd?.id === userResult.id ? 'bg-accent' : ''}`}
-                    onClick={() => setSelectedUserToAdd(userResult)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Avatar className="h-8 w-8">
-                        {userResult.profile_image_url ? (
-                          <AvatarImage src={userResult.profile_image_url} alt={userResult.name || userResult.username} />
-                        ) : (
-                          <AvatarFallback className="bg-gray-200 text-gray-500 text-xs">
-                            {getAvatarInitials(userResult.name, userResult.username)}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <span>{userResult.name || userResult.username} (@{userResult.username})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+              <CommandList>
+                {loadingSearch && <CommandEmpty>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching...
+                </CommandEmpty>}
+                {!loadingSearch && searchResults.length === 0 && searchUsername.length >= 2 && (
+                  <CommandEmpty>No users found.</CommandEmpty>
+                )}
+                <CommandGroup heading="Users">
+                  {searchResults.map((userResult) => (
+                    <CommandItem
+                      key={userResult.id}
+                      value={userResult.username}
+                      onSelect={() => {
+                        setSelectedUserToAdd(userResult);
+                        setSearchUsername(userResult.username); // Keep selected username in input
+                        setSearchResults([]); // Clear results after selection
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Avatar className="h-8 w-8">
+                          {userResult.profile_image_url ? (
+                            <AvatarImage src={userResult.profile_image_url} alt={userResult.name || userResult.username} />
+                          ) : (
+                            <AvatarFallback className="bg-gray-200 text-gray-500 text-xs">
+                              {getAvatarInitials(userResult.name, userResult.username)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <span>{userResult.name || userResult.username} (@{userResult.username})</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
 
             {selectedUserToAdd && (
               <div className="space-y-3">
