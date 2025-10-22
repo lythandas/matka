@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { FastifyRequest } from 'fastify'; // Import FastifyRequest
 
 const fastify = Fastify({
   logger: true
@@ -77,6 +78,13 @@ interface Post {
   created_at: string;
 }
 
+// Declare module 'fastify' to add 'user' property to FastifyRequest
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: Omit<User, 'password_hash'>;
+  }
+}
+
 let users: User[] = [];
 let roles: Role[] = [
   { id: uuidv4(), name: 'admin', permissions: ['manage_users', 'manage_roles', 'edit_any_journey', 'delete_any_journey', 'edit_any_post', 'delete_any_post', 'manage_journey_access', 'publish_post_on_journey'], created_at: new Date().toISOString() },
@@ -103,11 +111,7 @@ const generateToken = (user: Omit<User, 'password_hash'>): string => {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
-interface AuthRequest extends Fastify.FastifyRequest {
-  user?: Omit<User, 'password_hash'>;
-}
-
-const authenticate = async (request: AuthRequest, reply: Fastify.FastifyReply) => {
+const authenticate = async (request: FastifyRequest, reply: Fastify.FastifyReply) => {
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     reply.code(401).send({ message: 'Authentication token required' });
@@ -202,7 +206,7 @@ fastify.post('/login', async (request, reply) => {
 fastify.addHook('preHandler', authenticate);
 
 // Get current user profile
-fastify.get('/users/profile', async (request: AuthRequest, reply) => {
+fastify.get('/users/profile', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -216,7 +220,7 @@ fastify.get('/users/profile', async (request: AuthRequest, reply) => {
 });
 
 // Update current user profile
-fastify.put('/users/profile', async (request: AuthRequest, reply) => {
+fastify.put('/users/profile', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -243,7 +247,7 @@ fastify.put('/users/profile', async (request: AuthRequest, reply) => {
 });
 
 // Simulate media upload
-fastify.post('/upload-media', async (request: AuthRequest, reply) => {
+fastify.post('/upload-media', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -296,7 +300,7 @@ fastify.post('/upload-media', async (request: AuthRequest, reply) => {
 // --- Admin/User Management Routes ---
 
 // Get all users (Admin only)
-fastify.get('/users', async (request: AuthRequest, reply) => {
+fastify.get('/users', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -308,7 +312,7 @@ fastify.get('/users', async (request: AuthRequest, reply) => {
 });
 
 // Create a new user (Admin only)
-fastify.post('/users', async (request: AuthRequest, reply) => {
+fastify.post('/users', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -346,7 +350,7 @@ fastify.post('/users', async (request: AuthRequest, reply) => {
 });
 
 // Update a user (Admin only)
-fastify.put('/users/:id', async (request: AuthRequest, reply) => {
+fastify.put('/users/:id', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -392,7 +396,7 @@ fastify.put('/users/:id', async (request: AuthRequest, reply) => {
 });
 
 // Delete a user (Admin only)
-fastify.delete('/users/:id', async (request: AuthRequest, reply) => {
+fastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -413,7 +417,7 @@ fastify.delete('/users/:id', async (request: AuthRequest, reply) => {
 });
 
 // Search users (Admin only)
-fastify.get('/users/search', async (request: AuthRequest, reply) => {
+fastify.get('/users/search', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -438,7 +442,7 @@ fastify.get('/users/search', async (request: AuthRequest, reply) => {
 // --- Role Management Routes ---
 
 // Get all roles (Admin only)
-fastify.get('/roles', async (request: AuthRequest, reply) => {
+fastify.get('/roles', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -446,7 +450,7 @@ fastify.get('/roles', async (request: AuthRequest, reply) => {
 });
 
 // Create a new role (Admin only)
-fastify.post('/roles', async (request: AuthRequest, reply) => {
+fastify.post('/roles', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -470,7 +474,7 @@ fastify.post('/roles', async (request: AuthRequest, reply) => {
 });
 
 // Update a role (Admin only)
-fastify.put('/roles/:id', async (request: AuthRequest, reply) => {
+fastify.put('/roles/:id', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -509,7 +513,7 @@ fastify.put('/roles/:id', async (request: AuthRequest, reply) => {
 });
 
 // Delete a role (Admin only)
-fastify.delete('/roles/:id', async (request: AuthRequest, reply) => {
+fastify.delete('/roles/:id', async (request: FastifyRequest, reply) => {
   if (request.user?.role !== 'admin') {
     return reply.code(403).send({ message: 'Forbidden' });
   }
@@ -537,7 +541,7 @@ fastify.delete('/roles/:id', async (request: AuthRequest, reply) => {
 // --- Journey Management Routes ---
 
 // Get all journeys for the authenticated user
-fastify.get('/journeys', async (request: AuthRequest, reply) => {
+fastify.get('/journeys', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -555,7 +559,7 @@ fastify.get('/journeys', async (request: AuthRequest, reply) => {
 });
 
 // Create a new journey
-fastify.post('/journeys', async (request: AuthRequest, reply) => {
+fastify.post('/journeys', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -580,7 +584,7 @@ fastify.post('/journeys', async (request: AuthRequest, reply) => {
 });
 
 // Update a journey
-fastify.put('/journeys/:id', async (request: AuthRequest, reply) => {
+fastify.put('/journeys/:id', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -610,7 +614,7 @@ fastify.put('/journeys/:id', async (request: AuthRequest, reply) => {
 });
 
 // Delete a journey
-fastify.delete('/journeys/:id', async (request: AuthRequest, reply) => {
+fastify.delete('/journeys/:id', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -639,7 +643,7 @@ fastify.delete('/journeys/:id', async (request: AuthRequest, reply) => {
 });
 
 // Get journey collaborators
-fastify.get('/journeys/:id/collaborators', async (request: AuthRequest, reply) => {
+fastify.get('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -681,7 +685,7 @@ fastify.get('/journeys/:id/collaborators', async (request: AuthRequest, reply) =
 });
 
 // Add a collaborator to a journey
-fastify.post('/journeys/:id/collaborators', async (request: AuthRequest, reply) => {
+fastify.post('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -727,7 +731,7 @@ fastify.post('/journeys/:id/collaborators', async (request: AuthRequest, reply) 
 });
 
 // Update collaborator permissions
-fastify.put('/journeys/:journeyId/collaborators/:userId', async (request: AuthRequest, reply) => {
+fastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -757,7 +761,7 @@ fastify.put('/journeys/:journeyId/collaborators/:userId', async (request: AuthRe
 });
 
 // Remove a collaborator from a journey
-fastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: AuthRequest, reply) => {
+fastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -788,7 +792,7 @@ fastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: Aut
 // --- Post Management Routes ---
 
 // Get posts for a specific journey
-fastify.get('/posts', async (request: AuthRequest, reply) => {
+fastify.get('/posts', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -816,7 +820,7 @@ fastify.get('/posts', async (request: AuthRequest, reply) => {
 });
 
 // Create a new post
-fastify.post('/posts', async (request: AuthRequest, reply) => {
+fastify.post('/posts', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -870,7 +874,7 @@ fastify.post('/posts', async (request: AuthRequest, reply) => {
 });
 
 // Update a post
-fastify.put('/posts/:id', async (request: AuthRequest, reply) => {
+fastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
@@ -894,7 +898,7 @@ fastify.put('/posts/:id', async (request: AuthRequest, reply) => {
     return reply.code(404).send({ message: 'Associated journey not found' });
   }
 
-  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
+  // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
   const isPostAuthor = existingPost.user_id === request.user.id;
   const isJourneyOwner = journey.user_id === request.user.id;
   const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
@@ -916,7 +920,7 @@ fastify.put('/posts/:id', async (request: AuthRequest, reply) => {
 });
 
 // Delete a post
-fastify.delete('/posts/:id', async (request: AuthRequest, reply) => {
+fastify.delete('/posts/:id', async (request: FastifyRequest, reply) => {
   if (!request.user) {
     return reply.code(401).send({ message: 'Unauthorized' });
   }
