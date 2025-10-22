@@ -36,8 +36,8 @@ const LoginPage: React.FC = () => {
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
       {/* Matka Logo and Name */}
       <div className="absolute top-6 left-6 flex items-center z-10">
-        <Compass className="mr-2 h-8 w-8 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400">Matka</h1>
+        <Compass className="mr-2 h-8 w-8 text-border dark:text-foreground" />
+        <h1 className="text-3xl font-extrabold text-border dark:text-foreground">Matka</h1>
       </div>
 
       {/* Central Dialog */}
