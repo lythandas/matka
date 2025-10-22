@@ -130,7 +130,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New User</DialogTitle>
+          <DialogTitle>Create new user</DialogTitle>
           <DialogDescription>
             Create a new user account and assign their role.
           </DialogDescription>
@@ -172,7 +172,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="col-span-3"
-              placeholder="First Name (optional)"
+              placeholder="First name (optional)"
               disabled={isCreating}
             />
           </div>
@@ -185,7 +185,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               className="col-span-3"
-              placeholder="Last Name (optional)"
+              placeholder="Last name (optional)"
               disabled={isCreating}
             />
           </div>
@@ -224,7 +224,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
                 Creating...
               </>
             ) : (
-              'Create User'
+              'Create user'
             )}
           </Button>
         </DialogFooter>

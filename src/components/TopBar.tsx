@@ -49,12 +49,12 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
           )}
         >
-          {selectedJourney ? selectedJourney.name : "Select Journey"}
+          {selectedJourney ? selectedJourney.name : "Select journey"}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className={isMobileView ? "w-full" : "w-56"} align={isMobileView ? "start" : "end"}>
-        <DropdownMenuLabel>Your Journeys</DropdownMenuLabel>
+        <DropdownMenuLabel>Your journeys</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {loadingJourneys ? (
           <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
@@ -77,7 +77,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             <DropdownMenuItem onClick={() => {
               setIsCreateJourneyDialogOpen(true);
             }}>
-              <Plus className="mr-2 h-4 w-4" /> Create New Journey
+              <Plus className="mr-2 h-4 w-4" /> Create new journey
             </DropdownMenuItem>
           </>
         )}
@@ -118,7 +118,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         className="w-full justify-start text-lg font-semibold"
                         onClick={() => setIsManageJourneyDialogOpen(true)}
                       >
-                        <Wrench className="mr-2 h-4 w-4" /> Manage Journey
+                        <Wrench className="mr-2 h-4 w-4" /> Manage journey
                       </Button>
                     )}
                   </>
@@ -146,7 +146,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
             >
               <Wrench className="h-4 w-4" />
-              <span className="sr-only">Manage Journey</span>
+              <span className="sr-only">Manage journey</span>
             </Button>
           )}
         </div>

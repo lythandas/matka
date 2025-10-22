@@ -42,7 +42,7 @@ const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Journey</DialogTitle>
+          <DialogTitle>Create new journey</DialogTitle>
           <DialogDescription>
             Give your new journey a name. This will be a collection of your posts.
           </DialogDescription>
@@ -73,7 +73,7 @@ const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClo
                 Creating...
               </>
             ) : (
-              'Create Journey'
+              'Create journey'
             )}
           </Button>
         </DialogFooter>

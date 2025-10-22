@@ -90,7 +90,7 @@ const EditRoleDialog: React.FC<EditRoleDialogProps> = ({ isOpen, onClose, role, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Role: {role.name}</DialogTitle>
+          <DialogTitle>Edit role: {role.name}</DialogTitle>
           <DialogDescription>
             Update the name and permissions for this role.
           </DialogDescription>
@@ -98,7 +98,7 @@ const EditRoleDialog: React.FC<EditRoleDialogProps> = ({ isOpen, onClose, role, 
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="role-name" className="text-right">
-              Role Name
+              Role name
             </Label>
             <Input
               id="role-name"
@@ -139,7 +139,7 @@ const EditRoleDialog: React.FC<EditRoleDialogProps> = ({ isOpen, onClose, role, 
                 Updating...
               </>
             ) : (
-              'Save Changes'
+              'Save changes'
             )}
           </Button>
         </DialogFooter>

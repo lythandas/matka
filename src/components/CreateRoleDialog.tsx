@@ -85,7 +85,7 @@ const CreateRoleDialog: React.FC<CreateRoleDialogProps> = ({ isOpen, onClose, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create New Role</DialogTitle>
+          <DialogTitle>Create new role</DialogTitle>
           <DialogDescription>
             Define a new role and assign specific permissions to it.
           </DialogDescription>
@@ -93,7 +93,7 @@ const CreateRoleDialog: React.FC<CreateRoleDialogProps> = ({ isOpen, onClose, on
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="role-name" className="text-right">
-              Role Name
+              Role name
             </Label>
             <Input
               id="role-name"
@@ -134,7 +134,7 @@ const CreateRoleDialog: React.FC<CreateRoleDialogProps> = ({ isOpen, onClose, on
                 Creating...
               </>
             ) : (
-              'Create Role'
+              'Create role'
             )}
           </Button>
         </DialogFooter>

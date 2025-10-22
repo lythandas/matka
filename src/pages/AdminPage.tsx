@@ -137,7 +137,7 @@ const AdminPage: React.FC = () => {
       fetchRoles();
       fetchJourneys();
     } else {
-      showError('Access Denied: You must be an administrator to view this page.');
+      showError('Access denied: You must be an administrator to view this page.');
       navigate('/');
     }
   }, [currentUser, navigate, fetchUsers, fetchRoles, fetchJourneys]);
@@ -253,22 +253,22 @@ const AdminPage: React.FC = () => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold">Admin dashboard</h1>
       </div>
 
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="roles">Role Management</TabsTrigger>
-          <TabsTrigger value="journeys">Journey Management</TabsTrigger>
+          <TabsTrigger value="users">User management</TabsTrigger>
+          <TabsTrigger value="roles">Role management</TabsTrigger>
+          <TabsTrigger value="journeys">Journey management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="mt-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-2xl font-bold">Manage Users</CardTitle>
+              <CardTitle className="text-2xl font-bold">Manage users</CardTitle>
               <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-                <Plus className="mr-2 h-4 w-4" /> Create New User
+                <Plus className="mr-2 h-4 w-4" /> Create new user
               </Button>
             </CardHeader>
             <CardContent>
@@ -285,7 +285,7 @@ const AdminPage: React.FC = () => {
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Permissions</TableHead>
-                        <TableHead>Created At</TableHead>
+                        <TableHead>Created at</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -376,9 +376,9 @@ const AdminPage: React.FC = () => {
         <TabsContent value="roles" className="mt-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-2xl font-bold">Manage Roles</CardTitle>
+              <CardTitle className="text-2xl font-bold">Manage roles</CardTitle>
               <Button onClick={() => setIsCreateRoleDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-                <Plus className="mr-2 h-4 w-4" /> Create New Role
+                <Plus className="mr-2 h-4 w-4" /> Create new role
               </Button>
             </CardHeader>
             <CardContent>
@@ -392,9 +392,9 @@ const AdminPage: React.FC = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Role Name</TableHead>
+                        <TableHead>Role name</TableHead>
                         <TableHead>Permissions</TableHead>
-                        <TableHead>Created At</TableHead>
+                        <TableHead>Created at</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -468,7 +468,7 @@ const AdminPage: React.FC = () => {
         <TabsContent value="journeys" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">Manage Journeys</CardTitle>
+              <CardTitle className="text-2xl font-bold">Manage journeys</CardTitle>
             </CardHeader>
             <CardContent>
               {loadingJourneys ? (
@@ -483,7 +483,7 @@ const AdminPage: React.FC = () => {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Owner</TableHead>
-                        <TableHead>Created At</TableHead>
+                        <TableHead>Created at</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -570,7 +570,7 @@ const AdminPage: React.FC = () => {
 
       <CreateRoleDialog
         isOpen={isCreateRoleDialogOpen}
-        onClose={() => { setIsRoleDialogOpen(false); fetchRoles(); }}
+        onClose={() => { setIsCreateRoleDialogOpen(false); fetchRoles(); }}
         onRoleCreated={fetchRoles}
       />
 

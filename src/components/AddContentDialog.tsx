@@ -186,7 +186,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] min-h-[550px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add Content to Your Post</DialogTitle>
+          <DialogTitle>Add content to your post</DialogTitle>
           <DialogDescription>
             Choose what kind of content you want to add.
           </DialogDescription>
@@ -204,7 +204,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="media" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="media-upload">Upload Image or Video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
+            <Label htmlFor="media-upload">Upload image or video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
                 id="media-upload"
@@ -227,7 +227,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media Selected" : "Choose Media")}
+                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media selected" : "Choose media")}
               </Button>
               {(selectedFile || uploadedMediaInfo) && (
                 <Button
@@ -264,7 +264,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
             )}
           </TabsContent>
           <TabsContent value="spotify" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="spotify-embed">Spotify Embed URL</Label>
+            <Label htmlFor="spotify-embed">Spotify embed URL</Label>
             <Input
               id="spotify-embed"
               placeholder="e.g., https://open.spotify.com/embed/track/..."
@@ -306,7 +306,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isUploadingMedia}
               >
-                <LocateFixed className="mr-2 h-4 w-4" /> Get Current Location
+                <LocateFixed className="mr-2 h-4 w-4" /> Get current location
               </Button>
               <Button
                 type="button"
@@ -318,7 +318,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isUploadingMedia}
               >
-                <Search className="mr-2 h-4 w-4" /> Search Location
+                <Search className="mr-2 h-4 w-4" /> Search location
               </Button>
             </div>
 
@@ -335,7 +335,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                   ) : (
                     <MapPin className="mr-2 h-4 w-4" />
                   )}
-                  {locationLoading ? 'Getting Location...' : 'Get Current Location'}
+                  {locationLoading ? 'Getting location...' : 'Get current location'}
                 </Button>
                 {currentCoordinates && (
                   <>
@@ -344,7 +344,7 @@ const AddContentDialog: React.FC<AddContentDialogProps> = ({
                     </p>
                     <MapComponent coordinates={currentCoordinates} className="h-48" /> {/* Removed mt-2, will be spaced by parent */}
                     <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset"> {/* Removed mt-4, will be spaced by parent */}
-                      Clear Location
+                      Clear location
                     </Button>
                   </>
                 )}

@@ -92,7 +92,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="location-search">Search for a Location</Label>
+      <Label htmlFor="location-search">Search for a location</Label>
       <div className="flex items-center space-x-2">
         <Input
           id="location-search"

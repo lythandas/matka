@@ -183,7 +183,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage Your Account</DialogTitle>
+          <DialogTitle>Manage your account</DialogTitle>
           <DialogDescription>
             Update your personal information and profile picture.
           </DialogDescription>
@@ -221,7 +221,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : (profileImageUrl ? "Change Image" : "Upload Image")}
+                {selectedFile ? selectedFile.name : (profileImageUrl ? "Change image" : "Upload image")}
               </Button>
               {profileImageUrl && (
                 <Button
@@ -296,7 +296,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 Saving...
               </>
             ) : (
-              'Save Changes'
+              'Save changes'
             )}
           </Button>
         </DialogFooter>

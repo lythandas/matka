@@ -244,7 +244,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit User: {user.username}</DialogTitle>
+          <DialogTitle>Edit user: {user.username}</DialogTitle>
           <DialogDescription>
             Update user details and role.
           </DialogDescription>
@@ -282,7 +282,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : (profileImageUrl ? "Change Image" : "Upload Image")}
+                {selectedFile ? selectedFile.name : (profileImageUrl ? "Change image" : "Upload image")}
               </Button>
               {profileImageUrl && (
                 <Button
@@ -324,7 +324,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="col-span-3"
-              placeholder="First Name (optional)"
+              placeholder="First name (optional)"
               disabled={isUpdating || isUploadingImage}
             />
           </div>
@@ -337,7 +337,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               className="col-span-3"
-              placeholder="Last Name (optional)"
+              placeholder="Last name (optional)"
               disabled={isUpdating || isUploadingImage}
             />
           </div>
@@ -391,7 +391,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
                 Updating...
               </>
             ) : (
-              'Save Changes'
+              'Save changes'
             )}
           </Button>
         </DialogFooter>

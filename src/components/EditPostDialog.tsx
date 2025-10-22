@@ -284,7 +284,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] min-h-[600px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit Post</DialogTitle>
+          <DialogTitle>Edit post</DialogTitle>
           <DialogDescription>
             Modify the content of your post.
           </DialogDescription>
@@ -322,7 +322,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             </TabsTrigger>
           </TabsList>
           <TabsContent value="media" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="media-upload">Upload Image or Video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
+            <Label htmlFor="media-upload">Upload image or video (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB)</Label>
             <div className="flex items-center w-full">
               <Input
                 id="media-upload"
@@ -345,7 +345,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media Selected" : "Choose Media")}
+                {selectedFile ? selectedFile.name : (uploadedMediaInfo ? "Media selected" : "Choose media")}
               </Button>
               {(selectedFile || uploadedMediaInfo) && (
                 <Button
@@ -382,7 +382,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
           <TabsContent value="spotify" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="spotify-embed">Spotify Embed URL</Label>
+            <Label htmlFor="spotify-embed">Spotify embed URL</Label>
             <Input
               id="spotify-embed"
               placeholder="e.g., https://open.spotify.com/embed/track/..."
@@ -425,7 +425,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isSaving || isUploadingMedia || !canEditPost}
               >
-                <LocateFixed className="mr-2 h-4 w-4" /> Get Current Location
+                <LocateFixed className="mr-2 h-4 w-4" /> Get current location
               </Button>
               <Button
                 type="button"
@@ -437,7 +437,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isSaving || isUploadingMedia || !canEditPost}
               >
-                <Search className="mr-2 h-4 w-4" /> Search Location
+                <Search className="mr-2 h-4 w-4" /> Search location
               </Button>
             </div>
 
@@ -452,12 +452,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   {locationLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Getting Location...
+                      Getting location...
                     </>
                   ) : (
                     <>
                       <MapPin className="mr-2 h-4 w-4" />
-                      Get Current Location
+                      Get current location
                     </>
                   )}
                 </Button>
@@ -468,7 +468,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                     </p>
                     <MapComponent coordinates={coordinates} className="h-48" />
                     <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPost}>
-                      Clear Location
+                      Clear location
                     </Button>
                   </>
                 )}
@@ -495,7 +495,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 Saving...
               </>
             ) : (
-              'Save Changes'
+              'Save changes'
             )}
           </Button>
         </DialogFooter>

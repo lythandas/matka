@@ -117,7 +117,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               )}
             </Avatar>
             <div>
-              <DialogTitle>{post.title || "Post Details"}</DialogTitle>
+              <DialogTitle>{post.title || "Post details"}</DialogTitle>
               <DialogDescription>
                 By {displayName} &bull; {format(new Date(post.created_at), 'PPP p')}
               </DialogDescription>

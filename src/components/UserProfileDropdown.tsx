@@ -91,12 +91,12 @@ const UserProfileDropdown: React.FC = () => {
           {user?.role === 'admin' && (
             <DropdownMenuItem onClick={() => navigate('/admin')}>
               <Wrench className="mr-2 h-4 w-4" />
-              <span>Admin Dashboard</span>
+              <span>Admin dashboard</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Manage Account</span>
+            <span>Manage account</span>
           </DropdownMenuItem>
           {/* ThemeToggle moved to ManageAccountDialog */}
           <DropdownMenuSeparator />
