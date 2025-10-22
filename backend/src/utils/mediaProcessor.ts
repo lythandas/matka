@@ -47,34 +47,59 @@ export async function processAndSaveMedia(
     const imageUrls: { [key: string]: string } = {};
     const baseFileName = randomUUID();
 
-    // For profile images, only save the original (or a single medium size)
-    const sizesToProcess = isProfileImage ? ['medium'] : [...Object.keys(IMAGE_SIZES), 'original'];
-
-    for (const sizeKey of sizesToProcess as Array<keyof typeof IMAGE_SIZES | 'original' | 'medium'>) {
-      const objectName = `${baseFileName}-${sizeKey}.${fileExtension}`;
+    if (fileExtension === 'gif') {
+      // For GIFs, save the original file directly without resizing or format conversion
+      const objectName = `${baseFileName}-original.gif`;
       const filePath = path.join(UPLOADS_DIR, objectName);
       const publicUrl = `${backendBaseUrl}/uploads/${objectName}`;
 
-      let processedBuffer: Buffer = fileBuffer;
-      if (sizeKey !== 'original') {
-        const { width, height } = IMAGE_SIZES[sizeKey === 'medium' && isProfileImage ? 'medium' : sizeKey]; // Use medium for profile if specified
-        log.info(`Resizing image to ${width}x${height} for file: ${objectName}`);
-        try {
-          processedBuffer = await sharp(fileBuffer)
-            .resize(width, height, { fit: 'inside', withoutEnlargement: true })
-            .toBuffer();
-          log.info(`Image resized to ${sizeKey}. New buffer size: ${processedBuffer.length}`);
-        } catch (sharpError) {
-          log.warn({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
-          continue;
-        }
-      }
+      await fs.writeFile(filePath, fileBuffer);
+      log.info(`GIF '${objectName}' saved locally at '${filePath}'.`);
+      // For GIFs, all sizes can point to the original GIF for simplicity, or just 'original'
+      imageUrls.original = publicUrl;
+      imageUrls.medium = publicUrl; // Use original for medium preview as well
+      imageUrls.large = publicUrl; // Use original for large preview as well
+      imageUrls.small = publicUrl; // Use original for small preview as well
+      return { type: 'image', urls: imageUrls };
+    } else {
+      // For other image types, proceed with resizing and conversion to JPEG
+      const sizesToProcess = isProfileImage ? ['medium'] : [...Object.keys(IMAGE_SIZES), 'original'];
 
-      await fs.writeFile(filePath, processedBuffer);
-      log.info(`Image '${objectName}' saved locally at '${filePath}'.`);
-      imageUrls[sizeKey] = publicUrl;
+      for (const sizeKey of sizesToProcess as Array<keyof typeof IMAGE_SIZES | 'original' | 'medium'>) {
+        const objectName = `${baseFileName}-${sizeKey}.jpeg`; // Always save as JPEG for non-GIFs
+        const filePath = path.join(UPLOADS_DIR, objectName);
+        const publicUrl = `${backendBaseUrl}/uploads/${objectName}`;
+
+        let processedBuffer: Buffer = fileBuffer;
+        if (sizeKey !== 'original') {
+          const { width, height } = IMAGE_SIZES[sizeKey === 'medium' && isProfileImage ? 'medium' : sizeKey];
+          log.info(`Resizing image to ${width}x${height} for file: ${objectName}`);
+          try {
+            processedBuffer = await sharp(fileBuffer)
+              .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+              .jpeg({ quality: 80 }) // Convert to JPEG
+              .toBuffer();
+            log.info(`Image resized to ${sizeKey}. New buffer size: ${processedBuffer.length}`);
+          } catch (sharpError) {
+            log.warn({ sharpError }, `Error during image resizing to ${sizeKey} with sharp.`);
+            continue;
+          }
+        } else {
+          // For original, convert to JPEG if not already
+          try {
+            processedBuffer = await sharp(fileBuffer).jpeg({ quality: 90 }).toBuffer();
+          } catch (sharpError) {
+            log.warn({ sharpError }, `Error converting original image to JPEG with sharp.`);
+            continue;
+          }
+        }
+
+        await fs.writeFile(filePath, processedBuffer);
+        log.info(`Image '${objectName}' saved locally at '${filePath}'.`);
+        imageUrls[sizeKey] = publicUrl;
+      }
+      return { type: 'image', urls: imageUrls };
     }
-    return { type: 'image', urls: imageUrls };
 
   } else if (fileType.startsWith('video/')) {
     if (!SUPPORTED_VIDEO_EXTENSIONS.includes(fileExtension)) {
