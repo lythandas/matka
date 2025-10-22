@@ -15,16 +15,10 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^9.0.1",
-    "fastify": "^4.28.1",
-    "minio": "^7.1.3",
-    "pg": "^8.12.0",
-    "sharp": "^0.33.4"
+    "fastify": "^4.28.1"
   },
   "devDependencies": {
-    "@types/minio": "^7.1.3",
     "@types/node": "^20.14.12",
-    "@types/pg": "^8.11.6",
-    "@types/sharp": "^0.32.0",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
     "@typescript-eslint/parser": "^7.17.0",
     "eslint": "^8.57.0",
