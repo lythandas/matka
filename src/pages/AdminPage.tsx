@@ -253,6 +253,13 @@ const AdminPage: React.FC = () => {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-8">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/')}
+          className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Journeys
+        </Button>
         <h1 className="text-3xl font-bold">Admin dashboard</h1>
       </div>
 
