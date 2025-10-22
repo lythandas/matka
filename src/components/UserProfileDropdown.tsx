@@ -18,6 +18,7 @@ import RegisterDialog from './RegisterDialog';
 import ManageAccountDialog from './ManageAccountDialog';
 import { getAvatarInitials } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 const UserProfileDropdown: React.FC = () => {
   const { isAuthenticated, user, logout, usersExist } = useAuth();
@@ -96,6 +97,9 @@ const UserProfileDropdown: React.FC = () => {
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Manage Account</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem> {/* Wrap ThemeToggle in DropdownMenuItem */}
+            <ThemeToggle className="w-full justify-start" />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>

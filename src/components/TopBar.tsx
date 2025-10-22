@@ -104,7 +104,6 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                     >
                       Journeys
                     </Button>
-                    {/* Admin Dashboard button moved to UserProfileDropdown */}
                     {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
                   </>
                 )}
@@ -122,13 +121,12 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
 
       {!isMobile && isAuthenticated && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-4">
-          {/* Admin Dashboard button moved to UserProfileDropdown */}
           {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
         </div>
       )}
 
       <div className="flex items-center space-x-2">
-        <ThemeToggle className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:border-transparent" />
+        {/* ThemeToggle moved to UserProfileDropdown */}
         <UserProfileDropdown />
       </div>
     </div>
