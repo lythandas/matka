@@ -6,7 +6,8 @@ import jwt from 'jsonwebtoken';
 import { FastifyRequest } from 'fastify';
 
 const fastify = Fastify({
-  logger: true
+  logger: true,
+  bodyLimit: 12 * 1024 * 1024, // Set body limit to 12MB
 });
 
 // Register CORS plugin
@@ -912,7 +913,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey', or admin with 'edit_any_post'
+    // Check if user is owner of the post, owner of the journey, collaborator with 'publish_post_on_journey' or admin with 'edit_any_post'
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
     const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.permissions.includes('publish_post_on_journey'));
