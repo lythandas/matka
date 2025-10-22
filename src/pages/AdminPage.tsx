@@ -265,251 +265,251 @@ const AdminPage: React.FC = () => {
                                 <p className="font-medium">{user.name || user.username}</p>
                                 {user.name && <p className="text-sm text-muted-foreground">@{user.username}</p>}
                               </div>
-                            </TableCell>
-                            <TableCell>{user.role}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {user.permissions.length > 0 ? (
-                                  user.permissions.map((perm) => (
-                                    <span key={perm} className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
-                                      {getPermissionDisplayName(perm)}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-xs text-gray-500">None</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>{format(new Date(user.created_at!), 'PPP')}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => { setSelectedUser(user); setIsEditUserDialogOpen(true); }}
-                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      disabled={user.id === currentUser?.id}
-                                      className="hover:ring-2 hover:ring-blue-500"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the user "{user.username}"
-                                        and all their associated journeys and posts.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="roles" className="mt-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-2xl font-bold">Manage Roles</CardTitle>
-                <Button onClick={() => setIsCreateRoleDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-                  <Plus className="mr-2 h-4 w-4" /> Create New Role
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {loadingRoles ? (
-                  <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="ml-2 text-gray-600 dark:text-gray-400">Loading roles...</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Role Name</TableHead>
-                          <TableHead>Permissions</TableHead>
-                          <TableHead>Created At</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                            </div>
+                          </TableCell>
+                          <TableCell>{user.role}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {user.permissions.length > 0 ? (
+                                user.permissions.map((perm) => (
+                                  <span key={perm} className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full">
+                                    {getPermissionDisplayName(perm)}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-gray-500">None</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{format(new Date(user.created_at!), 'PPP')}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => { setSelectedUser(user); setIsEditUserDialogOpen(true); }}
+                                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    disabled={user.id === currentUser?.id}
+                                    className="hover:ring-2 hover:ring-blue-500"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the user "{user.username}"
+                                      and all their associated journeys and posts.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                      Continue
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {roles.map((role) => (
-                          <TableRow key={role.id}>
-                            <TableCell className="font-medium">{role.name}</TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {role.permissions.length > 0 ? (
-                                  role.permissions.map((perm) => (
-                                    <span key={perm} className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full">
-                                      {getPermissionDisplayName(perm)}
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-xs text-gray-500">None</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>{format(new Date(role.created_at), 'PPP')}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => { setSelectedRole(role); setIsEditRoleDialogOpen(true); }}
-                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      disabled={role.name === 'admin' || role.name === 'user'}
-                                      className="hover:ring-2 hover:ring-blue-500"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the role "{role.name}".
-                                        You cannot delete roles that have users assigned to them or are default roles.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteRole(role.id)}>
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="journeys" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold">Manage Journeys</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingJourneys ? (
-                  <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                    <p className="ml-2 text-gray-600 dark:text-gray-400">Loading journeys...</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Owner</TableHead> {/* Changed to display owner info */}
-                          <TableHead>Created At</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+        <TabsContent value="roles" className="mt-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-2xl font-bold">Manage Roles</CardTitle>
+              <Button onClick={() => setIsCreateRoleDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+                <Plus className="mr-2 h-4 w-4" /> Create New Role
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loadingRoles ? (
+                <div className="flex justify-center items-center h-48">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <p className="ml-2 text-gray-600 dark:text-gray-400">Loading roles...</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Role Name</TableHead>
+                        <TableHead>Permissions</TableHead>
+                        <TableHead>Created At</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {roles.map((role) => (
+                        <TableRow key={role.id}>
+                          <TableCell className="font-medium">{role.name}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {role.permissions.length > 0 ? (
+                                role.permissions.map((perm) => (
+                                  <span key={perm} className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full">
+                                    {getPermissionDisplayName(perm)}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-gray-500">None</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>{format(new Date(role.created_at), 'PPP')}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => { setSelectedRole(role); setIsEditRoleDialogOpen(true); }}
+                                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    disabled={role.name === 'admin' || role.name === 'user'}
+                                    className="hover:ring-2 hover:ring-blue-500"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the role "{role.name}".
+                                      You cannot delete roles that have users assigned to them or are default roles.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteRole(role.id)}>
+                                      Continue
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {journeys.map((journey) => (
-                          <TableRow key={journey.id}>
-                            <TableCell className="font-medium">{journey.name}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                <Avatar className="h-8 w-8 mr-2">
-                                  {journey.owner_profile_image_url ? (
-                                    <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
-                                  ) : (
-                                    <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                                      {getAvatarInitials(journey.owner_name, journey.owner_username)}
-                                    </AvatarFallback>
-                                  )}
-                                </Avatar>
-                                <p className="text-sm text-gray-800 dark:text-gray-200">
-                                  {journey.owner_name || journey.owner_username}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>{format(new Date(journey.created_at), 'PPP')}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => { setSelectedJourney(journey); setIsEditJourneyDialogOpen(true); }}
-                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the journey "{journey.name}"
-                                        and all its associated posts.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteJourney(journey.id)}>
-                                        Continue
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="journeys" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold">Manage Journeys</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingJourneys ? (
+                <div className="flex justify-center items-center h-48">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <p className="ml-2 text-gray-600 dark:text-gray-400">Loading journeys...</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Owner</TableHead> {/* Changed to display owner info */}
+                        <TableHead>Created At</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {journeys.map((journey) => (
+                        <TableRow key={journey.id}>
+                          <TableCell className="font-medium">{journey.name}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Avatar className="h-8 w-8 mr-2">
+                                {journey.owner_profile_image_url ? (
+                                  <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
+                                ) : (
+                                  <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                                    {getAvatarInitials(journey.owner_name, journey.owner_username)}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <p className="text-sm text-gray-800 dark:text-gray-200">
+                                {journey.owner_name || journey.owner_username}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{format(new Date(journey.created_at), 'PPP')}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => { setSelectedJourney(journey); setIsEditJourneyDialogOpen(true); }}
+                                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the journey "{journey.name}"
+                                      and all its associated posts.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteJourney(journey.id)}>
+                                      Continue
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <CreateUserDialog
         isOpen={isCreateUserDialogOpen}
