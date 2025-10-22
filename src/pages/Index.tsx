@@ -67,7 +67,7 @@ const Index = () => {
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
 
-  const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>('search'); // Default to search
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'none' | 'current' | 'search'>('none'); // Default to 'none'
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -266,6 +266,7 @@ const Index = () => {
 
   const handleClearLocation = () => {
     setCoordinates(null);
+    setLocationSelectionMode('none'); // Reset mode when clearing location
     showSuccess('Location cleared.');
   };
 
@@ -324,6 +325,7 @@ const Index = () => {
       setSelectedFiles([]);
       setUploadedMediaItems([]);
       setCoordinates(null);
+      setLocationSelectionMode('none'); // Reset mode after successful post
       showSuccess('Post created successfully!');
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -517,7 +519,10 @@ const Index = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setLocationSelectionMode('current')}
+                      onClick={() => {
+                        setLocationSelectionMode('current');
+                        setCoordinates(null); // Clear any previous selection
+                      }}
                       className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       disabled={!canCreatePost || isUploadingMedia}
                     >
@@ -526,7 +531,10 @@ const Index = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setLocationSelectionMode('search')}
+                      onClick={() => {
+                        setLocationSelectionMode('search');
+                        setCoordinates(null); // Clear any previous selection
+                      }}
                       className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       disabled={!canCreatePost || isUploadingMedia}
                     >
@@ -534,7 +542,8 @@ const Index = () => {
                     </Button>
                   </div>
 
-                  {locationSelectionMode === 'current' && !coordinates && (
+                  {/* Conditional rendering for location input/display based on mode and if coordinates are NOT already set */}
+                  {!coordinates && locationSelectionMode === 'current' && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <Button
                         type="button"
@@ -557,11 +566,11 @@ const Index = () => {
                     </div>
                   )}
 
-                  {locationSelectionMode === 'search' && !coordinates && (
+                  {!coordinates && locationSelectionMode === 'search' && (
                     <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                       <LocationSearch
                         onSelectLocation={setCoordinates}
-                        currentCoordinates={coordinates}
+                        currentCoordinates={coordinates} // This will be null here
                         disabled={!canCreatePost || isUploadingMedia}
                       />
                     </div>
