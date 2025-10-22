@@ -24,7 +24,7 @@ const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
   };
 
   return (
-    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground">
+    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground border-2 border-blue-500">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold">Login to Your Account</h2>
         <p className="text-sm text-muted-foreground mt-1">

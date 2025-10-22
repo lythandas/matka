@@ -34,12 +34,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
-      {/* Large, blurred compass icon in the background */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Compass className="h-[90vh] w-[90vh] text-blue-600/10 dark:text-blue-400/10 blur-md" /> {/* Increased size */}
-      </div>
-
-      {/* Matka Logo and Name (White) */}
+      {/* Matka Logo and Name */}
       <div className="absolute top-6 left-6 flex items-center z-10">
         <Compass className="mr-2 h-8 w-8 text-blue-600 dark:text-blue-400" />
         <h1 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400">Matka</h1>
