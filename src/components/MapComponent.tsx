@@ -26,7 +26,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, cla
     if (mapContainerRef.current && !mapRef.current) {
       mapRef.current = new maplibregl.Map({
         container: mapContainerRef.current, // Pass the DOM element directly
-        style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
+        style: 'https://demotiles.maplibre.org/style.json', // Changed to a non-Stadia style
         center: [coordinates.lng, coordinates.lat],
         zoom: zoom,
       });

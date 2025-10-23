@@ -47,7 +47,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
       setMapLoading(true);
       mapRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
+        style: 'https://demotiles.maplibre.org/style.json', // Changed to a non-Stadia style
         center: [0, 0], // Will be adjusted by fitBounds
         zoom: 1, // Will be adjusted by fitBounds
       });
