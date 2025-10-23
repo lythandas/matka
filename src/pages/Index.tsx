@@ -37,7 +37,7 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-// Removed PostCalendar import
+import PostDatePicker from '@/components/PostDatePicker'; // Import PostDatePicker
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
@@ -71,7 +71,7 @@ const Index = () => {
   const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // Keep state, but it won't be used by calendar
+  const [postDate, setPostDate] = useState<Date | undefined>(new Date()); // New state for post date, defaults to today
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -320,6 +320,7 @@ const Index = () => {
           message: message.trim(),
           media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
           coordinates: coordinates || undefined,
+          created_at: postDate ? postDate.toISOString() : undefined, // Include selected post date
         }),
       });
 
@@ -336,6 +337,7 @@ const Index = () => {
       setUploadedMediaItems([]);
       setCoordinates(null);
       setLocationSelectionMode('none');
+      setPostDate(new Date()); // Reset post date to today
       showSuccess('Post created successfully!');
     } catch (error: any) {
       console.error('Error creating post:', error);
@@ -426,8 +428,8 @@ const Index = () => {
   };
 
   // Filter posts by selected date (logic remains, but calendar UI is gone)
-  const filteredPosts = selectedDate
-    ? posts.filter(post => isSameDay(parseISO(post.created_at), selectedDate))
+  const filteredPosts = postDate
+    ? posts.filter(post => isSameDay(parseISO(post.created_at), postDate))
     : posts;
 
   // Permission check for creating a post (used for disabling UI)
@@ -518,7 +520,7 @@ const Index = () => {
                   </div>
                 )}
 
-                <div className="flex justify-center space-x-2">
+                <div className="flex flex-wrap justify-center gap-2"> {/* Use flex-wrap for responsiveness */}
                   <Input
                     id="media-upload"
                     type="file"
@@ -533,7 +535,7 @@ const Index = () => {
                     type="button"
                     onClick={() => mediaFileInputRef.current?.click()}
                     variant="outline"
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                     disabled={!canCreatePostUI || isUploadingMedia}
                   >
                     {isUploadingMedia ? (
@@ -553,7 +555,7 @@ const Index = () => {
                     type="button"
                     variant="outline"
                     onClick={handleGetLocation}
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                     disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
                   >
                     {locationLoading ? (
@@ -574,11 +576,17 @@ const Index = () => {
                       setLocationSelectionMode('search');
                       setCoordinates(null);
                     }}
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                     disabled={!canCreatePostUI || isUploadingMedia}
                   >
                     <Search className="mr-2 h-4 w-4" /> Search Location
                   </Button>
+                  <PostDatePicker
+                    selectedDate={postDate}
+                    onDateSelect={setPostDate}
+                    disabled={!canCreatePostUI || isUploadingMedia}
+                    className="flex-grow sm:flex-grow-0"
+                  />
                 </div>
 
                 {locationSelectionMode === 'search' && !coordinates && (
@@ -634,9 +642,9 @@ const Index = () => {
         <div className="text-center py-12">
           <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
           <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-            {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
+            {postDate ? `No posts found for ${postDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
           </p>
-          {!selectedDate && isAuthenticated && canCreatePostUI && (
+          {!postDate && isAuthenticated && canCreatePostUI && (
             <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
               Use the "Share your day" section above to begin.
             </p>

@@ -23,6 +23,8 @@ import { Post, MediaInfo, JourneyCollaborator } from '@/types';
 import LocationSearch from './LocationSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import PostDatePicker from './PostDatePicker'; // Import PostDatePicker
+import { parseISO } from 'date-fns'; // Import parseISO
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -49,6 +51,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentMediaPreviewIndex, setCurrentMediaPreviewIndex] = useState(0);
+  const [postDate, setPostDate] = useState<Date | undefined>(post.created_at ? parseISO(post.created_at) : undefined); // New state for post date
 
   useEffect(() => {
     setTitle(post.title || '');
@@ -59,6 +62,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     setCoordinates(post.coordinates || null);
     setLocationSelectionMode(post.coordinates ? 'current' : 'search');
     setCurrentMediaPreviewIndex(0);
+    setPostDate(post.created_at ? parseISO(post.created_at) : undefined); // Initialize post date
   }, [post, isOpen]);
 
   const uploadMediaToServer = async (files: File[]) => {
@@ -235,6 +239,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           message: message.trim(),
           media_items: currentMediaItems.length > 0 ? currentMediaItems : null,
           coordinates: coordinates || null,
+          created_at: postDate ? postDate.toISOString() : undefined, // Include selected post date
         }),
       });
 
@@ -287,6 +292,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             className="resize-none"
+            disabled={isSaving || isUploadingMedia || !canEditPostUI}
+          />
+          <Label htmlFor="post-date">Post date</Label>
+          <PostDatePicker
+            selectedDate={postDate}
+            onDateSelect={setPostDate}
             disabled={isSaving || isUploadingMedia || !canEditPostUI}
           />
         </div>

@@ -815,12 +815,13 @@ fastify.register(async (authenticatedFastify) => {
 
   // Create a new post
   authenticatedFastify.post('/posts', async (request: FastifyRequest, reply) => {
-    const { journeyId, title, message, media_items, coordinates } = request.body as {
+    const { journeyId, title, message, media_items, coordinates, created_at } = request.body as {
       journeyId?: string;
       title?: string;
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
+      created_at?: string; // Allow created_at to be passed
     };
 
     if (!request.user) {
@@ -861,7 +862,7 @@ fastify.register(async (authenticatedFastify) => {
       message: message || '',
       media_items: media_items && media_items.length > 0 ? media_items : undefined,
       coordinates: coordinates || undefined,
-      created_at: new Date().toISOString(),
+      created_at: created_at || new Date().toISOString(), // Use provided created_at or default
     };
     posts.unshift(newPost); // Add to the beginning for newest first
     return newPost;
@@ -870,11 +871,12 @@ fastify.register(async (authenticatedFastify) => {
   // Update a post
   authenticatedFastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { title, message, media_items, coordinates } = request.body as {
+    const { title, message, media_items, coordinates, created_at } = request.body as {
       title?: string;
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
+      created_at?: string; // Allow created_at to be updated
     };
 
     if (!request.user) {
@@ -909,6 +911,7 @@ fastify.register(async (authenticatedFastify) => {
       message: message || existingPost.message,
       media_items: media_items === null ? undefined : (media_items && media_items.length > 0 ? media_items : undefined),
       coordinates: coordinates === null ? undefined : (coordinates || existingPost.coordinates),
+      created_at: created_at || existingPost.created_at, // Use provided created_at or existing
     };
     return posts[postIndex];
   });
