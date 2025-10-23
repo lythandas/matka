@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react'; // Changed import statement
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Compass } from 'lucide-react';
@@ -36,7 +36,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const fetchJourney = useCallback(async () => {
+  const fetchJourney = React.useCallback(async () => { // Changed to React.useCallback
     if (!ownerUsername || !journeyName) {
       setError('Journey owner username or journey name is missing from the URL.');
       setLoadingJourney(false);
@@ -63,7 +63,7 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, [ownerUsername, journeyName]);
 
-  const fetchPosts = useCallback(async (id: string) => {
+  const fetchPosts = React.useCallback(async (id: string) => { // Changed to React.useCallback
     if (!id) {
       setLoadingPosts(false);
       return;
@@ -87,7 +87,7 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => { // Changed to React.useEffect
     const loadJourneyAndPosts = async () => {
       const id = await fetchJourney();
       if (id) {
