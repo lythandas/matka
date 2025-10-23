@@ -101,3 +101,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom utility for sticky calendar */
+.sticky-calendar {
+  align-self: flex-start; /* Ensures it sticks to the top of its flex container */
+  top: 64px; /* Height of the TopBar */
+}

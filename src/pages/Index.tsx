@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from '@/utils/toast';
-import { format, isSameDay, parseISO } from 'date-fns'; // Import isSameDay and parseISO
+import { format, isSameDay, parseISO } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,12 +38,16 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-import AppLayout from '@/components/AppLayout'; // Import AppLayout to wrap content
+import AppLayout from '@/components/AppLayout';
+import PostCalendar from '@/components/PostCalendar'; // Import PostCalendar
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
+  const isMobile = useIsMobile(); // Use the hook
+
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -69,7 +73,7 @@ const Index = () => {
   const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // New state for selected date
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -434,9 +438,18 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <AppLayout> {/* AppLayout no longer takes posts/date props */}
-      <div className="min-h-screen flex flex-col w-full">
-        <div className="max-w-3xl mx-auto flex-grow w-full">
+    <AppLayout>
+      <div className="flex flex-col lg:flex-row min-h-screen w-full"> {/* Use flex-row on large screens */}
+        {!isMobile && isAuthenticated && (
+          <aside className="w-full lg:w-80 p-4 lg:pr-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto"> {/* Sticky calendar on large screens */}
+            <PostCalendar
+              posts={posts}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+            />
+          </aside>
+        )}
+        <div className="flex-grow p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto w-full"> {/* Main content area */}
           {isAuthenticated ? (
             selectedJourney ? (
               <Card className="mb-8 shadow-lg shadow-neon-blue">
