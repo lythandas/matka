@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Compass, Map as MapIcon } from 'lucide-react';
+import { Loader2, Compass } from 'lucide-react'; // Removed Map as it's now in ViewToggle
 import { showError } from '@/utils/toast';
 import { format } from 'date-fns';
 import MapComponent from '@/components/MapComponent';
@@ -17,7 +17,7 @@ import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 import GridPostCard from '@/components/GridPostCard'; // Import GridPostCard
 import PostDetailDialog from '@/components/PostDetailDialog'; // Import PostDetailDialog
 import { Button } from '@/components/ui/button'; // Import Button
-import JourneyMapDialog from '@/components/JourneyMapDialog'; // Import JourneyMapDialog
+// Removed JourneyMapDialog as it's now integrated into the view
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
@@ -26,12 +26,12 @@ const PublicJourneyPage: React.FC = () => {
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // New state for view mode
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // Updated viewMode type
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
-  const [isJourneyMapDialogOpen, setIsJourneyMapDialogOpen] = useState<boolean>(false); // New state for map dialog
+  // Removed isJourneyMapDialogOpen state as it's now handled by viewMode
 
   const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
@@ -125,7 +125,7 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handleSelectPostFromMap = (post: Post, index: number) => {
-    setIsJourneyMapDialogOpen(false); // Close map dialog
+    // No need to close map dialog, as it's now a view mode
     handlePostClick(post, index); // Open post detail dialog
   };
 
@@ -185,15 +185,7 @@ const PublicJourneyPage: React.FC = () => {
         {posts.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            {hasPostsWithCoordinates && (
-              <Button
-                variant="outline"
-                onClick={() => setIsJourneyMapDialogOpen(true)}
-                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-              >
-                <MapIcon className="mr-2 h-4 w-4" /> Open Map
-              </Button>
-            )}
+            {/* Removed the "Open Map" button */}
           </div>
         )}
 
@@ -284,7 +276,7 @@ const PublicJourneyPage: React.FC = () => {
                 </ShineCard>
               ))}
             </div>
-          ) : (
+          ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {posts.map((post, index) => (
                 <GridPostCard
@@ -294,6 +286,27 @@ const PublicJourneyPage: React.FC = () => {
                 />
               ))}
             </div>
+          ) : ( // viewMode === 'map'
+            hasPostsWithCoordinates ? (
+              <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                <MapComponent
+                  posts={posts}
+                  onMarkerClick={handleSelectPostFromMap}
+                  className="w-full h-full"
+                  zoom={7} // Default zoom for map view
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  No posts with location data to display on the map.
+                </p>
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  Add posts with location information to see them here!
+                </p>
+              </div>
+            )
           )
         )}
       </div>
@@ -311,15 +324,7 @@ const PublicJourneyPage: React.FC = () => {
           onPrevious={handlePreviousPost}
         />
       )}
-
-      {isJourneyMapDialogOpen && (
-        <JourneyMapDialog
-          isOpen={isJourneyMapDialogOpen}
-          onClose={() => setIsJourneyMapDialogOpen(false)}
-          posts={posts}
-          onSelectPost={handleSelectPostFromMap}
-        />
-      )}
+      {/* Removed JourneyMapDialog as a separate dialog */}
     </div>
   );
 };
