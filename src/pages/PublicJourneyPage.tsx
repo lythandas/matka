@@ -13,6 +13,9 @@ import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api';
 import { Post, Journey } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
+import GridPostCard from '@/components/GridPostCard'; // Import GridPostCard
+import PostDetailDialog from '@/components/PostDetailDialog'; // Import PostDetailDialog
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
@@ -21,6 +24,11 @@ const PublicJourneyPage: React.FC = () => {
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // New state for view mode
+
+  const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
+  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
   const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
@@ -85,6 +93,34 @@ const PublicJourneyPage: React.FC = () => {
     loadJourneyAndPosts();
   }, [fetchJourney, fetchPosts]);
 
+  const handlePostClick = (post: Post, index: number) => {
+    setSelectedPostForDetail(post);
+    setSelectedPostIndex(index);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleNextPost = () => {
+    if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
+      const nextIndex = selectedPostIndex + 1;
+      setSelectedPostIndex(nextIndex);
+      setSelectedPostForDetail(posts[nextIndex]);
+    }
+  };
+
+  const handlePreviousPost = () => {
+    if (selectedPostIndex !== null && selectedPostIndex > 0) {
+      const prevIndex = selectedPostIndex - 1;
+      setSelectedPostIndex(prevIndex);
+      setSelectedPostForDetail(posts[prevIndex]);
+    }
+  };
+
+  const handleCloseDetailDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedPostForDetail(null);
+    setSelectedPostIndex(null);
+  };
+
   if (loadingJourney || loadingPosts) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
@@ -136,6 +172,12 @@ const PublicJourneyPage: React.FC = () => {
           </CardHeader>
         </Card>
 
+        {posts.length > 0 && (
+          <div className="mb-6">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
+        )}
+
         {posts.length === 0 ? (
           <div className="text-center py-12">
             <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
@@ -147,80 +189,109 @@ const PublicJourneyPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <ShineCard key={post.id} className="shadow-md">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    {post.author_profile_image_url ? (
-                      <Avatar className="h-10 w-10 mr-3">
-                        <AvatarImage src={post.author_profile_image_url} alt={post.author_name || post.author_username} />
-                      </Avatar>
-                    ) : (
-                      <Avatar className="h-10 w-10 mr-3">
-                        <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                          {getAvatarInitials(post.author_name, post.author_username)}
-                        </AvatarFallback>
-                      </Avatar>
+          viewMode === 'list' ? (
+            <div className="space-y-6">
+              {posts.map((post, index) => (
+                <ShineCard
+                  key={post.id}
+                  className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                  onClick={() => handlePostClick(post, index)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center mb-4">
+                      {post.author_profile_image_url ? (
+                        <Avatar className="h-10 w-10 mr-3">
+                          <AvatarImage src={post.author_profile_image_url} alt={post.author_name || post.author_username} />
+                        </Avatar>
+                      ) : (
+                        <Avatar className="h-10 w-10 mr-3">
+                          <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                            {getAvatarInitials(post.author_name, post.author_username)}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          {post.author_name || post.author_username}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {format(new Date(post.created_at), 'PPP p')}
+                        </p>
+                      </div>
+                    </div>
+                    {post.title && (
+                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                     )}
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100">
-                        {post.author_name || post.author_username}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {format(new Date(post.created_at), 'PPP p')}
-                      </p>
-                    </div>
-                  </div>
-                  {post.title && (
-                    <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                  )}
-                  {post.media_items && post.media_items.length > 0 && (
-                    <div className={
-                      post.media_items.length === 1
-                        ? "mb-4"
-                        : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                    }>
-                      {post.media_items.map((mediaItem, mediaIndex) => (
-                        <div key={mediaIndex} className="relative">
-                          {mediaItem.type === 'image' && mediaItem.urls.large && (
-                            <img
-                              src={mediaItem.urls.large}
-                              alt={`Post image ${mediaIndex + 1}`}
-                              className="w-full h-auto max-h-96 object-cover rounded-md"
-                              onError={(e) => {
-                                e.currentTarget.src = '/placeholder.svg';
-                                e.currentTarget.onerror = null;
-                                console.error(`Failed to load image: ${mediaItem.urls.large}`);
-                              }}
-                            />
-                          )}
-                          {mediaItem.type === 'video' && mediaItem.url && (
-                            <video
-                              src={mediaItem.url}
-                              controls
-                              className="w-full h-auto max-h-96 object-cover rounded-md"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
-                    {post.message}
-                  </p>
-                  {post.coordinates && (
-                    <div className="mt-4">
-                      <MapComponent coordinates={post.coordinates} />
-                    </div>
-                  )}
-                </CardContent>
-              </ShineCard>
-            ))}
-          </div>
+                    {post.media_items && post.media_items.length > 0 && (
+                      <div className={
+                        post.media_items.length === 1
+                          ? "mb-4"
+                          : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                      }>
+                        {post.media_items.map((mediaItem, mediaIndex) => (
+                          <div key={mediaIndex} className="relative">
+                            {mediaItem.type === 'image' && mediaItem.urls.large && (
+                              <img
+                                src={mediaItem.urls.large}
+                                alt={`Post image ${mediaIndex + 1}`}
+                                className="w-full h-auto max-h-96 object-cover rounded-md"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                  e.currentTarget.onerror = null;
+                                  console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                }}
+                              />
+                            )}
+                            {mediaItem.type === 'video' && mediaItem.url && (
+                              <video
+                                src={mediaItem.url}
+                                controls
+                                className="w-full h-auto max-h-96 object-cover rounded-md"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
+                      {post.message}
+                    </p>
+                    {post.coordinates && (
+                      <div className="mt-4">
+                        <MapComponent coordinates={post.coordinates} />
+                      </div>
+                    )}
+                  </CardContent>
+                </ShineCard>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {posts.map((post, index) => (
+                <GridPostCard
+                  key={post.id}
+                  post={post}
+                  onClick={() => handlePostClick(post, index)}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
       <AppFooter />
+
+      {selectedPostForDetail && isDetailDialogOpen && (
+        <PostDetailDialog
+          key={selectedPostForDetail.id}
+          post={selectedPostForDetail}
+          isOpen={isDetailDialogOpen}
+          onClose={handleCloseDetailDialog}
+          currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
+          totalPosts={posts.length}
+          onNext={handleNextPost}
+          onPrevious={handlePreviousPost}
+        />
+      )}
     </div>
   );
 };
