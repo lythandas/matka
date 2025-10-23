@@ -37,7 +37,7 @@ import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
-import JourneyMapDialog from '@/components/JourneyMapDialog'; // Import JourneyMapDialog
+import JourneyMapDialog from '@/components/JourneyMapDialog';
 import AppLayout from '@/components/AppLayout'; // Import AppLayout to wrap content
 
 const Index = () => {
@@ -434,7 +434,7 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <AppLayout posts={posts} selectedDate={selectedDate} onDateSelect={setSelectedDate}> {/* Pass posts and date handlers to AppLayout */}
+    <AppLayout> {/* AppLayout no longer takes posts/date props */}
       <div className="min-h-screen flex flex-col w-full">
         <div className="max-w-3xl mx-auto flex-grow w-full">
           {isAuthenticated ? (

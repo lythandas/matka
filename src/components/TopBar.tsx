@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react';
+import { Menu, Compass, Plus, ChevronDown, Wrench, Users, Calendar as CalendarIcon } from 'lucide-react'; // Import CalendarIcon
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,12 +20,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import ManageJourneyDialog from './ManageJourneyDialog';
+import FloatingCalendar from './FloatingCalendar'; // Import FloatingCalendar
+import { Post } from '@/types'; // Import Post type
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
+  posts: Post[]; // Pass posts to TopBar for FloatingCalendar
+  selectedDate: Date | undefined; // Pass selectedDate to TopBar for FloatingCalendar
+  onDateSelect: (date: Date | undefined) => void; // Pass onDateSelect to TopBar for FloatingCalendar
 }
 
-const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen, posts, selectedDate, onDateSelect }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -130,6 +135,14 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         <Users className="mr-2 h-4 w-4" /> Admin (Users)
                       </Button>
                     )}
+                    <div className="pt-4">
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Filter posts</h3>
+                      <FloatingCalendar
+                        posts={posts}
+                        selectedDate={selectedDate}
+                        onDateSelect={onDateSelect}
+                      />
+                    </div>
                   </>
                 )}
               </nav>
@@ -158,6 +171,11 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               <span className="sr-only">Manage journey</span>
             </Button>
           )}
+          <FloatingCalendar
+            posts={posts}
+            selectedDate={selectedDate}
+            onDateSelect={onDateSelect}
+          />
         </div>
       )}
 
