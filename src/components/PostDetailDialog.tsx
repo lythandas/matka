@@ -124,6 +124,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto">
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0"> {/* Added flex-shrink-0 */}
+                  {console.log('Current media for display:', currentMedia)}
                   {currentMedia?.type === 'image' && (
                     <img
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
@@ -134,6 +135,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                         e.currentTarget.src = '/placeholder.svg';
                         e.currentTarget.onerror = null;
                         console.error(`Failed to load image: ${currentMedia.urls.large}`);
+                        console.log('Image src that failed:', e.currentTarget.src);
                       }}
                     />
                   )}

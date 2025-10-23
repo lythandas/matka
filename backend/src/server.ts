@@ -318,6 +318,10 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const mockBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`; // Use external URL for frontend access
+    fastify.log.info(`Generated media URL base: ${mockBaseUrl}`);
+    fastify.log.info(`Generated file name: ${fileName}`);
+    fastify.log.info(`Full image URL: ${mockBaseUrl}/${fileName}`);
+
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {
