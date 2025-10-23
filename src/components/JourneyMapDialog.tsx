@@ -37,23 +37,39 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
   useEffect(() => {
+    console.log('JourneyMapDialog useEffect triggered. isOpen:', isOpen, 'mapContainerRef.current:', mapContainerRef.current, 'postsWithCoordinates.length:', postsWithCoordinates.length);
+
     const cleanupMap = () => {
+      console.log('Cleaning up map...');
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
-      setMapLoading(true); // Reset loading state on cleanup
+      // Do not reset mapLoading here, it will be handled by the main effect logic
     };
 
-    // Only proceed if dialog is open and container ref is available
-    if (!isOpen || !mapContainerRef.current || !postsWithCoordinates.length) {
+    if (!isOpen) {
       cleanupMap();
+      setMapLoading(true); // Reset loading state for next open
       return;
     }
 
-    // Initialize map only if it doesn't exist
+    if (!mapContainerRef.current) {
+      // If dialog is open but ref not yet attached, wait for next render
+      setMapLoading(true); // Keep loading true while waiting for ref
+      return;
+    }
+
+    if (!postsWithCoordinates.length) {
+      cleanupMap();
+      setMapLoading(false); // No posts to show, so not loading a map
+      return;
+    }
+
+    // If we reach here, dialog is open, ref is attached, and there are posts.
     if (!mapRef.current) {
-      setMapLoading(true);
+      console.log('Initializing new map...');
+      setMapLoading(true); // Indicate loading has started
       mapRef.current = L.map(mapContainerRef.current, {
         center: [0, 0], // Will be adjusted by fitBounds
         zoom: 1, // Will be adjusted by fitBounds
@@ -72,22 +88,26 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         setMapLoading(false);
       });
 
-      addMarkersAndFitBounds(mapRef.current); // Add markers and fit bounds
-      setMapLoading(false); // Set loading to false immediately after setup
-
+      addMarkersAndFitBounds(mapRef.current);
+      mapRef.current.invalidateSize(); // Ensure map renders correctly after initialization
+      setMapLoading(false); // Map setup complete
+      console.log('Map initialized and loading set to false.');
     } else {
-      // If map exists, just update markers and bounds
+      console.log('Updating existing map...');
+      // Map already exists, just update markers and bounds
       mapRef.current.eachLayer((layer) => {
         if (layer instanceof L.Marker) {
           layer.remove();
         }
       });
       addMarkersAndFitBounds(mapRef.current);
-      setMapLoading(false);
+      mapRef.current.invalidateSize(); // Ensure map renders correctly after update
+      setMapLoading(false); // Update complete
+      console.log('Map updated and loading set to false.');
     }
 
     return cleanupMap;
-  }, [isOpen, postsWithCoordinates]); // Removed mapContainerRef.current from dependencies
+  }, [isOpen, postsWithCoordinates]);
 
   const addMarkersAndFitBounds = (map: L.Map) => {
     if (!postsWithCoordinates.length) return;
