@@ -1,3 +1,5 @@
+"use client";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -42,20 +44,21 @@ const App = () => {
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <CreateJourneyDialogProvider>
             {isAuthenticated ? (
-              // AppLayout now wraps the Routes, and Index.tsx passes its posts and date handlers to AppLayout
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute adminOnly>
-                      <AdminPage />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppLayout> {/* AppLayout now wraps the authenticated routes */}
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute adminOnly>
+                        <AdminPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
             ) : (
               <Routes>
                 <Route path="/public-journey/:ownerUsername/:journeyName" element={<PublicJourneyPage />} /> {/* New public route with human-readable URL */}
