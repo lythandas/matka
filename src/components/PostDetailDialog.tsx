@@ -43,6 +43,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
 
+  // Debugging logs
+  console.log('PostDetailDialog rendering for post:', post.id, post.title);
+  console.log('Current Index:', currentIndex, 'Total Posts:', totalPosts);
+  console.log('Can go previous:', canGoPrevious, 'Can go next:', canGoNext);
+
+
   const handleToggleFullscreen = (mediaElement: HTMLImageElement | HTMLVideoElement | null) => {
     if (!document.fullscreenEnabled) {
       showError("Fullscreen mode is not supported by your browser.");
@@ -91,6 +97,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
 
+  // Debugging logs for media
+  console.log('Media items:', mediaItems);
+  console.log('Current media index:', currentMediaIndex);
+  console.log('Current media:', currentMedia);
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[950px] max-h-[98vh] flex flex-col">
@@ -117,13 +129,13 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           
           {/* Main content wrapper for TransitionGroup and navigation buttons */}
           <div className="relative flex-grow overflow-hidden">
-            <TransitionGroup className="absolute inset-0">
+            <TransitionGroup className="relative w-full h-full"> {/* Changed to relative w-full h-full */}
               <CSSTransition
                 key={post.id} // Key is essential here for TransitionGroup to detect changes
                 timeout={300} // Match animation duration
                 classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
               >
-                <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full">
+                <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* This div remains absolute */}
                   {mediaItems.length > 0 && (
                     <div className="relative mb-4 flex-shrink-0">
                       {currentMedia?.type === 'image' && (
