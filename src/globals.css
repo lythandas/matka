@@ -102,9 +102,4 @@
   }
 }
 
-/* Adjust main content area to account for fixed sidebar on larger screens */
-@media (min-width: 768px) { /* Tailwind's 'md' breakpoint */
-  .flex-grow > main {
-    margin-left: 16rem; /* Width of the sidebar (w-64 = 16rem) */
-  }
-}
+/* Removed the media query for margin-left */

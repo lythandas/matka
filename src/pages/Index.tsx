@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from '@/utils/toast';
-import { format, isSameDay, parseISO } from 'date-fns'; // Import isSameDay and parseISO
+import { format, isSameDay, parseISO } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react';
+import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2, Calendar as CalendarIcon } from 'lucide-react'; // Import CalendarIcon
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import MapComponent from '@/components/MapComponent';
@@ -37,8 +37,10 @@ import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
-import JourneyMapDialog from '@/components/JourneyMapDialog'; // Import JourneyMapDialog
-import AppLayout from '@/components/AppLayout'; // Import AppLayout to wrap content
+import JourneyMapDialog from '@/components/JourneyMapDialog';
+import AppLayout from '@/components/AppLayout';
+import PostCalendar from '@/components/PostCalendar'; // Import PostCalendar
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
@@ -69,7 +71,7 @@ const Index = () => {
   const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // New state for selected date
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined); // State for selected date
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -434,7 +436,7 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <AppLayout posts={posts} selectedDate={selectedDate} onDateSelect={setSelectedDate}> {/* Pass posts and date handlers to AppLayout */}
+    <AppLayout> {/* Removed posts and date handlers from AppLayout */}
       <div className="min-h-screen flex flex-col w-full">
         <div className="max-w-3xl mx-auto flex-grow w-full">
           {isAuthenticated ? (
@@ -625,6 +627,24 @@ const Index = () => {
           {filteredPosts.length > 0 && (
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
               <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, 'PPP') : 'Filter by date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <PostCalendar
+                    posts={posts} // Pass all posts to the calendar for highlighting
+                    selectedDate={selectedDate}
+                    onDateSelect={setSelectedDate}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
@@ -634,7 +654,7 @@ const Index = () => {
             <div className="text-center py-12">
               <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
               <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
+                {selectedDate ? `No posts found for ${format(selectedDate, 'PPP')}.` : "Your journey awaits! Start by adding your first post."}
               </p>
               {!selectedDate && isAuthenticated && canCreatePostUI && (
                 <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
