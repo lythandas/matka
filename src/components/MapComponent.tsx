@@ -28,7 +28,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   className,
   onMarkerClick,
 }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(mapContainerRef);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null); // Corrected initialization
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null); // Use LayerGroup for multiple markers
 
