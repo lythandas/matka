@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Post } from '@/types';
 import { isSameDay, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button'; // Ensure Button is imported
 
 interface PostCalendarProps {
   posts: Post[];
@@ -27,7 +28,7 @@ const PostCalendar: React.FC<PostCalendarProps> = ({ posts, selectedDate, onDate
 
   return (
     <div className="p-4">
-      <h2 className="text-lg font-semibold mb-4">Browse by date</h2>
+      {/* Removed the h2 title "Browse by date" */}
       <Calendar
         mode="single"
         selected={selectedDate}
