@@ -413,12 +413,12 @@ fastify.register(async (authenticatedFastify) => {
     return reply.code(204).send();
   });
 
-  // Search users (Admin only)
+  // Search users (Accessible to all authenticated users)
   authenticatedFastify.get('/users/search', async (request: FastifyRequest, reply) => {
     const { query } = request.query as { query: string };
 
-    if (!request.user || !request.user.isAdmin) {
-      return reply.code(403).send({ message: 'Forbidden: Only administrators can search users.' });
+    if (!request.user) { // Only check for authentication, not isAdmin
+      return reply.code(401).send({ message: 'Authentication required to search users.' });
     }
     if (!query) {
       return reply.code(400).send({ message: 'Search query is required' });
