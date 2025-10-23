@@ -19,7 +19,7 @@ import PostDetailDialog from '@/components/PostDetailDialog';
 import { Button } from '@/components/ui/button';
 import SortToggle from '@/components/SortToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
@@ -192,12 +192,12 @@ const PublicJourneyPage: React.FC = () => {
         </Card>
 
         {posts.length > 0 && (
-          <div className="flex flex-col items-center mb-6">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+          <div className="flex items-center justify-between mb-6"> {/* Use justify-between for spacing */}
+            <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+            <div className="flex-grow flex justify-center"> {/* Centered ViewToggle */}
               <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-              <ThemeToggle /> {/* Theme toggle for public users */}
             </div>
+            <ThemeToggle /> {/* Theme toggle on the right */}
           </div>
         )}
 

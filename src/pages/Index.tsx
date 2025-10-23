@@ -40,7 +40,6 @@ import JourneyMapDialog from '@/components/JourneyMapDialog';
 import PostDatePicker from '@/components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
-import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
@@ -646,7 +645,7 @@ const Index = () => {
           <div className="flex items-center justify-center gap-4 mb-4">
             <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            <ThemeToggle />
+            {/* ThemeToggle removed from here as it's available in UserProfileDropdown */}
           </div>
         </div>
       )}
