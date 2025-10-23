@@ -30,7 +30,7 @@ interface JourneyMapDialogProps {
 }
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null); // Corrected initialization
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const [mapLoading, setMapLoading] = useState<boolean>(true);
 
@@ -45,11 +45,13 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
       setMapLoading(true); // Reset loading state on cleanup
     };
 
+    // Only proceed if dialog is open and container ref is available
     if (!isOpen || !mapContainerRef.current || !postsWithCoordinates.length) {
       cleanupMap();
       return;
     }
 
+    // Initialize map only if it doesn't exist
     if (!mapRef.current) {
       setMapLoading(true);
       mapRef.current = L.map(mapContainerRef.current, {
@@ -64,14 +66,14 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
 
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-      addMarkersAndFitBounds(mapRef.current); // Add markers and fit bounds
-      setMapLoading(false); // Set loading to false immediately after setup
-
       mapRef.current.on('error', (e: any) => {
         console.error('Leaflet Map Error:', e.error);
         showError('Failed to load map tiles.');
         setMapLoading(false);
       });
+
+      addMarkersAndFitBounds(mapRef.current); // Add markers and fit bounds
+      setMapLoading(false); // Set loading to false immediately after setup
 
     } else {
       // If map exists, just update markers and bounds
@@ -85,7 +87,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
     }
 
     return cleanupMap;
-  }, [isOpen, postsWithCoordinates, mapContainerRef.current]);
+  }, [isOpen, postsWithCoordinates]); // Removed mapContainerRef.current from dependencies
 
   const addMarkersAndFitBounds = (map: L.Map) => {
     if (!postsWithCoordinates.length) return;
