@@ -9,10 +9,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, XCircle, Loader2 } from 'lucide-react'; // Import Loader2
-import maplibregl from 'maplibre-gl';
+import { Map as MapIcon, Loader2 } from 'lucide-react';
+import L from 'leaflet'; // Import Leaflet
 import { showError } from '@/utils/toast';
 import { Post } from '@/types'; // Centralized Post interface
+
+// Fix for default Leaflet icon paths
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
 
 interface JourneyMapDialogProps {
   isOpen: boolean;
@@ -23,8 +31,8 @@ interface JourneyMapDialogProps {
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const [mapLoading, setMapLoading] = useState<boolean>(true); // New state for map loading
+  const mapRef = useRef<L.Map | null>(null);
+  const [mapLoading, setMapLoading] = useState<boolean>(true);
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
@@ -42,27 +50,29 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
       return;
     }
 
-    // If map is not initialized, create a new one
     if (!mapRef.current) {
       setMapLoading(true);
-      mapRef.current = new maplibregl.Map({
-        container: mapContainerRef.current,
-        style: 'https://demotiles.maplibre.org/style.json', // Changed to a non-Stadia style
+      mapRef.current = L.map(mapContainerRef.current, {
         center: [0, 0], // Will be adjusted by fitBounds
         zoom: 1, // Will be adjusted by fitBounds
+        zoomControl: false,
       });
 
-      mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(mapRef.current);
+
+      L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
       mapRef.current.on('load', () => {
         if (mapRef.current) {
           addMarkersAndFitBounds(mapRef.current);
-          setMapLoading(false); // Map is loaded and markers added
+          setMapLoading(false);
         }
       });
 
-      mapRef.current.on('error', (e) => {
-        console.error('MapLibre GL Error:', e.error);
+      mapRef.current.on('error', (e: any) => {
+        console.error('Leaflet Map Error:', e.error);
         showError('Failed to load map tiles.');
         setMapLoading(false);
       });
@@ -70,46 +80,42 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
     } else {
       // If map exists, just update markers and bounds
       mapRef.current.eachLayer((layer) => {
-        if (layer instanceof maplibregl.Marker) {
+        if (layer instanceof L.Marker) {
           layer.remove();
         }
       });
       addMarkersAndFitBounds(mapRef.current);
-      setMapLoading(false); // Assume loaded if updating existing map
+      setMapLoading(false);
     }
 
     return cleanupMap;
   }, [isOpen, postsWithCoordinates, mapContainerRef.current]);
 
-  const addMarkersAndFitBounds = (map: maplibregl.Map) => {
+  const addMarkersAndFitBounds = (map: L.Map) => {
     if (!postsWithCoordinates.length) return;
 
-    const bounds = new maplibregl.LngLatBounds();
+    const markers: L.Marker[] = [];
+    const latLngs: L.LatLngExpression[] = [];
 
     postsWithCoordinates.forEach((post, index) => {
       if (post.coordinates) {
-        const marker = new maplibregl.Marker()
-          .setLngLat([post.coordinates.lng, post.coordinates.lat])
-          .addTo(map);
+        const latLng: L.LatLngExpression = [post.coordinates.lat, post.coordinates.lng];
+        const marker = L.marker(latLng).addTo(map);
 
-        const markerElement = marker.getElement();
-        markerElement.style.cursor = 'pointer';
-        markerElement.addEventListener('click', () => {
+        marker.on('click', () => {
           onSelectPost(post, posts.indexOf(post));
         });
 
-        bounds.extend([post.coordinates.lng, post.coordinates.lat]);
+        markers.push(marker);
+        latLngs.push(latLng);
       }
     });
 
-    if (postsWithCoordinates.length === 1 && postsWithCoordinates[0].coordinates) {
-      map.setCenter([postsWithCoordinates[0].coordinates.lng, postsWithCoordinates[0].coordinates.lat]);
-      map.setZoom(12);
-    } else if (postsWithCoordinates.length > 1) {
-      map.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 14,
-      });
+    if (latLngs.length === 1) {
+      map.setView(latLngs[0], 12);
+    } else if (latLngs.length > 1) {
+      const bounds = L.latLngBounds(latLngs);
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
   };
 
