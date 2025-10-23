@@ -85,7 +85,7 @@ export default {
             height: "0",
           },
         },
-        // Define keyframes for sliding animations
+        // Define keyframes for sliding animations with opacity
         slideInFromRight: {
           from: { transform: "translateX(100%)", opacity: "0" },
           to: { transform: "translateX(0)", opacity: "1" },

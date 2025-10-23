@@ -120,8 +120,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             timeout={300} // Match animation duration
             classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
           >
-            {/* Changed from absolute inset-0 to flex flex-col flex-grow for proper layout flow */}
-            <div className="flex flex-col flex-grow p-6 pt-4 overflow-y-auto">
+            {/* Reverted to absolute inset-0 for independent animation, added overflow-y-auto */}
+            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto">
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0">
                   {currentMedia?.type === 'image' && (
