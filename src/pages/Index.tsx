@@ -39,7 +39,8 @@ import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
 import PostDatePicker from '@/components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
-import SortToggle from '@/components/SortToggle'; // New import
+import SortToggle from '@/components/SortToggle';
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
@@ -73,7 +74,7 @@ const Index = () => {
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
   const [postDate, setPostDate] = useState<Date | undefined>(new Date());
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // New state for sorting
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -309,7 +310,7 @@ const Index = () => {
       return;
     }
 
-    console.log('Frontend: Sending post with created_at:', postDate?.toISOString()); // LOGGING
+    console.log('Frontend: Sending post with created_at:', postDate?.toISOString());
 
     try {
       const response = await fetch(`${API_BASE_URL}/posts`, {
@@ -641,10 +642,11 @@ const Index = () => {
       ) : null}
 
       {displayedPosts.length > 0 && (
-        <div className="flex items-center mb-6"> {/* Adjusted layout for sorting and viewing toggles */}
-          <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} className="mr-4" />
-          <div className="flex-grow flex justify-center">
+        <div className="flex flex-col items-center mb-6">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            <ThemeToggle />
           </div>
         </div>
       )}
@@ -677,7 +679,7 @@ const Index = () => {
               const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
               const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
-              console.log(`Frontend: Displayed post ID: ${post.id}, Created At: ${post.created_at}`); // LOGGING
+              console.log(`Frontend: Displayed post ID: ${post.id}, Created At: ${post.created_at}`);
 
               return (
                 <ShineCard

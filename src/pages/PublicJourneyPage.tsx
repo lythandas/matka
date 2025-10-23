@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Compass } from 'lucide-react'; // Removed Map as it's now in ViewToggle
+import { Loader2, Compass } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { format } from 'date-fns';
 import MapComponent from '@/components/MapComponent';
@@ -13,23 +13,24 @@ import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api';
 import { Post, Journey } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
-import GridPostCard from '@/components/GridPostCard'; // Import GridPostCard
-import PostDetailDialog from '@/components/PostDetailDialog'; // Import PostDetailDialog
-import { Button } from '@/components/ui/button'; // Import Button
-import SortToggle from '@/components/SortToggle'; // Import SortToggle
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import ViewToggle from '@/components/ViewToggle';
+import GridPostCard from '@/components/GridPostCard';
+import PostDetailDialog from '@/components/PostDetailDialog';
+import { Button } from '@/components/ui/button';
+import SortToggle from '@/components/SortToggle';
+import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
-  const { isAuthenticated } = useAuth(); // Get authentication status
+  const { isAuthenticated } = useAuth();
   const [journey, setJourney] = useState<Journey | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // State for sorting
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
@@ -50,7 +51,7 @@ const PublicJourneyPage: React.FC = () => {
       }
       const data: Journey = await response.json();
       setJourney(data);
-      return data.id; // Return journey ID to fetch posts
+      return data.id;
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       setError(err.message || 'Failed to load journey. It might not exist or is not public.');
@@ -92,7 +93,7 @@ const PublicJourneyPage: React.FC = () => {
       if (id) {
         fetchPosts(id);
       } else {
-        setLoadingPosts(false); // Stop loading posts if journey couldn't be fetched
+        setLoadingPosts(false);
       }
     };
     loadJourneyAndPosts();
@@ -190,11 +191,12 @@ const PublicJourneyPage: React.FC = () => {
           </CardHeader>
         </Card>
 
-        {posts.length > 0 && isAuthenticated && ( // Only show if authenticated
-          <div className="flex items-center mb-6">
-            <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} className="mr-4" />
-            <div className="flex-grow flex justify-center">
+        {posts.length > 0 && (
+          <div className="flex flex-col items-center mb-6">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
               <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <ThemeToggle /> {/* Theme toggle for public users */}
             </div>
           </div>
         )}
@@ -303,7 +305,7 @@ const PublicJourneyPage: React.FC = () => {
                   posts={sortedPosts}
                   onMarkerClick={handleSelectPostFromMap}
                   className="w-full h-full"
-                  zoom={7} // Default zoom for map view
+                  zoom={7}
                 />
               </div>
             ) : (
