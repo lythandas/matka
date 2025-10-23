@@ -2,34 +2,47 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button"; // Import Button component
+import { Sun, Moon, Monitor } from "lucide-react"; // Import icons
 
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils"; // Import cn utility
-
-interface ThemeToggleProps extends React.ComponentPropsWithoutRef<typeof ToggleGroup> {}
+interface ThemeToggleProps extends React.ComponentPropsWithoutRef<typeof Button> {}
 
 export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
 
+  const cycleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
+  };
+
+  const Icon = React.useMemo(() => {
+    if (theme === "light") return Sun;
+    if (theme === "dark") return Moon;
+    return Monitor;
+  }, [theme]);
+
+  const tooltipText = React.useMemo(() => {
+    if (theme === "light") return "Toggle dark theme";
+    if (theme === "dark") return "Toggle system theme";
+    return "Toggle light theme";
+  }, [theme]);
+
   return (
-    <ToggleGroup
-      type="single"
-      value={theme}
-      onValueChange={(value: "light" | "dark" | "system") => {
-        if (value) setTheme(value);
-      }}
-      className={cn("w-full justify-start", className)}
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={cycleTheme}
+      className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+      aria-label={tooltipText}
       {...props}
     >
-      <ToggleGroupItem value="light" aria-label="Toggle light theme" className="flex-1">
-        Light
-      </ToggleGroupItem>
-      <ToggleGroupItem value="dark" aria-label="Toggle dark theme" className="flex-1">
-        Dark
-      </ToggleGroupItem>
-      <ToggleGroupItem value="system" aria-label="Toggle system theme" className="flex-1">
-        System
-      </ToggleGroupItem>
-    </ToggleGroup>
+      <Icon className="h-5 w-5" />
+      <span className="sr-only">{tooltipText}</span>
+    </Button>
   );
 }
