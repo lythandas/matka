@@ -24,11 +24,11 @@ interface MapComponentProps {
 const MapComponent: React.FC<MapComponentProps> = ({
   posts,
   coordinates, // Still support single coordinate for other uses
-  zoom = 14,
+  zoom = 7, // Changed default zoom from 14 to 7 to approximate 1cm = 50km
   className,
   onMarkerClick,
 }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(mapContainerRef);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null); // Use LayerGroup for multiple markers
 
