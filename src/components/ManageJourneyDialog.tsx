@@ -472,7 +472,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-2"> {/* Adjusted grid-cols */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id={`read-${collab.user_id}`}
@@ -507,7 +507,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox
-                          id={`modify-${collab.user_id}`} {/* New checkbox */}
+                          id={`modify-${collab.user_id}`}
                           checked={collab.can_modify_post}
                           onCheckedChange={(checked) =>
                             handleUpdateCollaboratorPermissions(collab.user_id, {
