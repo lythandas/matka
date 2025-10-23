@@ -10,7 +10,7 @@ interface JourneyContextType {
   journeys: Journey[];
   selectedJourney: Journey | null;
   setSelectedJourney: (journey: Journey) => void;
-  fetchJourneys: () => Promise<void>;
+  fetchJourneys: () => Promise<void>; // Renamed to reflect it fetches the list
   createJourney: (name: string) => Promise<Journey | null>;
   loadingJourneys: boolean;
 }
@@ -23,14 +23,14 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
   const [selectedJourney, setSelectedJourneyState] = useState<Journey | null>(null);
   const [loadingJourneys, setLoadingJourneys] = useState<boolean>(true);
 
-  const fetchJourneys = useCallback(async () => {
+  // This function only fetches and sets the list of journeys.
+  // It does NOT contain logic for setting the selectedJourney based on previous state.
+  const fetchJourneysList = useCallback(async () => {
     setLoadingJourneys(true);
     try {
       if (!token) {
-        // If no token, clear journeys and stop loading
         setJourneys([]);
-        setSelectedJourneyState(null);
-        setLoadingJourgers(false);
+        setLoadingJourneys(false);
         return;
       }
 
@@ -44,39 +44,48 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
       }
       const data: Journey[] = await response.json();
       setJourneys(data);
-
-      // Update selectedJourney with the latest data if it exists
-      if (selectedJourney) {
-        const updatedSelectedJourney = data.find(j => j.id === selectedJourney.id);
-        if (updatedSelectedJourney) {
-          setSelectedJourneyState(updatedSelectedJourney);
-        } else {
-          // If previously selected journey no longer exists, select the first one or null
-          setSelectedJourneyState(data[0] || null);
-        }
-      } else if (data.length > 0) {
-        // If no journey was selected, select the first one
-        setSelectedJourneyState(data[0]);
-      }
     } catch (error) {
       console.error('Error fetching journeys:', error);
       showError('Failed to load journeys.');
+      setJourneys([]); // Clear journeys on error
     } finally {
       setLoadingJourneys(false);
     }
-  }, [selectedJourney, token]); // Add token to dependencies
+  }, [token]); // fetchJourneysList only depends on token, making it stable
 
+  // Effect to trigger fetching journeys when authentication state or token changes
   useEffect(() => {
-    // Only fetch if authenticated and token is available
     if (isAuthenticated && token) {
-      fetchJourneys();
+      fetchJourneysList();
     } else if (!isAuthenticated) {
-      // If not authenticated, clear journeys and stop loading
+      // If not authenticated, clear journeys and selected journey
       setJourneys([]);
       setSelectedJourneyState(null);
       setLoadingJourneys(false);
     }
-  }, [isAuthenticated, token, fetchJourneys]); // Update useEffect dependencies
+  }, [isAuthenticated, token, fetchJourneysList]);
+
+  // Effect to handle selectedJourney logic when the list of journeys changes
+  useEffect(() => {
+    if (journeys.length > 0) {
+      // If a journey was previously selected, try to find its updated version
+      if (selectedJourney) {
+        const updatedSelectedJourney = journeys.find(j => j.id === selectedJourney.id);
+        if (updatedSelectedJourney) {
+          setSelectedJourneyState(updatedSelectedJourney);
+        } else {
+          // If the previously selected journey no longer exists, select the first one
+          setSelectedJourneyState(journeys[0]);
+        }
+      } else {
+        // If no journey was selected, select the first one
+        setSelectedJourneyState(journeys[0]);
+      }
+    } else {
+      // If there are no journeys, clear selected journey
+      setSelectedJourneyState(null);
+    }
+  }, [journeys]); // This effect only depends on journeys, breaking the loop
 
   const createJourney = async (name: string): Promise<Journey | null> => {
     if (!token) {
@@ -99,9 +108,9 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const newJourney: Journey = await response.json();
-      setJourneys((prev) => [...prev, newJourney]);
-      setSelectedJourneyState(newJourney); // Automatically select the new journey
       showSuccess(`Journey '${newJourney.name}' created successfully!`);
+      await fetchJourneysList(); // Re-fetch all journeys to update the list
+      setSelectedJourneyState(newJourney); // Explicitly select the newly created journey
       return newJourney;
     } catch (error: any) {
       console.error('Error creating journey:', error);
@@ -115,7 +124,7 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <JourneyContext.Provider value={{ journeys, selectedJourney, setSelectedJourney, fetchJourneys, createJourney, loadingJourneys }}>
+    <JourneyContext.Provider value={{ journeys, selectedJourney, setSelectedJourney, fetchJourneys: fetchJourneysList, createJourney, loadingJourneys }}>
       {children}
     </JourneyContext.Provider>
   );
