@@ -522,11 +522,16 @@ const Index = () => {
                       disabled={!canCreatePostUI || isUploadingMedia}
                     >
                       {isUploadingMedia ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading Media...
+                        </>
                       ) : (
-                        <Upload className="mr-2 h-4 w-4" />
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Media
+                        </>
                       )}
-                      Upload Media
                     </Button>
 
                     <Button
@@ -630,10 +635,10 @@ const Index = () => {
                 const isPostAuthor = user?.id === post.user_id;
                 const isJourneyOwner = selectedJourney?.user_id === user?.id;
                 const isAdmin = user?.isAdmin;
-                const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
+                const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post); // Use new permission
                 const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
-                const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canPublishAsCollaborator;
+                const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator; // Use new permission
                 const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
                 return (

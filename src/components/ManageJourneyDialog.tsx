@@ -205,7 +205,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
-          // Default permissions are set on the backend: can_read_posts: true, can_publish_posts: true, can_delete_posts: false
+          // Default permissions are set on the backend: can_read_posts: true, can_publish_posts: true, can_modify_post: true, can_delete_posts: false
         }),
       });
 
@@ -230,7 +230,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleUpdateCollaboratorPermissions = async (
     userId: string,
-    permissions: { can_read_posts: boolean; can_publish_posts: boolean; can_delete_posts: boolean }
+    permissions: { can_read_posts: boolean; can_publish_posts: boolean; can_modify_post: boolean; can_delete_posts: boolean }
   ) => {
     if (!token) return;
 
@@ -472,7 +472,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-2"> {/* Adjusted grid-cols */}
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id={`read-${collab.user_id}`}
@@ -503,6 +503,22 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         />
                         <Label htmlFor={`publish-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                           Can publish posts
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`modify-${collab.user_id}`} {/* New checkbox */}
+                          checked={collab.can_modify_post}
+                          onCheckedChange={(checked) =>
+                            handleUpdateCollaboratorPermissions(collab.user_id, {
+                              ...collab,
+                              can_modify_post: checked as boolean,
+                            })
+                          }
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                        />
+                        <Label htmlFor={`modify-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Can modify posts
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">

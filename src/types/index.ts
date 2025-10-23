@@ -50,6 +50,7 @@ export interface JourneyCollaborator {
   surname?: string;
   profile_image_url?: string;
   can_read_posts: boolean; // New: Can read posts in this journey
-  can_publish_posts: boolean; // Can create/edit posts in this journey
+  can_publish_posts: boolean; // Can create posts in this journey
+  can_modify_post: boolean; // New: Can modify (edit) existing posts in this journey
   can_delete_posts: boolean; // New: Can delete posts in this journey
 }

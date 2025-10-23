@@ -213,9 +213,9 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     const isPostAuthor = currentUser.id === post.user_id;
     const isJourneyOwner = currentUser.id === journeyOwnerId;
     const isAdmin = currentUser.isAdmin;
-    const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts);
+    const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post); // Use new permission
 
-    const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canPublishAsCollaborator;
+    const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator; // Use new permission
 
     if (!canEdit) {
       showError('You do not have permission to edit this post.');
@@ -256,7 +256,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   };
 
   // Permission check for disabling UI elements
-  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts));
+  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post)); // Use new permission
 
   const displayedMedia = [...currentMediaItems];
   const currentPreviewMedia = displayedMedia[currentMediaPreviewIndex];

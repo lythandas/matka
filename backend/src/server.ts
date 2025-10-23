@@ -59,7 +59,8 @@ interface JourneyCollaborator {
   surname?: string;
   profile_image_url?: string;
   can_read_posts: boolean; // New: Can read posts in this journey
-  can_publish_posts: boolean; // Can create/edit posts in this journey
+  can_publish_posts: boolean; // Can create posts in this journey
+  can_modify_post: boolean; // New: Can modify (edit) existing posts in this journey
   can_delete_posts: boolean; // New: Can delete posts in this journey
 }
 
@@ -578,6 +579,7 @@ fastify.register(async (authenticatedFastify) => {
             profile_image_url: user.profile_image_url,
             can_read_posts: jup.can_read_posts,
             can_publish_posts: jup.can_publish_posts,
+            can_modify_post: jup.can_modify_post, // Include new permission
             can_delete_posts: jup.can_delete_posts,
           } as JourneyCollaborator;
         }
@@ -631,6 +633,7 @@ fastify.register(async (authenticatedFastify) => {
       profile_image_url: targetUser.profile_image_url,
       can_read_posts: true, // Default permission
       can_publish_posts: true, // Default permission
+      can_modify_post: true, // Default permission for new collaborators
       can_delete_posts: false, // Default permission
     };
     journeyUserPermissions.push(newCollaborator);
@@ -640,9 +643,10 @@ fastify.register(async (authenticatedFastify) => {
   // Update collaborator permissions
   authenticatedFastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
-    const { can_read_posts, can_publish_posts, can_delete_posts } = request.body as {
+    const { can_read_posts, can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
       can_read_posts?: boolean;
       can_publish_posts?: boolean;
+      can_modify_post?: boolean; // Include new permission
       can_delete_posts?: boolean;
     };
 
@@ -673,6 +677,7 @@ fastify.register(async (authenticatedFastify) => {
       ...existingCollab,
       can_read_posts: can_read_posts !== undefined ? can_read_posts : existingCollab.can_read_posts,
       can_publish_posts: can_publish_posts !== undefined ? can_publish_posts : existingCollab.can_publish_posts,
+      can_modify_post: can_modify_post !== undefined ? can_modify_post : existingCollab.can_modify_post, // Update new permission
       can_delete_posts: can_delete_posts !== undefined ? can_delete_posts : existingCollab.can_delete_posts,
     };
     return journeyUserPermissions[collabIndex];
@@ -819,14 +824,14 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is author of the post, owner of the journey, or admin, or collaborator with can_publish_posts
+    // Check if user is author of the post, owner of the journey, or admin, or collaborator with can_modify_post
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin;
     const collaboratorPerms = journeyUserPermissions.find(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id);
-    const canPublish = collaboratorPerms?.can_publish_posts; // Using can_publish_posts for edit permission
+    const canModify = collaboratorPerms?.can_modify_post; // Use new can_modify_post permission
 
-    if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canPublish) {
+    if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canModify) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
     }
 
