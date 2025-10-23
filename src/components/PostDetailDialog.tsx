@@ -94,139 +94,143 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[950px] max-h-[98vh] flex flex-col">
-        <DialogHeader className="p-6 pb-0 relative">
-          <div className="flex items-center mb-2">
-            <Avatar className="h-10 w-10 mr-3">
-              {post.author_profile_image_url ? (
-                <AvatarImage src={post.author_profile_image_url} alt={displayName} />
-              ) : (
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  {getAvatarInitials(post.author_name, post.author_username)}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div>
-              <DialogTitle>{post.title || "Post details"}</DialogTitle>
-              <DialogDescription>
-                By {displayName} &bull; {format(new Date(post.created_at), 'PPP p')}
-              </DialogDescription>
+        <> {/* Start of React.Fragment */}
+          <DialogHeader className="p-6 pb-0 relative">
+            <div className="flex items-center mb-2">
+              <Avatar className="h-10 w-10 mr-3">
+                {post.author_profile_image_url ? (
+                  <AvatarImage src={post.author_profile_image_url} alt={displayName} />
+                ) : (
+                  <AvatarFallback className="bg-blue-500 text-white text-lg">
+                    {getAvatarInitials(post.author_name, post.author_username)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <DialogTitle>{post.title || "Post details"}</DialogTitle>
+                <DialogDescription>
+                  By {displayName} &bull; {format(new Date(post.created_at), 'PPP p')}
+                </DialogDescription>
+              </div>
             </div>
-          </div>
-        </DialogHeader> {/* This was the missing closing tag */}
-        
-        <TransitionGroup className="relative flex-grow overflow-hidden">
-          <CSSTransition
-            key={post.id} // Key is essential here for TransitionGroup to detect changes
-            timeout={300} // Match animation duration
-            classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
-          >
-            {/* Reverted to absolute inset-0 for independent animation, added overflow-y-auto */}
-            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* Added h-full */}
-              {mediaItems.length > 0 && (
-                <div className="relative mb-4 flex-shrink-0">
-                  {currentMedia?.type === 'image' && (
-                    <img
-                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                      src={currentMedia.urls.large || '/placeholder.svg'}
-                      alt={post.title || "Post image"}
-                      className="w-full h-auto object-contain rounded-md mx-auto" {/* Removed max-h-[60vh] */}
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg';
-                        e.currentTarget.onerror = null;
-                        console.error(`Failed to load image: ${currentMedia.urls.large}`);
-                      }}
-                    />
-                  )}
-                  {currentMedia?.type === 'video' && (
-                    <video
-                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                      src={currentMedia.url}
-                      controls
-                      className="w-full h-auto object-contain rounded-md mx-auto" {/* Removed max-h-[60vh] */}
-                    />
-                  )}
-
-                  {document.fullscreenEnabled && currentMedia && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className={cn(
-                        "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                        isMediaFullscreen ? "fixed z-[1000]" : "absolute"
+          </DialogHeader>
+          
+          {/* Main content wrapper for TransitionGroup and navigation buttons */}
+          <div className="relative flex-grow overflow-hidden">
+            <TransitionGroup className="absolute inset-0">
+              <CSSTransition
+                key={post.id} // Key is essential here for TransitionGroup to detect changes
+                timeout={300} // Match animation duration
+                classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
+              >
+                <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full">
+                  {mediaItems.length > 0 && (
+                    <div className="relative mb-4 flex-shrink-0">
+                      {currentMedia?.type === 'image' && (
+                        <img
+                          ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                          src={currentMedia.urls.large || '/placeholder.svg'}
+                          alt={post.title || "Post image"}
+                          className="w-full h-auto object-contain rounded-md mx-auto"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.svg';
+                            e.currentTarget.onerror = null;
+                            console.error(`Failed to load image: ${currentMedia.urls.large}`);
+                          }}
+                        />
                       )}
-                      onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
-                    >
-                      {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                    </Button>
-                  )}
+                      {currentMedia?.type === 'video' && (
+                        <video
+                          ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                          src={currentMedia.url}
+                          controls
+                          className="w-full h-auto object-contain rounded-md mx-auto"
+                        />
+                      )}
 
-                  {mediaItems.length > 1 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
-                        disabled={isMediaFullscreen}
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
-                        disabled={isMediaFullscreen}
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
-                        {mediaItems.map((_, idx) => (
-                          <span
-                            key={idx}
-                            className={cn(
-                              "h-2 w-2 rounded-full bg-white/50",
-                              idx === currentMediaIndex && "bg-white"
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </>
+                      {document.fullscreenEnabled && currentMedia && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className={cn(
+                            "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+                            isMediaFullscreen ? "fixed z-[1000]" : "absolute"
+                          )}
+                          onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
+                        >
+                          {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                        </Button>
+                      )}
+
+                      {mediaItems.length > 1 && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
+                            disabled={isMediaFullscreen}
+                          >
+                            <ChevronLeft className="h-5 w-5" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
+                            disabled={isMediaFullscreen}
+                          >
+                            <ChevronRight className="h-5 w-5" />
+                          </Button>
+                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+                            {mediaItems.map((_, idx) => (
+                              <span
+                                key={idx}
+                                className={cn(
+                                  "h-2 w-2 rounded-full bg-white/50",
+                                  idx === currentMediaIndex && "bg-white"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 flex-shrink-0">
+                    {post.message}
+                  </p>
+                  {post.coordinates && (
+                    <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0">
+                      <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
+                    </div>
                   )}
                 </div>
-              )}
-              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 flex-shrink-0">
-                {post.message}
-              </p>
-              {post.coordinates && (
-                <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0">
-                  <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
-                </div>
-              )}
-            </div>
-          </CSSTransition>
-        </TransitionGroup>
+              </CSSTransition>
+            </TransitionGroup>
 
-        {canGoPrevious && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-            onClick={onPrevious}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-        )}
-        {canGoNext && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-            onClick={onNext}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        )}
+            {canGoPrevious && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                onClick={onPrevious}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            )}
+            {canGoNext && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                onClick={onNext}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
+        </> {/* End of React.Fragment */}
       </DialogContent>
     </Dialog>
   );
