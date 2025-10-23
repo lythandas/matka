@@ -30,7 +30,7 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
         // If no token, clear journeys and stop loading
         setJourneys([]);
         setSelectedJourneyState(null);
-        setLoadingJourneys(false);
+        setLoadingJourgers(false);
         return;
       }
 
@@ -44,15 +44,19 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
       }
       const data: Journey[] = await response.json();
       setJourneys(data);
-      if (data.length > 0 && !selectedJourney) {
-        // Set the first journey as selected if none is selected yet
-        setSelectedJourneyState(data[0]);
-      } else if (selectedJourney) {
-        // If a journey was already selected, ensure it's still in the list
-        const currentJourneyExists = data.find(j => j.id === selectedJourney.id);
-        if (!currentJourneyExists) {
-          setSelectedJourneyState(data[0] || null); // Fallback to first or null
+
+      // Update selectedJourney with the latest data if it exists
+      if (selectedJourney) {
+        const updatedSelectedJourney = data.find(j => j.id === selectedJourney.id);
+        if (updatedSelectedJourney) {
+          setSelectedJourneyState(updatedSelectedJourney);
+        } else {
+          // If previously selected journey no longer exists, select the first one or null
+          setSelectedJourneyState(data[0] || null);
         }
+      } else if (data.length > 0) {
+        // If no journey was selected, select the first one
+        setSelectedJourneyState(data[0]);
       }
     } catch (error) {
       console.error('Error fetching journeys:', error);
