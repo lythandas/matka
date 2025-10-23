@@ -39,8 +39,8 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Sonner />
+      <Sonner />
+      <TooltipProvider> {/* Moved TooltipProvider here to wrap BrowserRouter */}
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <CreateJourneyDialogProvider>
             {isAuthenticated ? (
