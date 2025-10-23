@@ -310,7 +310,6 @@ fastify.register(async (authenticatedFastify) => {
   });
 
   // --- Admin-only User Management Routes ---
-  // These routes are now only for the initial admin user.
 
   // Get all users (Admin only)
   authenticatedFastify.get('/users', async (request: FastifyRequest, reply) => {
@@ -387,6 +386,27 @@ fastify.register(async (authenticatedFastify) => {
     const updatedUser = users[userIndex];
     const userWithoutHash: Omit<User, 'password_hash'> = { ...updatedUser };
     return userWithoutHash;
+  });
+
+  // Reset user password (Admin only)
+  authenticatedFastify.put('/users/:id/reset-password', async (request: FastifyRequest, reply) => {
+    const { id } = request.params as { id: string };
+    const { newPassword } = request.body as { newPassword?: string };
+
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can reset user passwords.' });
+    }
+    if (!newPassword) {
+      return reply.code(400).send({ message: 'New password is required' });
+    }
+
+    const userIndex = users.findIndex(u => u.id === id);
+    if (userIndex === -1) {
+      return reply.code(404).send({ message: 'User not found' });
+    }
+
+    users[userIndex].password_hash = await hashPassword(newPassword);
+    return reply.code(200).send({ message: 'Password reset successfully' });
   });
 
   // Delete a user (Admin only)
