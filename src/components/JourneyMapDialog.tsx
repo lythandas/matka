@@ -121,7 +121,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         </DialogHeader>
         <div className="flex-grow relative rounded-md overflow-hidden">
           {postsWithCoordinates.length > 0 ? (
-            <div ref={mapContainerRef} className="w-full h-full" /> {/* Removed id attribute */}
+            <div ref={mapContainerRef} className="w-full h-full" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
