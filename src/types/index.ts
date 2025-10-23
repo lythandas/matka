@@ -19,6 +19,7 @@ export interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
+  is_public: boolean; // New: Indicates if the journey is publicly viewable
 }
 
 // Define the structure for media content

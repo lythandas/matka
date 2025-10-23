@@ -48,6 +48,7 @@ interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
+  is_public: boolean; // New: Indicates if the journey is publicly viewable
 }
 
 interface JourneyCollaborator {
@@ -133,7 +134,7 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 };
 
-// --- Public Routes ---
+// --- Public Routes (No Authentication Required) ---
 
 // Root route
 fastify.get('/', async (request, reply) => {
@@ -198,6 +199,30 @@ fastify.post('/login', async (request, reply) => {
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
 });
+
+// Get a public journey by ID
+fastify.get('/public/journeys/:id', async (request, reply) => {
+  const { id } = request.params as { id: string };
+  const journey = journeys.find(j => j.id === id);
+
+  if (!journey || !journey.is_public) {
+    return reply.code(404).send({ message: 'Public journey not found or not accessible' });
+  }
+  return journey;
+});
+
+// Get posts for a public journey by ID
+fastify.get('/public/journeys/:id/posts', async (request, reply) => {
+  const { id: journeyId } = request.params as { id: string };
+  const journey = journeys.find(j => j.id === journeyId);
+
+  if (!journey || !journey.is_public) {
+    return reply.code(404).send({ message: 'Public journey not found or not accessible' });
+  }
+
+  return posts.filter(p => p.journey_id === journeyId).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+});
+
 
 // --- Authenticated Routes Plugin ---
 fastify.register(async (authenticatedFastify) => {
@@ -497,6 +522,7 @@ fastify.register(async (authenticatedFastify) => {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
+      is_public: false, // New journeys are private by default
     };
     journeys.push(newJourney);
     return newJourney;
@@ -505,7 +531,7 @@ fastify.register(async (authenticatedFastify) => {
   // Update a journey
   authenticatedFastify.put('/journeys/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { name } = request.body as { name?: string };
+    const { name, is_public } = request.body as { name?: string; is_public?: boolean };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -529,6 +555,7 @@ fastify.register(async (authenticatedFastify) => {
     journeys[journeyIndex] = {
       ...existingJourney,
       name: name || existingJourney.name,
+      is_public: is_public !== undefined ? is_public : existingJourney.is_public,
     };
     return journeys[journeyIndex];
   });

@@ -8,6 +8,7 @@ import AppLayout from "./components/AppLayout";
 import { CreateJourneyDialogProvider } from "./contexts/CreateJourneyDialogContext";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage"; // Import AdminPage
+import PublicJourneyPage from "./pages/PublicJourneyPage"; // Import PublicJourneyPage
 import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -55,9 +56,13 @@ const App = () => {
               </AppLayout>
             ) : (
               <Routes>
+                <Route path="/public-journey/:journeyId" element={<PublicJourneyPage />} /> {/* New public route */}
                 <Route path="/" element={<LoginPage />} />
                 {/* Redirect any other path to login if not authenticated */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={
+                  // If not authenticated and not on a public journey page, redirect to login
+                  window.location.pathname.startsWith('/public-journey/') ? <NotFound /> : <Navigate to="/" replace />
+                } />
               </Routes>
             )}
           </CreateJourneyDialogProvider>

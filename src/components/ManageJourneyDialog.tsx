@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, Trash2, Search } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +28,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import { Switch } from "@/components/ui/switch"; // Import Switch component
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -44,7 +45,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 }) => {
   const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
+  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public); // New state for is_public
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
+  const [isTogglingPublic, setIsTogglingPublic] = useState<boolean>(false); // New state for public toggle loading
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -57,6 +60,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<number | null>(null);
+
+  const frontendBaseUrl = window.location.origin; // Get the base URL of the frontend
+  const shareLink = `${frontendBaseUrl}/public-journey/${journey.id}`;
 
   const fetchCollaborators = useCallback(async () => {
     if (!token || !journey?.id) return;
@@ -117,6 +123,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   useEffect(() => {
     if (isOpen && journey) {
       setJourneyName(journey.name);
+      setIsPublic(journey.is_public); // Initialize isPublic state
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -179,6 +186,46 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError(error.message || 'Failed to rename journey.');
     } finally {
       setIsRenaming(false);
+    }
+  };
+
+  const handleTogglePublic = async (checked: boolean) => {
+    if (!token || !currentUser) {
+      showError('Authentication required to update a journey.');
+      return;
+    }
+
+    // Permission check: only owner or admin can change public status
+    const canTogglePublic = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canTogglePublic) {
+      showError('You do not have permission to change the public status of this journey.');
+      return;
+    }
+
+    setIsTogglingPublic(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ is_public: checked }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update public status');
+      }
+
+      setIsPublic(checked);
+      showSuccess(`Journey is now ${checked ? 'public' : 'private'}!`);
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error toggling public status:', error);
+      showError(error.message || 'Failed to update public status.');
+    } finally {
+      setIsTogglingPublic(false);
     }
   };
 
@@ -303,9 +350,16 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(shareLink)
+      .then(() => showSuccess('Share link copied to clipboard!'))
+      .catch(() => showError('Failed to copy link.'));
+  };
+
   // Permission checks for UI elements
   const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
-  const canEditJourneyName = canManageJourney; // Same permission for renaming
+  const canEditJourneyName = canManageJourney;
+  const canTogglePublicStatus = canManageJourney;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -339,7 +393,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               (Owner has full access and cannot be removed.)
             </p>
 
-            {/* Journey Name input moved here */}
+            {/* Journey Name input */}
             <div className="grid grid-cols-4 items-center gap-4 mb-4">
               <Label htmlFor="journey-name" className="text-right">
                 Journey name
@@ -365,6 +419,48 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 )}
               </Button>
             </div>
+          </div>
+
+          {/* Public Access Section */}
+          <div className="border rounded-md p-4">
+            <h3 className="text-lg font-semibold mb-2">Public access</h3>
+            <div className="flex items-center justify-between space-x-4 mb-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="public-toggle"
+                  checked={isPublic}
+                  onCheckedChange={handleTogglePublic}
+                  disabled={isTogglingPublic || !canTogglePublicStatus}
+                />
+                <Label htmlFor="public-toggle" className="text-base">
+                  Make journey public
+                </Label>
+              </div>
+              {isTogglingPublic && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+            </div>
+            {isPublic && (
+              <div className="space-y-2">
+                <Label htmlFor="share-link" className="text-sm">Shareable link:</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="share-link"
+                    value={shareLink}
+                    readOnly
+                    className="flex-grow bg-muted"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyLink}
+                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span className="sr-only">Copy link</span>
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">Anyone with this link can view your journey's posts without logging in.</p>
+              </div>
+            )}
           </div>
 
           {/* Add Collaborator Section with Autocomplete */}
@@ -545,7 +641,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isTogglingPublic} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Close
           </Button>
         </DialogFooter>
