@@ -5,6 +5,7 @@ import TopBar from './TopBar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CreateJourneyDialog from './CreateJourneyDialog';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
+import AppFooter from './AppFooter'; // Import AppFooter
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         setIsCreateJourneyDialogOpen={setIsCreateJourneyDialogOpen}
       />
       <div className="flex flex-grow">
-        <main className="flex-grow p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto w-full">
+        <main className="flex-grow w-full"> {/* Removed max-w-3xl mx-auto and padding from here */}
           {children}
         </main>
       </div>
@@ -29,6 +30,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         isOpen={isCreateJourneyDialogOpen}
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
+      <AppFooter /> {/* AppFooter moved here */}
     </div>
   );
 };

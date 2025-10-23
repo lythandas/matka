@@ -30,7 +30,7 @@ import GridPostCard from '@/components/GridPostCard';
 import EditPostDialog from '@/components/EditPostDialog';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
-import AppFooter from '@/components/AppFooter';
+// Removed AppFooter import as it's now in AppLayout
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
@@ -38,7 +38,7 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-import AppLayout from '@/components/AppLayout';
+// Removed AppLayout import as Index.tsx is now wrapped by it
 import PostCalendar from '@/components/PostCalendar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -438,391 +438,383 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <AppLayout>
-      <div className="flex flex-col lg:flex-row w-full"> {/* This div contains calendar and post feed */}
-        <div className="flex-grow max-w-3xl mx-auto w-full"> {/* Main content area for posts and form */}
-          {isAuthenticated ? (
-            selectedJourney ? (
-              <Card className="mb-8 shadow-lg shadow-neon-blue">
-                <CardHeader className="flex flex-row items-center justify-end">
-                  {/* Removed the "Manage Collaborators" button from here */}
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex flex-col lg:flex-row w-full"> {/* This div contains calendar and post feed */}
+      {!isMobile && isAuthenticated && (
+        <aside className="w-full lg:w-80 lg:flex-shrink-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto"> {/* Sticky calendar on large screens */}
+          <PostCalendar
+            posts={posts}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+          />
+        </aside>
+      )}
+      <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8"> {/* Main content area for posts and form */}
+        {isAuthenticated ? (
+          selectedJourney ? (
+            <Card className="mb-8 shadow-lg shadow-neon-blue">
+              <CardHeader className="flex flex-row items-center justify-end">
+                {/* Removed the "Manage Collaborators" button from here */}
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <Input
+                    placeholder="Add a title (optional)"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full"
+                    disabled={!canCreatePostUI}
+                  />
+                  <Textarea
+                    placeholder="What's on your mind today?"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={4}
+                    className="w-full resize-none"
+                    disabled={!canCreatePostUI}
+                  />
+
+                  {(uploadedMediaItems.length > 0 || coordinates) && (
+                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                      <h4 className="text-lg font-semibold">Content preview:</h4>
+                      {uploadedMediaItems.map((mediaItem, index) => (
+                        <div key={index} className="relative">
+                          {mediaItem.type === 'image' ? (
+                            <img
+                              src={mediaItem.urls.medium || '/placeholder.svg'}
+                              alt={`Media preview ${index + 1}`}
+                              className="w-full h-auto max-h-64 object-cover rounded-md"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg';
+                                e.currentTarget.onerror = null;
+                                console.error(`Failed to load media: ${mediaItem.urls.medium}`);
+                              }}
+                            />
+                          ) : (
+                            <video
+                              src={mediaItem.url}
+                              controls
+                              className="w-full h-auto max-h-64 object-cover rounded-md"
+                            />
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveMediaItem(index)}
+                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                      {isUploadingMedia && (
+                        <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                      )}
+                      {coordinates && (
+                        <div className="relative">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+                            Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                          </p>
+                          <MapComponent coordinates={coordinates} className="h-48" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleClearLocation}
+                            className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <XCircle className="h-5 w-5 text-red-500" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-center space-x-2">
                     <Input
-                      placeholder="Add a title (optional)"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full"
-                      disabled={!canCreatePostUI}
+                      id="media-upload"
+                      type="file"
+                      accept={SUPPORTED_MEDIA_TYPES}
+                      onChange={handleMediaFileChange}
+                      ref={mediaFileInputRef}
+                      className="hidden"
+                      multiple
+                      disabled={!canCreatePostUI || isUploadingMedia}
                     />
-                    <Textarea
-                      placeholder="What's on your mind today?"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={4}
-                      className="w-full resize-none"
-                      disabled={!canCreatePostUI}
-                    />
-
-                    {(uploadedMediaItems.length > 0 || coordinates) && (
-                      <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                        <h4 className="text-lg font-semibold">Content preview:</h4>
-                        {uploadedMediaItems.map((mediaItem, index) => (
-                          <div key={index} className="relative">
-                            {mediaItem.type === 'image' ? (
-                              <img
-                                src={mediaItem.urls.medium || '/placeholder.svg'}
-                                alt={`Media preview ${index + 1}`}
-                                className="w-full h-auto max-h-64 object-cover rounded-md"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/placeholder.svg';
-                                  e.currentTarget.onerror = null;
-                                  console.error(`Failed to load media: ${mediaItem.urls.medium}`);
-                                }}
-                              />
-                            ) : (
-                              <video
-                                src={mediaItem.url}
-                                controls
-                                className="w-full h-auto max-h-64 object-cover rounded-md"
-                              />
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveMediaItem(index)}
-                              className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            >
-                              <XCircle className="h-5 w-5 text-red-500" />
-                            </Button>
-                          </div>
-                        ))}
-                        {isUploadingMedia && (
-                          <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
-                        )}
-                        {coordinates && (
-                          <div className="relative">
-                            <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
-                              Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
-                            </p>
-                            <MapComponent coordinates={coordinates} className="h-48" />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={handleClearLocation}
-                              className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            >
-                              <XCircle className="h-5 w-5 text-red-500" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex justify-center space-x-2">
-                      <Input
-                        id="media-upload"
-                        type="file"
-                        accept={SUPPORTED_MEDIA_TYPES}
-                        onChange={handleMediaFileChange}
-                        ref={mediaFileInputRef}
-                        className="hidden"
-                        multiple
-                        disabled={!canCreatePostUI || isUploadingMedia}
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => mediaFileInputRef.current?.click()}
-                        variant="outline"
-                        className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        disabled={!canCreatePostUI || isUploadingMedia}
-                      >
-                        {isUploadingMedia ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Uploading Media...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            Upload Media
-                          </>
-                        )}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleGetLocation}
-                        className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
-                      >
-                        {locationLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Getting location...
-                          </>
-                        ) : (
-                          <>
-                            <LocateFixed className="mr-2 h-4 w-4" /> Get Location
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setLocationSelectionMode('search');
-                          setCoordinates(null);
-                        }}
-                        className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        disabled={!canCreatePostUI || isUploadingMedia}
-                      >
-                        <Search className="mr-2 h-4 w-4" /> Search Location
-                      </Button>
-                    </div>
-
-                    {locationSelectionMode === 'search' && !coordinates && (
-                      <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                        <LocationSearch
-                          onSelectLocation={setCoordinates}
-                          currentCoordinates={coordinates}
-                          disabled={!canCreatePostUI || isUploadingMedia}
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex justify-center">
-                      <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
-                        Post
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            ) : (
-              !loadingJourneys && journeys.length === 0 && (
-                <div className="text-center py-12">
-                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                    You don't have any journeys yet!
-                  </p>
-                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
-                    Start by creating your first journey.
-                  </p>
-                  {canCreateJourneyUI && (
                     <Button
-                      onClick={() => setIsCreateJourneyDialogOpen(true)}
-                      className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+                      type="button"
+                      onClick={() => mediaFileInputRef.current?.click()}
+                      variant="outline"
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePostUI || isUploadingMedia}
                     >
-                      <Plus className="mr-2 h-4 w-4" /> Create new journey
+                      {isUploadingMedia ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading Media...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Media
+                        </>
+                      )}
                     </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGetLocation}
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
+                    >
+                      {locationLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Getting location...
+                        </>
+                      ) : (
+                        <>
+                          <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setLocationSelectionMode('search');
+                        setCoordinates(null);
+                      }}
+                      className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      disabled={!canCreatePostUI || isUploadingMedia}
+                    >
+                      <Search className="mr-2 h-4 w-4" /> Search Location
+                    </Button>
+                  </div>
+
+                  {locationSelectionMode === 'search' && !coordinates && (
+                    <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                      <LocationSearch
+                        onSelectLocation={setCoordinates}
+                        currentCoordinates={coordinates}
+                        disabled={!canCreatePostUI || isUploadingMedia}
+                      />
+                    </div>
                   )}
-                </div>
-              )
+
+                  <div className="flex justify-center">
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
+                      Post
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            !loadingJourneys && journeys.length === 0 && (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  You don't have any journeys yet!
+                </p>
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
+                  Start by creating your first journey.
+                </p>
+                {canCreateJourneyUI && (
+                  <Button
+                    onClick={() => setIsCreateJourneyDialogOpen(true)}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Create new journey
+                  </Button>
+                )}
+              </div>
             )
-          ) : null}
+          )
+        ) : null}
 
-          {filteredPosts.length > 0 && (
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            </div>
-          )}
-
-          {/* New flex container for calendar and post feed, starting after the create post card and view toggle */}
-          <div className="flex flex-col lg:flex-row lg:space-x-8">
-            {!isMobile && isAuthenticated && (
-              <aside className="w-full lg:w-80 lg:flex-shrink-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto">
-                <PostCalendar
-                  posts={posts}
-                  selectedDate={selectedDate}
-                  onDateSelect={setSelectedDate}
-                />
-              </aside>
-            )}
-            <div className="flex-grow"> {/* This will contain the actual post list/grid/map */}
-              {loadingPosts ? (
-                <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
-              ) : filteredPosts.length === 0 && selectedJourney ? (
-                <div className="text-center py-12">
-                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                    {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
-                  </p>
-                  {!selectedDate && isAuthenticated && canCreatePostUI && (
-                    <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                      Use the "Share your day" section above to begin.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                viewMode === 'list' ? (
-                  <div className="space-y-6">
-                    {filteredPosts.map((post, index) => {
-                      // Permission checks for individual post actions
-                      const isPostAuthor = user?.id === post.user_id;
-                      const isJourneyOwner = selectedJourney?.user_id === user?.id;
-                      const isAdmin = user?.isAdmin;
-                      const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
-                      const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
-
-                      const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
-                      const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
-
-                      return (
-                        <ShineCard
-                          key={post.id}
-                          className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                          onClick={() => handlePostClick(post, index)}
-                        >
-                          <CardContent className="p-6">
-                            <div className="flex items-center mb-4">
-                              {post.author_profile_image_url ? (
-                                <img
-                                  src={post.author_profile_image_url}
-                                  alt={post.author_name || post.author_username}
-                                  className="w-10 h-10 rounded-full object-cover mr-3"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                                  {getAvatarInitials(post.author_name, post.author_username)}
-                                </div>
-                              )}
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                  {post.author_name || post.author_username}
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {format(new Date(post.created_at), 'PPP p')}
-                                </p>
-                              </div>
-                            </div>
-                            {post.title && (
-                              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                            )}
-                            {post.media_items && post.media_items.length > 0 && (
-                              <div className={
-                                post.media_items.length === 1
-                                  ? "mb-4"
-                                  : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                              }>
-                                {post.media_items.map((mediaItem, mediaIndex) => (
-                                  <div key={mediaIndex} className="relative">
-                                    {mediaItem.type === 'image' && mediaItem.urls.large && (
-                                      <img
-                                        src={mediaItem.urls.large}
-                                        alt={`Post image ${mediaIndex + 1}`}
-                                        className="w-full h-auto max-h-96 object-cover rounded-md"
-                                        onError={(e) => {
-                                          e.currentTarget.src = '/placeholder.svg';
-                                          e.currentTarget.onerror = null;
-                                          console.error(`Failed to load image: ${mediaItem.urls.large}`);
-                                        }}
-                                      />
-                                    )}
-                                    {mediaItem.type === 'video' && mediaItem.url && (
-                                      <video
-                                        src={mediaItem.url}
-                                        controls
-                                        className="w-full h-auto max-h-96 object-cover rounded-md"
-                                      />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex justify-between items-start mb-2">
-                              <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                              <div className="flex space-x-2">
-                                {isAuthenticated && selectedJourney && canEditPost && (
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {isAuthenticated && selectedJourney && canDeletePost && (
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <AlertDialog key={`delete-dialog-${post.id}`}>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete your post
-                                            and remove its data from our servers.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                            Continue
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {post.coordinates && (
-                              <div className="mt-4">
-                                <MapComponent coordinates={post.coordinates} />
-                              </div>
-                            )}
-                          </CardContent>
-                        </ShineCard>
-                      );
-                    })}
-                  </div>
-                ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredPosts.map((post, index) => (
-                      <GridPostCard
-                        key={post.id}
-                        post={post}
-                        onClick={() => handlePostClick(post, index)}
-                      />
-                    ))}
-                  </div>
-                ) : ( // viewMode === 'map'
-                  hasPostsWithCoordinates ? (
-                    <div className="w-full h-[70vh] rounded-md overflow-hidden">
-                      <MapComponent
-                        posts={filteredPosts} // Pass filtered posts to map
-                        onMarkerClick={handleSelectPostFromMap}
-                        className="w-full h-full"
-                        zoom={7} // Default zoom for map view
-                      />
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                      <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                        No posts with location data to display on the map.
-                      </p>
-                      <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                        Add posts with location information to see them here!
-                      </p>
-                    </div>
-                  )
-                )
-              )}
-            </div>
+        {filteredPosts.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           </div>
-        </div>
+        )}
+
+        {loadingPosts ? (
+          <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
+        ) : filteredPosts.length === 0 && selectedJourney ? (
+          <div className="text-center py-12">
+            <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+            <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+              {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
+            </p>
+            {!selectedDate && isAuthenticated && canCreatePostUI && (
+              <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                Use the "Share your day" section above to begin.
+              </p>
+            )}
+          </div>
+        ) : (
+          viewMode === 'list' ? (
+            <div className="space-y-6">
+              {filteredPosts.map((post, index) => {
+                // Permission checks for individual post actions
+                const isPostAuthor = user?.id === post.user_id;
+                const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                const isAdmin = user?.isAdmin;
+                const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+                const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+
+                return (
+                  <ShineCard
+                    key={post.id}
+                    className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                    onClick={() => handlePostClick(post, index)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center mb-4">
+                        {post.author_profile_image_url ? (
+                          <img
+                            src={post.author_profile_image_url}
+                            alt={post.author_name || post.author_username}
+                            className="w-10 h-10 rounded-full object-cover mr-3"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                            {getAvatarInitials(post.author_name, post.author_username)}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">
+                            {post.author_name || post.author_username}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {format(new Date(post.created_at), 'PPP p')}
+                          </p>
+                        </div>
+                      </div>
+                      {post.title && (
+                        <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                      )}
+                      {post.media_items && post.media_items.length > 0 && (
+                        <div className={
+                          post.media_items.length === 1
+                            ? "mb-4"
+                            : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                        }>
+                          {post.media_items.map((mediaItem, mediaIndex) => (
+                            <div key={mediaIndex} className="relative">
+                              {mediaItem.type === 'image' && mediaItem.urls.large && (
+                                <img
+                                  src={mediaItem.urls.large}
+                                  alt={`Post image ${mediaIndex + 1}`}
+                                  className="w-full h-auto max-h-96 object-cover rounded-md"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder.svg';
+                                    e.currentTarget.onerror = null;
+                                    console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                  }}
+                                />
+                              )}
+                              {mediaItem.type === 'video' && mediaItem.url && (
+                                <video
+                                  src={mediaItem.url}
+                                  controls
+                                  className="w-full h-auto max-h-96 object-cover rounded-md"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                        <div className="flex space-x-2">
+                          {isAuthenticated && selectedJourney && canEditPost && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {isAuthenticated && selectedJourney && canDeletePost && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <AlertDialog key={`delete-dialog-${post.id}`}>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete your post
+                                      and remove its data from our servers.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                      Continue
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {post.coordinates && (
+                        <div className="mt-4">
+                          <MapComponent coordinates={post.coordinates} />
+                        </div>
+                      )}
+                    </CardContent>
+                  </ShineCard>
+                );
+              })}
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPosts.map((post, index) => (
+                <GridPostCard
+                  key={post.id}
+                  post={post}
+                  onClick={() => handlePostClick(post, index)}
+                />
+              ))}
+            </div>
+          ) : ( // viewMode === 'map'
+            hasPostsWithCoordinates ? (
+              <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                <MapComponent
+                  posts={filteredPosts} // Pass filtered posts to map
+                  onMarkerClick={handleSelectPostFromMap}
+                  className="w-full h-full"
+                  zoom={7} // Default zoom for map view
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  No posts with location data to display on the map.
+                </p>
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  Add posts with location information to see them here!
+                </p>
+              </div>
+            )
+          )
+        )}
       </div>
-      <AppFooter /> {/* Moved AppFooter outside the flex container */}
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
@@ -860,7 +852,7 @@ const Index = () => {
           }}
         />
       )}
-    </AppLayout>
+    </div>
   );
 };
 
