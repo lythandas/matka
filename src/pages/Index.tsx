@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from 'react'; // Changed import statement
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // Reverted import statement
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,35 +48,35 @@ const Index = () => {
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const isMobile = useIsMobile();
 
-  const [title, setTitle] = React.useState<string>(''); // Changed to React.useState
-  const [message, setMessage] = React.useState<string>(''); // Changed to React.useState
-  const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]); // Changed to React.useState
-  const [uploadedMediaItems, setUploadedMediaItems] = React.useState<MediaInfo[]>([]); // Changed to React.useState
-  const [isUploadingMedia, setIsUploadingMedia] = React.useState<boolean>(false); // Changed to React.useState
-  const [coordinates, setCoordinates] = React.useState<{ lat: number; lng: number } | null>(null); // Changed to React.useState
-  const [posts, setPosts] = React.useState<Post[]>([]); // Changed to React.useState
-  const [loadingPosts, setLoadingPosts] = React.useState<boolean>(true); // Changed to React.useState
-  const [backendConnected, setBackendConnected] = React.useState<boolean>(false); // Changed to React.useState
-  const [viewMode, setViewMode] = React.useState<'list' | 'grid' | 'map'>('list'); // Changed to React.useState
+  const [title, setTitle] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadedMediaItems, setUploadedMediaItems] = useState<MediaInfo[]>([]);
+  const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
+  const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
 
-  const [selectedPostForDetail, setSelectedPostForDetail] = React.useState<Post | null>(null); // Changed to React.useState
-  const [selectedPostIndex, setSelectedPostIndex] = React.useState<number | null>(null); // Changed to React.useState
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = React.useState<boolean>(false); // Changed to React.useState
+  const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
+  const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = React.useState<boolean>(false); // Changed to React.useState
-  const [postToEdit, setPostToEdit] = React.useState<Post | null>(null); // Changed to React.useState
+  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
+  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
-  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = React.useState<boolean>(false); // Changed to React.useState
-  const [journeyCollaborators, setJourneyCollaborators] = React.useState<JourneyCollaborator[]>([]); // Changed to React.useState
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
+  const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
 
-  const [locationSelectionMode, setLocationSelectionMode] = React.useState<'none' | 'current' | 'search'>('none'); // Changed to React.useState
-  const [locationLoading, setLoadingLocation] = React.useState<boolean>(false); // Changed to React.useState
-  const mediaFileInputRef = React.useRef<HTMLInputElement>(null); // Changed to React.useRef
+  const [locationSelectionMode, setLocationSelectionMode] = useState<'none' | 'current' | 'search'>('none');
+  const [locationLoading, setLoadingLocation] = useState<boolean>(false);
+  const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [postDate, setPostDate] = React.useState<Date | undefined>(new Date()); // Changed to React.useState
-  const [sortOrder, setSortOrder] = React.useState<'desc' | 'asc'>('desc'); // Changed to React.useState
+  const [postDate, setPostDate] = useState<Date | undefined>(new Date());
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
-  React.useEffect(() => { // Changed to React.useEffect
+  useEffect(() => {
     const checkBackendStatus = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/`);
@@ -91,7 +91,7 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchJourneyCollaborators = React.useCallback(async (journeyId: string) => { // Changed to React.useCallback
+  const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
       setJourneyCollaborators([]);
       return;
@@ -138,7 +138,7 @@ const Index = () => {
     }
   };
 
-  React.useEffect(() => { // Changed to React.useEffect
+  useEffect(() => {
     if (selectedJourney) {
       fetchPosts(selectedJourney.id);
       fetchJourneyCollaborators(selectedJourney.id);
@@ -176,7 +176,7 @@ const Index = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: React.JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }), // Changed to React.JSON.stringify
+          body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
         });
 
         if (!response.ok) {
@@ -199,9 +199,9 @@ const Index = () => {
     }
   };
 
-  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => { // Changed to React.ChangeEvent
+  const handleMediaFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      const files = React.Array.from(event.target.files); // Changed to React.Array.from
+      const files = Array.from(event.target.files);
       const validFiles: File[] = [];
 
       for (const file of files) {
@@ -234,14 +234,14 @@ const Index = () => {
   };
 
   const handleGetLocation = () => {
-    if (!React.navigator.geolocation) { // Changed to React.navigator
+    if (!navigator.geolocation) {
       showError('Geolocation is not supported by your browser.');
       return;
     }
 
     setLoadingLocation(true);
     setLocationSelectionMode('current');
-    React.navigator.geolocation.getCurrentPosition( // Changed to React.navigator
+    navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
@@ -277,7 +277,7 @@ const Index = () => {
     showSuccess('Location cleared.');
   };
 
-  const handleSubmit = async (event: React.FormEvent) => { // Changed to React.FormEvent
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!isAuthenticated) {
@@ -319,7 +319,7 @@ const Index = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: React.JSON.stringify({ // Changed to React.JSON.stringify
+        body: JSON.stringify({
           journeyId: selectedJourney.id,
           title: title.trim() || undefined,
           message: message.trim(),

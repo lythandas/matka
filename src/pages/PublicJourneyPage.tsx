@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from 'react'; // Changed import statement
+import React, { useState, useEffect, useCallback } from 'react'; // Reverted import statement
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Compass } from 'lucide-react';
@@ -36,7 +36,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const fetchJourney = React.useCallback(async () => { // Changed to React.useCallback
+  const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
       setError('Journey owner username or journey name is missing from the URL.');
       setLoadingJourney(false);
@@ -63,7 +63,7 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, [ownerUsername, journeyName]);
 
-  const fetchPosts = React.useCallback(async (id: string) => { // Changed to React.useCallback
+  const fetchPosts = useCallback(async (id: string) => {
     if (!id) {
       setLoadingPosts(false);
       return;
@@ -87,7 +87,7 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, []);
 
-  React.useEffect(() => { // Changed to React.useEffect
+  useEffect(() => {
     const loadJourneyAndPosts = async () => {
       const id = await fetchJourney();
       if (id) {
@@ -193,12 +193,12 @@ const PublicJourneyPage: React.FC = () => {
           </Card>
 
           {posts.length > 0 && (
-            <div className="relative flex items-center justify-center mb-6 h-10"> {/* Added h-10 for consistent height */}
-              <div className="absolute left-0"> {/* Left-aligned SortToggle */}
+            <div className="relative flex items-center justify-center mb-6 h-10">
+              <div className="absolute left-0">
                 <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
               </div>
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> {/* Truly centered ViewToggle */}
-              <div className="absolute right-0"> {/* Right-aligned ThemeToggle */}
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <div className="absolute right-0">
                 <ThemeToggle />
               </div>
             </div>
