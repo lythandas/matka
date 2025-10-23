@@ -447,13 +447,21 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  placeholder="Add a title (optional)"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full"
-                  disabled={!canCreatePostUI}
-                />
+                <div className="flex flex-col sm:flex-row gap-2 mb-4"> {/* Flex container for title and date picker */}
+                  <Input
+                    placeholder="Add a title (optional)"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="flex-grow"
+                    disabled={!canCreatePostUI}
+                  />
+                  <PostDatePicker
+                    selectedDate={postDate}
+                    onDateSelect={setPostDate}
+                    disabled={!canCreatePostUI || isUploadingMedia}
+                    className="w-full sm:w-auto" // Adjust width for responsiveness
+                  />
+                </div>
                 <Textarea
                   placeholder="What's on your mind today?"
                   value={message}
@@ -581,12 +589,6 @@ const Index = () => {
                   >
                     <Search className="mr-2 h-4 w-4" /> Search Location
                   </Button>
-                  <PostDatePicker
-                    selectedDate={postDate}
-                    onDateSelect={setPostDate}
-                    disabled={!canCreatePostUI || isUploadingMedia}
-                    className="flex-grow sm:flex-grow-0"
-                  />
                 </div>
 
                 {locationSelectionMode === 'search' && !coordinates && (
