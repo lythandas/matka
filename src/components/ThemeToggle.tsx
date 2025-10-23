@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button"; // Import Button component
-import { Sun, Moon, Monitor } from "lucide-react"; // Import icons
+import { Button } from "@/components/ui/button";
+import { Sun, Moon, Monitor } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 
 interface ThemeToggleProps extends React.ComponentPropsWithoutRef<typeof Button> {}
 
@@ -33,16 +34,23 @@ export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
   }, [theme]);
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={cycleTheme}
-      className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-      aria-label={tooltipText}
-      {...props}
-    >
-      <Icon className="h-5 w-5" />
-      <span className="sr-only">{tooltipText}</span>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline" {/* Changed from 'ghost' to 'outline' */}
+          size="icon"
+          onClick={cycleTheme}
+          className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          aria-label={tooltipText}
+          {...props}
+        >
+          <Icon className="h-5 w-5" />
+          <span className="sr-only">{tooltipText}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
