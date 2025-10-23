@@ -192,17 +192,12 @@ const PublicJourneyPage: React.FC = () => {
         </Card>
 
         {posts.length > 0 && (
-          <div className="flex items-center justify-between mb-6">
-            {/* Left section: SortToggle, centered within its flex-1 space */}
-            <div className="flex-1 flex justify-center">
+          <div className="relative flex items-center justify-center mb-6 h-10"> {/* Added h-10 for consistent height */}
+            <div className="absolute left-0"> {/* Left-aligned SortToggle */}
               <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
             </div>
-            {/* Center section: ViewToggle, truly centered */}
-            <div className="flex-1 flex justify-center">
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            </div>
-            {/* Right section: ThemeToggle, aligned to the right within its flex-1 space */}
-            <div className="flex-1 flex justify-center">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> {/* Truly centered ViewToggle */}
+            <div className="absolute right-0"> {/* Right-aligned ThemeToggle */}
               <ThemeToggle />
             </div>
           </div>
