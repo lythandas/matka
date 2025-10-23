@@ -850,6 +850,8 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
     }
 
+    fastify.log.info(`Backend: Received created_at from frontend: ${created_at}`); // LOGGING
+
     const newPost: Post = {
       id: uuidv4(),
       journey_id: journeyId,
@@ -864,6 +866,7 @@ fastify.register(async (authenticatedFastify) => {
       coordinates: coordinates || undefined,
       created_at: created_at || new Date().toISOString(), // Use provided created_at or default
     };
+    fastify.log.info(`Backend: Storing post with created_at: ${newPost.created_at}`); // LOGGING
     posts.unshift(newPost); // Add to the beginning for newest first
     return newPost;
   });

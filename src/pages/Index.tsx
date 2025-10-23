@@ -309,6 +309,8 @@ const Index = () => {
       return;
     }
 
+    console.log('Frontend: Sending post with created_at:', postDate?.toISOString()); // LOGGING
+
     try {
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
@@ -674,6 +676,8 @@ const Index = () => {
 
               const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
               const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+
+              console.log(`Frontend: Displayed post ID: ${post.id}, Created At: ${post.created_at}`); // LOGGING
 
               return (
                 <ShineCard
