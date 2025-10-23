@@ -39,14 +39,14 @@ import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
 import AppLayout from '@/components/AppLayout';
-import PostCalendar from '@/components/PostCalendar'; // Import PostCalendar
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import PostCalendar from '@/components/PostCalendar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
-  const isMobile = useIsMobile(); // Use the hook
+  const isMobile = useIsMobile();
 
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -438,8 +438,8 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <AppLayout>
-      <div className="flex flex-col lg:flex-row min-h-screen w-full"> {/* Use flex-row on large screens */}
+    <> {/* Use a fragment to avoid extra div, AppLayout already provides the main wrapper */}
+      <div className="flex flex-col lg:flex-row w-full"> {/* This div contains calendar and post feed */}
         {!isMobile && isAuthenticated && (
           <aside className="w-full lg:w-80 p-4 lg:pr-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto"> {/* Sticky calendar on large screens */}
             <PostCalendar
@@ -449,7 +449,7 @@ const Index = () => {
             />
           </aside>
         )}
-        <div className="flex-grow p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto w-full"> {/* Main content area */}
+        <div className="flex-grow max-w-3xl mx-auto w-full"> {/* Main content area */}
           {isAuthenticated ? (
             selectedJourney ? (
               <Card className="mb-8 shadow-lg shadow-neon-blue">
@@ -816,46 +816,46 @@ const Index = () => {
             )
           )}
         </div>
-        <AppFooter />
-
-        {selectedPostForDetail && isDetailDialogOpen && (
-          <PostDetailDialog
-            key={selectedPostForDetail.id}
-            post={selectedPostForDetail}
-            isOpen={isDetailDialogOpen}
-            onClose={handleCloseDetailDialog}
-            currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
-            totalPosts={posts.length}
-            onNext={handleNextPost}
-            onPrevious={handlePreviousPost}
-          />
-        )}
-
-        {postToEdit && selectedJourney && (
-          <EditPostDialog
-            isOpen={isEditPostDialogOpen}
-            onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
-            post={postToEdit}
-            onUpdate={handlePostUpdated}
-            journeyOwnerId={selectedJourney.user_id}
-            journeyCollaborators={journeyCollaborators}
-          />
-        )}
-
-        {selectedJourney && (
-          <ManageJourneyDialog
-            isOpen={isManageJourneyDialogOpen}
-            onClose={() => setIsManageJourneyDialogOpen(false)}
-            journey={selectedJourney}
-            onJourneyUpdated={() => {
-              fetchJourneys();
-              fetchJourneyCollaborators(selectedJourney.id);
-              fetchPosts(selectedJourney.id);
-            }}
-          />
-        )}
       </div>
-    </AppLayout>
+      <AppFooter /> {/* Moved AppFooter outside the flex container */}
+
+      {selectedPostForDetail && isDetailDialogOpen && (
+        <PostDetailDialog
+          key={selectedPostForDetail.id}
+          post={selectedPostForDetail}
+          isOpen={isDetailDialogOpen}
+          onClose={handleCloseDetailDialog}
+          currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
+          totalPosts={posts.length}
+          onNext={handleNextPost}
+          onPrevious={handlePreviousPost}
+        />
+      )}
+
+      {postToEdit && selectedJourney && (
+        <EditPostDialog
+          isOpen={isEditPostDialogOpen}
+          onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
+          post={postToEdit}
+          onUpdate={handlePostUpdated}
+          journeyOwnerId={selectedJourney.user_id}
+          journeyCollaborators={journeyCollaborators}
+        />
+      )}
+
+      {selectedJourney && (
+        <ManageJourneyDialog
+          isOpen={isManageJourneyDialogOpen}
+          onClose={() => setIsManageJourneyDialogOpen(false)}
+          journey={selectedJourney}
+          onJourneyUpdated={() => {
+            fetchJourneys();
+            fetchJourneyCollaborators(selectedJourney.id);
+            fetchPosts(selectedJourney.id);
+          }}
+        />
+      )}
+    </>
   );
 };
 
