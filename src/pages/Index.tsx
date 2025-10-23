@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'; // Reverted import statement
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -447,7 +447,7 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <>
+    <React.Fragment>
       <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         {isAuthenticated ? (
           selectedJourney ? (
@@ -866,7 +866,7 @@ const Index = () => {
           }}
         />
       )}
-    </>
+    </React.Fragment>
   );
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react'; // Reverted import statement
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Compass } from 'lucide-react';
@@ -40,7 +40,7 @@ const PublicJourneyPage: React.FC = () => {
     if (!ownerUsername || !journeyName) {
       setError('Journey owner username or journey name is missing from the URL.');
       setLoadingJourney(false);
-      return null; // Return null to indicate failure
+      return null;
     }
     setLoadingJourney(true);
     try {
@@ -174,7 +174,7 @@ const PublicJourneyPage: React.FC = () => {
   }
 
   return (
-    <>
+    <React.Fragment>
       <div className="min-h-screen flex flex-col w-full bg-gray-50 dark:bg-gray-900">
         <div className="max-w-3xl mx-auto flex-grow w-full p-4 sm:p-6 lg:p-8">
           <Card className="mb-8 shadow-lg shadow-neon-blue">
@@ -341,7 +341,7 @@ const PublicJourneyPage: React.FC = () => {
           />
         )}
       </div>
-    </>
+    </React.Fragment>
   );
 };
 
