@@ -85,32 +85,10 @@ export default {
             height: "0",
           },
         },
-        // Define keyframes for sliding animations with opacity
-        slideInFromRight: {
-          from: { transform: "translateX(100%)", opacity: "0" },
-          to: { transform: "translateX(0)", opacity: "1" },
-        },
-        slideOutToLeft: {
-          from: { transform: "translateX(0)", opacity: "1" },
-          to: { transform: "translateX(-100%)", opacity: "0" },
-        },
-        slideInFromLeft: {
-          from: { transform: "translateX(-100%)", opacity: "0" },
-          to: { transform: "translateX(0)", opacity: "1" },
-        },
-        slideOutToRight: {
-          from: { transform: "translateX(0)", opacity: "1" },
-          to: { transform: "translateX(100%)", opacity: "0" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        // Map keyframes to CSSTransition's expected class names
-        "slide-next-enter-active": "slideInFromRight 0.3s ease-out forwards",
-        "slide-next-exit-active": "slideOutToLeft 0.3s ease-out forwards",
-        "slide-prev-enter-active": "slideInFromLeft 0.3s ease-out forwards",
-        "slide-prev-exit-active": "slideOutToRight 0.3s ease-out forwards",
       },
       boxShadow: {
         'neon-blue': '0 0 5px theme("colors.blue.400"), 0 0 15px theme("colors.blue.500"), 0 0 30px theme("colors.blue.600")',

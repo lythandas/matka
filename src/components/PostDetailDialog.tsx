@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interface
-// Removed: import { CSSTransition, TransitionGroup } from 'react-transition-group'; // Import TransitionGroup and CSSTransition
 
 interface PostDetailDialogProps {
   post: Post;
@@ -35,10 +34,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
   const [isMediaFullscreen, setIsMediaFullscreen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0); // For cycling through multiple media items
-
-  // State to manage transition direction - no longer needed without CSSTransition
-  // const prevPostIndexRef = useRef(currentIndex);
-  // const [transitionClassPrefix, setTransitionClassPrefix] = useState<string | null>(null);
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
@@ -80,19 +75,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     setCurrentMediaIndex(0); // Reset media index when post changes
   }, [post]);
 
-  // Effect to determine transition direction - no longer needed without CSSTransition
-  // useEffect(() => {
-  //   if (currentIndex > prevPostIndexRef.current) {
-  //     setTransitionClassPrefix('slide-next');
-  //   } else if (currentIndex < prevPostIndexRef.current) {
-  //     setTransitionClassPrefix('slide-prev');
-  //   } else {
-  //     setTransitionClassPrefix(null); // No transition if same post or initial render
-  //   }
-  //   prevPostIndexRef.current = currentIndex;
-  // }, [currentIndex]);
-
-
   const displayName = post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
@@ -129,7 +111,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           
           {/* Main content wrapper for TransitionGroup and navigation buttons */}
           <div className="relative flex-grow overflow-hidden flex"> {/* Added flex here */}
-            {/* Removed TransitionGroup and CSSTransition for debugging */}
             <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* Changed from absolute inset-0 to flex-grow */}
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0">
