@@ -30,7 +30,6 @@ import GridPostCard from '@/components/GridPostCard';
 import EditPostDialog from '@/components/EditPostDialog';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
-// Removed AppFooter import as it's now in AppLayout
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
@@ -38,7 +37,6 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-// Removed AppLayout import as Index.tsx is now wrapped by it
 import PostCalendar from '@/components/PostCalendar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -438,17 +436,9 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <div className="flex flex-col lg:flex-row w-full"> {/* This div contains calendar and post feed */}
-      {!isMobile && isAuthenticated && (
-        <aside className="w-full lg:w-80 lg:flex-shrink-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto"> {/* Sticky calendar on large screens */}
-          <PostCalendar
-            posts={posts}
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-          />
-        </aside>
-      )}
-      <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8"> {/* Main content area for posts and form */}
+    <>
+      {/* This is the "create post" card and view toggle, which should always be full width and centered */}
+      <div className="max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         {isAuthenticated ? (
           selectedJourney ? (
             <Card className="mb-8 shadow-lg shadow-neon-blue">
@@ -639,181 +629,195 @@ const Index = () => {
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           </div>
         )}
+      </div>
 
-        {loadingPosts ? (
-          <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
-        ) : filteredPosts.length === 0 && selectedJourney ? (
-          <div className="text-center py-12">
-            <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-              {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
-            </p>
-            {!selectedDate && isAuthenticated && canCreatePostUI && (
-              <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                Use the "Share your day" section above to begin.
+      {/* This is the container for the calendar and the actual post feed */}
+      <div className="flex flex-col lg:flex-row w-full">
+        {!isMobile && isAuthenticated && (
+          <aside className="w-full lg:w-80 lg:flex-shrink-0 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto p-4 lg:pr-0">
+            <PostCalendar
+              posts={posts}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+            />
+          </aside>
+        )}
+        <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8"> {/* This will contain the actual post list/grid/map */}
+          {loadingPosts ? (
+            <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
+          ) : filteredPosts.length === 0 && selectedJourney ? (
+            <div className="text-center py-12">
+              <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+              <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                {selectedDate ? `No posts found for ${selectedDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
               </p>
-            )}
-          </div>
-        ) : (
-          viewMode === 'list' ? (
-            <div className="space-y-6">
-              {filteredPosts.map((post, index) => {
-                // Permission checks for individual post actions
-                const isPostAuthor = user?.id === post.user_id;
-                const isJourneyOwner = selectedJourney?.user_id === user?.id;
-                const isAdmin = user?.isAdmin;
-                const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
-                const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+              {!selectedDate && isAuthenticated && canCreatePostUI && (
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  Use the "Share your day" section above to begin.
+                </p>
+              )}
+            </div>
+          ) : (
+            viewMode === 'list' ? (
+              <div className="space-y-6">
+                {filteredPosts.map((post, index) => {
+                  // Permission checks for individual post actions
+                  const isPostAuthor = user?.id === post.user_id;
+                  const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                  const isAdmin = user?.isAdmin;
+                  const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                  const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
-                const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
-                const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+                  const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                  const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
-                return (
-                  <ShineCard
-                    key={post.id}
-                    className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                    onClick={() => handlePostClick(post, index)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-center mb-4">
-                        {post.author_profile_image_url ? (
-                          <img
-                            src={post.author_profile_image_url}
-                            alt={post.author_name || post.author_username}
-                            className="w-10 h-10 rounded-full object-cover mr-3"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                            {getAvatarInitials(post.author_name, post.author_username)}
+                  return (
+                    <ShineCard
+                      key={post.id}
+                      className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                      onClick={() => handlePostClick(post, index)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-center mb-4">
+                          {post.author_profile_image_url ? (
+                            <img
+                              src={post.author_profile_image_url}
+                              alt={post.author_name || post.author_username}
+                              className="w-10 h-10 rounded-full object-cover mr-3"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                              {getAvatarInitials(post.author_name, post.author_username)}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              {post.author_name || post.author_username}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {format(new Date(post.created_at), 'PPP p')}
+                            </p>
+                          </div>
+                        </div>
+                        {post.title && (
+                          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                        )}
+                        {post.media_items && post.media_items.length > 0 && (
+                          <div className={
+                            post.media_items.length === 1
+                              ? "mb-4"
+                              : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                          }>
+                            {post.media_items.map((mediaItem, mediaIndex) => (
+                              <div key={mediaIndex} className="relative">
+                                {mediaItem.type === 'image' && mediaItem.urls.large && (
+                                  <img
+                                    src={mediaItem.urls.large}
+                                    alt={`Post image ${mediaIndex + 1}`}
+                                    className="w-full h-auto max-h-96 object-cover rounded-md"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '/placeholder.svg';
+                                      e.currentTarget.onerror = null;
+                                      console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                    }}
+                                  />
+                                )}
+                                {mediaItem.type === 'video' && mediaItem.url && (
+                                  <video
+                                    src={mediaItem.url}
+                                    controls
+                                    className="w-full h-auto max-h-96 object-cover rounded-md"
+                                  />
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-gray-100">
-                            {post.author_name || post.author_username}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {format(new Date(post.created_at), 'PPP p')}
-                          </p>
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                          <div className="flex space-x-2">
+                            {isAuthenticated && selectedJourney && canEditPost && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isAuthenticated && selectedJourney && canDeletePost && (
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <AlertDialog key={`delete-dialog-${post.id}`}>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete your post
+                                        and remove its data from our servers.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                        Continue
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      {post.title && (
-                        <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                      )}
-                      {post.media_items && post.media_items.length > 0 && (
-                        <div className={
-                          post.media_items.length === 1
-                            ? "mb-4"
-                            : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                        }>
-                          {post.media_items.map((mediaItem, mediaIndex) => (
-                            <div key={mediaIndex} className="relative">
-                              {mediaItem.type === 'image' && mediaItem.urls.large && (
-                                <img
-                                  src={mediaItem.urls.large}
-                                  alt={`Post image ${mediaIndex + 1}`}
-                                  className="w-full h-auto max-h-96 object-cover rounded-md"
-                                  onError={(e) => {
-                                    e.currentTarget.src = '/placeholder.svg';
-                                    e.currentTarget.onerror = null;
-                                    console.error(`Failed to load image: ${mediaItem.urls.large}`);
-                                  }}
-                                />
-                              )}
-                              {mediaItem.type === 'video' && mediaItem.url && (
-                                <video
-                                  src={mediaItem.url}
-                                  controls
-                                  className="w-full h-auto max-h-96 object-cover rounded-md"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                        <div className="flex space-x-2">
-                          {isAuthenticated && selectedJourney && canEditPost && (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {isAuthenticated && selectedJourney && canDeletePost && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <AlertDialog key={`delete-dialog-${post.id}`}>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. This will permanently delete your post
-                                      and remove its data from our servers.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                      Continue
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {post.coordinates && (
-                        <div className="mt-4">
-                          <MapComponent coordinates={post.coordinates} />
-                        </div>
-                      )}
-                    </CardContent>
-                  </ShineCard>
-                );
-              })}
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPosts.map((post, index) => (
-                <GridPostCard
-                  key={post.id}
-                  post={post}
-                  onClick={() => handlePostClick(post, index)}
-                />
-              ))}
-            </div>
-          ) : ( // viewMode === 'map'
-            hasPostsWithCoordinates ? (
-              <div className="w-full h-[70vh] rounded-md overflow-hidden">
-                <MapComponent
-                  posts={filteredPosts} // Pass filtered posts to map
-                  onMarkerClick={handleSelectPostFromMap}
-                  className="w-full h-full"
-                  zoom={7} // Default zoom for map view
-                />
+                        {post.coordinates && (
+                          <div className="mt-4">
+                            <MapComponent coordinates={post.coordinates} />
+                          </div>
+                        )}
+                      </CardContent>
+                    </ShineCard>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                  No posts with location data to display on the map.
-                </p>
-                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                  Add posts with location information to see them here!
-                </p>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredPosts.map((post, index) => (
+                  <GridPostCard
+                    key={post.id}
+                    post={post}
+                    onClick={() => handlePostClick(post, index)}
+                  />
+                ))}
               </div>
+            ) : ( // viewMode === 'map'
+              hasPostsWithCoordinates ? (
+                <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                  <MapComponent
+                    posts={filteredPosts} // Pass filtered posts to map
+                    onMarkerClick={handleSelectPostFromMap}
+                    className="w-full h-full"
+                    zoom={7} // Default zoom for map view
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                    No posts with location data to display on the map.
+                  </p>
+                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                    Add posts with location information to see them here!
+                  </p>
+                </div>
+              )
             )
-          )
-        )}
+          )}
+        </div>
       </div>
 
       {selectedPostForDetail && isDetailDialogOpen && (
@@ -852,7 +856,7 @@ const Index = () => {
           }}
         />
       )}
-    </div>
+    </>
   );
 };
 
