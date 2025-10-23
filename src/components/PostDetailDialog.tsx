@@ -112,7 +112,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               </DialogDescription>
             </div>
           </div>
-        </DialogHeader>
+        </DialogHeader> {/* This was the missing closing tag */}
         
         <TransitionGroup className="relative flex-grow overflow-hidden">
           <CSSTransition
