@@ -52,7 +52,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, cla
       // Add zoom control
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-      // Add marker
+      // Add marker directly after map initialization
       markerRef.current = L.marker([coordinates.lat, coordinates.lng]).addTo(mapRef.current);
 
       mapRef.current.on('error', (e: any) => {

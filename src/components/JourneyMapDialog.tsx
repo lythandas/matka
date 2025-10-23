@@ -30,7 +30,7 @@ interface JourneyMapDialogProps {
 }
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(mapContainerRef);
   const mapRef = useRef<L.Map | null>(null);
   const [mapLoading, setMapLoading] = useState<boolean>(true);
 
@@ -64,12 +64,8 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
 
       L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-      mapRef.current.on('load', () => {
-        if (mapRef.current) {
-          addMarkersAndFitBounds(mapRef.current);
-          setMapLoading(false);
-        }
-      });
+      addMarkersAndFitBounds(mapRef.current); // Add markers and fit bounds
+      setMapLoading(false); // Set loading to false immediately after setup
 
       mapRef.current.on('error', (e: any) => {
         console.error('Leaflet Map Error:', e.error);
