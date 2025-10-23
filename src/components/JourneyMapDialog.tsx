@@ -10,10 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Map as MapIcon, XCircle } from 'lucide-react';
-import MapComponent from './MapComponent';
-import { Post } from '@/types';
 import maplibregl from 'maplibre-gl';
 import { showError } from '@/utils/toast';
+import { Post } from '@/types'; // Centralized Post interface
 
 interface JourneyMapDialogProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ interface JourneyMapDialogProps {
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const [mapId] = useState(() => `journey-map-${Math.random().toString(36).substring(2, 9)}`);
+  // Removed mapId state as we'll use the ref directly
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
@@ -35,6 +34,11 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         mapRef.current.remove();
         mapRef.current = null;
       }
+      return;
+    }
+
+    // Ensure the container element is available before initializing the map
+    if (!mapContainerRef.current) {
       return;
     }
 
@@ -49,14 +53,9 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
       return;
     }
 
-    if (!mapContainerRef.current) {
-      showError("Map container not found for journey map.");
-      return;
-    }
-
-    // Initialize map
+    // Initialize map, passing the DOM element directly
     mapRef.current = new maplibregl.Map({
-      container: mapId,
+      container: mapContainerRef.current, // Pass the DOM element directly
       style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
       center: [0, 0], // Will be adjusted by fitBounds
       zoom: 1, // Will be adjusted by fitBounds
@@ -76,7 +75,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         mapRef.current = null;
       }
     };
-  }, [isOpen, postsWithCoordinates, mapId]);
+  }, [isOpen, postsWithCoordinates, mapContainerRef.current]); // Add mapContainerRef.current to dependencies
 
   const addMarkersAndFitBounds = (map: maplibregl.Map) => {
     if (!postsWithCoordinates.length) return;
@@ -122,7 +121,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         </DialogHeader>
         <div className="flex-grow relative rounded-md overflow-hidden">
           {postsWithCoordinates.length > 0 ? (
-            <div ref={mapContainerRef} id={mapId} className="w-full h-full" />
+            <div ref={mapContainerRef} className="w-full h-full" /> {/* Removed id attribute */}
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
