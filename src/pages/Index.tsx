@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react';
+import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2, Map as MapIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from "@/components/ui/badge";
 import MapComponent from '@/components/MapComponent';
@@ -37,6 +37,7 @@ import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
+import JourneyMapDialog from '@/components/JourneyMapDialog'; // Import JourneyMapDialog
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
@@ -66,6 +67,8 @@ const Index = () => {
   const [locationSelectionMode, setLocationSelectionMode] = useState<'none' | 'current' | 'search'>('none');
   const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isJourneyMapDialogOpen, setIsJourneyMapDialogOpen] = useState<boolean>(false); // New state for map dialog
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -415,9 +418,15 @@ const Index = () => {
     }
   };
 
+  const handleSelectPostFromMap = (post: Post, index: number) => {
+    setIsJourneyMapDialogOpen(false); // Close map dialog
+    handlePostClick(post, index); // Open post detail dialog
+  };
+
   // Permission check for creating a post (used for disabling UI)
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
   const canCreateJourneyUI = isAuthenticated; // All authenticated users can create journeys
+  const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
     <div className="min-h-screen flex flex-col w-full">
@@ -608,8 +617,17 @@ const Index = () => {
         ) : null}
 
         {posts.length > 0 && (
-          <div className="mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            {hasPostsWithCoordinates && (
+              <Button
+                variant="outline"
+                onClick={() => setIsJourneyMapDialogOpen(true)}
+                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              >
+                <MapIcon className="mr-2 h-4 w-4" /> Open Map
+              </Button>
+            )}
           </div>
         )}
 
@@ -803,6 +821,15 @@ const Index = () => {
             fetchJourneyCollaborators(selectedJourney.id);
             fetchPosts(selectedJourney.id);
           }}
+        />
+      )}
+
+      {isJourneyMapDialogOpen && (
+        <JourneyMapDialog
+          isOpen={isJourneyMapDialogOpen}
+          onClose={() => setIsJourneyMapDialogOpen(false)}
+          posts={posts}
+          onSelectPost={handleSelectPostFromMap}
         />
       )}
     </div>

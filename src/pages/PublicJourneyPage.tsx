@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Compass } from 'lucide-react';
+import { Loader2, Compass, Map as MapIcon } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { format } from 'date-fns';
 import MapComponent from '@/components/MapComponent';
@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 import GridPostCard from '@/components/GridPostCard'; // Import GridPostCard
 import PostDetailDialog from '@/components/PostDetailDialog'; // Import PostDetailDialog
+import { Button } from '@/components/ui/button'; // Import Button
+import JourneyMapDialog from '@/components/JourneyMapDialog'; // Import JourneyMapDialog
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
@@ -29,6 +31,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
+  const [isJourneyMapDialogOpen, setIsJourneyMapDialogOpen] = useState<boolean>(false); // New state for map dialog
 
   const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
@@ -121,6 +124,13 @@ const PublicJourneyPage: React.FC = () => {
     setSelectedPostIndex(null);
   };
 
+  const handleSelectPostFromMap = (post: Post, index: number) => {
+    setIsJourneyMapDialogOpen(false); // Close map dialog
+    handlePostClick(post, index); // Open post detail dialog
+  };
+
+  const hasPostsWithCoordinates = posts.some(post => post.coordinates);
+
   if (loadingJourney || loadingPosts) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
@@ -173,8 +183,17 @@ const PublicJourneyPage: React.FC = () => {
         </Card>
 
         {posts.length > 0 && (
-          <div className="mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            {hasPostsWithCoordinates && (
+              <Button
+                variant="outline"
+                onClick={() => setIsJourneyMapDialogOpen(true)}
+                className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              >
+                <MapIcon className="mr-2 h-4 w-4" /> Open Map
+              </Button>
+            )}
           </div>
         )}
 
@@ -290,6 +309,15 @@ const PublicJourneyPage: React.FC = () => {
           totalPosts={posts.length}
           onNext={handleNextPost}
           onPrevious={handlePreviousPost}
+        />
+      )}
+
+      {isJourneyMapDialogOpen && (
+        <JourneyMapDialog
+          isOpen={isJourneyMapDialogOpen}
+          onClose={() => setIsJourneyMapDialogOpen(false)}
+          posts={posts}
+          onSelectPost={handleSelectPostFromMap}
         />
       )}
     </div>
