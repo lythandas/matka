@@ -37,8 +37,9 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-import PostDatePicker from '@/components/PostDatePicker'; // Import PostDatePicker
+import PostDatePicker from '@/components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
+import SortToggle from '@/components/SortToggle'; // New import
 
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
@@ -71,7 +72,8 @@ const Index = () => {
   const [locationLoading, setLoadingLocation] = useState<boolean>(false);
   const mediaFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [postDate, setPostDate] = useState<Date | undefined>(new Date()); // New state for post date, defaults to today
+  const [postDate, setPostDate] = useState<Date | undefined>(new Date());
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // New state for sorting
 
   useEffect(() => {
     const checkBackendStatus = async () => {
@@ -320,7 +322,7 @@ const Index = () => {
           message: message.trim(),
           media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
           coordinates: coordinates || undefined,
-          created_at: postDate ? postDate.toISOString() : undefined, // Include selected post date
+          created_at: postDate ? postDate.toISOString() : undefined,
         }),
       });
 
@@ -427,8 +429,14 @@ const Index = () => {
     handlePostClick(post, index); // Open post detail dialog
   };
 
-  // The postDate state is now only used for new post creation, not for filtering the displayed posts.
-  const displayedPosts = posts;
+  // Apply sorting logic
+  const sortedPosts = [...posts].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  });
+
+  const displayedPosts = sortedPosts; // Use sortedPosts for rendering
 
   // Permission check for creating a post (used for disabling UI)
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
@@ -436,7 +444,7 @@ const Index = () => {
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   return (
-    <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8"> {/* Main content area for posts and form */}
+    <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
       {isAuthenticated ? (
         selectedJourney ? (
           <Card className="mb-8 shadow-lg shadow-neon-blue">
@@ -445,7 +453,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-2 mb-4"> {/* Flex container for title and date picker */}
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
                   <Input
                     placeholder="Add a title (optional)"
                     value={title}
@@ -457,7 +465,7 @@ const Index = () => {
                     selectedDate={postDate}
                     onDateSelect={setPostDate}
                     disabled={!canCreatePostUI || isUploadingMedia}
-                    className="w-full sm:w-auto" // Adjust width for responsiveness
+                    className="w-full sm:w-auto"
                   />
                 </div>
                 <Textarea
@@ -526,7 +534,7 @@ const Index = () => {
                   </div>
                 )}
 
-                <div className="flex flex-wrap justify-center gap-2"> {/* Use flex-wrap for responsiveness */}
+                <div className="flex flex-wrap justify-center gap-2">
                   <Input
                     id="media-upload"
                     type="file"
@@ -633,6 +641,7 @@ const Index = () => {
       {displayedPosts.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} /> {/* New SortToggle */}
         </div>
       )}
 
@@ -791,10 +800,10 @@ const Index = () => {
           hasPostsWithCoordinates ? (
             <div className="w-full h-[70vh] rounded-md overflow-hidden">
               <MapComponent
-                posts={displayedPosts} // Pass all posts to map
+                posts={displayedPosts}
                 onMarkerClick={handleSelectPostFromMap}
                 className="w-full h-full"
-                zoom={7} // Default zoom for map view
+                zoom={7}
               />
             </div>
           ) : (
