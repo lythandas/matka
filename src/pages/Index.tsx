@@ -427,10 +427,8 @@ const Index = () => {
     handlePostClick(post, index); // Open post detail dialog
   };
 
-  // Filter posts by selected date (logic remains, but calendar UI is gone)
-  const filteredPosts = postDate
-    ? posts.filter(post => isSameDay(parseISO(post.created_at), postDate))
-    : posts;
+  // The postDate state is now only used for new post creation, not for filtering the displayed posts.
+  const displayedPosts = posts;
 
   // Permission check for creating a post (used for disabling UI)
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
@@ -632,7 +630,7 @@ const Index = () => {
         )
       ) : null}
 
-      {filteredPosts.length > 0 && (
+      {displayedPosts.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
         </div>
@@ -640,13 +638,13 @@ const Index = () => {
 
       {loadingPosts ? (
         <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
-      ) : filteredPosts.length === 0 && selectedJourney ? (
+      ) : displayedPosts.length === 0 && selectedJourney ? (
         <div className="text-center py-12">
           <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
           <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-            {postDate ? `No posts found for ${postDate.toDateString()}.` : "Your journey awaits! Start by adding your first post."}
+            Your journey awaits! Start by adding your first post.
           </p>
-          {!postDate && isAuthenticated && canCreatePostUI && (
+          {isAuthenticated && canCreatePostUI && (
             <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
               Use the "Share your day" section above to begin.
             </p>
@@ -655,7 +653,7 @@ const Index = () => {
       ) : (
         viewMode === 'list' ? (
           <div className="space-y-6">
-            {filteredPosts.map((post, index) => {
+            {displayedPosts.map((post, index) => {
               // Permission checks for individual post actions
               const isPostAuthor = user?.id === post.user_id;
               const isJourneyOwner = selectedJourney?.user_id === user?.id;
@@ -781,7 +779,7 @@ const Index = () => {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post, index) => (
+            {displayedPosts.map((post, index) => (
               <GridPostCard
                 key={post.id}
                 post={post}
@@ -793,7 +791,7 @@ const Index = () => {
           hasPostsWithCoordinates ? (
             <div className="w-full h-[70vh] rounded-md overflow-hidden">
               <MapComponent
-                posts={filteredPosts} // Pass filtered posts to map
+                posts={displayedPosts} // Pass all posts to map
                 onMarkerClick={handleSelectPostFromMap}
                 className="w-full h-full"
                 zoom={7} // Default zoom for map view
