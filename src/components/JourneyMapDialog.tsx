@@ -37,74 +37,61 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
   useEffect(() => {
-    console.log('JourneyMapDialog useEffect triggered. isOpen:', isOpen, 'mapContainerRef.current:', mapContainerRef.current, 'postsWithCoordinates.length:', postsWithCoordinates.length);
-
     const cleanupMap = () => {
-      console.log('Cleaning up map...');
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
-      // Do not reset mapLoading here, it will be handled by the main effect logic
+      setMapLoading(true); // Reset loading state on cleanup
     };
 
-    if (!isOpen) {
+    if (!isOpen || !mapContainerRef.current || !postsWithCoordinates.length) {
       cleanupMap();
-      setMapLoading(true); // Reset loading state for next open
       return;
     }
 
-    if (!mapContainerRef.current) {
-      // If dialog is open but ref not yet attached, wait for next render
-      setMapLoading(true); // Keep loading true while waiting for ref
-      return;
-    }
+    setMapLoading(true); // Start loading indicator
 
-    if (!postsWithCoordinates.length) {
-      cleanupMap();
-      setMapLoading(false); // No posts to show, so not loading a map
-      return;
-    }
+    const initializeOrUpdateMap = () => {
+      if (!mapRef.current) {
+        console.log('Initializing new map...');
+        mapRef.current = L.map(mapContainerRef.current!, {
+          center: [0, 0], // Will be adjusted by fitBounds
+          zoom: 1, // Will be adjusted by fitBounds
+          zoomControl: false,
+        });
 
-    // If we reach here, dialog is open, ref is attached, and there are posts.
-    if (!mapRef.current) {
-      console.log('Initializing new map...');
-      setMapLoading(true); // Indicate loading has started
-      mapRef.current = L.map(mapContainerRef.current, {
-        center: [0, 0], // Will be adjusted by fitBounds
-        zoom: 1, // Will be adjusted by fitBounds
-        zoomControl: false,
-      });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapRef.current);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(mapRef.current);
+        L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
 
-      L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
-
-      mapRef.current.on('error', (e: any) => {
-        console.error('Leaflet Map Error:', e.error);
-        showError('Failed to load map tiles.');
-        setMapLoading(false);
-      });
+        mapRef.current.on('error', (e: any) => {
+          console.error('Leaflet Map Error:', e.error);
+          showError('Failed to load map tiles.');
+          setMapLoading(false);
+        });
+      } else {
+        console.log('Updating existing map...');
+        mapRef.current.eachLayer((layer) => {
+          if (layer instanceof L.Marker) {
+            layer.remove();
+          }
+        });
+      }
 
       addMarkersAndFitBounds(mapRef.current);
-      mapRef.current.invalidateSize(); // Ensure map renders correctly after initialization
-      setMapLoading(false); // Map setup complete
-      console.log('Map initialized and loading set to false.');
-    } else {
-      console.log('Updating existing map...');
-      // Map already exists, just update markers and bounds
-      mapRef.current.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          layer.remove();
-        }
-      });
-      addMarkersAndFitBounds(mapRef.current);
-      mapRef.current.invalidateSize(); // Ensure map renders correctly after update
-      setMapLoading(false); // Update complete
-      console.log('Map updated and loading set to false.');
-    }
+      
+      // Delay invalidateSize to ensure dialog has settled
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+        setMapLoading(false); // Set loading to false after invalidateSize
+        console.log('Map ready and invalidateSize called (delayed).');
+      }, 100); // A small delay (e.g., 100ms) can be more reliable
+    };
+
+    initializeOrUpdateMap();
 
     return cleanupMap;
   }, [isOpen, postsWithCoordinates]);
