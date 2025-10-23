@@ -121,15 +121,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
             </div>
           )}
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onClose}
-          className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-        >
-          <XCircle className="h-5 w-5" />
-          <span className="sr-only">Close map</span>
-        </Button>
+        {/* Removed the redundant close button here */}
       </DialogContent>
     </Dialog>
   );
