@@ -61,8 +61,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const debounceTimeoutRef = useRef<number | null>(null);
 
-  const frontendBaseUrl = window.location.origin; // Get the base URL of the frontend
-  const shareLink = `${frontendBaseUrl}/public-journey/${journey.id}`;
+  // Generate human-readable share link
+  const frontendBaseUrl = window.location.origin;
+  const shareLink = `${frontendBaseUrl}/public-journey/${journey.owner_username}/${encodeURIComponent(journey.name)}`;
 
   const fetchCollaborators = useCallback(async () => {
     if (!token || !journey?.id) return;

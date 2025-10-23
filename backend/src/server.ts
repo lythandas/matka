@@ -211,6 +211,27 @@ fastify.get('/public/journeys/:id', async (request, reply) => {
   return journey;
 });
 
+// Get a public journey by owner username and journey name
+fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
+  const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
+
+  const owner = users.find(u => u.username.toLowerCase() === ownerUsername.toLowerCase());
+  if (!owner) {
+    return reply.code(404).send({ message: 'Journey owner not found' });
+  }
+
+  const journey = journeys.find(j =>
+    j.user_id === owner.id &&
+    j.name.toLowerCase() === decodeURIComponent(journeyName).toLowerCase() &&
+    j.is_public
+  );
+
+  if (!journey) {
+    return reply.code(404).send({ message: 'Public journey not found or not accessible' });
+  }
+  return journey;
+});
+
 // Get posts for a public journey by ID
 fastify.get('/public/journeys/:id/posts', async (request, reply) => {
   const { id: journeyId } = request.params as { id: string };

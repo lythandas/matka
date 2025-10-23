@@ -15,7 +15,7 @@ import { Post, Journey } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const PublicJourneyPage: React.FC = () => {
-  const { journeyId } = useParams<{ journeyId: string }>();
+  const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
   const [journey, setJourney] = useState<Journey | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
@@ -23,38 +23,40 @@ const PublicJourneyPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchJourney = useCallback(async () => {
-    if (!journeyId) {
-      setError('Journey ID is missing.');
+    if (!ownerUsername || !journeyName) {
+      setError('Journey owner username or journey name is missing from the URL.');
       setLoadingJourney(false);
       return;
     }
     setLoadingJourney(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/public/journeys/${journeyId}`);
+      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${journeyName}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch public journey');
       }
       const data: Journey = await response.json();
       setJourney(data);
+      return data.id; // Return journey ID to fetch posts
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       setError(err.message || 'Failed to load journey. It might not exist or is not public.');
       showError(err.message || 'Failed to load journey.');
       setJourney(null);
+      return null;
     } finally {
       setLoadingJourney(false);
     }
-  }, [journeyId]);
+  }, [ownerUsername, journeyName]);
 
-  const fetchPosts = useCallback(async () => {
-    if (!journeyId) {
+  const fetchPosts = useCallback(async (id: string) => {
+    if (!id) {
       setLoadingPosts(false);
       return;
     }
     setLoadingPosts(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/public/journeys/${journeyId}/posts`);
+      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch public posts');
@@ -69,11 +71,18 @@ const PublicJourneyPage: React.FC = () => {
     } finally {
       setLoadingPosts(false);
     }
-  }, [journeyId]);
+  }, []);
 
   useEffect(() => {
-    fetchJourney();
-    fetchPosts();
+    const loadJourneyAndPosts = async () => {
+      const id = await fetchJourney();
+      if (id) {
+        fetchPosts(id);
+      } else {
+        setLoadingPosts(false); // Stop loading posts if journey couldn't be fetched
+      }
+    };
+    loadJourneyAndPosts();
   }, [fetchJourney, fetchPosts]);
 
   if (loadingJourney || loadingPosts) {

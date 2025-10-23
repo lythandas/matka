@@ -56,7 +56,7 @@ const App = () => {
               </AppLayout>
             ) : (
               <Routes>
-                <Route path="/public-journey/:journeyId" element={<PublicJourneyPage />} /> {/* New public route */}
+                <Route path="/public-journey/:ownerUsername/:journeyName" element={<PublicJourneyPage />} /> {/* New public route with human-readable URL */}
                 <Route path="/" element={<LoginPage />} />
                 {/* Redirect any other path to login if not authenticated */}
                 <Route path="*" element={
