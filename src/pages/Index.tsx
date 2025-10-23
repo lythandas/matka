@@ -27,7 +27,6 @@ import ShineCard from '@/components/ShineCard';
 import { useJourneys } from '@/contexts/JourneyContext';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
-// Removed CreateUserDialog, LoginDialog, RegisterDialog imports as they are handled by LoginPage
 import EditPostDialog from '@/components/EditPostDialog';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
@@ -36,7 +35,6 @@ import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
-// Removed userHasPermission import
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 
@@ -284,7 +282,11 @@ const Index = () => {
     }
 
     // Permission check for creating a post
-    const canCreatePost = user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
+    const isOwner = user?.id === selectedJourney.user_id;
+    const isAdmin = user?.isAdmin;
+    const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
+    const canCreatePost = isOwner || isAdmin || canPublishAsCollaborator;
+
     if (!canCreatePost) {
       showError('You do not have permission to create posts in this journey.');
       return;
@@ -345,7 +347,9 @@ const Index = () => {
     const isPostAuthor = user?.id === postAuthorId;
     const isJourneyOwner = selectedJourney?.user_id === user?.id;
     const isAdmin = user?.isAdmin;
-    if (!isPostAuthor && !isJourneyOwner && !isAdmin) {
+    const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+    if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canDeleteAsCollaborator) {
       showError('You do not have permission to delete this post.');
       return;
     }
@@ -623,8 +627,14 @@ const Index = () => {
             <div className="space-y-6">
               {posts.map((post, index) => {
                 // Permission checks for individual post actions
-                const canEditPost = user?.id === post.user_id || selectedJourney?.user_id === user?.id || user?.isAdmin;
-                const canDeletePost = user?.id === post.user_id || selectedJourney?.user_id === user?.id || user?.isAdmin;
+                const isPostAuthor = user?.id === post.user_id;
+                const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                const isAdmin = user?.isAdmin;
+                const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
+                const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+                const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canPublishAsCollaborator;
+                const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
                 return (
                   <ShineCard

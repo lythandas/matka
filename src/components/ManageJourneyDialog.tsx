@@ -16,7 +16,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Trash2, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
-// Removed getPermissionDisplayName and userHasPermission imports
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from "@/lib/utils";
 import { API_BASE_URL } from '@/config/api';
@@ -206,7 +205,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
-          // can_publish_posts is implicitly true on backend
+          // Default permissions are set on the backend: can_read_posts: true, can_publish_posts: true, can_delete_posts: false
         }),
       });
 
@@ -226,6 +225,46 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError(error.message || 'Failed to add collaborator.');
     } finally {
       setIsAddingCollaborator(false);
+    }
+  };
+
+  const handleUpdateCollaboratorPermissions = async (
+    userId: string,
+    permissions: { can_read_posts: boolean; can_publish_posts: boolean; can_delete_posts: boolean }
+  ) => {
+    if (!token) return;
+
+    // Permission check: only owner or admin can update collaborators
+    const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
+    if (!canManageJourney) {
+      showError('You do not have permission to update collaborator permissions for this journey.');
+      return;
+    }
+
+    setIsUpdatingCollaborator(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(permissions),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update collaborator permissions');
+      }
+
+      showSuccess(`Permissions updated for collaborator.`);
+      fetchCollaborators(); // Re-fetch to get the latest state
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error updating collaborator permissions:', error);
+      showError(error.message || 'Failed to update collaborator permissions.');
+    } finally {
+      setIsUpdatingCollaborator(false);
     }
   };
 
@@ -379,7 +418,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               <div className="space-y-3">
                 <p className="text-sm font-medium mb-2">
                   Adding <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span> as a collaborator.
-                  They will be able to publish posts on this journey.
+                  They will be able to publish posts on this journey by default.
                 </p>
                 <Button
                   onClick={handleAddCollaborator}
@@ -433,7 +472,56 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">Can publish posts: {collab.can_publish_posts ? 'Yes' : 'No'}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`read-${collab.user_id}`}
+                          checked={collab.can_read_posts}
+                          onCheckedChange={(checked) =>
+                            handleUpdateCollaboratorPermissions(collab.user_id, {
+                              ...collab,
+                              can_read_posts: checked as boolean,
+                            })
+                          }
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                        />
+                        <Label htmlFor={`read-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Can read posts
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`publish-${collab.user_id}`}
+                          checked={collab.can_publish_posts}
+                          onCheckedChange={(checked) =>
+                            handleUpdateCollaboratorPermissions(collab.user_id, {
+                              ...collab,
+                              can_publish_posts: checked as boolean,
+                            })
+                          }
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                        />
+                        <Label htmlFor={`publish-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Can publish posts
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`delete-${collab.user_id}`}
+                          checked={collab.can_delete_posts}
+                          onCheckedChange={(checked) =>
+                            handleUpdateCollaboratorPermissions(collab.user_id, {
+                              ...collab,
+                              can_delete_posts: checked as boolean,
+                            })
+                          }
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                        />
+                        <Label htmlFor={`delete-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Can delete posts
+                        </Label>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

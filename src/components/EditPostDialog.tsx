@@ -22,7 +22,6 @@ import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/con
 import { Post, MediaInfo, JourneyCollaborator } from '@/types';
 import LocationSearch from './LocationSearch';
 import { useAuth } from '@/contexts/AuthContext';
-// Removed userHasPermission import
 import { cn } from '@/lib/utils';
 
 interface EditPostDialogProps {
@@ -211,7 +210,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
 
     // Permission check for editing a post
-    const canEdit = currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin;
+    const isPostAuthor = currentUser.id === post.user_id;
+    const isJourneyOwner = currentUser.id === journeyOwnerId;
+    const isAdmin = currentUser.isAdmin;
+    const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts);
+
+    const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canPublishAsCollaborator;
+
     if (!canEdit) {
       showError('You do not have permission to edit this post.');
       return;
@@ -251,7 +256,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   };
 
   // Permission check for disabling UI elements
-  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin);
+  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts));
 
   const displayedMedia = [...currentMediaItems];
   const currentPreviewMedia = displayedMedia[currentMediaPreviewIndex];
