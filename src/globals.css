@@ -108,23 +108,43 @@
   top: 64px; /* Height of the TopBar */
 }
 
-/* CSSTransition classes for slide and fade effect */
-.slide-next-enter {
-  transform: translateX(100%);
-  opacity: 0;
-}
+@layer components {
+  /* CSSTransition classes for slide and fade effect */
+  .slide-next-enter {
+    @apply translate-x-full opacity-0; /* Initial state for entering */
+  }
+  .slide-next-enter-active {
+    @apply animate-slide-next-enter-active; /* Apply the animation utility class */
+  }
+  .slide-next-enter-done {
+    @apply translate-x-0 opacity-100; /* Final state after entering */
+  }
+  .slide-next-exit {
+    @apply translate-x-0 opacity-100; /* Initial state for exiting */
+  }
+  .slide-next-exit-active {
+    @apply animate-slide-next-exit-active; /* Apply the animation utility class */
+  }
+  .slide-next-exit-done {
+    @apply hidden; /* Hide the element completely after exiting */
+  }
 
-.slide-next-exit {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-
-.slide-prev-enter {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-
-.slide-prev-exit {
-  transform: translateX(100%);
-  opacity: 0;
+  .slide-prev-enter {
+    @apply -translate-x-full opacity-0; /* Initial state for entering */
+  }
+  .slide-prev-enter-active {
+    @apply animate-slide-prev-enter-active; /* Apply the animation utility class */
+  }
+  .slide-prev-enter-done {
+    @apply translate-x-0 opacity-100; /* Final state after entering */
+  }
+  .slide-prev-exit {
+    @apply translate-x-0 opacity-100; /* Initial state for exiting */
+  }
+  .slide-prev-exit-active {
+    @apply animate-slide-prev-exit-active; /* Apply the animation utility class */
+  }
+  .slide-prev-exit-done {
+    @apply hidden; /* Hide the element completely after exiting */
+  }
 }
