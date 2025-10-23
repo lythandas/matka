@@ -642,12 +642,12 @@ const Index = () => {
       ) : null}
 
       {displayedPosts.length > 0 && (
-        <div className="flex flex-col items-center mb-6">
-          <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="relative flex items-center justify-center mb-6 h-10">
+          <div className="absolute left-0">
             <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
-            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            {/* ThemeToggle is intentionally removed from here as it's available in UserProfileDropdown */}
           </div>
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          {/* ThemeToggle is intentionally removed from here as it's available in UserProfileDropdown */}
         </div>
       )}
 
