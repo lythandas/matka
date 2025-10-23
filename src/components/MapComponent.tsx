@@ -75,7 +75,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, cla
   }, [coordinates, zoom]);
 
   return (
-    <div ref={mapContainerRef} className={`w-full h-64 rounded-md relative overflow-hidden ${className}`} />
+    <div ref={mapContainerRef} className={`w-full h-64 rounded-md relative overflow-hidden z-0 ${className}`} />
   );
 };
 

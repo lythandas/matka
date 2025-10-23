@@ -154,7 +154,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
             </div>
           )}
           {postsWithCoordinates.length > 0 ? (
-            <div ref={mapContainerRef} className="w-full h-full" />
+            <div ref={mapContainerRef} className="w-full h-full z-0" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
