@@ -17,21 +17,23 @@ import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 import GridPostCard from '@/components/GridPostCard'; // Import GridPostCard
 import PostDetailDialog from '@/components/PostDetailDialog'; // Import PostDetailDialog
 import { Button } from '@/components/ui/button'; // Import Button
-// Removed JourneyMapDialog as it's now integrated into the view
+import SortToggle from '@/components/SortToggle'; // Import SortToggle
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 const PublicJourneyPage: React.FC = () => {
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
+  const { isAuthenticated } = useAuth(); // Get authentication status
   const [journey, setJourney] = useState<Journey | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // Updated viewMode type
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // State for sorting
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
-  // Removed isJourneyMapDialogOpen state as it's now handled by viewMode
 
   const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
@@ -125,11 +127,17 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handleSelectPostFromMap = (post: Post, index: number) => {
-    // No need to close map dialog, as it's now a view mode
-    handlePostClick(post, index); // Open post detail dialog
+    handlePostClick(post, index);
   };
 
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
+
+  // Apply sorting logic
+  const sortedPosts = [...posts].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  });
 
   if (loadingJourney || loadingPosts) {
     return (
@@ -182,9 +190,12 @@ const PublicJourneyPage: React.FC = () => {
           </CardHeader>
         </Card>
 
-        {posts.length > 0 && (
-          <div className="flex justify-center items-center mb-6"> {/* Centered ViewToggle */}
-            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        {posts.length > 0 && isAuthenticated && ( // Only show if authenticated
+          <div className="flex items-center mb-6">
+            <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} className="mr-4" />
+            <div className="flex-grow flex justify-center">
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            </div>
           </div>
         )}
 
@@ -201,7 +212,7 @@ const PublicJourneyPage: React.FC = () => {
         ) : (
           viewMode === 'list' ? (
             <div className="space-y-6">
-              {posts.map((post, index) => (
+              {sortedPosts.map((post, index) => (
                 <ShineCard
                   key={post.id}
                   className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
@@ -277,7 +288,7 @@ const PublicJourneyPage: React.FC = () => {
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post, index) => (
+              {sortedPosts.map((post, index) => (
                 <GridPostCard
                   key={post.id}
                   post={post}
@@ -289,7 +300,7 @@ const PublicJourneyPage: React.FC = () => {
             hasPostsWithCoordinates ? (
               <div className="w-full h-[70vh] rounded-md overflow-hidden">
                 <MapComponent
-                  posts={posts}
+                  posts={sortedPosts}
                   onMarkerClick={handleSelectPostFromMap}
                   className="w-full h-full"
                   zoom={7} // Default zoom for map view
@@ -323,7 +334,6 @@ const PublicJourneyPage: React.FC = () => {
           onPrevious={handlePreviousPost}
         />
       )}
-      {/* Removed JourneyMapDialog as a separate dialog */}
     </div>
   );
 };
