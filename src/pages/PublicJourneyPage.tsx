@@ -336,6 +336,7 @@ const PublicJourneyPage: React.FC = () => {
           totalPosts={posts.length}
           onNext={handleNextPost}
           onPrevious={handlePreviousPost}
+          journey={journey} {/* Pass journey here */}
         />
       )}
     </div>

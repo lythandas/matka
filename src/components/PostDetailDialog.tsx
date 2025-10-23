@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Maximize, Minimize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Maximize, Minimize, ChevronLeft, ChevronRight, Share2 } from 'lucide-react'; // Added Share2 icon
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast'; // Import showSuccess
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
-import { Post, MediaInfo } from '@/types'; // Centralized Post and MediaInfo interface
+import { getAvatarInitials } from '@/lib/utils';
+import { Post, MediaInfo, Journey } from '@/types'; // Import Journey type
 
 interface PostDetailDialogProps {
   post: Post;
@@ -20,6 +20,7 @@ interface PostDetailDialogProps {
   totalPosts: number;
   onNext: () => void;
   onPrevious: () => void;
+  journey: Journey | null; // Added journey prop
 }
 
 const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
@@ -30,6 +31,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   totalPosts,
   onNext,
   onPrevious,
+  journey, // Destructure journey prop
 }) => {
   const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
   const [isMediaFullscreen, setIsMediaFullscreen] = useState(false);
@@ -75,6 +77,18 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     setCurrentMediaIndex(0); // Reset media index when post changes
   }, [post]);
 
+  const handleShare = () => {
+    if (!journey) {
+      showError('Cannot share: Journey information is missing.');
+      return;
+    }
+    const frontendBaseUrl = window.location.origin;
+    const shareLink = `${frontendBaseUrl}/public-journey/${journey.owner_username}/${encodeURIComponent(journey.name)}`;
+    navigator.clipboard.writeText(shareLink)
+      .then(() => showSuccess('Journey share link copied to clipboard!'))
+      .catch(() => showError('Failed to copy link.'));
+  };
+
   const displayName = post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
@@ -110,8 +124,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </DialogHeader>
           
           {/* Main content wrapper for TransitionGroup and navigation buttons */}
-          <div className="relative flex-grow overflow-hidden flex"> {/* Added flex here */}
-            <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* Changed from absolute inset-0 to flex-grow */}
+          <div className="relative flex-grow overflow-hidden flex">
+            <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full">
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0">
                   {currentMedia?.type === 'image' && (
@@ -197,25 +211,35 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
             {canGoPrevious && (
               <Button
-                variant="outline"
+                variant="ghost" // Changed to ghost for more subtle background
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors" // Larger, semi-transparent
                 onClick={onPrevious}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-7 w-7" /> {/* Larger icon */}
               </Button>
             )}
             {canGoNext && (
               <Button
-                variant="outline"
+                variant="ghost" // Changed to ghost for more subtle background
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors" // Larger, semi-transparent
                 onClick={onNext}
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-7 w-7" /> {/* Larger icon */}
               </Button>
             )}
           </div>
+          <DialogFooter className="p-6 pt-0 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              disabled={!journey}
+              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+            >
+              <Share2 className="mr-2 h-4 w-4" /> Share Journey
+            </Button>
+          </DialogFooter>
         </> {/* End of React.Fragment */}
       </DialogContent>
     </Dialog>

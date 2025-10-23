@@ -837,6 +837,7 @@ const Index = () => {
           totalPosts={posts.length}
           onNext={handleNextPost}
           onPrevious={handlePreviousPost}
+          journey={selectedJourney} {/* Pass selectedJourney here */}
         />
       )}
 
