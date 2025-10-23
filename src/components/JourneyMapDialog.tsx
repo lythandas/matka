@@ -30,7 +30,7 @@ interface JourneyMapDialogProps {
 }
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(mapContainerRef);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null); // Corrected initialization
   const mapRef = useRef<L.Map | null>(null);
   const [mapLoading, setMapLoading] = useState<boolean>(true);
 
