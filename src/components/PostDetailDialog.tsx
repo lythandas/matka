@@ -128,9 +128,9 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </DialogHeader>
           
           {/* Main content wrapper for TransitionGroup and navigation buttons */}
-          <div className="relative flex-grow overflow-hidden">
+          <div className="relative flex-grow overflow-hidden flex"> {/* Added flex here */}
             {/* Removed TransitionGroup and CSSTransition for debugging */}
-            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full">
+            <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* Changed from absolute inset-0 to flex-grow */}
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0">
                   {currentMedia?.type === 'image' && (
