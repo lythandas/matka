@@ -42,6 +42,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
 // Removed ThemeToggle import as it's not needed here
 
+// Minor change to force re-compilation
 const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
