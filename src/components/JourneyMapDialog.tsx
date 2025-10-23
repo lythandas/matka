@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Map as MapIcon, XCircle } from 'lucide-react';
+import { Map as MapIcon, XCircle, Loader2 } from 'lucide-react'; // Import Loader2
 import maplibregl from 'maplibre-gl';
 import { showError } from '@/utils/toast';
 import { Post } from '@/types'; // Centralized Post interface
@@ -24,6 +24,7 @@ interface JourneyMapDialogProps {
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const [mapLoading, setMapLoading] = useState<boolean>(true); // New state for map loading
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
@@ -33,15 +34,17 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
         mapRef.current.remove();
         mapRef.current = null;
       }
+      setMapLoading(true); // Reset loading state on cleanup
     };
 
-    if (!isOpen || !postsWithCoordinates.length) {
+    if (!isOpen || !mapContainerRef.current || !postsWithCoordinates.length) {
       cleanupMap();
       return;
     }
 
-    // Initialize map only if container is available and map is not already initialized
-    if (mapContainerRef.current && !mapRef.current) {
+    // If map is not initialized, create a new one
+    if (!mapRef.current) {
+      setMapLoading(true);
       mapRef.current = new maplibregl.Map({
         container: mapContainerRef.current,
         style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
@@ -54,17 +57,25 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
       mapRef.current.on('load', () => {
         if (mapRef.current) {
           addMarkersAndFitBounds(mapRef.current);
+          setMapLoading(false); // Map is loaded and markers added
         }
       });
-    } else if (mapRef.current && isOpen && postsWithCoordinates.length > 0) {
-      // If map exists and dialog is open, just update markers and bounds
-      // This handles cases where posts change while the dialog is open
+
+      mapRef.current.on('error', (e) => {
+        console.error('MapLibre GL Error:', e.error);
+        showError('Failed to load map tiles.');
+        setMapLoading(false);
+      });
+
+    } else {
+      // If map exists, just update markers and bounds
       mapRef.current.eachLayer((layer) => {
         if (layer instanceof maplibregl.Marker) {
           layer.remove();
         }
       });
       addMarkersAndFitBounds(mapRef.current);
+      setMapLoading(false); // Assume loaded if updating existing map
     }
 
     return cleanupMap;
@@ -112,6 +123,12 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow relative rounded-md overflow-hidden">
+          {mapLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <p className="ml-2 text-lg text-muted-foreground">Loading map...</p>
+            </div>
+          )}
           {postsWithCoordinates.length > 0 ? (
             <div ref={mapContainerRef} className="w-full h-full" />
           ) : (
@@ -121,7 +138,6 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
             </div>
           )}
         </div>
-        {/* Removed the redundant close button here */}
       </DialogContent>
     </Dialog>
   );
