@@ -639,9 +639,11 @@ const Index = () => {
       ) : null}
 
       {displayedPosts.length > 0 && (
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-          <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} /> {/* New SortToggle */}
+        <div className="flex items-center mb-6"> {/* Adjusted layout for sorting and viewing toggles */}
+          <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} className="mr-4" />
+          <div className="flex-grow flex justify-center">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
         </div>
       )}
 

@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,22 +13,30 @@ interface SortToggleProps {
 }
 
 const SortToggle: React.FC<SortToggleProps> = ({ sortOrder, onSortOrderChange, className }) => {
+  const handleToggleSort = () => {
+    onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
+  const tooltipText = sortOrder === 'desc' ? 'Newest First' : 'Oldest First';
+  const Icon = sortOrder === 'desc' ? ArrowDownWideNarrow : ArrowUpWideNarrow;
+
   return (
-    <ToggleGroup
-      type="single"
-      value={sortOrder}
-      onValueChange={(value: 'asc' | 'desc') => {
-        if (value) onSortOrderChange(value);
-      }}
-      className={cn("w-fit mx-auto", className)}
-    >
-      <ToggleGroupItem value="desc" aria-label="Sort by newest first">
-        <ArrowDownWideNarrow className="h-4 w-4 mr-2" /> Newest First
-      </ToggleGroupItem>
-      <ToggleGroupItem value="asc" aria-label="Sort by oldest first">
-        <ArrowUpWideNarrow className="h-4 w-4 mr-2" /> Oldest First
-      </ToggleGroupItem>
-    </ToggleGroup>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleToggleSort}
+          className={cn("hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit", className)}
+        >
+          <Icon className="h-4 w-4" />
+          <span className="sr-only">{tooltipText}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{tooltipText}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

@@ -183,9 +183,8 @@ const PublicJourneyPage: React.FC = () => {
         </Card>
 
         {posts.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="flex justify-center items-center mb-6"> {/* Centered ViewToggle */}
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            {/* Removed the "Open Map" button */}
           </div>
         )}
 
