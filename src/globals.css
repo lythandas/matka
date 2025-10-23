@@ -107,3 +107,24 @@
   align-self: flex-start; /* Ensures it sticks to the top of its flex container */
   top: 64px; /* Height of the TopBar */
 }
+
+/* CSSTransition classes for slide and fade effect */
+.slide-next-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.slide-next-exit {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.slide-prev-enter {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+.slide-prev-exit {
+  transform: translateX(100%);
+  opacity: 0;
+}

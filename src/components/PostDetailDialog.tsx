@@ -121,7 +121,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
           >
             {/* Reverted to absolute inset-0 for independent animation, added overflow-y-auto */}
-            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto">
+            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full"> {/* Added h-full */}
               {mediaItems.length > 0 && (
                 <div className="relative mb-4 flex-shrink-0">
                   {currentMedia?.type === 'image' && (
@@ -129,7 +129,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                       src={currentMedia.urls.large || '/placeholder.svg'}
                       alt={post.title || "Post image"}
-                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto"
+                      className="w-full h-auto object-contain rounded-md mx-auto" {/* Removed max-h-[60vh] */}
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                         e.currentTarget.onerror = null;
@@ -142,7 +142,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                       src={currentMedia.url}
                       controls
-                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto"
+                      className="w-full h-auto object-contain rounded-md mx-auto" {/* Removed max-h-[60vh] */}
                     />
                   )}
 
