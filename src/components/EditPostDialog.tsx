@@ -22,7 +22,7 @@ import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/con
 import { Post, MediaInfo, JourneyCollaborator } from '@/types';
 import LocationSearch from './LocationSearch';
 import { useAuth } from '@/contexts/AuthContext';
-import { userHasPermission } from '@/lib/permissions';
+// Removed userHasPermission import
 import { cn } from '@/lib/utils';
 
 interface EditPostDialogProps {
@@ -35,7 +35,7 @@ interface EditPostDialogProps {
 }
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
-  const { user: currentUser, token } = useAuth(); // Get token from useAuth
+  const { user: currentUser, token } = useAuth();
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
   const [currentMediaItems, setCurrentMediaItems] = useState<MediaInfo[]>(post.media_items || []);
@@ -87,7 +87,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, // Use token from context
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
         });
@@ -210,7 +210,8 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       return;
     }
 
-    const canEdit = userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id);
+    // Permission check for editing a post
+    const canEdit = currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin;
     if (!canEdit) {
       showError('You do not have permission to edit this post.');
       return;
@@ -222,12 +223,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: title.trim() || null,
           message: message.trim(),
-          media_items: currentMediaItems.length > 0 ? currentMediaItems : null, // Use media_items
+          media_items: currentMediaItems.length > 0 ? currentMediaItems : null,
           coordinates: coordinates || null,
         }),
       });
@@ -249,7 +250,8 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     }
   };
 
-  const canEditPost = currentUser && userHasPermission(currentUser, 'edit_post', journeyOwnerId, journeyCollaborators, post.id, post.user_id);
+  // Permission check for disabling UI elements
+  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin);
 
   const displayedMedia = [...currentMediaItems];
   const currentPreviewMedia = displayedMedia[currentMediaPreviewIndex];
@@ -270,7 +272,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             placeholder="Add a title (optional)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={isSaving || isUploadingMedia || !canEditPost}
+            disabled={isSaving || isUploadingMedia || !canEditPostUI}
           />
           <Label htmlFor="message">Message</Label>
           <Textarea
@@ -280,15 +282,15 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             className="resize-none"
-            disabled={isSaving || isUploadingMedia || !canEditPost}
+            disabled={isSaving || isUploadingMedia || !canEditPostUI}
           />
         </div>
         <Tabs defaultValue="media" className="w-full flex-grow flex flex-col">
-          <TabsList className="grid w-full grid-cols-2"> {/* Removed Spotify tab */}
-            <TabsTrigger value="media" disabled={!canEditPost}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="media" disabled={!canEditPostUI}>
               <Image className="h-4 w-4 mr-2" /> Media
             </TabsTrigger>
-            <TabsTrigger value="location" disabled={!canEditPost}>
+            <TabsTrigger value="location" disabled={!canEditPostUI}>
               <MapPin className="h-4 w-4 mr-2" /> Location
             </TabsTrigger>
           </TabsList>
@@ -302,15 +304,15 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 onChange={handleMediaFileChange}
                 ref={fileInputRef}
                 className="hidden"
-                multiple // Allow multiple file selection
-                disabled={isSaving || isUploadingMedia || !canEditPost}
+                multiple
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
               />
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
                 className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
-                disabled={isSaving || isUploadingMedia || !canEditPost}
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 {isUploadingMedia ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -345,7 +347,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   size="icon"
                   onClick={() => handleRemoveMedia(currentMediaPreviewIndex)}
                   className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                  disabled={isSaving || isUploadingMedia || !canEditPost}
+                  disabled={isSaving || isUploadingMedia || !canEditPostUI}
                 >
                   <XCircle className="h-5 w-5 text-red-500" />
                 </Button>
@@ -357,7 +359,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       size="icon"
                       className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       onClick={() => setCurrentMediaPreviewIndex((prev) => (prev === 0 ? displayedMedia.length - 1 : prev - 1))}
-                      disabled={isSaving || isUploadingMedia || !canEditPost}
+                      disabled={isSaving || isUploadingMedia || !canEditPostUI}
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </Button>
@@ -366,7 +368,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       size="icon"
                       className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                       onClick={() => setCurrentMediaPreviewIndex((prev) => (prev === displayedMedia.length - 1 ? 0 : prev + 1))}
-                      disabled={isSaving || isUploadingMedia || !canEditPost}
+                      disabled={isSaving || isUploadingMedia || !canEditPostUI}
                     >
                       <ChevronRight className="h-5 w-5" />
                     </Button>
@@ -396,7 +398,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   setCoordinates(null);
                 }}
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia || !canEditPost}
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 <LocateFixed className="mr-2 h-4 w-4" /> Get current location
               </Button>
@@ -408,7 +410,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   setCoordinates(null);
                 }}
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia || !canEditPost}
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 <Search className="mr-2 h-4 w-4" /> Search location
               </Button>
@@ -419,7 +421,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 <Button
                   type="button"
                   onClick={handleGetLocation}
-                  disabled={locationLoading || isSaving || isUploadingMedia || !canEditPost}
+                  disabled={locationLoading || isSaving || isUploadingMedia || !canEditPostUI}
                   className="w-full hover:ring-2 hover:ring-blue-500"
                 >
                   {locationLoading ? (
@@ -440,7 +442,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
                     </p>
                     <MapComponent coordinates={coordinates} className="h-48" />
-                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPost}>
+                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPostUI}>
                       Clear location
                     </Button>
                   </>
@@ -452,7 +454,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               <LocationSearch
                 onSelectLocation={setCoordinates}
                 currentCoordinates={coordinates}
-                disabled={isSaving || isUploadingMedia || !canEditPost}
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
               />
             )}
           </TabsContent>
@@ -461,7 +463,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPost} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

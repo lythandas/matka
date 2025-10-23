@@ -32,18 +32,10 @@ interface User {
   id: string;
   username: string;
   password_hash: string;
-  role: string;
-  permissions: string[];
+  isAdmin: boolean; // Simplified: first user is admin, others are not
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  created_at: string;
-}
-
-interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
   created_at: string;
 }
 
@@ -66,7 +58,7 @@ interface JourneyCollaborator {
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  permissions: string[]; // Permissions specific to this journey
+  can_publish_posts: boolean; // Simplified permission for collaborators
 }
 
 type MediaInfo =
@@ -83,7 +75,7 @@ interface Post {
   author_profile_image_url?: string;
   title?: string;
   message: string;
-  media_items?: MediaInfo[]; // Changed to an array of MediaInfo
+  media_items?: MediaInfo[];
   coordinates?: { lat: number; lng: number };
   created_at: string;
 }
@@ -96,23 +88,18 @@ declare module 'fastify' {
 }
 
 let users: User[] = [];
-let roles: Role[] = [
-  // Admin role retains full control
-  { id: uuidv4(), name: 'admin', permissions: ['manage_users', 'manage_roles', 'edit_any_journey', 'delete_any_journey', 'edit_any_post', 'delete_any_post', 'manage_journey_access', 'publish_post_on_journey'], created_at: new Date().toISOString() },
-  // User role has no explicit global permissions; abilities are handled by implicit checks (e.g., create own journey)
-  { id: uuidv4(), name: 'user', permissions: [], created_at: new Date().toISOString() },
-];
+// Roles array is removed as roles are no longer explicitly managed
 let journeys: Journey[] = [];
 let journeyUserPermissions: JourneyCollaborator[] = [];
 let posts: Post[] = [];
 
-const JWT_SECRET = process.env.JWT_SECRET; // Get from environment variable
+const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   console.error('JWT_SECRET is not defined. Please set it in your environment variables.');
-  process.exit(1); // Exit if secret is not set
+  process.exit(1);
 }
 const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localhost:3001';
-const UPLOADS_DIR = path.join(__dirname, '../uploads'); // Define uploads directory path
+const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
 // --- Utility Functions ---
 const hashPassword = async (password: string): Promise<string> => {
@@ -144,55 +131,6 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 };
 
-// Helper to check permissions based on the new model
-const checkPermission = (
-  currentUser: Omit<User, 'password_hash'>,
-  requiredPermission: string,
-  journey?: Journey,
-  post?: Post,
-  collaborators: JourneyCollaborator[] = []
-): boolean => {
-  // 1. Global Admin Override
-  if (currentUser.role === 'admin' && currentUser.permissions.includes('manage_roles')) {
-    return true;
-  }
-
-  // 2. Explicit Global Permissions (e.g., 'manage_users', 'manage_roles', 'edit_any_journey')
-  if (currentUser.permissions.includes(requiredPermission)) {
-    return true;
-  }
-
-  // 3. Implicit Permissions for Journey Owners
-  const isJourneyOwner = journey && currentUser.id === journey.user_id;
-  if (isJourneyOwner) {
-    if (['edit_journey', 'delete_journey', 'manage_journey_access', 'create_post', 'edit_post', 'delete_post'].includes(requiredPermission)) {
-      return true;
-    }
-  }
-
-  // 4. Implicit Permissions for Post Authors
-  const isPostAuthor = post && currentUser.id === post.user_id;
-  if (isPostAuthor) {
-    if (['edit_post', 'delete_post'].includes(requiredPermission)) {
-      return true;
-    }
-  }
-
-  // 5. Journey-specific permissions for collaborators
-  const userJourneyPerms = collaborators.find(collab => collab.user_id === currentUser.id)?.permissions || [];
-  if (userJourneyPerms.includes(requiredPermission)) {
-    return true;
-  }
-
-  // 6. Default/Implicit Permissions for all authenticated users
-  if (requiredPermission === 'create_journey') {
-    return true;
-  }
-
-  return false;
-};
-
-
 // --- Public Routes ---
 
 // Root route
@@ -219,19 +157,12 @@ fastify.post('/register', async (request, reply) => {
 
   const password_hash = await hashPassword(password);
   const isFirstUser = users.length === 0;
-  const roleName = isFirstUser ? 'admin' : 'user';
-  const userRole = roles.find(r => r.name === roleName);
-
-  if (!userRole) {
-    return reply.code(500).send({ message: `Default role '${roleName}' not found.` });
-  }
 
   const newUser: User = {
     id: uuidv4(),
     username,
     password_hash,
-    role: userRole.name,
-    permissions: userRole.permissions,
+    isAdmin: isFirstUser, // First user is admin
     created_at: new Date().toISOString(),
   };
   users.push(newUser);
@@ -376,12 +307,13 @@ fastify.register(async (authenticatedFastify) => {
     return { mediaInfo };
   });
 
-  // --- Admin/User Management Routes ---
+  // --- Admin-only User Management Routes ---
+  // These routes are now only for the initial admin user.
 
   // Get all users (Admin only)
   authenticatedFastify.get('/users', async (request: FastifyRequest, reply) => {
-    if (!request.user || !checkPermission(request.user, 'manage_users')) {
-      return reply.code(403).send({ message: 'Forbidden' });
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
     return users.map(u => {
       const userWithoutHash: Omit<User, 'password_hash'> = { ...u };
@@ -389,50 +321,13 @@ fastify.register(async (authenticatedFastify) => {
     });
   });
 
-  // Create a new user (Admin only)
-  authenticatedFastify.post('/users', async (request: FastifyRequest, reply) => {
-    const { username, password, role_id, name, surname } = request.body as { username?: string; password?: string; role_id?: string; name?: string; surname?: string };
-
-    if (!request.user || !checkPermission(request.user, 'manage_users')) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-    if (!username || !password || !role_id) {
-      return reply.code(400).send({ message: 'Username, password, and role are required' });
-    }
-
-    if (users.some(u => u.username === username)) {
-      return reply.code(409).send({ message: 'Username already exists' });
-    }
-
-    const userRole = roles.find(r => r.id === role_id);
-    if (!userRole) {
-      return reply.code(400).send({ message: 'Invalid role ID' });
-    }
-
-    const password_hash = await hashPassword(password);
-    const newUser: User = {
-      id: uuidv4(),
-      username,
-      password_hash,
-      role: userRole.name,
-      permissions: userRole.permissions,
-      name: name || undefined,
-      surname: surname || undefined,
-      created_at: new Date().toISOString(),
-    };
-    users.push(newUser);
-
-    const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
-    return userWithoutHash;
-  });
-
   // Update a user (Admin only)
   authenticatedFastify.put('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { username, role_id, name, surname, profile_image_url } = request.body as { username?: string; role_id?: string; name?: string; surname?: string; profile_image_url?: string };
+    const { username, name, surname, profile_image_url, isAdmin } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; isAdmin?: boolean };
 
-    if (!request.user || !checkPermission(request.user, 'manage_users')) {
-      return reply.code(403).send({ message: 'Forbidden' });
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
     }
 
     const userIndex = users.findIndex(u => u.id === id);
@@ -446,25 +341,13 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(409).send({ message: 'Username already exists' });
     }
 
-    let updatedRole = existingUser.role;
-    let updatedPermissions = existingUser.permissions;
-    if (role_id) {
-      const newRole = roles.find(r => r.id === role_id);
-      if (!newRole) {
-        return reply.code(400).send({ message: 'Invalid role ID' });
-      }
-      updatedRole = newRole.name;
-      updatedPermissions = newRole.permissions;
-    }
-
     users[userIndex] = {
       ...existingUser,
       username: username || existingUser.username,
-      role: updatedRole,
-      permissions: updatedPermissions,
       name: name === null ? undefined : (name || existingUser.name),
       surname: surname === null ? undefined : (surname || existingUser.surname),
       profile_image_url: profile_image_url === null ? undefined : (profile_image_url || existingUser.profile_image_url),
+      isAdmin: isAdmin !== undefined ? isAdmin : existingUser.isAdmin, // Admin can change isAdmin status
     };
 
     const updatedUser = users[userIndex];
@@ -476,8 +359,11 @@ fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user || !checkPermission(request.user, 'manage_users')) {
-      return reply.code(403).send({ message: 'Forbidden' });
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can delete users.' });
+    }
+    if (request.user.id === id) {
+      return reply.code(403).send({ message: 'Forbidden: An administrator cannot delete their own account.' });
     }
 
     const initialLength = users.length;
@@ -498,8 +384,8 @@ fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.get('/users/search', async (request: FastifyRequest, reply) => {
     const { query } = request.query as { query: string };
 
-    if (!request.user || !checkPermission(request.user, 'manage_users')) {
-      return reply.code(403).send({ message: 'Forbidden' });
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can search users.' });
     }
     if (!query) {
       return reply.code(400).send({ message: 'Search query is required' });
@@ -515,107 +401,6 @@ fastify.register(async (authenticatedFastify) => {
       return userWithoutHash;
     });
     return results;
-  });
-
-  // --- Role Management Routes ---
-
-  // Get all roles (Admin only)
-  authenticatedFastify.get('/roles', async (request: FastifyRequest, reply) => {
-    if (!request.user || !checkPermission(request.user, 'manage_roles')) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-    return roles;
-  });
-
-  // Create a new role (Admin only)
-  authenticatedFastify.post('/roles', async (request: FastifyRequest, reply) => {
-    const { name, permissions } = request.body as { name?: string; permissions?: string[] };
-
-    if (!request.user || !checkPermission(request.user, 'manage_roles')) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-    if (!name || !permissions) {
-      return reply.code(400).send({ message: 'Role name and permissions are required' });
-    }
-    if (roles.some(r => r.name === name)) {
-      return reply.code(409).send({ message: 'Role name already exists' });
-    }
-
-    const newRole: Role = {
-      id: uuidv4(),
-      name,
-      permissions,
-      created_at: new Date().toISOString(),
-    };
-    roles.push(newRole);
-    return newRole;
-  });
-
-  // Update a role (Admin only)
-  authenticatedFastify.put('/roles/:id', async (request: FastifyRequest, reply) => {
-    const { id } = request.params as { id: string };
-    const { name, permissions } = request.body as { name?: string; permissions?: string[] };
-
-    if (!request.user || !checkPermission(request.user, 'manage_roles')) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-
-    const roleIndex = roles.findIndex(r => r.id === id);
-    if (roleIndex === -1) {
-      return reply.code(404).send({ message: 'Role not found' });
-    }
-
-    const existingRole = roles[roleIndex];
-    if (existingRole.name === 'admin' || existingRole.name === 'user') {
-      return reply.code(403).send({ message: 'Cannot edit default roles' });
-    }
-
-    if (name && name !== existingRole.name && roles.some(r => r.name === name && r.id !== id)) {
-      return reply.code(409).send({ message: 'Role name already exists' });
-    }
-
-    roles[roleIndex] = {
-      ...existingRole,
-      name: name || existingRole.name,
-      permissions: permissions || existingRole.permissions,
-    };
-
-    // Update permissions for all users assigned to this role
-    users = users.map(u => {
-      if (u.role === existingRole.name) {
-        return { ...u, permissions: roles[roleIndex].permissions };
-      }
-      return u;
-    });
-
-    return roles[roleIndex];
-  });
-
-  // Delete a role (Admin only)
-  authenticatedFastify.delete('/roles/:id', async (request: FastifyRequest, reply) => {
-    const { id } = request.params as { id: string };
-
-    if (!request.user || !checkPermission(request.user, 'manage_roles')) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-
-    const roleToDelete = roles.find(r => r.id === id);
-    if (!roleToDelete) {
-      return reply.code(404).send({ message: 'Role not found' });
-    }
-    if (roleToDelete.name === 'admin' || roleToDelete.name === 'user') {
-      return reply.code(403).send({ message: 'Cannot delete default roles' });
-    }
-    if (users.some(u => u.role === roleToDelete.name)) {
-      return reply.code(409).send({ message: 'Cannot delete role with assigned users' });
-    }
-
-    const initialLength = roles.length;
-    roles = roles.filter(r => r.id !== id);
-    if (roles.length === initialLength) {
-      return reply.code(404).send({ message: 'Role not found' });
-    }
-    return reply.code(204).send();
   });
 
   // --- Journey Management Routes ---
@@ -640,8 +425,8 @@ fastify.register(async (authenticatedFastify) => {
 
   // Create a new journey
   authenticatedFastify.post('/journeys', async (request: FastifyRequest, reply) => {
-    if (!request.user || !checkPermission(request.user, 'create_journey')) {
-      return reply.code(403).send({ message: 'Forbidden: You do not have permission to create journeys.' });
+    if (!request.user) {
+      return reply.code(401).send({ message: 'Unauthorized' });
     }
     const { name } = request.body as { name?: string };
 
@@ -678,9 +463,12 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const existingJourney = journeys[journeyIndex];
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === existingJourney.id);
 
-    if (!checkPermission(request.user, 'edit_journey', existingJourney, undefined, currentCollaborators)) {
+    // Only owner or admin can edit
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
@@ -705,9 +493,12 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const existingJourney = journeys[journeyIndex];
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === existingJourney.id);
 
-    if (!checkPermission(request.user, 'delete_journey', existingJourney, undefined, currentCollaborators)) {
+    // Only owner or admin can delete
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
     }
 
@@ -731,13 +522,16 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Only owner or admin can view collaborators
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'manage_journey_access', journey, undefined, currentCollaborators)) {
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
-    const collaboratorsForJourney = currentCollaborators
+    const collaboratorsForJourney = journeyUserPermissions
+      .filter(jup => jup.journey_id === journeyId)
       .map(jup => {
         const user = users.find(u => u.id === jup.user_id);
         if (user) {
@@ -749,7 +543,7 @@ fastify.register(async (authenticatedFastify) => {
             name: user.name,
             surname: user.surname,
             profile_image_url: user.profile_image_url,
-            permissions: jup.permissions,
+            can_publish_posts: jup.can_publish_posts,
           } as JourneyCollaborator;
         }
         return null;
@@ -762,7 +556,7 @@ fastify.register(async (authenticatedFastify) => {
   // Add a collaborator to a journey
   authenticatedFastify.post('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
     const { id: journeyId } = request.params as { id: string };
-    const { username, permissions } = request.body as { username: string; permissions: string[] };
+    const { username } = request.body as { username: string }; // No explicit permissions needed, just 'can_publish_posts'
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -773,9 +567,11 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Only owner or admin can add collaborators
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'manage_journey_access', journey, undefined, currentCollaborators)) {
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
@@ -798,16 +594,16 @@ fastify.register(async (authenticatedFastify) => {
       name: targetUser.name,
       surname: targetUser.surname,
       profile_image_url: targetUser.profile_image_url,
-      permissions: permissions || [],
+      can_publish_posts: true, // Default and only permission for collaborators
     };
     journeyUserPermissions.push(newCollaborator);
     return newCollaborator;
   });
 
-  // Update collaborator permissions
+  // Update collaborator permissions (simplified to just can_publish_posts)
   authenticatedFastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
-    const { permissions } = request.body as { permissions: string[] };
+    const { can_publish_posts } = request.body as { can_publish_posts: boolean };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -818,9 +614,11 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Only owner or admin can update collaborators
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'manage_journey_access', journey, undefined, currentCollaborators)) {
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
@@ -829,7 +627,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Collaborator not found for this journey' });
     }
 
-    journeyUserPermissions[collabIndex].permissions = permissions;
+    journeyUserPermissions[collabIndex].can_publish_posts = can_publish_posts;
     return journeyUserPermissions[collabIndex];
   });
 
@@ -846,9 +644,11 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Only owner or admin can remove collaborators
+    const isOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'manage_journey_access', journey, undefined, currentCollaborators)) {
+    if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
@@ -880,12 +680,12 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Check if user is owner or collaborator with 'publish_post_on_journey' or admin
+    // Check if user is owner, collaborator, or admin
     const isOwner = journey.user_id === request.user.id;
     const isCollaborator = journeyUserPermissions.some(jup => jup.journey_id === journeyId && jup.user_id === request.user?.id);
-    const isAdmin = request.user.role === 'admin';
+    const isAdmin = request.user.isAdmin;
 
-    if (!isOwner && !isCollaborator && !isAdmin) { // This check is fine as it's for viewing posts
+    if (!isOwner && !isCollaborator && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have access to this journey.' });
     }
 
@@ -918,9 +718,12 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Check if user is owner, collaborator with can_publish_posts, or admin
+    const isOwner = journey.user_id === request.user.id;
+    const canPublish = journeyUserPermissions.some(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id && jup.can_publish_posts);
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'create_post', journey, undefined, currentCollaborators)) {
+    if (!isOwner && !canPublish && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
     }
 
@@ -967,9 +770,12 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Check if user is author of the post, owner of the journey, or admin
+    const isPostAuthor = existingPost.user_id === request.user.id;
+    const isJourneyOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'edit_post', journey, existingPost, currentCollaborators)) {
+    if (!isPostAuthor && !isJourneyOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
     }
 
@@ -1002,9 +808,12 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    const currentCollaborators = journeyUserPermissions.filter(jup => jup.journey_id === journey.id);
+    // Check if user is author of the post, owner of the journey, or admin
+    const isPostAuthor = existingPost.user_id === request.user.id;
+    const isJourneyOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
 
-    if (!checkPermission(request.user, 'delete_post', journey, existingPost, currentCollaborators)) {
+    if (!isPostAuthor && !isJourneyOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
     }
 

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Settings, User as UserIcon, Wrench } from 'lucide-react'; // Added Wrench icon
+import { LogOut, Settings, User as UserIcon, Users } from 'lucide-react'; // Changed Wrench to Users icon for admin
 import LoginDialog from './LoginDialog';
 import RegisterDialog from './RegisterDialog';
 import ManageAccountDialog from './ManageAccountDialog';
@@ -88,10 +88,10 @@ const UserProfileDropdown: React.FC = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {user?.role === 'admin' && (
+          {user?.isAdmin && ( // Only show Admin link if user is an admin
             <DropdownMenuItem onClick={() => navigate('/admin')}>
-              <Wrench className="mr-2 h-4 w-4" />
-              <span>Admin dashboard</span>
+              <Users className="mr-2 h-4 w-4" />
+              <span>Admin (Users)</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>

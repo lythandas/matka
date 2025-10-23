@@ -3,7 +3,17 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { showError, showSuccess } from '@/utils/toast';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-import { User } from '@/types'; // Centralized User interface
+
+// Updated User interface for the new permission model
+interface User {
+  id: string;
+  username: string;
+  isAdmin: boolean; // Simplified: first user is admin, others are not
+  name?: string;
+  surname?: string;
+  profile_image_url?: string;
+  created_at?: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -64,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout(); // Force logout if check fails and frontend is authenticated
       }
     }
-  }, [isAuthenticated, logout]);
+  }, [isAuthenticated, logout, setAuthData]);
 
   // Load auth state from localStorage on initial render
   useEffect(() => {
@@ -72,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('authUser');
     if (storedToken && storedUser) {
       try {
-        const parsedUser = JSON.parse(storedUser);
+        const parsedUser: User = JSON.parse(storedUser); // Cast to new User type
         setAuthData(parsedUser, storedToken); // Use new setAuthData
       } catch (error) {
         console.error("Failed to parse stored user data:", error);

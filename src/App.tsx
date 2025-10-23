@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import AdminPage from "./pages/AdminPage";
 import AppLayout from "./components/AppLayout";
 import { CreateJourneyDialogProvider } from "./contexts/CreateJourneyDialogContext";
 import LoginPage from "./pages/LoginPage"; // Import LoginPage
@@ -26,7 +25,7 @@ const App = () => {
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/admin" element={<AdminPage />} />
+                  {/* Removed AdminPage route */}
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

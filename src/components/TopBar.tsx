@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import ManageJourneyDialog from './ManageJourneyDialog';
-import { userHasPermission } from '@/lib/permissions';
+// Removed userHasPermission import as it's no longer needed
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
@@ -34,8 +34,9 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
 
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
 
-  // Check if the current user has permission to manage the selected journey
-  const canManageSelectedJourney = isAuthenticated && selectedJourney && userHasPermission(user, 'manage_journey_access', selectedJourney.user_id);
+  // Simplified permission check: only journey owner or admin can manage journey
+  const canManageSelectedJourney = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin);
+  const canCreateJourney = isAuthenticated; // All authenticated users can create journeys
 
   const renderJourneyDropdown = (isMobileView: boolean) => (
     <DropdownMenu>
@@ -71,7 +72,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             </DropdownMenuItem>
           ))
         )}
-        {isAuthenticated && (userHasPermission(user, 'create_journey')) && (
+        {canCreateJourney && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {
@@ -119,6 +120,15 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         onClick={() => setIsManageJourneyDialogOpen(true)}
                       >
                         <Wrench className="mr-2 h-4 w-4" /> Manage journey
+                      </Button>
+                    )}
+                    {user?.isAdmin && ( // Only show Admin link if user is an admin
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-lg font-semibold"
+                        onClick={() => navigate('/admin')}
+                      >
+                        <Users className="mr-2 h-4 w-4" /> Admin (Users)
                       </Button>
                     )}
                   </>

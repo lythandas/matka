@@ -16,9 +16,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Trash2, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
-import { getPermissionDisplayName, userHasPermission } from '@/lib/permissions';
+// Removed getPermissionDisplayName and userHasPermission imports
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } from '@/lib/utils';
+import { getAvatarInitials } from "@/lib/utils";
 import { API_BASE_URL } from '@/config/api';
 import { Journey, JourneyCollaborator, User } from '@/types';
 import {
@@ -28,19 +28,14 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from "@/components/ui/command"; // Import Command components
+} from "@/components/ui/command";
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
   onClose: () => void;
   journey: Journey;
-  onJourneyUpdated: () => void; // Callback to refresh journeys list in parent
+  onJourneyUpdated: () => void;
 }
-
-// Only 'publish_post_on_journey' is a journey-specific permission for collaborators
-const journeySpecificPermissions = [
-  'publish_post_on_journey',
-];
 
 const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   isOpen,
@@ -48,7 +43,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   journey,
   onJourneyUpdated,
 }) => {
-  const { token, user: currentUser } = useAuth(); // Get token from useAuth
+  const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
@@ -60,7 +55,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
-  const [newCollaboratorPermissions, setNewCollaboratorPermissions] = useState<string[]>([]);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<number | null>(null);
@@ -71,7 +65,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators`, {
         headers: {
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
       });
       if (!response.ok) {
@@ -100,7 +94,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     try {
       const response = await fetch(`${API_BASE_URL}/users/search?query=${encodeURIComponent(query.trim())}`, {
         headers: {
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
       });
       if (!response.ok) {
@@ -123,23 +117,21 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   useEffect(() => {
     if (isOpen && journey) {
-      setJourneyName(journey.name); // Reset journey name when dialog opens
+      setJourneyName(journey.name);
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
       setSelectedUserToAdd(null);
-      setNewCollaboratorPermissions([]); // Reset permissions for new collaborator
     }
   }, [isOpen, journey, fetchCollaborators]);
 
-  // Debounce searchUsername changes
   useEffect(() => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
     debounceTimeoutRef.current = window.setTimeout(() => {
       searchUsers(searchUsername);
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       if (debounceTimeoutRef.current) {
@@ -158,7 +150,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       return;
     }
 
-    if (!userHasPermission(currentUser, 'edit_journey', journey.user_id, collaborators)) {
+    // Permission check: only owner or admin can edit journey name
+    const canEditJourneyName = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canEditJourneyName) {
       showError('You do not have permission to edit this journey.');
       return;
     }
@@ -169,7 +163,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ name: journeyName.trim() }),
       });
@@ -180,7 +174,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       }
 
       showSuccess(`Journey renamed to '${journeyName}' successfully!`);
-      onJourneyUpdated(); // Trigger refresh in parent
+      onJourneyUpdated();
     } catch (error: any) {
       console.error('Error renaming journey:', error);
       showError(error.message || 'Failed to rename journey.');
@@ -194,17 +188,25 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError('Please select a user to add as a collaborator.');
       return;
     }
+
+    // Permission check: only owner or admin can add collaborators
+    const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
+    if (!canManageJourney) {
+      showError('You do not have permission to add collaborators to this journey.');
+      return;
+    }
+
     setIsAddingCollaborator(true);
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
-          permissions: newCollaboratorPermissions,
+          // can_publish_posts is implicitly true on backend
         }),
       });
 
@@ -215,11 +217,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       showSuccess(`User '${selectedUserToAdd.username}' added as collaborator.`);
       fetchCollaborators();
-      onJourneyUpdated(); // Trigger refresh in parent
+      onJourneyUpdated();
       setSearchUsername('');
       setSearchResults([]);
       setSelectedUserToAdd(null);
-      setNewCollaboratorPermissions([]);
     } catch (error: any) {
       console.error('Error adding collaborator:', error);
       showError(error.message || 'Failed to add collaborator.');
@@ -228,43 +229,22 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
-  const handleUpdateCollaboratorPermissions = async (userId: string, newPermissions: string[]) => {
-    if (!token) return;
-    setIsUpdatingCollaborator(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Use token from context
-        },
-        body: JSON.stringify({ permissions: newPermissions }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update permissions');
-      }
-
-      showSuccess('Collaborator permissions updated.');
-      fetchCollaborators();
-      onJourneyUpdated(); // Trigger refresh in parent
-    } catch (error: any) {
-      console.error('Error updating collaborator permissions:', error);
-      showError(error.message || 'Failed to update permissions.');
-    } finally {
-      setIsUpdatingCollaborator(false);
-    }
-  };
-
   const handleRemoveCollaborator = async (userId: string, username: string) => {
     if (!token) return;
+
+    // Permission check: only owner or admin can remove collaborators
+    const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
+    if (!canManageJourney) {
+      showError('You do not have permission to remove collaborators from this journey.');
+      return;
+    }
+
     setIsUpdatingCollaborator(true);
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`, // Use token from context
+          'Authorization': `Bearer ${token}`,
         },
       });
 
@@ -275,7 +255,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       showSuccess(`Collaborator '${username}' removed.`);
       fetchCollaborators();
-      onJourneyUpdated(); // Trigger refresh in parent
+      onJourneyUpdated();
     } catch (error: any) {
       console.error('Error removing collaborator:', error);
       showError(error.message || 'Failed to remove collaborator.');
@@ -284,26 +264,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
-  const handleNewCollabPermissionChange = (permission: string, checked: boolean) => {
-    setNewCollaboratorPermissions((prev) =>
-      checked ? [...prev, permission] : prev.filter((p) => p !== permission)
-    );
-  };
-
-  const handleExistingCollabPermissionChange = (
-    collabId: string,
-    currentPermissions: string[],
-    permission: string,
-    checked: boolean
-  ) => {
-    const updatedPermissions = checked
-      ? [...currentPermissions, permission]
-      : currentPermissions.filter((p) => p !== permission);
-    handleUpdateCollaboratorPermissions(collabId, updatedPermissions);
-  };
-
-  const canManageJourney = currentUser && userHasPermission(currentUser, 'manage_journey_access', journey.user_id, collaborators);
-  const canEditJourneyName = currentUser && userHasPermission(currentUser, 'edit_journey', journey.user_id, collaborators);
+  // Permission checks for UI elements
+  const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
+  const canEditJourneyName = canManageJourney; // Same permission for renaming
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -314,7 +277,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             Update journey details or manage collaborators.
           </DialogDescription>
         </DialogHeader>
-        <div className="p-4 space-y-4 flex-grow overflow-y-auto"> {/* Removed Tabs, directly rendering content */}
+        <div className="p-4 space-y-4 flex-grow overflow-y-auto">
           {/* Journey Owner */}
           <div className="border rounded-md p-4 bg-muted/50">
             <h3 className="text-lg font-semibold mb-2">Journey owner</h3>
@@ -334,7 +297,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              (Owner has full access and cannot be removed or have permissions modified here.)
+              (Owner has full access and cannot be removed.)
             </p>
 
             {/* Journey Name input moved here */}
@@ -389,9 +352,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       value={userResult.username}
                       onSelect={() => {
                         setSelectedUserToAdd(userResult);
-                        setSearchUsername(userResult.username); // Keep selected username in input
-                        setSearchResults([]); // Clear results after selection
-                        setNewCollaboratorPermissions(['publish_post_on_journey']); // Set default permission
+                        setSearchUsername(userResult.username);
+                        setSearchResults([]);
                       }}
                       className="flex items-center justify-between"
                     >
@@ -415,24 +377,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
             {selectedUserToAdd && (
               <div className="space-y-3">
-                <p className="text-sm font-medium">
-                  Assign permissions for <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span>:
+                <p className="text-sm font-medium mb-2">
+                  Adding <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span> as a collaborator.
+                  They will be able to publish posts on this journey.
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {journeySpecificPermissions.map((perm) => (
-                    <div key={`new-${perm}`} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`new-perm-${perm}`}
-                        checked={newCollaboratorPermissions.includes(perm)}
-                        onCheckedChange={(checked) => handleNewCollabPermissionChange(perm, !!checked)}
-                        disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
-                      />
-                      <Label htmlFor={`new-perm-${perm}`}>
-                        {getPermissionDisplayName(perm)}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
                 <Button
                   onClick={handleAddCollaborator}
                   disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
@@ -485,23 +433,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {journeySpecificPermissions.map((perm) => (
-                        <div key={`${collab.user_id}-${perm}`} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${collab.user_id}-${perm}`}
-                            checked={collab.permissions.includes(perm)}
-                            onCheckedChange={(checked) =>
-                              handleExistingCollabPermissionChange(collab.user_id, collab.permissions, perm, !!checked)
-                            }
-                            disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
-                          />
-                          <Label htmlFor={`${collab.user_id}-${perm}`}>
-                            {getPermissionDisplayName(perm)}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-muted-foreground">Can publish posts: {collab.can_publish_posts ? 'Yes' : 'No'}</p>
                   </div>
                 ))}
               </div>

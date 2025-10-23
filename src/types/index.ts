@@ -3,12 +3,11 @@
 export interface User {
   id: string;
   username: string;
-  role: string; // Role name (e.g., 'admin', 'user')
-  permissions: string[]; // Permissions derived from the role
+  isAdmin: boolean; // Replaced role and permissions with a simple isAdmin flag
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  created_at?: string; // Added for AdminPage
+  created_at?: string;
 }
 
 export interface Journey {
@@ -39,13 +38,7 @@ export interface Post {
   author_name?: string;
   author_surname?: string;
   author_profile_image_url?: string;
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  permissions: string[];
-  created_at: string;
+  journey_id: string; // Added journey_id to Post interface
 }
 
 // New: Interface for a user's permissions within a specific journey
@@ -56,5 +49,5 @@ export interface JourneyCollaborator {
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  permissions: string[]; // Permissions specific to this journey
+  can_publish_posts: boolean; // Simplified to a single boolean permission for collaborators
 }
