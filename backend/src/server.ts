@@ -104,7 +104,11 @@ let journeys: Journey[] = [];
 let journeyUserPermissions: JourneyCollaborator[] = [];
 let posts: Post[] = [];
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey_dev';
+const JWT_SECRET = process.env.JWT_SECRET; // Get from environment variable
+if (!JWT_SECRET) {
+  console.error('JWT_SECRET is not defined. Please set it in your environment variables.');
+  process.exit(1); // Exit if secret is not set
+}
 const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localhost:3001';
 const UPLOADS_DIR = path.join(__dirname, '../uploads'); // Define uploads directory path
 
@@ -182,7 +186,8 @@ fastify.post('/register', async (request, reply) => {
   users.push(newUser);
 
   const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
-  delete (userWithoutHash as any).password_hash; // Remove hash for token
+  // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+  // delete (userWithoutHash as any).password_hash; 
 
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
@@ -207,7 +212,8 @@ fastify.post('/login', async (request, reply) => {
   }
 
   const userWithoutHash: Omit<User, 'password_hash'> = { ...user };
-  delete (userWithoutHash as any).password_hash;
+  // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+  // delete (userWithoutHash as any).password_hash;
 
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
@@ -229,7 +235,8 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'User not found' });
     }
     const userWithoutHash: Omit<User, 'password_hash'> = { ...user };
-    delete (userWithoutHash as any).password_hash;
+    // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+    // delete (userWithoutHash as any).password_hash;
     return userWithoutHash;
   });
 
@@ -254,7 +261,8 @@ fastify.register(async (authenticatedFastify) => {
 
     const updatedUser = users[userIndex];
     const userWithoutHash: Omit<User, 'password_hash'> = { ...updatedUser };
-    delete (userWithoutHash as any).password_hash;
+    // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+    // delete (userWithoutHash as any).password_hash;
 
     const newToken = generateToken(userWithoutHash); // Generate new token with updated user info
     return { user: userWithoutHash, token: newToken };
@@ -334,7 +342,8 @@ fastify.register(async (authenticatedFastify) => {
     }
     return users.map(u => {
       const userWithoutHash: Omit<User, 'password_hash'> = { ...u };
-      delete (userWithoutHash as any).password_hash;
+      // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+      // delete (userWithoutHash as any).password_hash;
       return userWithoutHash;
     });
   });
@@ -373,7 +382,8 @@ fastify.register(async (authenticatedFastify) => {
     users.push(newUser);
 
     const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
-    delete (userWithoutHash as any).password_hash;
+    // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+    // delete (userWithoutHash as any).password_hash;
     return userWithoutHash;
   });
 
@@ -420,7 +430,8 @@ fastify.register(async (authenticatedFastify) => {
 
     const updatedUser = users[userIndex];
     const userWithoutHash: Omit<User, 'password_hash'> = { ...updatedUser };
-    delete (userWithoutHash as any).password_hash;
+    // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+    // delete (userWithoutHash as any).password_hash;
     return userWithoutHash;
   });
 
@@ -464,7 +475,8 @@ fastify.register(async (authenticatedFastify) => {
       u.surname?.toLowerCase().includes(searchLower)
     ).map(u => {
       const userWithoutHash: Omit<User, 'password_hash'> = { ...u };
-      delete (userWithoutHash as any).password_hash;
+      // No need to delete property with 'as any' if type is Omit<User, 'password_hash'>
+      // delete (userWithoutHash as any).password_hash;
       return userWithoutHash;
     });
     return results;

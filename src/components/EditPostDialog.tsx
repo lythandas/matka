@@ -35,7 +35,7 @@ interface EditPostDialogProps {
 }
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, token } = useAuth(); // Get token from useAuth
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
   const [currentMediaItems, setCurrentMediaItems] = useState<MediaInfo[]>(post.media_items || []);
@@ -87,7 +87,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Authorization': `Bearer ${token}`, // Use token from context
           },
           body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
         });
@@ -222,7 +222,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({
           title: title.trim() || null,

@@ -48,7 +48,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   journey,
   onJourneyUpdated,
 }) => {
-  const { token, user: currentUser } = useAuth();
+  const { token, user: currentUser } = useAuth(); // Get token from useAuth
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
@@ -71,7 +71,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
       if (!response.ok) {
@@ -100,7 +100,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     try {
       const response = await fetch(`${API_BASE_URL}/users/search?query=${encodeURIComponent(query.trim())}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
       if (!response.ok) {
@@ -169,7 +169,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({ name: journeyName.trim() }),
       });
@@ -200,7 +200,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
@@ -236,7 +236,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({ permissions: newPermissions }),
       });
@@ -264,7 +264,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
 

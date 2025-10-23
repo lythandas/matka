@@ -29,7 +29,7 @@ interface ManageAccountDialogProps {
 }
 
 const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClose, currentUser }) => {
-  const { token, updateUser } = useAuth();
+  const { token, updateUser } = useAuth(); // Get token from useAuth
   const [name, setName] = useState<string>(currentUser.name || '');
   const [surname, setSurname] = useState<string>(currentUser.surname || '');
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(currentUser.profile_image_url);
@@ -70,7 +70,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: true }), // Pass isProfileImage
       });
@@ -151,7 +151,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({
           name: name.trim() || null,

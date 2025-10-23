@@ -37,7 +37,7 @@ interface EditUserDialogProps {
 }
 
 const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, onUserUpdated }) => {
-  const { token, user: currentUser } = useAuth();
+  const { token, user: currentUser } = useAuth(); // Get token from useAuth
   const [username, setUsername] = useState<string>(user.username);
   const [name, setName] = useState<string>(user.name || '');
   const [surname, setSurname] = useState<string>(user.surname || '');
@@ -122,7 +122,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: true }), // Pass isProfileImage
       });
@@ -206,7 +206,7 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ isOpen, onClose, user, 
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({
           username: username.trim(),

@@ -35,7 +35,7 @@ import { User, Journey, Role, JourneyCollaborator } from '@/types';
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user: currentUser, token } = useAuth();
+  const { user: currentUser, token } = useAuth(); // Get token from useAuth
   const { journeys, fetchJourneys, loadingJourneys } = useJourneys();
 
   const [users, setUsers] = useState<User[]>([]);

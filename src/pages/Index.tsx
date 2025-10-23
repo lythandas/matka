@@ -43,7 +43,7 @@ import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 
 const Index = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, token } = useAuth(); // Get token from useAuth
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const [title, setTitle] = useState<string>('');
@@ -87,14 +87,14 @@ const Index = () => {
   }, []);
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
-    if (!user || !user.id || !localStorage.getItem('authToken')) {
+    if (!user || !user.id || !token) { // Use token from context
       setJourneyCollaborators([]);
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
       if (!response.ok) {
@@ -110,14 +110,14 @@ const Index = () => {
       console.error('Error fetching journey collaborators:', error);
       setJourneyCollaborators([]);
     }
-  }, [user]);
+  }, [user, token]); // Add token to dependencies
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
     try {
       const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
       if (!response.ok) {
@@ -142,7 +142,7 @@ const Index = () => {
       setLoadingPosts(false);
       setJourneyCollaborators([]);
     }
-  }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators]);
+  }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators, token]); // Add token to dependencies
 
   const uploadMediaToServer = async (files: File[]) => {
     setIsUploadingMedia(true);
@@ -169,7 +169,7 @@ const Index = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Authorization': `Bearer ${token}`, // Use token from context
           },
           body: JSON.stringify({ fileBase64: base64Data, fileType: file.type, isProfileImage: false }),
         });
@@ -304,7 +304,7 @@ const Index = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
         body: JSON.stringify({
           journeyId: selectedJourney.id,
@@ -349,7 +349,7 @@ const Index = () => {
       const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`, // Use token from context
         },
       });
 
