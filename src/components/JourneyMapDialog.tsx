@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react'; // Removed useState, useEffect, useRef
 import {
   Dialog,
   DialogContent,
@@ -8,19 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Map as MapIcon, Loader2 } from 'lucide-react';
-import L from 'leaflet'; // Import Leaflet
-import { showError } from '@/utils/toast';
+import { Map as MapIcon } from 'lucide-react'; // Removed Loader2
 import { Post } from '@/types'; // Centralized Post interface
-
-// Fix for default Leaflet icon paths
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
+import MapComponent from './MapComponent'; // Import the enhanced MapComponent
 
 interface JourneyMapDialogProps {
   isOpen: boolean;
@@ -30,99 +20,7 @@ interface JourneyMapDialogProps {
 }
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<L.Map | null>(null);
-  const [mapLoading, setMapLoading] = useState<boolean>(true);
-
   const postsWithCoordinates = posts.filter(post => post.coordinates);
-
-  useEffect(() => {
-    const cleanupMap = () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      setMapLoading(true); // Reset loading state on cleanup
-    };
-
-    if (!isOpen || !mapContainerRef.current || !postsWithCoordinates.length) {
-      cleanupMap();
-      return;
-    }
-
-    setMapLoading(true); // Start loading indicator
-
-    const initializeOrUpdateMap = () => {
-      if (!mapRef.current) {
-        console.log('Initializing new map...');
-        mapRef.current = L.map(mapContainerRef.current!, {
-          center: [0, 0], // Will be adjusted by fitBounds
-          zoom: 1, // Will be adjusted by fitBounds
-          zoomControl: false,
-        });
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapRef.current);
-
-        L.control.zoom({ position: 'topright' }).addTo(mapRef.current);
-
-        mapRef.current.on('error', (e: any) => {
-          console.error('Leaflet Map Error:', e.error);
-          showError('Failed to load map tiles.');
-          setMapLoading(false);
-        });
-      } else {
-        console.log('Updating existing map...');
-        mapRef.current.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            layer.remove();
-          }
-        });
-      }
-
-      addMarkersAndFitBounds(mapRef.current);
-      
-      // Delay invalidateSize to ensure dialog has settled
-      setTimeout(() => {
-        mapRef.current?.invalidateSize();
-        setMapLoading(false); // Set loading to false after invalidateSize
-        console.log('Map ready and invalidateSize called (delayed).');
-      }, 100); // A small delay (e.g., 100ms) can be more reliable
-    };
-
-    initializeOrUpdateMap();
-
-    return cleanupMap;
-  }, [isOpen, postsWithCoordinates]);
-
-  const addMarkersAndFitBounds = (map: L.Map) => {
-    if (!postsWithCoordinates.length) return;
-
-    const markers: L.Marker[] = [];
-    const latLngs: L.LatLngExpression[] = [];
-
-    postsWithCoordinates.forEach((post, index) => {
-      if (post.coordinates) {
-        const latLng: L.LatLngExpression = [post.coordinates.lat, post.coordinates.lng];
-        const marker = L.marker(latLng).addTo(map);
-
-        marker.on('click', () => {
-          onSelectPost(post, posts.indexOf(post));
-        });
-
-        markers.push(marker);
-        latLngs.push(latLng);
-      }
-    });
-
-    if (latLngs.length === 1) {
-      map.setView(latLngs[0], 12);
-    } else if (latLngs.length > 1) {
-      const bounds = L.latLngBounds(latLngs);
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -134,14 +32,13 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow relative rounded-md overflow-hidden">
-          {mapLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="ml-2 text-lg text-muted-foreground">Loading map...</p>
-            </div>
-          )}
           {postsWithCoordinates.length > 0 ? (
-            <div ref={mapContainerRef} className="w-full h-full z-0" />
+            <MapComponent
+              posts={postsWithCoordinates}
+              onMarkerClick={onSelectPost}
+              className="w-full h-full"
+              zoom={12} // Default zoom when fitting bounds, can be adjusted
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
