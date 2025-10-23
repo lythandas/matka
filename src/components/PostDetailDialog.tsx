@@ -120,22 +120,20 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             timeout={300} // Match animation duration
             classNames={transitionClassPrefix || ''} // Use the determined prefix for classNames
           >
-            {/* The content div needs to be the direct child of CSSTransition and handle its own scrolling */}
-            <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto">
+            {/* Changed from absolute inset-0 to flex flex-col flex-grow for proper layout flow */}
+            <div className="flex flex-col flex-grow p-6 pt-4 overflow-y-auto">
               {mediaItems.length > 0 && (
-                <div className="relative mb-4 flex-shrink-0"> {/* Added flex-shrink-0 */}
-                  {console.log('Current media for display:', currentMedia)}
+                <div className="relative mb-4 flex-shrink-0">
                   {currentMedia?.type === 'image' && (
                     <img
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                       src={currentMedia.urls.large || '/placeholder.svg'}
                       alt={post.title || "Post image"}
-                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto" // Changed object-cover to object-contain, added max-h and mx-auto
+                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                         e.currentTarget.onerror = null;
                         console.error(`Failed to load image: ${currentMedia.urls.large}`);
-                        console.log('Image src that failed:', e.currentTarget.src);
                       }}
                     />
                   )}
@@ -144,7 +142,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                       src={currentMedia.url}
                       controls
-                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto" // Changed object-cover to object-contain, added max-h and mx-auto
+                      className="w-full h-auto object-contain max-h-[60vh] rounded-md mx-auto"
                     />
                   )}
 
