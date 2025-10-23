@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage"; // Import AdminPage
 import PublicJourneyPage from "./pages/PublicJourneyPage"; // Import PublicJourneyPage
 import { useAuth } from "./contexts/AuthContext";
+import { useJourneys } from "./contexts/JourneyContext"; // Import useJourneys
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,8 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element
 
 const App = () => {
   const { isAuthenticated } = useAuth();
+  // Removed posts and selectedDate from App component as they are now managed within Index.tsx
+  // and passed to AppLayout from there.
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -39,21 +42,20 @@ const App = () => {
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <CreateJourneyDialogProvider>
             {isAuthenticated ? (
-              <AppLayout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute adminOnly>
-                        <AdminPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AppLayout>
+              // AppLayout now wraps the Routes, and Index.tsx passes its posts and date handlers to AppLayout
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <AdminPage />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             ) : (
               <Routes>
                 <Route path="/public-journey/:ownerUsername/:journeyName" element={<PublicJourneyPage />} /> {/* New public route with human-readable URL */}
