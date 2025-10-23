@@ -328,7 +328,7 @@ const PublicJourneyPage: React.FC = () => {
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
-          key={selectedPostForDetail.id}
+          // Removed key={selectedPostForDetail.id}
           post={selectedPostForDetail}
           isOpen={isDetailDialogOpen}
           onClose={handleCloseDetailDialog}

@@ -572,7 +572,7 @@ const Index = () => {
                     type="button"
                     variant="outline"
                     onClick={handleGetLocation}
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+                    className="flex items-center hover:ring-2 hover://ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                     disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
                   >
                     {locationLoading ? (
@@ -829,7 +829,7 @@ const Index = () => {
       )}
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
-          key={selectedPostForDetail.id}
+          // Removed key={selectedPostForDetail.id}
           post={selectedPostForDetail}
           isOpen={isDetailDialogOpen}
           onClose={handleCloseDetailDialog}
