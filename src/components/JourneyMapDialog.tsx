@@ -24,58 +24,51 @@ interface JourneyMapDialogProps {
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  // Removed mapId state as we'll use the ref directly
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
   useEffect(() => {
-    if (!isOpen || !postsWithCoordinates.length) {
+    const cleanupMap = () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
+    };
+
+    if (!isOpen || !postsWithCoordinates.length) {
+      cleanupMap();
       return;
     }
 
-    // Ensure the container element is available before initializing the map
-    if (!mapContainerRef.current) {
-      return;
-    }
+    // Initialize map only if container is available and map is not already initialized
+    if (mapContainerRef.current && !mapRef.current) {
+      mapRef.current = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
+        center: [0, 0], // Will be adjusted by fitBounds
+        zoom: 1, // Will be adjusted by fitBounds
+      });
 
-    if (mapRef.current) {
-      // If map already exists, just update markers and fit bounds
+      mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      mapRef.current.on('load', () => {
+        if (mapRef.current) {
+          addMarkersAndFitBounds(mapRef.current);
+        }
+      });
+    } else if (mapRef.current && isOpen && postsWithCoordinates.length > 0) {
+      // If map exists and dialog is open, just update markers and bounds
+      // This handles cases where posts change while the dialog is open
       mapRef.current.eachLayer((layer) => {
         if (layer instanceof maplibregl.Marker) {
           layer.remove();
         }
       });
       addMarkersAndFitBounds(mapRef.current);
-      return;
     }
 
-    // Initialize map, passing the DOM element directly
-    mapRef.current = new maplibregl.Map({
-      container: mapContainerRef.current, // Pass the DOM element directly
-      style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
-      center: [0, 0], // Will be adjusted by fitBounds
-      zoom: 1, // Will be adjusted by fitBounds
-    });
-
-    mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-    mapRef.current.on('load', () => {
-      if (mapRef.current) {
-        addMarkersAndFitBounds(mapRef.current);
-      }
-    });
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [isOpen, postsWithCoordinates, mapContainerRef.current]); // Add mapContainerRef.current to dependencies
+    return cleanupMap;
+  }, [isOpen, postsWithCoordinates, mapContainerRef.current]);
 
   const addMarkersAndFitBounds = (map: maplibregl.Map) => {
     if (!postsWithCoordinates.length) return;
@@ -88,11 +81,10 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
           .setLngLat([post.coordinates.lng, post.coordinates.lat])
           .addTo(map);
 
-        // Create a custom element for the marker to add click listener
         const markerElement = marker.getElement();
         markerElement.style.cursor = 'pointer';
         markerElement.addEventListener('click', () => {
-          onSelectPost(post, posts.indexOf(post)); // Pass original index
+          onSelectPost(post, posts.indexOf(post));
         });
 
         bounds.extend([post.coordinates.lng, post.coordinates.lat]);
@@ -101,11 +93,11 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
 
     if (postsWithCoordinates.length === 1 && postsWithCoordinates[0].coordinates) {
       map.setCenter([postsWithCoordinates[0].coordinates.lng, postsWithCoordinates[0].coordinates.lat]);
-      map.setZoom(12); // Default zoom for single marker
+      map.setZoom(12);
     } else if (postsWithCoordinates.length > 1) {
       map.fitBounds(bounds, {
-        padding: 50, // Padding around the bounds
-        maxZoom: 14, // Don't zoom in too much
+        padding: 50,
+        maxZoom: 14,
       });
     }
   };

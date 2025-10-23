@@ -10,43 +10,57 @@ interface MapComponentProps {
   className?: string;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, className }) => { // Changed default zoom to 14
+const MapComponent: React.FC<MapComponentProps> = ({ coordinates, zoom = 14, className }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const [mapId] = useState(() => `map-${Math.random().toString(36).substring(2, 9)}`);
 
   useEffect(() => {
-    if (mapRef.current) return;
-
-    if (!mapContainerRef.current) {
-      showError("Map container not found.");
-      return;
-    }
-
-    mapRef.current = new maplibregl.Map({
-      container: mapId,
-      style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
-      center: [coordinates.lng, coordinates.lat],
-      zoom: zoom,
-    });
-
-    mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-    // This line adds the pin to the chosen location!
-    new maplibregl.Marker()
-      .setLngLat([coordinates.lng, coordinates.lat])
-      .addTo(mapRef.current);
-
-    return () => {
+    const cleanupMap = () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, [coordinates, zoom, mapId]);
+
+    // Initialize map only if container is available and map is not already initialized
+    if (mapContainerRef.current && !mapRef.current) {
+      mapRef.current = new maplibregl.Map({
+        container: mapContainerRef.current, // Pass the DOM element directly
+        style: 'https://tiles.stadiamaps.com/styles/outdoors.json',
+        center: [coordinates.lng, coordinates.lat],
+        zoom: zoom,
+      });
+
+      mapRef.current.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      mapRef.current.on('load', () => {
+        if (mapRef.current) {
+          new maplibregl.Marker()
+            .setLngLat([coordinates.lng, coordinates.lat])
+            .addTo(mapRef.current);
+        }
+      });
+    } else if (mapRef.current) {
+      // If map exists, update center and marker if coordinates change
+      mapRef.current.setCenter([coordinates.lng, coordinates.lat]);
+      mapRef.current.setZoom(zoom);
+      // Remove existing markers
+      mapRef.current.eachLayer((layer) => {
+        if (layer instanceof maplibregl.Marker) {
+          layer.remove();
+        }
+      });
+      // Add new marker
+      new maplibregl.Marker()
+        .setLngLat([coordinates.lng, coordinates.lat])
+        .addTo(mapRef.current);
+    }
+
+    return cleanupMap;
+  }, [coordinates, zoom, mapContainerRef.current]);
 
   return (
-    <div ref={mapContainerRef} id={mapId} className={`w-full h-64 rounded-md relative overflow-hidden ${className}`} />
+    <div ref={mapContainerRef} className={`w-full h-64 rounded-md relative overflow-hidden ${className}`} />
   );
 };
 
