@@ -12,17 +12,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Settings, User as UserIcon, Users } from 'lucide-react'; // Changed Wrench to Users icon for admin
+import { LogOut, Settings, User as UserIcon, Users } from 'lucide-react';
 import LoginDialog from './LoginDialog';
 import RegisterDialog from './RegisterDialog';
 import ManageAccountDialog from './ManageAccountDialog';
 import { getAvatarInitials } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-// Removed ThemeToggle import
+import { useNavigate } from 'react-router-dom';
 
 const UserProfileDropdown: React.FC = () => {
   const { isAuthenticated, user, logout, usersExist } = useAuth();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState<boolean>(false);
   const [isManageAccountDialogOpen, setIsManageAccountDialogOpen] = useState<boolean>(false);
@@ -98,7 +97,6 @@ const UserProfileDropdown: React.FC = () => {
             <Settings className="mr-2 h-4 w-4" />
             <span>Manage account</span>
           </DropdownMenuItem>
-          {/* ThemeToggle moved to ManageAccountDialog */}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />

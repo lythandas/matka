@@ -1,18 +1,35 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/AppLayout";
 import { CreateJourneyDialogProvider } from "./contexts/CreateJourneyDialogContext";
-import LoginPage from "./pages/LoginPage"; // Import LoginPage
-import { useAuth } from "./contexts/AuthContext"; // Import useAuth
+import LoginPage from "./pages/LoginPage";
+import AdminPage from "./pages/AdminPage"; // Import AdminPage
+import { useAuth } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
+// ProtectedRoute component to guard admin access
+const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element; adminOnly?: boolean }) => {
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (adminOnly && !user?.isAdmin) {
+    // Optionally show an error toast here
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 const App = () => {
-  const { isAuthenticated, usersExist } = useAuth(); // Use useAuth here
+  const { isAuthenticated } = useAuth();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -20,12 +37,18 @@ const App = () => {
         <Sonner />
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <CreateJourneyDialogProvider>
-            {/* Conditionally render AppLayout or LoginPage */}
             {isAuthenticated ? (
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  {/* Removed AdminPage route */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute adminOnly>
+                        <AdminPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

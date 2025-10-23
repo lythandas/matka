@@ -321,6 +321,38 @@ fastify.register(async (authenticatedFastify) => {
     });
   });
 
+  // Create a new user (Admin only)
+  authenticatedFastify.post('/users', async (request: FastifyRequest, reply) => {
+    const { username, password, name, surname } = request.body as { username?: string; password?: string; name?: string; surname?: string };
+
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can create users.' });
+    }
+    if (!username || !password) {
+      return reply.code(400).send({ message: 'Username and password are required' });
+    }
+
+    if (users.some(u => u.username === username)) {
+      return reply.code(409).send({ message: 'Username already exists' });
+    }
+
+    const password_hash = await hashPassword(password);
+
+    const newUser: User = {
+      id: uuidv4(),
+      username,
+      password_hash,
+      isAdmin: false, // New users created by admin are not admins by default
+      name: name || undefined,
+      surname: surname || undefined,
+      created_at: new Date().toISOString(),
+    };
+    users.push(newUser);
+
+    const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
+    return userWithoutHash;
+  });
+
   // Update a user (Admin only)
   authenticatedFastify.put('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };

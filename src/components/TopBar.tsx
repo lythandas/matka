@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import ManageJourneyDialog from './ManageJourneyDialog';
-// Removed userHasPermission import as it's no longer needed
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
