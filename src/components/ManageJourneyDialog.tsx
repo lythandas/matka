@@ -250,6 +250,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
+          // can_read_posts is implicitly true and handled by backend
         }),
       });
 
@@ -292,7 +293,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(permissions),
+        body: JSON.stringify({
+          can_publish_posts: permissions.can_publish_posts,
+          can_modify_post: permissions.can_modify_post,
+          can_delete_posts: permissions.can_delete_posts,
+          // can_read_posts is implicitly true and not sent for update
+        }),
       });
 
       if (!response.ok) {
@@ -508,7 +514,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               <div className="space-y-3">
                 <p className="text-sm font-medium mb-2">
                   Adding <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span> as a collaborator.
-                  They will be able to publish posts on this journey by default.
+                  They will be able to read posts and publish posts on this journey by default.
                 </p>
                 <Button
                   onClick={handleAddCollaborator}
@@ -556,7 +562,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <ToggleGroup
                           type="multiple"
                           value={[
-                            collab.can_read_posts ? 'read' : '',
+                            // can_read_posts is implicitly true, no toggle needed
                             collab.can_publish_posts ? 'publish' : '',
                             collab.can_modify_post ? 'modify' : '',
                             collab.can_delete_posts ? 'delete' : '',
@@ -564,7 +570,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           onValueChange={(newValues: string[]) => {
                             handleUpdateCollaboratorPermissions(collab.user_id, {
                               ...collab,
-                              can_read_posts: newValues.includes('read'),
+                              can_read_posts: true, // Always true for collaborators
                               can_publish_posts: newValues.includes('publish'),
                               can_modify_post: newValues.includes('modify'),
                               can_delete_posts: newValues.includes('delete'),
@@ -573,27 +579,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           className="flex space-x-1"
                           disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
                         >
-                          {/* Can read posts */}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <ToggleGroupItem
-                                value="read"
-                                aria-label="Toggle read permission"
-                                className={cn(
-                                  "h-7 w-7 p-0",
-                                  collab.can_read_posts
-                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                                )}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </ToggleGroupItem>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Allow user to read posts in this journey</p>
-                            </TooltipContent>
-                          </Tooltip>
-
                           {/* Can publish posts */}
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -603,8 +588,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_publish_posts
-                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                    : "bg-red-100 text-red-800 hover:bg-red-200"
                                 )}
                               >
                                 <PlusCircle className="h-4 w-4" />
@@ -624,8 +609,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_modify_post
-                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                    : "bg-red-100 text-red-800 hover:bg-red-200"
                                 )}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -645,8 +630,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_delete_posts
-                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                    : "bg-red-100 text-red-800 hover:bg-red-200"
                                 )}
                               >
                                 <Trash2 className="h-4 w-4" />

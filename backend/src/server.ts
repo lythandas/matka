@@ -759,14 +759,13 @@ fastify.register(async (authenticatedFastify) => {
     const isOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin;
 
-    // Check if the user is a collaborator with can_read_posts permission
-    const collaboratorPermsResult = await dbClient.query(
-      'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+    // Check if the user is a collaborator (read permission is implicit)
+    const isCollaborator = await dbClient.query(
+      'SELECT 1 FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
     );
-    const canReadAsCollaborator = collaboratorPermsResult.rows.length > 0 && collaboratorPermsResult.rows[0].can_read_posts;
 
-    if (!isOwner && !isAdmin && !canReadAsCollaborator) {
+    if (!isOwner && !isAdmin && isCollaborator.rows.length === 0) { // Simplified check
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
@@ -825,7 +824,7 @@ fastify.register(async (authenticatedFastify) => {
       name: targetUser.name,
       surname: targetUser.surname,
       profile_image_url: targetUser.profile_image_url,
-      can_read_posts: true,
+      can_read_posts: true, // Always true for new collaborators
       can_publish_posts: true,
       can_modify_post: true,
       can_delete_posts: false,
@@ -843,8 +842,7 @@ fastify.register(async (authenticatedFastify) => {
   // Update collaborator permissions
   authenticatedFastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
-    const { can_read_posts, can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
-      can_read_posts?: boolean;
+    const { can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
       can_publish_posts?: boolean;
       can_modify_post?: boolean;
       can_delete_posts?: boolean;
@@ -874,13 +872,12 @@ fastify.register(async (authenticatedFastify) => {
 
     const result = await dbClient.query(
       `UPDATE journey_user_permissions SET
-        can_read_posts = COALESCE($1, can_read_posts),
-        can_publish_posts = COALESCE($2, can_publish_posts),
-        can_modify_post = COALESCE($3, can_modify_post),
-        can_delete_posts = COALESCE($4, can_delete_posts)
-       WHERE journey_id = $5 AND user_id = $6
+        can_publish_posts = COALESCE($1, can_publish_posts),
+        can_modify_post = COALESCE($2, can_modify_post),
+        can_delete_posts = COALESCE($3, can_delete_posts)
+       WHERE journey_id = $4 AND user_id = $5
        RETURNING *`,
-      [can_read_posts, can_publish_posts, can_modify_post, can_delete_posts, journeyId, userId]
+      [can_publish_posts, can_modify_post, can_delete_posts, journeyId, userId]
     );
     return result.rows[0];
   });
@@ -937,12 +934,12 @@ fastify.register(async (authenticatedFastify) => {
     const isOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
-      'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      'SELECT 1 FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', // Just check existence
       [journeyId, request.user.id]
     );
-    const canRead = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_read_posts : false;
+    const isCollaborator = collaboratorPermsResult.rows.length > 0; // Simplified check
 
-    if (!isOwner && !isAdmin && !canRead) {
+    if (!isOwner && !isAdmin && !isCollaborator) { // Simplified check
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to read posts in this journey.' });
     }
 
