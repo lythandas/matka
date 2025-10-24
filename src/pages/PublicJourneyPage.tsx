@@ -21,6 +21,7 @@ import SortToggle from '@/components/SortToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
@@ -33,6 +34,7 @@ const PublicJourneyPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
@@ -185,7 +187,7 @@ const PublicJourneyPage: React.FC = () => {
                 {t('publicJourneyPage.aJourneyBy', { author: journey.owner_name || journey.owner_username })}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {t('publicJourneyPage.createdOn', { date: format(new Date(journey.created_at), 'PPP') })}
+                {t('publicJourneyPage.createdOn', { date: format(new Date(journey.created_at), 'PPP', { locale: currentLocale }) })}
               </p>
             </CardHeader>
           </Card>
@@ -239,7 +241,7 @@ const PublicJourneyPage: React.FC = () => {
                             {post.author_name || post.author_username}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {format(new Date(post.created_at), 'PPP p')}
+                            {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
                           </p>
                         </div>
                       </div>

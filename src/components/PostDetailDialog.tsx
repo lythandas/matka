@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post, MediaInfo, Journey } from '@/types'; // Import Journey type
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 interface PostDetailDialogProps {
   post: Post;
@@ -38,6 +39,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
   const [isMediaFullscreen, setIsMediaFullscreen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0); // For cycling through multiple media items
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
@@ -95,7 +97,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               <div>
                 <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
                 <DialogDescription>
-                  {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p') })}
+                  {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p', { locale: currentLocale }) })}
                 </DialogDescription>
               </div>
             </div>

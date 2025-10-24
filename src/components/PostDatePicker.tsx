@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 interface PostDatePickerProps {
   selectedDate: Date | undefined;
@@ -28,6 +29,8 @@ const PostDatePicker: React.FC<PostDatePickerProps> = ({
   className,
 }) => {
   const { t } = useTranslation(); // Initialize useTranslation
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -41,7 +44,7 @@ const PostDatePicker: React.FC<PostDatePickerProps> = ({
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selectedDate ? format(selectedDate, "PPP") : <span>{t('common.pickADate')}</span>}
+          {selectedDate ? format(selectedDate, "PPP", { locale: currentLocale }) : <span>{t('common.pickADate')}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
@@ -51,6 +54,7 @@ const PostDatePicker: React.FC<PostDatePickerProps> = ({
           onSelect={onDateSelect}
           initialFocus
           disabled={disabled}
+          locale={currentLocale} // Pass locale to Calendar component
         />
       </PopoverContent>
     </Popover>

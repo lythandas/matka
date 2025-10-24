@@ -28,11 +28,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
   const navigate = useNavigate();
   const { user: currentUser, token } = useAuth();
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
@@ -252,7 +254,7 @@ const AdminPage: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>{user.isAdmin ? t('common.yes') : t('common.no')}</TableCell>
-                      <TableCell>{format(new Date(user.created_at!), 'PPP')}</TableCell>
+                      <TableCell>{format(new Date(user.created_at!), 'PPP', { locale: currentLocale })}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button
@@ -347,7 +349,7 @@ const AdminPage: React.FC = () => {
                       <TableCell>
                         {journey.is_public ? <Globe className="h-4 w-4 text-green-500" /> : <Globe className="h-4 w-4 text-gray-400" />}
                       </TableCell>
-                      <TableCell>{format(new Date(journey.created_at), 'PPP')}</TableCell>
+                      <TableCell>{format(new Date(journey.created_at), 'PPP', { locale: currentLocale })}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button

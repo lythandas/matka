@@ -41,6 +41,7 @@ import PostDatePicker from './../components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 const Index = () => {
   const { t } = useTranslation(); // Initialize useTranslation
@@ -48,6 +49,7 @@ const Index = () => {
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
   const isMobile = useIsMobile();
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -253,7 +255,7 @@ const Index = () => {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
-        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated success
+        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated error
         setLoadingLocation(false);
       },
       (error) => {
@@ -282,7 +284,7 @@ const Index = () => {
   const handleClearLocation = () => {
     setCoordinates(null);
     setLocationSelectionMode('none');
-    showSuccess(t('common.locationCleared')); // Translated success
+    showSuccess(t('common.locationCleared')); // Translated error
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -351,7 +353,7 @@ const Index = () => {
       setCoordinates(null);
       setLocationSelectionMode('none');
       setPostDate(new Date()); // Reset post date to today
-      showSuccess(t('common.postCreatedSuccessfully')); // Translated success
+      showSuccess(t('common.postCreatedSuccessfully')); // Translated error
     } catch (error: any) {
       console.error('Error creating post:', error);
       showError(error.message || t('common.failedToCreatePost')); // Translated error
@@ -389,7 +391,7 @@ const Index = () => {
       }
 
       setPosts(posts.filter((post) => post.id !== id));
-      showSuccess(t('common.postDeletedSuccessfully')); // Translated success
+      showSuccess(t('common.postDeletedSuccessfully')); // Translated error
     } catch (error: any) {
       console.error('Error deleting post:', error);
       showError(error.message || t('common.failedToDeletePost')); // Translated error
@@ -724,7 +726,7 @@ const Index = () => {
                           {post.author_name || post.author_username}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {format(new Date(post.created_at), 'PPP p')}
+                          {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
                         </p>
                       </div>
                     </div>

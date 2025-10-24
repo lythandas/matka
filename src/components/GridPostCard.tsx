@@ -9,6 +9,7 @@ import { getAvatarInitials } from '@/lib/utils';
 import { Post } from '@/types';
 import { Compass } from 'lucide-react'; // Import the Compass icon
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 
 interface GridPostCardProps {
   post: Post;
@@ -20,6 +21,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
   const { t } = useTranslation(); // Initialize useTranslation
   const firstMedia = post.media_items?.[0]; // Get the first media item
   const displayName = post.author_name || post.author_username;
+  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   let mediaElement: React.ReactNode = null;
 
