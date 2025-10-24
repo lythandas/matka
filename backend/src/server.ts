@@ -119,8 +119,8 @@ const connectDb = async () => {
     await dbClient.connect();
     fastify.log.info('Connected to PostgreSQL database');
     await createTables();
-  } catch (err) {
-    fastify.log.error('Failed to connect to PostgreSQL:', err);
+  } catch (err: unknown) { // Cast err to unknown
+    fastify.log.error('Failed to connect to PostgreSQL:', err as Error); // Cast err to Error
     process.exit(1);
   }
 };
@@ -178,8 +178,8 @@ const createTables = async () => {
       );
     `);
     fastify.log.info('Database tables checked/created successfully');
-  } catch (err) {
-    fastify.log.error('Error creating database tables:', err);
+  } catch (err: unknown) { // Cast err to unknown
+    fastify.log.error('Error creating database tables:', err as Error); // Cast err to Error
     process.exit(1);
   }
 };
@@ -257,7 +257,15 @@ fastify.post('/register', async (request, reply) => {
     [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.created_at]
   );
 
-  const userWithoutHash: Omit<User, 'password_hash'> = result.rows[0];
+  const userWithoutHash: Omit<User, 'password_hash'> = {
+    id: result.rows[0].id,
+    username: result.rows[0].username,
+    is_admin: result.rows[0].is_admin,
+    name: result.rows[0].name,
+    surname: result.rows[0].surname,
+    profile_image_url: result.rows[0].profile_image_url,
+    created_at: result.rows[0].created_at,
+  };
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
 });
@@ -282,7 +290,15 @@ fastify.post('/login', async (request, reply) => {
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
 
-  const userWithoutHash: Omit<User, 'password_hash'> = { ...user, password_hash: undefined as any }; // Remove password_hash
+  const userWithoutHash: Omit<User, 'password_hash'> = {
+    id: user.id,
+    username: user.username,
+    is_admin: user.is_admin,
+    name: user.name,
+    surname: user.surname,
+    profile_image_url: user.profile_image_url,
+    created_at: user.created_at,
+  };
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
 });
@@ -394,7 +410,7 @@ fastify.register(async (authenticatedFastify) => {
       await fs.mkdir(UPLOADS_DIR, { recursive: true });
       const buffer = Buffer.from(fileBase64, 'base64');
       await fs.writeFile(filePath, buffer);
-    } catch (error) {
+    } catch (error: unknown) { // Cast error to unknown
       console.error('Error saving uploaded file:', error);
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
@@ -1083,8 +1099,8 @@ const start = async () => {
     await connectDb(); // Connect to DB before starting server
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
-  } catch (err) {
-    fastify.log.error(err);
+  } catch (err: unknown) { // Cast err to unknown
+    fastify.log.error(err as Error); // Cast err to Error
     process.exit(1);
   }
 };
