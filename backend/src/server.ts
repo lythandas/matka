@@ -205,7 +205,7 @@ const mapDbUserToApiUser = (dbUser: User): Omit<User, 'password_hash'> & { isAdm
   created_at: dbUser.created_at,
 });
 
-const generateToken = (user: Omit<User, 'password_hash'> & { isAdmin: boolean }): string => {
+const generateToken = (user: Omit<User, 'password_hash' | 'is_admin'> & { isAdmin: boolean }): string => {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
