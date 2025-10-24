@@ -40,6 +40,9 @@ interface User {
   created_at: string;
 }
 
+// Define a type for the user object that is sent to the frontend and used in JWT
+type ApiUser = Omit<User, 'password_hash' | 'is_admin'> & { isAdmin: boolean };
+
 interface Journey {
   id: string;
   name: string;
@@ -88,7 +91,7 @@ interface Post {
 // Declare module 'fastify' to add 'user' property to FastifyRequest
 declare module 'fastify' {
   interface FastifyRequest {
-    user?: Omit<User, 'password_hash'> & { isAdmin: boolean }; // Add isAdmin to request.user
+    user?: ApiUser; // Use the new ApiUser type here
   }
 }
 
@@ -195,7 +198,7 @@ const comparePassword = async (password: string, hash: string): Promise<boolean>
 };
 
 // Helper to transform DB user object to API user object
-const mapDbUserToApiUser = (dbUser: User): Omit<User, 'password_hash'> & { isAdmin: boolean } => ({
+const mapDbUserToApiUser = (dbUser: User): ApiUser => ({
   id: dbUser.id,
   username: dbUser.username,
   isAdmin: dbUser.is_admin, // Map is_admin to isAdmin
@@ -205,7 +208,7 @@ const mapDbUserToApiUser = (dbUser: User): Omit<User, 'password_hash'> & { isAdm
   created_at: dbUser.created_at,
 });
 
-const generateToken = (user: Omit<User, 'password_hash' | 'is_admin'> & { isAdmin: boolean }): string => {
+const generateToken = (user: ApiUser): string => { // Use ApiUser type here
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
@@ -218,7 +221,7 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as Omit<User, 'password_hash'> & { isAdmin: boolean };
+    const decoded = jwt.verify(token, JWT_SECRET) as ApiUser; // Use ApiUser type here
     request.user = decoded;
   } catch (err) {
     reply.code(401).send({ message: 'Invalid or expired token' });
