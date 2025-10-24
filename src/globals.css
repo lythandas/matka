@@ -107,19 +107,3 @@
   align-self: flex-start; /* Ensures it sticks to the top of its flex container */
   top: 64px; /* Height of the TopBar */
 }
-
-/* CSS for PostDetailDialog transitions */
-.post-fade-enter {
-  opacity: 0;
-}
-.post-fade-enter-active {
-  opacity: 1;
-  transition: opacity 300ms ease-in;
-}
-.post-fade-exit {
-  opacity: 1;
-}
-.post-fade-exit-active {
-  opacity: 0;
-  transition: opacity 300ms ease-out;
-}

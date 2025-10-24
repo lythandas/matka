@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post, MediaInfo, Journey } from '@/types'; // Import Journey type
-import { CSSTransition, TransitionGroup } from 'react-transition-group'; // Import CSSTransition and TransitionGroup
 
 interface PostDetailDialogProps {
   post: Post;
@@ -126,98 +125,89 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           
           {/* Main content wrapper for TransitionGroup and navigation buttons */}
           <div className="relative flex-grow overflow-hidden flex">
-            <TransitionGroup className="relative flex-grow w-full h-full">
-              <CSSTransition
-                key={post.id} // Key changes when post changes
-                timeout={300} // Match CSS transition duration
-                classNames="post-fade" // Custom class prefix
-              >
-                {/* This div needs to be absolutely positioned to overlap during transition */}
-                <div className="absolute inset-0 p-6 pt-4 flex flex-col overflow-y-auto h-full">
-                  {mediaItems.length > 0 && (
-                    <div className="relative mb-4 flex-shrink-0">
-                      {currentMedia?.type === 'image' && (
-                        <img
-                          ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                          src={currentMedia.urls.large || '/placeholder.svg'}
-                          alt={post.title || "Post image"}
-                          className="w-full h-auto object-contain rounded-md mx-auto"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                            e.currentTarget.onerror = null;
-                            console.error(`Failed to load image: ${currentMedia.urls.large}`);
-                          }}
-                        />
-                      )}
-                      {currentMedia?.type === 'video' && (
-                        <video
-                          ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                          src={currentMedia.url}
-                          controls
-                          className="w-full h-auto object-contain rounded-md mx-auto"
-                        />
-                      )}
-
-                      {document.fullscreenEnabled && currentMedia && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className={cn(
-                            "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                            isMediaFullscreen ? "fixed z-[1000]" : "absolute"
-                          )}
-                          onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
-                        >
-                          {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                        </Button>
-                      )}
-
-                      {mediaItems.length > 1 && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
-                            disabled={isMediaFullscreen}
-                          >
-                            <ChevronLeft className="h-5 w-5" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
-                            disabled={isMediaFullscreen}
-                          >
-                            <ChevronRight className="h-5 w-5" />
-                          </Button>
-                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
-                            {mediaItems.map((_, idx) => (
-                              <span
-                                key={idx}
-                                className={cn(
-                                  "h-2 w-2 rounded-full bg-white/50",
-                                  idx === currentMediaIndex && "bg-white"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
+            <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full">
+              {mediaItems.length > 0 && (
+                <div className="relative mb-4 flex-shrink-0">
+                  {currentMedia?.type === 'image' && (
+                    <img
+                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                      src={currentMedia.urls.large || '/placeholder.svg'}
+                      alt={post.title || "Post image"}
+                      className="w-full h-auto object-contain rounded-md mx-auto"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                        e.currentTarget.onerror = null;
+                        console.error(`Failed to load image: ${currentMedia.urls.large}`);
+                      }}
+                    />
                   )}
-                  <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 flex-shrink-0">
-                    {post.message}
-                  </p>
-                  {post.coordinates && (
-                    <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0">
-                      <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
-                    </div>
+                  {currentMedia?.type === 'video' && (
+                    <video
+                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                      src={currentMedia.url}
+                      controls
+                      className="w-full h-auto object-contain rounded-md mx-auto"
+                    />
+                  )}
+
+                  {document.fullscreenEnabled && currentMedia && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        "bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+                        isMediaFullscreen ? "fixed z-[1000]" : "absolute"
+                      )}
+                      onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
+                    >
+                      {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    </Button>
+                  )}
+
+                  {mediaItems.length > 1 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
+                        disabled={isMediaFullscreen}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
+                        disabled={isMediaFullscreen}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+                        {mediaItems.map((_, idx) => (
+                          <span
+                            key={idx}
+                            className={cn(
+                              "h-2 w-2 rounded-full bg-white/50",
+                              idx === currentMediaIndex && "bg-white"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
-              </CSSTransition>
-            </TransitionGroup>
+              )}
+              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 flex-shrink-0">
+                {post.message}
+              </p>
+              {post.coordinates && (
+                <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0">
+                  <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
+                </div>
+              )}
+            </div>
 
             {canGoPrevious && (
               <Button
