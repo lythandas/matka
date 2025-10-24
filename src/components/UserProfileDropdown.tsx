@@ -95,7 +95,7 @@ const UserProfileDropdown: React.FC = () => {
           {user?.isAdmin && ( // Only show Admin link if user is an admin
             <DropdownMenuItem onClick={() => navigate('/admin')}>
               <Users className="mr-2 h-4 w-4" />
-              <span>Admin (Users)</span>
+              <span>Administration</span> {/* Changed from "Admin (Users)" to "Administration" */}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>
