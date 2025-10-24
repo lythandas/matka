@@ -119,8 +119,8 @@ const connectDb = async () => {
     await dbClient.connect();
     fastify.log.info('Connected to PostgreSQL database');
     await createTables();
-  } catch (err: unknown) { // Cast err to unknown
-    fastify.log.error('Failed to connect to PostgreSQL:', err as Error); // Cast err to Error
+  } catch (err: unknown) {
+    fastify.log.error(err as Error, 'Failed to connect to PostgreSQL'); // Corrected logger call
     process.exit(1);
   }
 };
@@ -178,8 +178,8 @@ const createTables = async () => {
       );
     `);
     fastify.log.info('Database tables checked/created successfully');
-  } catch (err: unknown) { // Cast err to unknown
-    fastify.log.error('Error creating database tables:', err as Error); // Cast err to Error
+  } catch (err: unknown) {
+    fastify.log.error(err as Error, 'Error creating database tables'); // Corrected logger call
     process.exit(1);
   }
 };
@@ -410,7 +410,7 @@ fastify.register(async (authenticatedFastify) => {
       await fs.mkdir(UPLOADS_DIR, { recursive: true });
       const buffer = Buffer.from(fileBase64, 'base64');
       await fs.writeFile(filePath, buffer);
-    } catch (error: unknown) { // Cast error to unknown
+    } catch (error: unknown) {
       console.error('Error saving uploaded file:', error);
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
@@ -1099,8 +1099,8 @@ const start = async () => {
     await connectDb(); // Connect to DB before starting server
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
-  } catch (err: unknown) { // Cast err to unknown
-    fastify.log.error(err as Error); // Cast err to Error
+  } catch (err: unknown) {
+    fastify.log.error(err as Error, 'Failed to start server'); // Corrected logger call
     process.exit(1);
   }
 };

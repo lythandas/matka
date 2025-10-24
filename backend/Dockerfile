@@ -1,14 +1,11 @@
 # Use a Node.js base image
 FROM node:20-alpine
 
-# Install sharp dependencies and curl for healthcheck
-# libvips-dev is needed for sharp to compile correctly
-RUN apk add --no-cache vips-dev build-base gcc autoconf automake zlib-dev curl
-
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if any)
+# Copy package.json and package-lock.json (or yarn.lock)
+# to leverage Docker cache
 COPY package*.json ./
 
 # Install dependencies
@@ -23,5 +20,5 @@ RUN npm run build
 # Expose the port the app runs on
 EXPOSE 3001
 
-# Command to run the application
+# Run the application
 CMD ["npm", "start"]
