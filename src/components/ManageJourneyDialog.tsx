@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Dialog,
+  Dialog, // Ensure Dialog is correctly imported
   DialogContent,
   DialogDescription,
   DialogFooter,
