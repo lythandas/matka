@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,11 @@ const UserProfileDropdown: React.FC = () => {
   const [isManageAccountDialogOpen, setIsManageAccountDialogOpen] = useState<boolean>(false);
 
   const displayName = user?.name || user?.username;
+
+  useEffect(() => {
+    console.log("UserProfileDropdown: Current user:", user);
+    console.log("UserProfileDropdown: Is Admin:", user?.isAdmin);
+  }, [user]);
 
   const handleAuthButtonClick = () => {
     if (isAuthenticated) {

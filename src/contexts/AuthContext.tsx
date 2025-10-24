@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     showSuccess('Logged out successfully!');
     setUsersExist(true); // Assume users still exist after logout, or will be created
+    console.log("AuthContext: User logged out.");
   }, []);
 
   const setAuthData = useCallback((userData: User, authToken: string) => {
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setIsAuthenticated(true);
     setUsersExist(true); // After successful login/registration, we know users exist
+    console.log("AuthContext: setAuthData called. User:", userData, "Is Admin:", userData.isAdmin);
   }, []);
 
   const fetchUsersExist = useCallback(async () => {
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       const data = await response.json();
       setUsersExist(data.exists);
+      console.log("AuthContext: Users exist check:", data.exists);
       if (!data.exists && isAuthenticated) { // If no users exist in DB but frontend thinks it's authenticated
         console.warn("No users found in backend, but frontend is authenticated. Forcing logout.");
         logout(); // Force logout to clear stale token
@@ -122,6 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!prevUser) return null;
       const newUser = { ...prevUser, ...updatedUserData };
       localStorage.setItem('authUser', JSON.stringify(newUser));
+      console.log("AuthContext: User updated. New User:", newUser, "Is Admin:", newUser.isAdmin);
       return newUser;
     });
     if (newToken) {
