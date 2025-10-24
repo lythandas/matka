@@ -77,17 +77,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     setCurrentMediaIndex(0); // Reset media index when post changes
   }, [post]);
 
-  const handleShare = () => {
-    if (!journey) {
-      showError('Cannot share: Journey information is missing.');
-      return;
-    }
-    const frontendBaseUrl = window.location.origin;
-    const shareLink = `${frontendBaseUrl}/public-journey/${journey.owner_username}/${encodeURIComponent(journey.name)}`;
-    navigator.clipboard.writeText(shareLink)
-      .then(() => showSuccess('Journey share link copied to clipboard!'))
-      .catch(() => showError('Failed to copy link.'));
-  };
+  // Removed handleShare function as the button is being removed.
 
   const displayName = post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
@@ -231,14 +221,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             )}
           </div>
           <DialogFooter className="p-6 pt-0 flex justify-end">
-            <Button
-              variant="outline"
-              onClick={handleShare}
-              disabled={!journey}
-              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-            >
-              <Share2 className="mr-2 h-4 w-4" /> Share Journey
-            </Button>
+            {/* Share Journey button removed */}
           </DialogFooter>
         </> {/* End of React.Fragment */}
       </DialogContent>
