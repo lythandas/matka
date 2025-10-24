@@ -446,200 +446,213 @@ const Index = () => {
   const canCreateJourneyUI = isAuthenticated; // All authenticated users can create journeys
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
+  let mainContent;
+
+  if (!isAuthenticated) {
+    mainContent = null; // App.tsx handles redirection to LoginPage
+  } else if (selectedJourney) {
+    mainContent = (
+      <Card className="mb-8 shadow-lg shadow-neon-blue">
+        <CardHeader className="flex flex-row items-center justify-end">
+          {/* Removed the "Manage Collaborators" button from here */}
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+              <Input
+                placeholder="Add a title (optional)"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="flex-grow"
+                disabled={!canCreatePostUI}
+              />
+              <PostDatePicker
+                selectedDate={postDate}
+                onDateSelect={setPostDate}
+                disabled={!canCreatePostUI || isUploadingMedia}
+                className="w-full sm:w-auto"
+              />
+            </div>
+            <Textarea
+              placeholder="What's on your mind today?"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="w-full resize-none"
+              disabled={!canCreatePostUI}
+            />
+
+            {(uploadedMediaItems.length > 0 || coordinates) && (
+              <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                <h4 className="text-lg font-semibold">Content preview:</h4>
+                {uploadedMediaItems.map((mediaItem, index) => (
+                  <div key={index} className="relative">
+                    {mediaItem.type === 'image' ? (
+                      <img
+                        src={mediaItem.urls.medium || '/placeholder.svg'}
+                        alt={`Media preview ${index + 1}`}
+                        className="w-full h-auto max-h-64 object-cover rounded-md"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.onerror = null;
+                          console.error(`Failed to load media: ${mediaItem.urls.medium}`);
+                        }}
+                      />
+                    ) : (
+                      <video
+                        src={mediaItem.url}
+                        controls
+                        className="w-full h-auto max-h-64 object-cover rounded-md"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveMediaItem(index)}
+                      className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    >
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+                {isUploadingMedia && (
+                  <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                )}
+                {coordinates && (
+                  <div className="relative">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+                      Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                    </p>
+                    <MapComponent coordinates={coordinates} className="h-48" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClearLocation}
+                      className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    >
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-wrap justify-center gap-2">
+              <Input
+                id="media-upload"
+                type="file"
+                accept={SUPPORTED_MEDIA_TYPES}
+                onChange={handleMediaFileChange}
+                ref={mediaFileInputRef}
+                className="hidden"
+                multiple
+                disabled={!canCreatePostUI || isUploadingMedia}
+              />
+              <Button
+                type="button"
+                onClick={() => mediaFileInputRef.current?.click()}
+                variant="outline"
+                className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+                disabled={!canCreatePostUI || isUploadingMedia}
+              >
+                {isUploadingMedia ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading Media...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Media
+                  </>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGetLocation}
+                className="flex items-center hover:ring-2 hover://ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+                disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
+              >
+                {locationLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Getting location...
+                  </>
+                ) : (
+                  <>
+                    <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setLocationSelectionMode('search');
+                  setCoordinates(null);
+                }}
+                className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+                disabled={!canCreatePostUI || isUploadingMedia}
+              >
+                <Search className="mr-2 h-4 w-4" /> Search Location
+              </Button>
+            </div>
+
+            {locationSelectionMode === 'search' && !coordinates && (
+              <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+                <LocationSearch
+                  onSelectLocation={setCoordinates}
+                  currentCoordinates={coordinates}
+                  disabled={!canCreatePostUI || isUploadingMedia}
+                />
+              </div>
+            )}
+
+            <div className="flex justify-center">
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
+                Post
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  } else if (!loadingJourneys && journeys.length === 0) {
+    mainContent = (
+      <div className="text-center py-12">
+        <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+        <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+          You don't have any journeys yet!
+        </p>
+        <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
+          Start by creating your first journey.
+        </p>
+        {canCreateJourneyUI && (
+          <Button
+            onClick={() => setIsCreateJourneyDialogOpen(true)}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+          >
+            <Plus className="mr-2 h-4 w-4" /> Create new journey
+          </Button>
+        )}
+      </div>
+    );
+  } else {
+    mainContent = (
+      <div className="text-center py-12">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+        <p className="text-lg text-gray-600 dark:text-gray-400">Loading journeys...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
-      {isAuthenticated ? (
-        selectedJourney ? (
-          <Card className="mb-8 shadow-lg shadow-neon-blue">
-            <CardHeader className="flex flex-row items-center justify-end">
-              {/* Removed the "Manage Collaborators" button from here */}
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                  <Input
-                    placeholder="Add a title (optional)"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="flex-grow"
-                    disabled={!canCreatePostUI}
-                  />
-                  <PostDatePicker
-                    selectedDate={postDate}
-                    onDateSelect={setPostDate}
-                    disabled={!canCreatePostUI || isUploadingMedia}
-                    className="w-full sm:w-auto"
-                  />
-                </div>
-                <Textarea
-                  placeholder="What's on your mind today?"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={4}
-                  className="w-full resize-none"
-                  disabled={!canCreatePostUI}
-                />
-
-                {(uploadedMediaItems.length > 0 || coordinates) && (
-                  <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                    <h4 className="text-lg font-semibold">Content preview:</h4>
-                    {uploadedMediaItems.map((mediaItem, index) => (
-                      <div key={index} className="relative">
-                        {mediaItem.type === 'image' ? (
-                          <img
-                            src={mediaItem.urls.medium || '/placeholder.svg'}
-                            alt={`Media preview ${index + 1}`}
-                            className="w-full h-auto max-h-64 object-cover rounded-md"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                              e.currentTarget.onerror = null;
-                              console.error(`Failed to load media: ${mediaItem.urls.medium}`);
-                            }}
-                          />
-                        ) : (
-                          <video
-                            src={mediaItem.url}
-                            controls
-                            className="w-full h-auto max-h-64 object-cover rounded-md"
-                          />
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveMediaItem(index)}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        >
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                    {isUploadingMedia && (
-                      <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
-                    )}
-                    {coordinates && (
-                      <div className="relative">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
-                          Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
-                        </p>
-                        <MapComponent coordinates={coordinates} className="h-48" />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleClearLocation}
-                          className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        >
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Input
-                    id="media-upload"
-                    type="file"
-                    accept={SUPPORTED_MEDIA_TYPES}
-                    onChange={handleMediaFileChange}
-                    ref={mediaFileInputRef}
-                    className="hidden"
-                    multiple
-                    disabled={!canCreatePostUI || isUploadingMedia}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => mediaFileInputRef.current?.click()}
-                    variant="outline"
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
-                    disabled={!canCreatePostUI || isUploadingMedia}
-                  >
-                    {isUploadingMedia ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading Media...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Media
-                      </>
-                    )}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleGetLocation}
-                    className="flex items-center hover:ring-2 hover://ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
-                    disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
-                  >
-                    {locationLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Getting location...
-                      </>
-                    ) : (
-                      <>
-                        <LocateFixed className="mr-2 h-4 w-4" /> Get Location
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setLocationSelectionMode('search');
-                      setCoordinates(null);
-                    }}
-                    className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
-                    disabled={!canCreatePostUI || isUploadingMedia}
-                  >
-                    <Search className="mr-2 h-4 w-4" /> Search Location
-                  </Button>
-                </div>
-
-                {locationSelectionMode === 'search' && !coordinates && (
-                  <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                    <LocationSearch
-                      onSelectLocation={setCoordinates}
-                      currentCoordinates={coordinates}
-                      disabled={!canCreatePostUI || isUploadingMedia}
-                    />
-                  </div>
-                )}
-
-                <div className="flex justify-center">
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
-                    Post
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        ) : (
-          !loadingJourneys && journeys.length === 0 && (
-            <div className="text-center py-12">
-              <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-              <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                You don't have any journeys yet!
-              </p>
-              <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
-                Start by creating your first journey.
-              </p>
-              {canCreateJourneyUI && (
-                <Button
-                  onClick={() => setIsCreateJourneyDialogOpen(true)}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> Create new journey
-                </Button>
-              )}
-            </div>
-          )
-        )
-      ) : null}
+      {mainContent}
 
       {displayedPosts.length > 0 && (
         <div className="relative flex items-center justify-center mb-6 h-10">
@@ -829,7 +842,6 @@ const Index = () => {
       )}
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
-          // Removed key={selectedPostForDetail.id}
           post={selectedPostForDetail}
           isOpen={isDetailDialogOpen}
           onClose={handleCloseDetailDialog}
@@ -837,7 +849,7 @@ const Index = () => {
           totalPosts={posts.length}
           onNext={handleNextPost}
           onPrevious={handlePreviousPost}
-          journey={selectedJourney} {/* Pass selectedJourney here */}
+          journey={selectedJourney}
         />
       )}
 
