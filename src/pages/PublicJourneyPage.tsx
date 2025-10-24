@@ -140,17 +140,17 @@ const PublicJourneyPage: React.FC = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
+  let pageContent;
+
   if (loadingJourney || loadingPosts) {
-    return (
+    pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
         <p className="text-lg text-gray-600 dark:text-gray-400">Loading public journey...</p>
       </div>
     );
-  }
-
-  if (error) {
-    return (
+  } else if (error) {
+    pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 text-center">
         <h1 className="text-4xl font-bold text-red-600 mb-4">Error</h1>
         <p className="text-xl text-gray-700 dark:text-gray-300 mb-6">{error}</p>
@@ -159,10 +159,8 @@ const PublicJourneyPage: React.FC = () => {
         </a>
       </div>
     );
-  }
-
-  if (!journey) {
-    return (
+  } else if (!journey) {
+    pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 text-center">
         <h1 className="text-4xl font-bold text-gray-700 dark:text-gray-300 mb-4">Journey Not Found</h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">The public journey you are looking for does not exist or is not accessible.</p>
@@ -171,10 +169,8 @@ const PublicJourneyPage: React.FC = () => {
         </a>
       </div>
     );
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col w-full bg-gray-50 dark:bg-gray-900">
+  } else {
+    pageContent = (
       <div className="max-w-3xl mx-auto flex-grow w-full p-4 sm:p-6 lg:p-8">
         <Card className="mb-8 shadow-lg shadow-neon-blue">
           <CardHeader className="text-center">
@@ -280,12 +276,10 @@ const PublicJourneyPage: React.FC = () => {
               )
             )
           )}
-        </div>
         <AppFooter />
 
         {selectedPostForDetail && isDetailDialogOpen && (
           <PostDetailDialog
-            // Removed key={selectedPostForDetail.id}
             post={selectedPostForDetail}
             isOpen={isDetailDialogOpen}
             onClose={handleCloseDetailDialog}
@@ -293,10 +287,17 @@ const PublicJourneyPage: React.FC = () => {
             totalPosts={posts.length}
             onNext={handleNextPost}
             onPrevious={handlePreviousPost}
-            journey={journey} {/* Pass journey here */}
+            journey={journey}
           />
         )}
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col w-full bg-gray-50 dark:bg-gray-900">
+      {pageContent}
+    </div>
   );
 };
 
