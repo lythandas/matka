@@ -536,8 +536,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               <div className="space-y-4">
                 {collaborators.map((collab) => (
                   <div key={collab.user_id} className="border p-3 rounded-md">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between gap-2"> {/* Adjusted gap */}
+                      <div className="flex items-center space-x-2 min-w-0"> {/* Added min-w-0 to allow shrinking */}
                         <Avatar className="h-9 w-9">
                           {collab.profile_image_url ? (
                             <AvatarImage src={collab.profile_image_url} alt={collab.name || collab.username} />
@@ -547,125 +547,127 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             </AvatarFallback>
                           )}
                         </Avatar>
-                        <div>
-                          <p className="font-medium">{collab.name || collab.username}</p>
-                          {collab.name && <p className="text-sm text-muted-foreground">@{collab.username}</p>}
+                        <div className="flex-grow truncate"> {/* Added truncate */}
+                          <p className="font-medium truncate">{collab.name || collab.username}</p>
+                          {collab.name && <p className="text-sm text-muted-foreground truncate">@{collab.username}</p>}
                         </div>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
-                        disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
-                        className="hover:ring-2 hover:ring-blue-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center space-x-1"> {/* Container for toggles and delete button */}
+                        <ToggleGroup
+                          type="multiple"
+                          value={[
+                            collab.can_read_posts ? 'read' : '',
+                            collab.can_publish_posts ? 'publish' : '',
+                            collab.can_modify_post ? 'modify' : '',
+                            collab.can_delete_posts ? 'delete' : '',
+                          ].filter(Boolean)}
+                          onValueChange={(newValues: string[]) => {
+                            handleUpdateCollaboratorPermissions(collab.user_id, {
+                              ...collab,
+                              can_read_posts: newValues.includes('read'),
+                              can_publish_posts: newValues.includes('publish'),
+                              can_modify_post: newValues.includes('modify'),
+                              can_delete_posts: newValues.includes('delete'),
+                            });
+                          }}
+                          className="flex space-x-1" {/* Changed to flex and smaller space */}
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                        >
+                          {/* Can read posts */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <ToggleGroupItem
+                                value="read"
+                                aria-label="Toggle read permission"
+                                className={cn(
+                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  collab.can_read_posts
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                )}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </ToggleGroupItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Allow user to read posts in this journey</p>
+                            </TooltipContent>
+                          </Tooltip>
+
+                          {/* Can publish posts */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <ToggleGroupItem
+                                value="publish"
+                                aria-label="Toggle publish permission"
+                                className={cn(
+                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  collab.can_publish_posts
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                )}
+                              >
+                                <PlusCircle className="h-4 w-4" />
+                              </ToggleGroupItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Allow user to create new posts in this journey</p>
+                            </TooltipContent>
+                          </Tooltip>
+
+                          {/* Can modify posts */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <ToggleGroupItem
+                                value="modify"
+                                aria-label="Toggle modify permission"
+                                className={cn(
+                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  collab.can_modify_post
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                )}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </ToggleGroupItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Allow user to edit existing posts in this journey</p>
+                            </TooltipContent>
+                          </Tooltip>
+
+                          {/* Can delete posts */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <ToggleGroupItem
+                                value="delete"
+                                aria-label="Toggle delete permission"
+                                className={cn(
+                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  collab.can_delete_posts
+                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                )}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </ToggleGroupItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Allow user to delete posts from this journey</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </ToggleGroup>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
+                          className="h-7 w-7 hover:ring-2 hover:ring-blue-500" // Smaller size
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <ToggleGroup
-                      type="multiple"
-                      value={[
-                        collab.can_read_posts ? 'read' : '',
-                        collab.can_publish_posts ? 'publish' : '',
-                        collab.can_modify_post ? 'modify' : '',
-                        collab.can_delete_posts ? 'delete' : '',
-                      ].filter(Boolean)}
-                      onValueChange={(newValues: string[]) => {
-                        handleUpdateCollaboratorPermissions(collab.user_id, {
-                          ...collab,
-                          can_read_posts: newValues.includes('read'),
-                          can_publish_posts: newValues.includes('publish'),
-                          can_modify_post: newValues.includes('modify'),
-                          can_delete_posts: newValues.includes('delete'),
-                        });
-                      }}
-                      className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2"
-                      disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                    >
-                      {/* Can read posts */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <ToggleGroupItem
-                            value="read"
-                            aria-label="Toggle read permission"
-                            className={cn(
-                              "flex-1",
-                              collab.can_read_posts
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                            )}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </ToggleGroupItem>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Allow user to read posts in this journey</p>
-                        </TooltipContent>
-                      </Tooltip>
-
-                      {/* Can publish posts */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <ToggleGroupItem
-                            value="publish"
-                            aria-label="Toggle publish permission"
-                            className={cn(
-                              "flex-1",
-                              collab.can_publish_posts
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                            )}
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </ToggleGroupItem>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Allow user to create new posts in this journey</p>
-                        </TooltipContent>
-                      </Tooltip>
-
-                      {/* Can modify posts */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <ToggleGroupItem
-                            value="modify"
-                            aria-label="Toggle modify permission"
-                            className={cn(
-                              "flex-1",
-                              collab.can_modify_post
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                            )}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </ToggleGroupItem>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Allow user to edit existing posts in this journey</p>
-                        </TooltipContent>
-                      </Tooltip>
-
-                      {/* Can delete posts */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <ToggleGroupItem
-                            value="delete"
-                            aria-label="Toggle delete permission"
-                            className={cn(
-                              "flex-1",
-                              collab.can_delete_posts
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                            )}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </ToggleGroupItem>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Allow user to delete posts from this journey</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </ToggleGroup>
                   </div>
                 ))}
               </div>
