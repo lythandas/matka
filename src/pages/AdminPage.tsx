@@ -4,17 +4,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, ArrowLeft, Trash2, KeyRound } from 'lucide-react';
+import { Loader2, Plus, ArrowLeft, Trash2, KeyRound, Wrench, Globe } from 'lucide-react'; // Added Wrench and Globe icons
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
 import CreateUserDialog from '@/components/CreateUserDialog';
-import ResetPasswordDialog from '@/components/ResetPasswordDialog'; // Import ResetPasswordDialog
+import ResetPasswordDialog from '@/components/ResetPasswordDialog';
+import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // Import ManageJourneyDialog
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
-import { User } from '@/types';
+import { User, Journey } from '@/types'; // Import Journey type
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,12 @@ const AdminPage: React.FC = () => {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState<boolean>(false);
   const [userToResetPassword, setUserToResetPassword] = useState<{ id: string; username: string } | null>(null);
   const [isDeletingUser, setIsDeletingUser] = useState<boolean>(false);
+
+  const [journeys, setJourneys] = useState<Journey[]>([]); // New state for journeys
+  const [loadingJourneys, setLoadingJourneys] = useState<boolean>(true); // New state for loading journeys
+  const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false); // New state for manage journey dialog
+  const [journeyToManage, setJourneyToManage] = useState<Journey | null>(null); // New state for journey to manage
+  const [isDeletingJourney, setIsDeletingJourney] = useState<boolean>(false); // New state for deleting journey
 
   const fetchUsers = useCallback(async () => {
     if (!token || !currentUser?.isAdmin) {
@@ -63,14 +70,40 @@ const AdminPage: React.FC = () => {
     }
   }, [token, currentUser]);
 
+  const fetchJourneys = useCallback(async () => { // New function to fetch journeys
+    if (!token || !currentUser?.isAdmin) {
+      setLoadingJourneys(false);
+      return;
+    }
+    setLoadingJourneys(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys`, { // Admin can fetch all journeys
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch journeys');
+      }
+      const data: Journey[] = await response.json();
+      setJourneys(data);
+    } catch (error) {
+      console.error('Error fetching journeys:', error);
+      showError('Failed to load journeys.');
+    } finally {
+      setLoadingJourneys(false);
+    }
+  }, [token, currentUser]);
+
   useEffect(() => {
     if (currentUser?.isAdmin) {
       fetchUsers();
+      fetchJourneys(); // Fetch journeys when component mounts
     } else {
       showError('Access denied: You must be an administrator to view this page.');
       navigate('/');
     }
-  }, [currentUser, navigate, fetchUsers]);
+  }, [currentUser, navigate, fetchUsers, fetchJourneys]);
 
   const handleUserCreated = (newUser: User) => {
     setUsers((prev) => [...prev, newUser]);
@@ -115,12 +148,51 @@ const AdminPage: React.FC = () => {
     setIsResetPasswordDialogOpen(true);
   };
 
+  const openManageJourneyDialog = (journey: Journey) => { // New function to open manage journey dialog
+    setJourneyToManage(journey);
+    setIsManageJourneyDialogOpen(true);
+  };
+
+  const handleJourneyUpdated = () => { // Callback for when a journey is updated in the dialog
+    fetchJourneys(); // Re-fetch journeys to update the list
+  };
+
+  const handleDeleteJourney = async (journeyId: string, journeyName: string) => { // New function to delete journey
+    if (!token || !currentUser?.isAdmin) {
+      showError('Authentication required or not authorized to delete journeys.');
+      return;
+    }
+
+    setIsDeletingJourney(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete journey');
+      }
+
+      showSuccess(`Journey '${journeyName}' deleted successfully!`);
+      setJourneys((prev) => prev.filter((journey) => journey.id !== journeyId));
+    } catch (error: any) {
+      console.error('Error deleting journey:', error);
+      showError(error.message || 'Failed to delete journey.');
+    } finally {
+      setIsDeletingJourney(false);
+    }
+  };
+
   if (!currentUser?.isAdmin) {
     return null; // Should be redirected by useEffect, but a fallback
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8"> {/* Increased max-w */}
       <div className="flex items-center justify-between mb-8">
         <Button
           variant="outline"
@@ -132,7 +204,8 @@ const AdminPage: React.FC = () => {
         <h1 className="text-3xl font-bold">Admin dashboard</h1>
       </div>
 
-      <Card>
+      {/* Manage Users Section */}
+      <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Manage users</CardTitle>
           <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
@@ -230,6 +303,104 @@ const AdminPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Manage Journeys Section */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-2xl font-bold">Manage journeys</CardTitle>
+          {/* No "Create new journey" button here, as it's available in the main app */}
+        </CardHeader>
+        <CardContent>
+          {loadingJourneys ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <p className="ml-2 text-gray-600 dark:text-gray-400">Loading journeys...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Journey Name</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead>Public</TableHead>
+                    <TableHead>Created at</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {journeys.map((journey) => (
+                    <TableRow key={journey.id}>
+                      <TableCell className="font-medium">{journey.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Avatar className="h-7 w-7 mr-2">
+                            {journey.owner_profile_image_url ? (
+                              <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
+                            ) : (
+                              <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs">
+                                {getAvatarInitials(journey.owner_name, journey.owner_username)}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <span>{journey.owner_name || journey.owner_username}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {journey.is_public ? <Globe className="h-4 w-4 text-green-500" /> : <Globe className="h-4 w-4 text-gray-400" />}
+                      </TableCell>
+                      <TableCell>{format(new Date(journey.created_at), 'PPP')}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openManageJourneyDialog(journey)}
+                            disabled={isDeletingJourney}
+                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <Wrench className="h-4 w-4" />
+                            <span className="sr-only">Manage journey</span>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                disabled={isDeletingJourney}
+                                className="hover:ring-2 hover:ring-blue-500"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete journey</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the journey{' '}
+                                  <span className="font-bold">"{journey.name}"</span> and all its associated
+                                  posts and collaborator permissions.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteJourney(journey.id, journey.name)}>
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <CreateUserDialog
         isOpen={isCreateUserDialogOpen}
         onClose={() => setIsCreateUserDialogOpen(false)}
@@ -245,6 +416,18 @@ const AdminPage: React.FC = () => {
           }}
           userId={userToResetPassword.id}
           username={userToResetPassword.username}
+        />
+      )}
+
+      {journeyToManage && (
+        <ManageJourneyDialog
+          isOpen={isManageJourneyDialogOpen}
+          onClose={() => {
+            setIsManageJourneyDialogOpen(false);
+            setJourneyToManage(null);
+          }}
+          journey={journeyToManage}
+          onJourneyUpdated={handleJourneyUpdated}
         />
       )}
     </div>
