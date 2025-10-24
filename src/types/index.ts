@@ -7,6 +7,7 @@ export interface User {
   name?: string;
   surname?: string;
   profile_image_url?: string;
+  language?: string; // New: User's preferred language
   created_at?: string;
 }
 

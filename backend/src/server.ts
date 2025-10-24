@@ -37,6 +37,7 @@ interface User {
   name?: string;
   surname?: string;
   profile_image_url?: string;
+  language?: string; // New: User's preferred language
   created_at: string;
 }
 
@@ -49,6 +50,7 @@ type ApiUser = {
   name?: string;
   surname?: string;
   profile_image_url?: string;
+  language?: string; // New: User's preferred language
   created_at: string;
 };
 
@@ -160,6 +162,7 @@ const createTables = async () => {
         name VARCHAR(255),
         surname VARCHAR(255),
         profile_image_url TEXT,
+        language VARCHAR(10) DEFAULT 'en', -- New: User's preferred language
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -226,6 +229,7 @@ const mapDbUserToApiUser = (dbUser: User): ApiUser => ({
   name: dbUser.name,
   surname: dbUser.surname,
   profile_image_url: dbUser.profile_image_url,
+  language: dbUser.language, // Include language
   created_at: dbUser.created_at,
 });
 
@@ -284,12 +288,13 @@ fastify.post('/register', async (request, reply) => {
     username,
     password_hash,
     is_admin: isFirstUser,
+    language: 'en', // Default language for new users
     created_at: new Date().toISOString(),
   };
 
   const result = await dbClient.query(
-    'INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
-    [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.created_at]
+    'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+    [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
   );
 
   const userForApi = mapDbUserToApiUser(result.rows[0]);
@@ -380,7 +385,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
     const result = await dbClient.query(
-      'SELECT id, username, is_admin, name, surname, profile_image_url, created_at FROM users WHERE id = $1',
+      'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users WHERE id = $1',
       [request.user.id]
     );
     const user = result.rows[0];
@@ -395,11 +400,11 @@ fastify.register(async (authenticatedFastify) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name, surname, profile_image_url } = request.body as { name?: string; surname?: string; profile_image_url?: string };
+    const { name, surname, profile_image_url, language } = request.body as { name?: string; surname?: string; profile_image_url?: string; language?: string };
 
     const result = await dbClient.query(
-      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3 WHERE id = $4 RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
-      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, request.user.id]
+      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4 WHERE id = $5 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, language, request.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -464,7 +469,7 @@ fastify.register(async (authenticatedFastify) => {
 
     if (isProfileImage && mediaInfo.type === 'image') {
       const updateResult = await dbClient.query(
-        'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
+        'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
         [mediaInfo.urls.medium, request.user.id]
       );
       if (updateResult.rows.length > 0) {
@@ -483,7 +488,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
     const result = await dbClient.query(
-      'SELECT id, username, is_admin, name, surname, profile_image_url, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users ORDER BY created_at DESC'
     );
     return result.rows.map(mapDbUserToApiUser); // Map all users
   });
@@ -513,12 +518,13 @@ fastify.register(async (authenticatedFastify) => {
       is_admin: false,
       name: name || undefined,
       surname: surname || undefined,
+      language: 'en', // Default language for new users created by admin
       created_at: new Date().toISOString(),
     };
 
     const result = await dbClient.query(
-      'INSERT INTO users (id, username, password_hash, is_admin, name, surname, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
-      [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.created_at]
+      'INSERT INTO users (id, username, password_hash, is_admin, name, surname, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+      [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.language, newUser.created_at]
     );
     return mapDbUserToApiUser(result.rows[0]); // Map the created user
   });
@@ -526,7 +532,7 @@ fastify.register(async (authenticatedFastify) => {
   // Update a user (Admin only)
   authenticatedFastify.put('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { username, name, surname, profile_image_url, is_admin } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean };
+    const { username, name, surname, profile_image_url, is_admin, language } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean; language?: string };
 
     if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
@@ -551,10 +557,11 @@ fastify.register(async (authenticatedFastify) => {
         name = $2,
         surname = $3,
         profile_image_url = $4,
-        is_admin = COALESCE($5, is_admin)
-       WHERE id = $6
-       RETURNING id, username, is_admin, name, surname, profile_image_url, created_at`,
-      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, id]
+        is_admin = COALESCE($5, is_admin),
+        language = COALESCE($6, language)
+       WHERE id = $7
+       RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at`,
+      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, language, id]
     );
 
     if (result.rows.length === 0) {
@@ -618,7 +625,7 @@ fastify.register(async (authenticatedFastify) => {
 
     const searchLower = `%${query.toLowerCase()}%`;
     const result = await dbClient.query(
-      `SELECT id, username, is_admin, name, surname, profile_image_url, created_at
+      `SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at
        FROM users
        WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
       [searchLower, searchLower, searchLower]

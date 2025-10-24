@@ -21,6 +21,13 @@ import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_PROFILE_IMAGE_SIZE_BYTES, SUPPORTED_IMAGE_TYPES } from '@/config/constants'; // Updated import
 import { User } from '@/types'; // Centralized User interface
 import { ThreeButtonThemeToggle } from '@/components/ThreeButtonThemeToggle'; // Import ThreeButtonThemeToggle
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Import Select components
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
@@ -38,6 +45,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(currentUser.language || 'en'); // New state for language
 
   useEffect(() => {
     setName(currentUser.name || '');
@@ -45,6 +53,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     setProfileImageUrl(currentUser.profile_image_url);
     setLocalPreviewUrl(null); // Clear local preview on user change/dialog open
     setSelectedFile(null); // Clear selected file on dialog open/user change
+    setSelectedLanguage(currentUser.language || 'en'); // Initialize language
   }, [currentUser, isOpen]);
 
   const uploadImageToServer = async (file: File) => {
@@ -157,6 +166,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
           name: name.trim() || null,
           surname: surname.trim() || null,
           profile_image_url: profileImageUrl || null,
+          language: selectedLanguage, // Include selected language
         }),
       });
 
@@ -279,6 +289,22 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
               placeholder="Your last name"
               disabled={isSaving || isUploadingImage}
             />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="language" className="text-right">
+              Language
+            </Label>
+            <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isSaving || isUploadingImage}>
+              <SelectTrigger id="language" className="col-span-3">
+                <SelectValue placeholder="Select a language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Theme</Label>
