@@ -24,7 +24,11 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <ToggleGroupItem value="light" aria-label="Set light theme" className="flex-1">
+          <ToggleGroupItem
+            value="light"
+            aria-label="Set light theme"
+            className={cn("flex-1", theme === "light" && "ring-2 ring-blue-500")}
+          >
             <Sun className="h-4 w-4 mr-2" /> Light
           </ToggleGroupItem>
         </TooltipTrigger>
@@ -35,7 +39,11 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <ToggleGroupItem value="dark" aria-label="Set dark theme" className="flex-1">
+          <ToggleGroupItem
+            value="dark"
+            aria-label="Set dark theme"
+            className={cn("flex-1", theme === "dark" && "ring-2 ring-blue-500")}
+          >
             <Moon className="h-4 w-4 mr-2" /> Dark
           </ToggleGroupItem>
         </TooltipTrigger>
@@ -46,7 +54,11 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <ToggleGroupItem value="system" aria-label="Set system theme" className="flex-1">
+          <ToggleGroupItem
+            value="system"
+            aria-label="Set system theme"
+            className={cn("flex-1", theme === "system" && "ring-2 ring-blue-500")}
+          >
             <Monitor className="h-4 w-4 mr-2" /> System
           </ToggleGroupItem>
         </TooltipTrigger>
