@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
@@ -28,8 +27,9 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
-import { Switch } from "@/components/ui/switch"; // Import Switch component
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // Import ToggleGroup and ToggleGroupItem
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -46,9 +46,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 }) => {
   const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
-  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public); // New state for is_public
+  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
-  const [isTogglingPublic, setIsTogglingPublic] = useState<boolean>(false); // New state for public toggle loading
+  const [isTogglingPublic, setIsTogglingPublic] = useState<boolean>(false);
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -62,7 +62,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const debounceTimeoutRef = useRef<number | null>(null);
 
-  // Generate human-readable share link
   const frontendBaseUrl = window.location.origin;
   const shareLink = `${frontendBaseUrl}/public-journey/${journey.owner_username}/${encodeURIComponent(journey.name)}`;
 
@@ -108,7 +107,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         throw new Error('Failed to search users');
       }
       const data: User[] = await response.json();
-      // Filter out current collaborators and the journey owner
       const filteredData = data.filter(u =>
         !collaborators.some(collab => collab.user_id === u.id) && u.id !== journey.user_id
       );
@@ -125,7 +123,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   useEffect(() => {
     if (isOpen && journey) {
       setJourneyName(journey.name);
-      setIsPublic(journey.is_public); // Initialize isPublic state
+      setIsPublic(journey.is_public);
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -158,7 +156,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       return;
     }
 
-    // Permission check: only owner or admin can edit journey name
     const canEditJourneyName = currentUser.id === journey.user_id || currentUser.isAdmin;
     if (!canEditJourneyName) {
       showError('You do not have permission to edit this journey.');
@@ -197,7 +194,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       return;
     }
 
-    // Permission check: only owner or admin can change public status
     const canTogglePublic = currentUser.id === journey.user_id || currentUser.isAdmin;
     if (!canTogglePublic) {
       showError('You do not have permission to change the public status of this journey.');
@@ -237,7 +233,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       return;
     }
 
-    // Permission check: only owner or admin can add collaborators
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
       showError('You do not have permission to add collaborators to this journey.');
@@ -254,7 +249,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
-          // Default permissions are set on the backend: can_read_posts: true, can_publish_posts: true, can_modify_post: true, can_delete_posts: false
         }),
       });
 
@@ -283,7 +277,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   ) => {
     if (!token) return;
 
-    // Permission check: only owner or admin can update collaborators
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
       showError('You do not have permission to update collaborator permissions for this journey.');
@@ -307,7 +300,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       }
 
       showSuccess(`Permissions updated for collaborator.`);
-      fetchCollaborators(); // Re-fetch to get the latest state
+      fetchCollaborators();
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error updating collaborator permissions:', error);
@@ -320,7 +313,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const handleRemoveCollaborator = async (userId: string, username: string) => {
     if (!token) return;
 
-    // Permission check: only owner or admin can remove collaborators
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
       showError('You do not have permission to remove collaborators from this journey.');
@@ -358,7 +350,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       .catch(() => showError('Failed to copy link.'));
   };
 
-  // Permission checks for UI elements
   const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
   const canEditJourneyName = canManageJourney;
   const canTogglePublicStatus = canManageJourney;
@@ -570,29 +561,32 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+                    <ToggleGroup
+                      type="multiple"
+                      value={[
+                        collab.can_read_posts ? 'read' : '',
+                        collab.can_publish_posts ? 'publish' : '',
+                        collab.can_modify_post ? 'modify' : '',
+                        collab.can_delete_posts ? 'delete' : '',
+                      ].filter(Boolean)}
+                      onValueChange={(newValues: string[]) => {
+                        handleUpdateCollaboratorPermissions(collab.user_id, {
+                          ...collab,
+                          can_read_posts: newValues.includes('read'),
+                          can_publish_posts: newValues.includes('publish'),
+                          can_modify_post: newValues.includes('modify'),
+                          can_delete_posts: newValues.includes('delete'),
+                        });
+                      }}
+                      className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2"
+                      disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                    >
                       {/* Can read posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
-                            <div className="flex items-center space-x-2">
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                              <Label htmlFor={`read-${collab.user_id}`} className="text-sm font-medium leading-none">
-                                Read
-                              </Label>
-                            </div>
-                            <Switch
-                              id={`read-${collab.user_id}`}
-                              checked={collab.can_read_posts}
-                              onCheckedChange={(checked) =>
-                                handleUpdateCollaboratorPermissions(collab.user_id, {
-                                  ...collab,
-                                  can_read_posts: checked as boolean,
-                                })
-                              }
-                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                            />
-                          </div>
+                          <ToggleGroupItem value="read" aria-label="Toggle read permission" className="flex-1">
+                            <Eye className="h-4 w-4" />
+                          </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Allow user to read posts in this journey</p>
@@ -602,25 +596,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can publish posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
-                            <div className="flex items-center space-x-2">
-                              <PlusCircle className="h-4 w-4 text-muted-foreground" />
-                              <Label htmlFor={`publish-${collab.user_id}`} className="text-sm font-medium leading-none">
-                                Publish
-                              </Label>
-                            </div>
-                            <Switch
-                              id={`publish-${collab.user_id}`}
-                              checked={collab.can_publish_posts}
-                              onCheckedChange={(checked) =>
-                                handleUpdateCollaboratorPermissions(collab.user_id, {
-                                  ...collab,
-                                  can_publish_posts: checked as boolean,
-                                })
-                              }
-                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                            />
-                          </div>
+                          <ToggleGroupItem value="publish" aria-label="Toggle publish permission" className="flex-1">
+                            <PlusCircle className="h-4 w-4" />
+                          </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Allow user to create new posts in this journey</p>
@@ -630,25 +608,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can modify posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
-                            <div className="flex items-center space-x-2">
-                              <Pencil className="h-4 w-4 text-muted-foreground" />
-                              <Label htmlFor={`modify-${collab.user_id}`} className="text-sm font-medium leading-none">
-                                Modify
-                              </Label>
-                            </div>
-                            <Switch
-                              id={`modify-${collab.user_id}`}
-                              checked={collab.can_modify_post}
-                              onCheckedChange={(checked) =>
-                                handleUpdateCollaboratorPermissions(collab.user_id, {
-                                  ...collab,
-                                  can_modify_post: checked as boolean,
-                                })
-                              }
-                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                            />
-                          </div>
+                          <ToggleGroupItem value="modify" aria-label="Toggle modify permission" className="flex-1">
+                            <Pencil className="h-4 w-4" />
+                          </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Allow user to edit existing posts in this journey</p>
@@ -658,31 +620,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can delete posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
-                            <div className="flex items-center space-x-2">
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                              <Label htmlFor={`delete-${collab.user_id}`} className="text-sm font-medium leading-none">
-                                Delete
-                              </Label>
-                            </div>
-                            <Switch
-                              id={`delete-${collab.user_id}`}
-                              checked={collab.can_delete_posts}
-                              onCheckedChange={(checked) =>
-                                handleUpdateCollaboratorPermissions(collab.user_id, {
-                                  ...collab,
-                                  can_delete_posts: checked as boolean,
-                                })
-                              }
-                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                            />
-                          </div>
+                          <ToggleGroupItem value="delete" aria-label="Toggle delete permission" className="flex-1">
+                            <Trash2 className="h-4 w-4" />
+                          </ToggleGroupItem>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>Allow user to delete posts from this journey</p>
                         </TooltipContent>
                       </Tooltip>
-                    </div>
+                    </ToggleGroup>
                   </div>
                 ))}
               </div>
