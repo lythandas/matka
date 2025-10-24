@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from '@/utils/toast';
-import { format, isSameDay, parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Badge } from "@/components/ui/badge";
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
 import ShineCard from '@/components/ShineCard';
@@ -28,28 +27,24 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import EditPostDialog from '@/components/EditPostDialog';
-import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
-import { Post, Journey, MediaInfo, JourneyCollaborator } from '@/types';
+import { Post, MediaInfo, JourneyCollaborator } from '@/types'; // Removed Journey from here as it's not directly used
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
-import JourneyMapDialog from '@/components/JourneyMapDialog';
 import PostDatePicker from './../components/PostDatePicker';
-import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
-import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/date-locales';
 
 const Index = () => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
-  const isMobile = useIsMobile();
-  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
+  const currentLocale = getDateFnsLocale();
 
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
@@ -59,7 +54,6 @@ const Index = () => {
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
-  const [backendConnected, setBackendConnected] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -79,28 +73,13 @@ const Index = () => {
   const [postDate, setPostDate] = useState<Date | undefined>(new Date());
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
-  useEffect(() => {
-    const checkBackendStatus = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/`);
-        setBackendConnected(response.ok);
-      } catch (error) {
-        console.error('Backend connection check failed:', error);
-        setBackendConnected(false);
-      }
-    };
-    checkBackendStatus();
-    const interval = setInterval(checkBackendStatus, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  // Removed backendConnected state as it's not used
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
-      console.log("Index.tsx: Not authenticated or user/token missing, cannot fetch collaborators.");
       setJourneyCollaborators([]);
       return;
     }
-    console.log(`Index.tsx: Fetching collaborators for journey ${journeyId} with user ${user.username} (ID: ${user.id})`);
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
         headers: {
@@ -109,18 +88,16 @@ const Index = () => {
       });
       if (!response.ok) {
         if (response.status === 403 || response.status === 401) {
-          console.warn(`Index.tsx: Access denied to fetch collaborators for journey ${journeyId}. Status: ${response.status}`);
           setJourneyCollaborators([]);
           return;
         }
-        throw new Error(t('common.failedToFetchJourneyCollaborators')); // Translated error
+        throw new Error(t('common.failedToFetchJourneyCollaborators'));
       }
       const data: JourneyCollaborator[] = await response.json();
-      console.log(`Index.tsx: Fetched collaborators for journey ${journeyId}:`, data);
       setJourneyCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
-      showError(t('common.failedToLoadJourneyCollaborators')); // Translated error
+      showError(t('common.failedToLoadJourneyCollaborators'));
       setJourneyCollaborators([]);
     }
   }, [user, token, t]);
@@ -134,13 +111,13 @@ const Index = () => {
         },
       });
       if (!response.ok) {
-        throw new Error(t('common.failedToFetchPosts')); // Translated error
+        throw new Error(t('common.failedToFetchPosts'));
       }
       const data: Post[] = await response.json();
       setPosts(data);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      showError(t('common.failedToLoadPosts')); // Translated error
+      showError(t('common.failedToLoadPosts'));
     } finally {
       setLoadingPosts(false);
     }
@@ -148,11 +125,9 @@ const Index = () => {
 
   useEffect(() => {
     if (selectedJourney) {
-      console.log("Index.tsx: selectedJourney changed, fetching posts and collaborators for:", selectedJourney.id);
       fetchPosts(selectedJourney.id);
       fetchJourneyCollaborators(selectedJourney.id);
     } else {
-      console.log("Index.tsx: No selectedJourney, clearing posts and collaborators.");
       setPosts([]);
       setLoadingPosts(false);
       setJourneyCollaborators([]);
@@ -191,7 +166,7 @@ const Index = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name })); // Translated error
+          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name }));
         }
 
         const data = await response.json();
@@ -199,10 +174,10 @@ const Index = () => {
       }
       setUploadedMediaItems((prev) => [...prev, ...newUploadedMedia]);
       setSelectedFiles([]);
-      showSuccess(t('common.mediaUploadedSuccessfully')); // Translated success
+      showSuccess(t('common.mediaUploadedSuccessfully'));
     } catch (error: any) {
       console.error('Error uploading media:', error);
-      showError(error.message || t('common.failedToUploadMediaGeneric')); // Translated error
+      showError(error.message || t('common.failedToUploadMediaGeneric'));
       setSelectedFiles([]);
     } finally {
       setIsUploadingMedia(false);
@@ -216,11 +191,11 @@ const Index = () => {
 
       for (const file of files) {
         if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
-          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })); // Translated error
+          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) }));
           continue;
         }
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          showError(t('common.fileNotImageOrVideo', { fileName: file.name })); // Translated error
+          showError(t('common.fileNotImageOrVideo', { fileName: file.name }));
           continue;
         }
         validFiles.push(file);
@@ -240,12 +215,12 @@ const Index = () => {
 
   const handleRemoveMediaItem = (indexToRemove: number) => {
     setUploadedMediaItems((prev) => prev.filter((_, index) => index !== indexToRemove));
-    showSuccess(t('common.mediaItemRemoved')); // Translated success
+    showSuccess(t('common.mediaItemRemoved'));
   };
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      showError(t('common.geolocationNotSupported')); // Translated error
+      showError(t('common.geolocationNotSupported'));
       return;
     }
 
@@ -255,21 +230,21 @@ const Index = () => {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
-        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated error
+        showSuccess(t('common.locationRetrievedSuccessfully'));
         setLoadingLocation(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
-        let errorMessage = t('common.failedToGetLocation'); // Translated error
+        let errorMessage = t('common.failedToGetLocation');
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = t('common.permissionDeniedLocation'); // Translated error
+            errorMessage = t('common.permissionDeniedLocation');
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = t('common.locationUnavailable'); // Translated error
+            errorMessage = t('common.locationUnavailable');
             break;
           case error.TIMEOUT:
-            errorMessage = t('common.locationRequestTimedOut'); // Translated error
+            errorMessage = t('common.locationRequestTimedOut');
             break;
         }
         showError(errorMessage);
@@ -284,43 +259,40 @@ const Index = () => {
   const handleClearLocation = () => {
     setCoordinates(null);
     setLocationSelectionMode('none');
-    showSuccess(t('common.locationCleared')); // Translated error
+    showSuccess(t('common.locationCleared'));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!isAuthenticated) {
-      showError(t('common.authRequiredCreatePost')); // Translated error
+      showError(t('common.authRequiredCreatePost'));
       return;
     }
 
     if (!selectedJourney) {
-      showError(t('common.selectJourneyBeforePost')); // Translated error
+      showError(t('common.selectJourneyBeforePost'));
       return;
     }
 
-    // Permission check for creating a post
     const isOwner = user?.id === selectedJourney.user_id;
     const isAdmin = user?.isAdmin;
     const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
     const canCreatePost = isOwner || isAdmin || canPublishAsCollaborator;
 
     if (!canCreatePost) {
-      showError(t('common.noPermissionCreatePost')); // Translated error
+      showError(t('common.noPermissionCreatePost'));
       return;
     }
 
     if (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) {
-      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired')); // Translated error
+      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired'));
       return;
     }
     if (isUploadingMedia) {
-      showError(t('common.pleaseWaitForMediaUploads')); // Translated error
+      showError(t('common.pleaseWaitForMediaUploads'));
       return;
     }
-
-    console.log('Frontend: Sending post with created_at:', postDate?.toISOString());
 
     try {
       const response = await fetch(`${API_BASE_URL}/posts`, {
@@ -341,7 +313,7 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToCreatePost')); // Translated error
+        throw new Error(errorData.message || t('common.failedToCreatePost'));
       }
 
       const newPost: Post = await response.json();
@@ -352,28 +324,27 @@ const Index = () => {
       setUploadedMediaItems([]);
       setCoordinates(null);
       setLocationSelectionMode('none');
-      setPostDate(new Date()); // Reset post date to today
-      showSuccess(t('common.postCreatedSuccessfully')); // Translated error
+      setPostDate(new Date());
+      showSuccess(t('common.postCreatedSuccessfully'));
     } catch (error: any) {
       console.error('Error creating post:', error);
-      showError(error.message || t('common.failedToCreatePost')); // Translated error
+      showError(error.message || t('common.failedToCreatePost'));
     }
   };
 
   const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string) => {
     if (!isAuthenticated) {
-      showError(t('common.authRequiredDeletePost')); // Translated error
+      showError(t('common.authRequiredDeletePost'));
       return;
     }
 
-    // Permission check for deleting a post
     const isPostAuthor = user?.id === postAuthorId;
     const isJourneyOwner = selectedJourney?.user_id === user?.id;
     const isAdmin = user?.isAdmin;
     const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canDeleteAsCollaborator) {
-      showError(t('common.noPermissionDeletePost')); // Translated error
+      showError(t('common.noPermissionDeletePost'));
       return;
     }
 
@@ -387,14 +358,14 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToDeletePost')); // Translated error
+        throw new Error(errorData.message || t('common.failedToDeletePost'));
       }
 
       setPosts(posts.filter((post) => post.id !== id));
-      showSuccess(t('common.postDeletedSuccessfully')); // Translated error
-    } catch (error: any) {
+      showSuccess(t('common.postDeletedSuccessfully'));
+    } catch (error: any) => {
       console.error('Error deleting post:', error);
-      showError(error.message || t('common.failedToDeletePost')); // Translated error
+      showError(error.message || t('common.failedToDeletePost'));
     }
   };
 
@@ -439,27 +410,25 @@ const Index = () => {
   };
 
   const handleSelectPostFromMap = (post: Post, index: number) => {
-    handlePostClick(post, index); // Open post detail dialog
+    handlePostClick(post, index);
   };
 
-  // Apply sorting logic
   const sortedPosts = [...posts].sort((a, b) => {
     const dateA = new Date(a.created_at).getTime();
     const dateB = new Date(b.created_at).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
-  const displayedPosts = sortedPosts; // Use sortedPosts for rendering
+  const displayedPosts = sortedPosts;
 
-  // Permission check for creating a post (used for disabling UI)
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
-  const canCreateJourneyUI = isAuthenticated; // All authenticated users can create journeys
+  const canCreateJourneyUI = isAuthenticated;
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   let mainContent;
 
   if (!isAuthenticated) {
-    mainContent = null; // App.tsx handles redirection to LoginPage
+    mainContent = null;
   } else if (selectedJourney) {
     mainContent = (
       <Card className="mb-8 shadow-lg shadow-neon-blue">
@@ -499,12 +468,12 @@ const Index = () => {
                     {mediaItem.type === 'image' ? (
                       <img
                         src={mediaItem.urls.medium || '/placeholder.svg'}
-                        alt={`Media preview ${index + 1}`}
+                        alt={t('common.postImageAlt', { index: index + 1 })}
                         className="w-full h-auto max-h-64 object-cover rounded-md"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder.svg';
                           e.currentTarget.onerror = null;
-                          console.error(t('common.failedToLoadMedia'), mediaItem.urls.medium); // Translated error
+                          showError(t('common.failedToLoadMedia', { fileName: `media-${index + 1}` }));
                         }}
                       />
                     ) : (
@@ -583,7 +552,7 @@ const Index = () => {
                 type="button"
                 variant="outline"
                 onClick={handleGetLocation}
-                className="flex items-center hover:ring-2 hover://ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+                className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                 disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
               >
                 {locationLoading ? (
@@ -690,7 +659,6 @@ const Index = () => {
         viewMode === 'list' ? (
           <div className="space-y-6">
             {displayedPosts.map((post, index) => {
-              // Permission checks for individual post actions
               const isPostAuthor = user?.id === post.user_id;
               const isJourneyOwner = selectedJourney?.user_id === user?.id;
               const isAdmin = user?.isAdmin;
@@ -699,8 +667,6 @@ const Index = () => {
 
               const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
               const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
-
-              console.log(`Frontend: Displayed post ID: ${post.id}, Created At: ${post.created_at}`);
 
               return (
                 <ShineCard
@@ -744,12 +710,12 @@ const Index = () => {
                             {mediaItem.type === 'image' && mediaItem.urls.large && (
                               <img
                                 src={mediaItem.urls.large}
-                                alt={`Post image ${mediaIndex + 1}`}
+                                alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
                                 className="w-full h-auto max-h-96 object-cover rounded-md"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
                                   e.currentTarget.onerror = null;
-                                  console.error(t('common.failedToLoadImage'), mediaItem.urls.large); // Translated error
+                                  showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
                                 }}
                               />
                             )}
