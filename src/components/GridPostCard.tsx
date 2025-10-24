@@ -67,7 +67,8 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         <AspectRatio ratio={1 / 1}>
           {mediaElement}
         </AspectRatio>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold
+                    opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"> {/* Added fade effect */}
           {post.title && (
             <p className="truncate mb-1">{post.title}</p>
           )}
