@@ -7,7 +7,7 @@ import { FastifyRequest } from 'fastify';
 import path from 'path';
 import fs from 'fs/promises';
 import fastifyStatic from '@fastify/static';
-import { Client } from 'pg'; // Import the PostgreSQL client
+import { Client } from 'pg';
 
 const fastify = Fastify({
   logger: true,
@@ -33,16 +33,14 @@ interface User {
   id: string;
   username: string;
   password_hash: string;
-  is_admin: boolean; // Renamed to is_admin for DB consistency
+  is_admin: boolean;
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  language?: string; // New: User's preferred language
+  language?: string;
   created_at: string;
 }
 
-// Define a type for the user object that is sent to the frontend and used in JWT
-// This type explicitly defines the structure after mapping from DB User
 type ApiUser = {
   id: string;
   username: string;
@@ -50,7 +48,7 @@ type ApiUser = {
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  language?: string; // New: User's preferred language
+  language?: string;
   created_at: string;
 };
 
@@ -99,10 +97,9 @@ interface Post {
   created_at: string;
 }
 
-// Declare module 'fastify' to add 'user' property to FastifyRequest
 declare module 'fastify' {
   interface FastifyRequest {
-    user?: ApiUser; // Use the new ApiUser type here
+    user?: ApiUser;
   }
 }
 
@@ -137,15 +134,15 @@ const connectDb = async () => {
       await dbClient.connect();
       fastify.log.info('Connected to PostgreSQL database');
       await createTables();
-      return; // Connection successful, exit loop
+      return;
     } catch (err: unknown) {
       retries++;
       fastify.log.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
       if (retries < MAX_RETRIES) {
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 5000));
       } else {
         fastify.log.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
-        process.exit(1); // Exit if max retries reached
+        process.exit(1);
       }
     }
   }
@@ -162,11 +159,10 @@ const createTables = async () => {
         name VARCHAR(255),
         surname VARCHAR(255),
         profile_image_url TEXT,
-        language VARCHAR(10) DEFAULT 'en', -- New: User's preferred language
+        language VARCHAR(10) DEFAULT 'en',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
-      -- Add language column if it doesn't exist
       DO $$ BEGIN
           ALTER TABLE users ADD COLUMN language VARCHAR(10) DEFAULT 'en';
       EXCEPTION
@@ -213,7 +209,7 @@ const createTables = async () => {
     `);
     fastify.log.info('Database tables checked/created successfully');
   } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Error creating database tables'); // Corrected logger call
+    fastify.log.error(err as Error, 'Error creating database tables');
     process.exit(1);
   }
 };
@@ -228,19 +224,18 @@ const comparePassword = async (password: string, hash: string): Promise<boolean>
   return bcrypt.compare(password, hash);
 };
 
-// Helper to transform DB user object to API user object
 const mapDbUserToApiUser = (dbUser: User): ApiUser => ({
   id: dbUser.id,
   username: dbUser.username,
-  isAdmin: dbUser.is_admin, // Map is_admin to isAdmin
+  isAdmin: dbUser.is_admin,
   name: dbUser.name,
   surname: dbUser.surname,
   profile_image_url: dbUser.profile_image_url,
-  language: dbUser.language, // Include language
+  language: dbUser.language,
   created_at: dbUser.created_at,
 });
 
-const generateToken = (user: ApiUser): string => { // Use ApiUser type here
+const generateToken = (user: ApiUser): string => {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
@@ -253,7 +248,7 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as ApiUser; // Use ApiUser type here
+    const decoded = jwt.verify(token, JWT_SECRET) as ApiUser;
     request.user = decoded;
   } catch (err) {
     reply.code(401).send({ message: 'Invalid or expired token' });
@@ -262,18 +257,15 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 
 // --- Public Routes (No Authentication Required) ---
 
-// Root route
 fastify.get('/', async (request, reply) => {
   return { message: 'Hello from Fastify backend!' };
 });
 
-// Check if any users exist (for initial admin registration)
 fastify.get('/users/exists', async (request, reply) => {
   const result = await dbClient.query('SELECT COUNT(*) FROM users');
   return { exists: parseInt(result.rows[0].count) > 0 };
 });
 
-// Register a new user (first user is admin)
 fastify.post('/register', async (request, reply) => {
   const { username, password } = request.body as { username?: string; password?: string };
 
@@ -295,7 +287,7 @@ fastify.post('/register', async (request, reply) => {
     username,
     password_hash,
     is_admin: isFirstUser,
-    language: 'en', // Default language for new users
+    language: 'en',
     created_at: new Date().toISOString(),
   };
 
@@ -305,12 +297,11 @@ fastify.post('/register', async (request, reply) => {
   );
 
   const userForApi = mapDbUserToApiUser(result.rows[0]);
-  fastify.log.info(`Backend /register: User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
+  fastify.log.info(`User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
   const token = generateToken(userForApi);
   return { user: userForApi, token };
 });
 
-// Login user
 fastify.post('/login', async (request, reply) => {
   const { username, password } = request.body as { username?: string; password?: string };
 
@@ -331,12 +322,11 @@ fastify.post('/login', async (request, reply) => {
   }
 
   const userForApi = mapDbUserToApiUser(user);
-  fastify.log.info(`Backend /login: User ${userForApi.username} logged in. isAdmin: ${userForApi.isAdmin}`);
+  fastify.log.info(`User ${userForApi.username} logged in. isAdmin: ${userForApi.isAdmin}`);
   const token = generateToken(userForApi);
   return { user: userForApi, token };
 });
 
-// Get a public journey by ID
 fastify.get('/public/journeys/:id', async (request, reply) => {
   const { id } = request.params as { id: string };
   const result = await dbClient.query('SELECT * FROM journeys WHERE id = $1 AND is_public = TRUE', [id]);
@@ -348,7 +338,6 @@ fastify.get('/public/journeys/:id', async (request, reply) => {
   return journey;
 });
 
-// Get a public journey by owner username and journey name
 fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
   const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
 
@@ -366,7 +355,6 @@ fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (reque
   return journey;
 });
 
-// Get posts for a public journey by ID
 fastify.get('/public/journeys/:id/posts', async (request, reply) => {
   const { id: journeyId } = request.params as { id: string };
   const journeyResult = await dbClient.query('SELECT id FROM journeys WHERE id = $1 AND is_public = TRUE', [journeyId]);
@@ -375,7 +363,7 @@ fastify.get('/public/journeys/:id/posts', async (request, reply) => {
     return reply.code(404).send({ message: 'Public journey not found or not accessible' });
   }
 
-  const postsResult = await dbClient.query('SELECT * FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+  const postsResult = await dbClient.query('SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
   return postsResult.rows;
 });
 
@@ -383,8 +371,6 @@ fastify.get('/public/journeys/:id/posts', async (request, reply) => {
 // --- Authenticated Routes Plugin ---
 fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.addHook('preHandler', authenticate);
-
-  // All routes defined within this plugin will be authenticated
 
   // Get current user profile
   authenticatedFastify.get('/users/profile', async (request: FastifyRequest, reply) => {
@@ -448,27 +434,23 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
 
-    const mockBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`;
-    fastify.log.info(`Generated media URL base: ${mockBaseUrl}`);
-    fastify.log.info(`Generated file name: ${fileName}`);
-    fastify.log.info(`Full image URL: ${mockBaseUrl}/${fileName}`);
-
+    const mediaBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`;
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {
       mediaInfo = {
         type: 'image',
         urls: {
-          small: `${mockBaseUrl}/${fileName}`,
-          medium: `${mockBaseUrl}/${fileName}`,
-          large: `${mockBaseUrl}/${fileName}`,
-          original: `${mockBaseUrl}/${fileName}`,
+          small: `${mediaBaseUrl}/${fileName}`,
+          medium: `${mediaBaseUrl}/${fileName}`,
+          large: `${mediaBaseUrl}/${fileName}`,
+          original: `${mediaBaseUrl}/${fileName}`,
         }
       };
     } else if (fileType.startsWith('video/')) {
       mediaInfo = {
         type: 'video',
-        url: `${mockBaseUrl}/${fileName}`,
+        url: `${mediaBaseUrl}/${fileName}`,
       };
     } else {
       return reply.code(400).send({ message: 'Unsupported media type' });
@@ -480,7 +462,7 @@ fastify.register(async (authenticatedFastify) => {
         [mediaInfo.urls.medium, request.user.id]
       );
       if (updateResult.rows.length > 0) {
-        request.user = mapDbUserToApiUser(updateResult.rows[0]); // Update request.user for new token generation
+        request.user = mapDbUserToApiUser(updateResult.rows[0]);
       }
     }
 
@@ -489,22 +471,20 @@ fastify.register(async (authenticatedFastify) => {
 
   // --- Admin-only User Management Routes ---
 
-  // Get all users (Admin only)
   authenticatedFastify.get('/users', async (request: FastifyRequest, reply) => {
-    if (!request.user || !request.user.isAdmin) { // Check isAdmin
+    if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
     const result = await dbClient.query(
       'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users ORDER BY created_at DESC'
     );
-    return result.rows.map(mapDbUserToApiUser); // Map all users
+    return result.rows.map(mapDbUserToApiUser);
   });
 
-  // Create a new user (Admin only)
   authenticatedFastify.post('/users', async (request: FastifyRequest, reply) => {
     const { username, password, name, surname } = request.body as { username?: string; password?: string; name?: string; surname?: string };
 
-    if (!request.user || !request.user.isAdmin) { // Check isAdmin
+    if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can create users.' });
     }
     if (!username || !password) {
@@ -525,7 +505,7 @@ fastify.register(async (authenticatedFastify) => {
       is_admin: false,
       name: name || undefined,
       surname: surname || undefined,
-      language: 'en', // Default language for new users created by admin
+      language: 'en',
       created_at: new Date().toISOString(),
     };
 
@@ -533,15 +513,14 @@ fastify.register(async (authenticatedFastify) => {
       'INSERT INTO users (id, username, password_hash, is_admin, name, surname, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
       [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.language, newUser.created_at]
     );
-    return mapDbUserToApiUser(result.rows[0]); // Map the created user
+    return mapDbUserToApiUser(result.rows[0]);
   });
 
-  // Update a user (Admin only)
   authenticatedFastify.put('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
     const { username, name, surname, profile_image_url, is_admin, language } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean; language?: string };
 
-    if (!request.user || !request.user.isAdmin) { // Check isAdmin
+    if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
     }
 
@@ -574,15 +553,14 @@ fastify.register(async (authenticatedFastify) => {
     if (result.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
-    return mapDbUserToApiUser(result.rows[0]); // Map the updated user
+    return mapDbUserToApiUser(result.rows[0]);
   });
 
-  // Reset user password (Admin only)
   authenticatedFastify.put('/users/:id/reset-password', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
     const { newPassword } = request.body as { newPassword?: string };
 
-    if (!request.user || !request.user.isAdmin) { // Check isAdmin
+    if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can reset user passwords.' });
     }
     if (!newPassword) {
@@ -599,11 +577,10 @@ fastify.register(async (authenticatedFastify) => {
     return reply.code(200).send({ message: 'Password reset successfully' });
   });
 
-  // Delete a user (Admin only)
   authenticatedFastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user || !request.user.isAdmin) { // Check isAdmin
+    if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can delete users.' });
     }
     if (request.user.id === id) {
@@ -615,7 +592,6 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    // CASCADE DELETE should handle journeys, posts, and permissions automatically due to foreign key constraints
     return reply.code(204).send();
   });
 
@@ -637,12 +613,11 @@ fastify.register(async (authenticatedFastify) => {
        WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
       [searchLower, searchLower, searchLower]
     );
-    return result.rows.map(mapDbUserToApiUser); // Map search results
+    return result.rows.map(mapDbUserToApiUser);
   });
 
   // --- Journey Management Routes ---
 
-  // Get all journeys for the authenticated user (owned or collaborated)
   authenticatedFastify.get('/journeys', async (request: FastifyRequest, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -659,7 +634,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows;
   });
 
-  // Create a new journey
   authenticatedFastify.post('/journeys', async (request: FastifyRequest, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -691,7 +665,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows[0];
   });
 
-  // Update a journey
   authenticatedFastify.put('/journeys/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
     const { name, is_public } = request.body as { name?: string; is_public?: boolean };
@@ -708,7 +681,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
@@ -725,7 +698,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows[0];
   });
 
-  // Delete a journey
   authenticatedFastify.delete('/journeys/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
@@ -741,7 +713,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
@@ -752,11 +724,9 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // CASCADE DELETE should handle posts and permissions automatically
     return reply.code(204).send();
   });
 
-  // Get journey collaborators
   authenticatedFastify.get('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
     const { id: journeyId } = request.params as { id: string };
 
@@ -773,13 +743,12 @@ fastify.register(async (authenticatedFastify) => {
     const isOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin;
 
-    // Check if the user is a collaborator (read permission is implicit)
     const isCollaborator = await dbClient.query(
       'SELECT 1 FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
     );
 
-    if (!isOwner && !isAdmin && isCollaborator.rows.length === 0) { // Simplified check
+    if (!isOwner && !isAdmin && isCollaborator.rows.length === 0) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
@@ -794,7 +763,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows;
   });
 
-  // Add a collaborator to a journey
   authenticatedFastify.post('/journeys/:id/collaborators', async (request: FastifyRequest, reply) => {
     const { id: journeyId } = request.params as { id: string };
     const { username } = request.body as { username: string };
@@ -810,7 +778,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -838,7 +806,7 @@ fastify.register(async (authenticatedFastify) => {
       name: targetUser.name,
       surname: targetUser.surname,
       profile_image_url: targetUser.profile_image_url,
-      can_read_posts: true, // Always true for new collaborators
+      can_read_posts: true,
       can_publish_posts: true,
       can_modify_post: true,
       can_delete_posts: false,
@@ -853,7 +821,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows[0];
   });
 
-  // Update collaborator permissions
   authenticatedFastify.put('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
     const { can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
@@ -873,7 +840,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -896,7 +863,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows[0];
   });
 
-  // Remove a collaborator from a journey
   authenticatedFastify.delete('/journeys/:journeyId/collaborators/:userId', async (request: FastifyRequest, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
 
@@ -911,7 +877,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -927,7 +893,6 @@ fastify.register(async (authenticatedFastify) => {
 
   // --- Post Management Routes ---
 
-  // Get posts for a specific journey
   authenticatedFastify.get('/posts', async (request: FastifyRequest, reply) => {
     const { journeyId } = request.query as { journeyId: string };
 
@@ -946,22 +911,21 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
     const collaboratorPermsResult = await dbClient.query(
-      'SELECT 1 FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', // Just check existence
+      'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
     );
-    const isCollaborator = collaboratorPermsResult.rows.length > 0; // Simplified check
+    const canRead = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_read_posts : false;
 
-    if (!isOwner && !isAdmin && !isCollaborator) { // Simplified check
+    if (!isOwner && !isAdmin && !canRead) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to read posts in this journey.' });
     }
 
-    const postsResult = await dbClient.query('SELECT * FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+    const postsResult = await dbClient.query('SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
     return postsResult.rows;
   });
 
-  // Create a new post
   authenticatedFastify.post('/posts', async (request: FastifyRequest, reply) => {
     const { journeyId, title, message, media_items, coordinates, created_at } = request.body as {
       journeyId?: string;
@@ -990,7 +954,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_publish_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
@@ -1019,18 +983,18 @@ fastify.register(async (authenticatedFastify) => {
     const result = await dbClient.query(
       `INSERT INTO posts (id, journey_id, user_id, author_username, author_name, author_surname, author_profile_image_url, title, message, media_items, coordinates, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-       RETURNING *`,
+       RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
         newPost.id, newPost.journey_id, newPost.user_id, newPost.author_username, newPost.author_name, newPost.author_surname,
         newPost.author_profile_image_url, newPost.title, newPost.message,
-        newPost.media_items ? JSON.stringify(newPost.media_items) : null, // Explicitly stringify or set to null
-        newPost.coordinates, newPost.created_at
+        newPost.media_items ? JSON.stringify(newPost.media_items) : null,
+        newPost.coordinates ? JSON.stringify(newPost.coordinates) : null,
+        newPost.created_at
       ]
     );
     return result.rows[0];
   });
 
-  // Update a post
   authenticatedFastify.put('/posts/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
     const { title, message, media_items, coordinates, created_at } = request.body as {
@@ -1059,7 +1023,7 @@ fastify.register(async (authenticatedFastify) => {
 
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_modify_post FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [existingPost.journey_id, request.user.id]
@@ -1078,12 +1042,12 @@ fastify.register(async (authenticatedFastify) => {
         coordinates = $4,
         created_at = COALESCE($5, created_at)
        WHERE id = $6
-       RETURNING *`,
+       RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
         title === null ? null : title,
         message,
-        media_items && media_items.length > 0 ? JSON.stringify(media_items) : null, // Explicitly stringify or set to null
-        coordinates === null ? null : coordinates,
+        media_items && media_items.length > 0 ? JSON.stringify(media_items) : null,
+        coordinates ? JSON.stringify(coordinates) : null,
         created_at,
         id
       ]
@@ -1091,7 +1055,6 @@ fastify.register(async (authenticatedFastify) => {
     return result.rows[0];
   });
 
-  // Delete a post
   authenticatedFastify.delete('/posts/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
@@ -1112,8 +1075,8 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isPostAuthor = existingPost.user_id === request.user.id;
-    const isJourneyOwner = journey.user.id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isJourneyOwner = journey.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_delete_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [existingPost.journey_id, request.user.id]
@@ -1137,11 +1100,11 @@ fastify.register(async (authenticatedFastify) => {
 // Run the server
 const start = async () => {
   try {
-    await connectDb(); // Connect to DB before starting server
+    await connectDb();
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
   } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Failed to start server'); // Corrected logger call
+    fastify.log.error(err as Error, 'Failed to start server');
     process.exit(1);
   }
 };
