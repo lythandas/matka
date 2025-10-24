@@ -204,7 +204,9 @@
   "editPostDialog": {
     "editPost": "Edit post",
     "modifyPostContent": "Modify the content of your post.",
+    "title": "Title",
     "titlePlaceholder": "Add a title (optional)",
+    "message": "Message",
     "messagePlaceholder": "What's on your mind today?",
     "postDate": "Post date",
     "media": "Media",

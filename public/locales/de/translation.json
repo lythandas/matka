@@ -204,7 +204,9 @@
   "editPostDialog": {
     "editPost": "Beitrag bearbeiten",
     "modifyPostContent": "Ändern Sie den Inhalt Ihres Beitrags.",
+    "title": "Titel",
     "titlePlaceholder": "Titel hinzufügen (optional)",
+    "message": "Nachricht",
     "messagePlaceholder": "Was beschäftigt Sie heute?",
     "postDate": "Beitragsdatum",
     "media": "Medien",

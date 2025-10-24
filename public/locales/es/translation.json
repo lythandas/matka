@@ -204,7 +204,9 @@
   "editPostDialog": {
     "editPost": "Editar publicación",
     "modifyPostContent": "Modifica el contenido de tu publicación.",
+    "title": "Título",
     "titlePlaceholder": "Añadir un título (opcional)",
+    "message": "Mensaje",
     "messagePlaceholder": "¿Qué tienes en mente hoy?",
     "postDate": "Fecha de publicación",
     "media": "Medios",
