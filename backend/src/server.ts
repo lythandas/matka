@@ -757,9 +757,16 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin; // Check isAdmin
+    const isAdmin = request.user.isAdmin;
 
-    if (!isOwner && !isAdmin) {
+    // Check if the user is a collaborator with can_read_posts permission
+    const collaboratorPermsResult = await dbClient.query(
+      'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      [journeyId, request.user.id]
+    );
+    const canReadAsCollaborator = collaboratorPermsResult.rows.length > 0 && collaboratorPermsResult.rows[0].can_read_posts;
+
+    if (!isOwner && !isAdmin && !canReadAsCollaborator) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
