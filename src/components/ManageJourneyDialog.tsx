@@ -29,8 +29,8 @@ import {
 } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // Import ToggleGroup and ToggleGroupItem
-import { cn } from '@/lib/utils'; // Import cn for conditional class names
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from '@/lib/utils';
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -591,8 +591,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             className={cn(
                               "flex-1",
                               collab.can_read_posts
-                                ? "bg-green-500 text-white hover:bg-green-600"
-                                : "bg-red-500 text-white hover:bg-red-600"
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                             )}
                           >
                             <Eye className="h-4 w-4" />
@@ -612,8 +612,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             className={cn(
                               "flex-1",
                               collab.can_publish_posts
-                                ? "bg-green-500 text-white hover:bg-green-600"
-                                : "bg-red-500 text-white hover:bg-red-600"
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                             )}
                           >
                             <PlusCircle className="h-4 w-4" />
@@ -633,8 +633,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             className={cn(
                               "flex-1",
                               collab.can_modify_post
-                                ? "bg-green-500 text-white hover:bg-green-600"
-                                : "bg-red-500 text-white hover:bg-red-600"
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                             )}
                           >
                             <Pencil className="h-4 w-4" />
@@ -654,8 +654,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             className={cn(
                               "flex-1",
                               collab.can_delete_posts
-                                ? "bg-green-500 text-white hover:bg-green-600"
-                                : "bg-red-500 text-white hover:bg-red-600"
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                             )}
                           >
                             <Trash2 className="h-4 w-4" />
