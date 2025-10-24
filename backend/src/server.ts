@@ -41,7 +41,16 @@ interface User {
 }
 
 // Define a type for the user object that is sent to the frontend and used in JWT
-type ApiUser = Omit<User, 'password_hash' | 'is_admin'> & { isAdmin: boolean };
+// This type explicitly defines the structure after mapping from DB User
+type ApiUser = {
+  id: string;
+  username: string;
+  isAdmin: boolean;
+  name?: string;
+  surname?: string;
+  profile_image_url?: string;
+  created_at: string;
+};
 
 interface Journey {
   id: string;
@@ -110,7 +119,7 @@ const UPLOADS_DIR = path.join(__dirname, '../uploads');
 const connectDb = async () => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    console.error('DATABASE_URL is not defined. Please set it in your environment variables.');
+    fastify.log.error('DATABASE_URL is not defined. Please set it in your environment variables.');
     process.exit(1);
   }
 
@@ -118,13 +127,25 @@ const connectDb = async () => {
     connectionString: databaseUrl,
   });
 
-  try {
-    await dbClient.connect();
-    fastify.log.info('Connected to PostgreSQL database');
-    await createTables();
-  } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Failed to connect to PostgreSQL'); // Corrected logger call
-    process.exit(1);
+  const MAX_RETRIES = 10;
+  let retries = 0;
+
+  while (retries < MAX_RETRIES) {
+    try {
+      await dbClient.connect();
+      fastify.log.info('Connected to PostgreSQL database');
+      await createTables();
+      return; // Connection successful, exit loop
+    } catch (err: unknown) {
+      retries++;
+      fastify.log.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
+      if (retries < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds before retrying
+      } else {
+        fastify.log.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
+        process.exit(1); // Exit if max retries reached
+      }
+    }
   }
 };
 
