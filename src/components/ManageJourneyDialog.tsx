@@ -30,6 +30,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"; // Import ToggleGroup and ToggleGroupItem
+import { cn } from '@/lib/utils'; // Import cn for conditional class names
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -584,7 +585,16 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can read posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <ToggleGroupItem value="read" aria-label="Toggle read permission" className="flex-1">
+                          <ToggleGroupItem
+                            value="read"
+                            aria-label="Toggle read permission"
+                            className={cn(
+                              "flex-1",
+                              collab.can_read_posts
+                                ? "bg-green-500 text-white hover:bg-green-600"
+                                : "bg-red-500 text-white hover:bg-red-600"
+                            )}
+                          >
                             <Eye className="h-4 w-4" />
                           </ToggleGroupItem>
                         </TooltipTrigger>
@@ -596,7 +606,16 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can publish posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <ToggleGroupItem value="publish" aria-label="Toggle publish permission" className="flex-1">
+                          <ToggleGroupItem
+                            value="publish"
+                            aria-label="Toggle publish permission"
+                            className={cn(
+                              "flex-1",
+                              collab.can_publish_posts
+                                ? "bg-green-500 text-white hover:bg-green-600"
+                                : "bg-red-500 text-white hover:bg-red-600"
+                            )}
+                          >
                             <PlusCircle className="h-4 w-4" />
                           </ToggleGroupItem>
                         </TooltipTrigger>
@@ -608,7 +627,16 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can modify posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <ToggleGroupItem value="modify" aria-label="Toggle modify permission" className="flex-1">
+                          <ToggleGroupItem
+                            value="modify"
+                            aria-label="Toggle modify permission"
+                            className={cn(
+                              "flex-1",
+                              collab.can_modify_post
+                                ? "bg-green-500 text-white hover:bg-green-600"
+                                : "bg-red-500 text-white hover:bg-red-600"
+                            )}
+                          >
                             <Pencil className="h-4 w-4" />
                           </ToggleGroupItem>
                         </TooltipTrigger>
@@ -620,7 +648,16 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {/* Can delete posts */}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <ToggleGroupItem value="delete" aria-label="Toggle delete permission" className="flex-1">
+                          <ToggleGroupItem
+                            value="delete"
+                            aria-label="Toggle delete permission"
+                            className={cn(
+                              "flex-1",
+                              collab.can_delete_posts
+                                ? "bg-green-500 text-white hover:bg-green-600"
+                                : "bg-red-500 text-white hover:bg-red-600"
+                            )}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </ToggleGroupItem>
                         </TooltipTrigger>
