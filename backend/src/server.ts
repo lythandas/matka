@@ -983,7 +983,9 @@ fastify.register(async (authenticatedFastify) => {
        RETURNING *`,
       [
         newPost.id, newPost.journey_id, newPost.user_id, newPost.author_username, newPost.author_name, newPost.author_surname,
-        newPost.author_profile_image_url, newPost.title, newPost.message, newPost.media_items, newPost.coordinates, newPost.created_at
+        newPost.author_profile_image_url, newPost.title, newPost.message,
+        newPost.media_items ? JSON.stringify(newPost.media_items) : null, // Explicitly stringify or set to null
+        newPost.coordinates, newPost.created_at
       ]
     );
     return result.rows[0];
@@ -1041,7 +1043,7 @@ fastify.register(async (authenticatedFastify) => {
       [
         title === null ? null : title,
         message,
-        media_items === null ? null : (media_items && media_items.length > 0 ? media_items : null),
+        media_items && media_items.length > 0 ? JSON.stringify(media_items) : null, // Explicitly stringify or set to null
         coordinates === null ? null : coordinates,
         created_at,
         id
