@@ -30,7 +30,7 @@ import EditPostDialog from '@/components/EditPostDialog';
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
-import { Post, MediaInfo, JourneyCollaborator } from '@/types'; // Removed Journey from here as it's not directly used
+import { Post, MediaInfo, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
@@ -72,8 +72,6 @@ const Index = () => {
 
   const [postDate, setPostDate] = useState<Date | undefined>(new Date());
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-
-  // Removed backendConnected state as it's not used
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
@@ -363,7 +361,7 @@ const Index = () => {
 
       setPosts(posts.filter((post) => post.id !== id));
       showSuccess(t('common.postDeletedSuccessfully'));
-    } catch (error: any) => {
+    } catch (error: any) { // Corrected syntax here
       console.error('Error deleting post:', error);
       showError(error.message || t('common.failedToDeletePost'));
     }
