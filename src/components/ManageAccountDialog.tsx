@@ -20,7 +20,7 @@ import { getAvatarInitials } from '@/lib/utils'; // Import getAvatarInitials
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
 import { MAX_PROFILE_IMAGE_SIZE_BYTES, SUPPORTED_IMAGE_TYPES } from '@/config/constants'; // Updated import
 import { User } from '@/types'; // Centralized User interface
-import { ThemeToggle } from '@/components/ThemeToggle'; // Import ThemeToggle
+import { ThreeButtonThemeToggle } from '@/components/ThreeButtonThemeToggle'; // Import ThreeButtonThemeToggle
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
@@ -217,11 +217,13 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 disabled={isSaving || isUploadingImage}
               >
                 {isUploadingImage ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  selectedFile ? selectedFile.name : (profileImageUrl ? "Change image" : "Upload image")
                 )}
-                {selectedFile ? selectedFile.name : (profileImageUrl ? "Change image" : "Upload image")}
               </Button>
               {profileImageUrl && (
                 <Button
@@ -281,7 +283,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Theme</Label>
             <div className="col-span-3">
-              <ThemeToggle className="w-full justify-start" />
+              <ThreeButtonThemeToggle className="w-full justify-start" />
             </div>
           </div>
         </div>
