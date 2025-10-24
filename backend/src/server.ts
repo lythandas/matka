@@ -4,9 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { FastifyRequest } from 'fastify';
-import path from 'path'; // Import path module
-import fs from 'fs/promises'; // Import fs/promises for async file operations
-import fastifyStatic from '@fastify/static'; // Import the static plugin
+import path from 'path';
+import fs from 'fs/promises';
+import fastifyStatic from '@fastify/static';
+import { Client } from 'pg'; // Import the PostgreSQL client
 
 const fastify = Fastify({
   logger: true,
@@ -15,24 +16,24 @@ const fastify = Fastify({
 
 // Register CORS plugin
 fastify.register(cors, {
-  origin: ['http://localhost:8080', 'http://127.0.0.1:8080', '*'], // Explicitly allow frontend origin
+  origin: ['http://localhost:8080', 'http://127.0.0.1:8080', '*'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 });
 
 // Register @fastify/static to serve uploaded files from the 'uploads' directory
 fastify.register(fastifyStatic, {
-  root: path.join(__dirname, '../uploads'), // Path to your uploads directory
-  prefix: '/uploads/', // URL prefix for serving static files (e.g., http://localhost:3001/uploads/image.jpg)
-  decorateReply: false // Do not decorate reply with .sendFile, we'll handle URLs manually
+  root: path.join(__dirname, '../uploads'),
+  prefix: '/uploads/',
+  decorateReply: false
 });
 
-// --- In-memory Data Stores (for demonstration purposes) ---
+// --- Data Interfaces ---
 interface User {
   id: string;
   username: string;
   password_hash: string;
-  isAdmin: boolean; // Simplified: first user is admin, others are not
+  is_admin: boolean; // Renamed to is_admin for DB consistency
   name?: string;
   surname?: string;
   profile_image_url?: string;
@@ -48,21 +49,21 @@ interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
-  is_public: boolean; // New: Indicates if the journey is publicly viewable
+  is_public: boolean;
 }
 
 interface JourneyCollaborator {
-  id: string; // ID of the journey_user_permissions entry
+  id: string;
   journey_id: string;
   user_id: string;
   username: string;
   name?: string;
   surname?: string;
   profile_image_url?: string;
-  can_read_posts: boolean; // New: Can read posts in this journey
-  can_publish_posts: boolean; // Can create posts in this journey
-  can_modify_post: boolean; // New: Can modify (edit) existing posts in this journey
-  can_delete_posts: boolean; // New: Can delete posts in this journey
+  can_read_posts: boolean;
+  can_publish_posts: boolean;
+  can_modify_post: boolean;
+  can_delete_posts: boolean;
 }
 
 type MediaInfo =
@@ -91,10 +92,8 @@ declare module 'fastify' {
   }
 }
 
-let users: User[] = [];
-let journeys: Journey[] = [];
-let journeyUserPermissions: JourneyCollaborator[] = [];
-let posts: Post[] = [];
+// --- Database Client ---
+let dbClient: Client;
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -103,6 +102,87 @@ if (!JWT_SECRET) {
 }
 const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localhost:3001';
 const UPLOADS_DIR = path.join(__dirname, '../uploads');
+
+// --- Database Connection and Schema Creation ---
+const connectDb = async () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.error('DATABASE_URL is not defined. Please set it in your environment variables.');
+    process.exit(1);
+  }
+
+  dbClient = new Client({
+    connectionString: databaseUrl,
+  });
+
+  try {
+    await dbClient.connect();
+    fastify.log.info('Connected to PostgreSQL database');
+    await createTables();
+  } catch (err) {
+    fastify.log.error('Failed to connect to PostgreSQL:', err);
+    process.exit(1);
+  }
+};
+
+const createTables = async () => {
+  try {
+    await dbClient.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(255) PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        is_admin BOOLEAN DEFAULT FALSE,
+        name VARCHAR(255),
+        surname VARCHAR(255),
+        profile_image_url TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS journeys (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
+        owner_username VARCHAR(255) NOT NULL,
+        owner_name VARCHAR(255),
+        owner_surname VARCHAR(255),
+        owner_profile_image_url TEXT,
+        is_public BOOLEAN DEFAULT FALSE
+      );
+
+      CREATE TABLE IF NOT EXISTS posts (
+        id VARCHAR(255) PRIMARY KEY,
+        journey_id VARCHAR(255) REFERENCES journeys(id) ON DELETE CASCADE,
+        user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
+        author_username VARCHAR(255) NOT NULL,
+        author_name VARCHAR(255),
+        author_surname VARCHAR(255),
+        author_profile_image_url TEXT,
+        title VARCHAR(255),
+        message TEXT NOT NULL,
+        media_items JSONB,
+        coordinates JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS journey_user_permissions (
+        id VARCHAR(255) PRIMARY KEY,
+        journey_id VARCHAR(255) REFERENCES journeys(id) ON DELETE CASCADE,
+        user_id VARCHAR(255) REFERENCES users(id) ON DELETE CASCADE,
+        can_read_posts BOOLEAN DEFAULT TRUE,
+        can_publish_posts BOOLEAN DEFAULT TRUE,
+        can_modify_post BOOLEAN DEFAULT TRUE,
+        can_delete_posts BOOLEAN DEFAULT FALSE,
+        UNIQUE (journey_id, user_id)
+      );
+    `);
+    fastify.log.info('Database tables checked/created successfully');
+  } catch (err) {
+    fastify.log.error('Error creating database tables:', err);
+    process.exit(1);
+  }
+};
 
 // --- Utility Functions ---
 const hashPassword = async (password: string): Promise<string> => {
@@ -143,7 +223,8 @@ fastify.get('/', async (request, reply) => {
 
 // Check if any users exist (for initial admin registration)
 fastify.get('/users/exists', async (request, reply) => {
-  return { exists: users.length > 0 };
+  const result = await dbClient.query('SELECT COUNT(*) FROM users');
+  return { exists: parseInt(result.rows[0].count) > 0 };
 });
 
 // Register a new user (first user is admin)
@@ -154,24 +235,29 @@ fastify.post('/register', async (request, reply) => {
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
-  if (users.some(u => u.username === username)) {
+  const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
+  if (existingUser.rows.length > 0) {
     return reply.code(409).send({ message: 'Username already exists' });
   }
 
   const password_hash = await hashPassword(password);
-  const isFirstUser = users.length === 0;
+  const usersCount = await dbClient.query('SELECT COUNT(*) FROM users');
+  const isFirstUser = parseInt(usersCount.rows[0].count) === 0;
 
   const newUser: User = {
     id: uuidv4(),
     username,
     password_hash,
-    isAdmin: isFirstUser, // First user is admin
+    is_admin: isFirstUser,
     created_at: new Date().toISOString(),
   };
-  users.push(newUser);
 
-  const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
+  const result = await dbClient.query(
+    'INSERT INTO users (id, username, password_hash, is_admin, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
+    [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.created_at]
+  );
 
+  const userWithoutHash: Omit<User, 'password_hash'> = result.rows[0];
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
 });
@@ -184,7 +270,9 @@ fastify.post('/login', async (request, reply) => {
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
-  const user = users.find(u => u.username === username);
+  const result = await dbClient.query('SELECT * FROM users WHERE username = $1', [username]);
+  const user: User = result.rows[0];
+
   if (!user) {
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
@@ -194,8 +282,7 @@ fastify.post('/login', async (request, reply) => {
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
 
-  const userWithoutHash: Omit<User, 'password_hash'> = { ...user };
-
+  const userWithoutHash: Omit<User, 'password_hash'> = { ...user, password_hash: undefined as any }; // Remove password_hash
   const token = generateToken(userWithoutHash);
   return { user: userWithoutHash, token };
 });
@@ -203,9 +290,10 @@ fastify.post('/login', async (request, reply) => {
 // Get a public journey by ID
 fastify.get('/public/journeys/:id', async (request, reply) => {
   const { id } = request.params as { id: string };
-  const journey = journeys.find(j => j.id === id);
+  const result = await dbClient.query('SELECT * FROM journeys WHERE id = $1 AND is_public = TRUE', [id]);
+  const journey: Journey = result.rows[0];
 
-  if (!journey || !journey.is_public) {
+  if (!journey) {
     return reply.code(404).send({ message: 'Public journey not found or not accessible' });
   }
   return journey;
@@ -215,16 +303,13 @@ fastify.get('/public/journeys/:id', async (request, reply) => {
 fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
   const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
 
-  const owner = users.find(u => u.username.toLowerCase() === ownerUsername.toLowerCase());
-  if (!owner) {
-    return reply.code(404).send({ message: 'Journey owner not found' });
-  }
-
-  const journey = journeys.find(j =>
-    j.user_id === owner.id &&
-    j.name.toLowerCase() === decodeURIComponent(journeyName).toLowerCase() &&
-    j.is_public
+  const result = await dbClient.query(
+    `SELECT j.* FROM journeys j
+     JOIN users u ON j.user_id = u.id
+     WHERE u.username ILIKE $1 AND j.name ILIKE $2 AND j.is_public = TRUE`,
+    [ownerUsername, decodeURIComponent(journeyName)]
   );
+  const journey: Journey = result.rows[0];
 
   if (!journey) {
     return reply.code(404).send({ message: 'Public journey not found or not accessible' });
@@ -235,13 +320,14 @@ fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (reque
 // Get posts for a public journey by ID
 fastify.get('/public/journeys/:id/posts', async (request, reply) => {
   const { id: journeyId } = request.params as { id: string };
-  const journey = journeys.find(j => j.id === journeyId);
+  const journeyResult = await dbClient.query('SELECT id FROM journeys WHERE id = $1 AND is_public = TRUE', [journeyId]);
 
-  if (!journey || !journey.is_public) {
+  if (journeyResult.rows.length === 0) {
     return reply.code(404).send({ message: 'Public journey not found or not accessible' });
   }
 
-  return posts.filter(p => p.journey_id === journeyId).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const postsResult = await dbClient.query('SELECT * FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+  return postsResult.rows;
 });
 
 
@@ -256,12 +342,15 @@ fastify.register(async (authenticatedFastify) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const user = users.find(u => u.id === request.user?.id);
+    const result = await dbClient.query(
+      'SELECT id, username, is_admin, name, surname, profile_image_url, created_at FROM users WHERE id = $1',
+      [request.user.id]
+    );
+    const user = result.rows[0];
     if (!user) {
       return reply.code(404).send({ message: 'User not found' });
     }
-    const userWithoutHash: Omit<User, 'password_hash'> = { ...user };
-    return userWithoutHash;
+    return user;
   });
 
   // Update current user profile
@@ -271,23 +360,18 @@ fastify.register(async (authenticatedFastify) => {
     }
     const { name, surname, profile_image_url } = request.body as { name?: string; surname?: string; profile_image_url?: string };
 
-    const userIndex = users.findIndex(u => u.id === request.user?.id);
-    if (userIndex === -1) {
+    const result = await dbClient.query(
+      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3 WHERE id = $4 RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
+      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, request.user.id]
+    );
+
+    if (result.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    users[userIndex] = {
-      ...users[userIndex],
-      name: name === null ? undefined : name,
-      surname: surname === null ? undefined : surname,
-      profile_image_url: profile_image_url === null ? undefined : profile_image_url,
-    };
-
-    const updatedUser = users[userIndex];
-    const userWithoutHash: Omit<User, 'password_hash'> = { ...updatedUser };
-
-    const newToken = generateToken(userWithoutHash); // Generate new token with updated user info
-    return { user: userWithoutHash, token: newToken };
+    const updatedUser: Omit<User, 'password_hash'> = result.rows[0];
+    const newToken = generateToken(updatedUser);
+    return { user: updatedUser, token: newToken };
   });
 
   // Handle media upload
@@ -302,14 +386,12 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const mediaId = uuidv4();
-    const fileExtension = fileType.split('/')[1] || 'bin'; // e.g., 'jpeg', 'png', 'mp4'
+    const fileExtension = fileType.split('/')[1] || 'bin';
     const fileName = `${mediaId}-original.${fileExtension}`;
     const filePath = path.join(UPLOADS_DIR, fileName);
 
     try {
-      // Ensure the uploads directory exists
       await fs.mkdir(UPLOADS_DIR, { recursive: true });
-      // Decode base64 and save the file
       const buffer = Buffer.from(fileBase64, 'base64');
       await fs.writeFile(filePath, buffer);
     } catch (error) {
@@ -317,7 +399,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
 
-    const mockBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`; // Use external URL for frontend access
+    const mockBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`;
     fastify.log.info(`Generated media URL base: ${mockBaseUrl}`);
     fastify.log.info(`Generated file name: ${fileName}`);
     fastify.log.info(`Full image URL: ${mockBaseUrl}/${fileName}`);
@@ -325,7 +407,6 @@ fastify.register(async (authenticatedFastify) => {
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {
-      // For images, we can simulate different sizes by just returning the original URL for all
       mediaInfo = {
         type: 'image',
         urls: {
@@ -344,15 +425,13 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(400).send({ message: 'Unsupported media type' });
     }
 
-    // If it's a profile image, update the user's profile_image_url directly
-    if (isProfileImage) {
-      const userIndex = users.findIndex(u => u.id === request.user?.id);
-      if (userIndex !== -1 && mediaInfo.type === 'image') {
-        users[userIndex].profile_image_url = mediaInfo.urls.medium;
-        // Update the user object in the request context for the new token
-        if (request.user) {
-          request.user.profile_image_url = mediaInfo.urls.medium;
-        }
+    if (isProfileImage && mediaInfo.type === 'image') {
+      const updateResult = await dbClient.query(
+        'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
+        [mediaInfo.urls.medium, request.user.id]
+      );
+      if (updateResult.rows.length > 0) {
+        request.user = updateResult.rows[0]; // Update request.user for new token generation
       }
     }
 
@@ -363,27 +442,28 @@ fastify.register(async (authenticatedFastify) => {
 
   // Get all users (Admin only)
   authenticatedFastify.get('/users', async (request: FastifyRequest, reply) => {
-    if (!request.user || !request.user.isAdmin) {
+    if (!request.user || !request.user.is_admin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
-    return users.map(u => {
-      const userWithoutHash: Omit<User, 'password_hash'> = { ...u };
-      return userWithoutHash;
-    });
+    const result = await dbClient.query(
+      'SELECT id, username, is_admin, name, surname, profile_image_url, created_at FROM users ORDER BY created_at DESC'
+    );
+    return result.rows;
   });
 
   // Create a new user (Admin only)
   authenticatedFastify.post('/users', async (request: FastifyRequest, reply) => {
     const { username, password, name, surname } = request.body as { username?: string; password?: string; name?: string; surname?: string };
 
-    if (!request.user || !request.user.isAdmin) {
+    if (!request.user || !request.user.is_admin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can create users.' });
     }
     if (!username || !password) {
       return reply.code(400).send({ message: 'Username and password are required' });
     }
 
-    if (users.some(u => u.username === username)) {
+    const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
+    if (existingUser.rows.length > 0) {
       return reply.code(409).send({ message: 'Username already exists' });
     }
 
@@ -393,49 +473,57 @@ fastify.register(async (authenticatedFastify) => {
       id: uuidv4(),
       username,
       password_hash,
-      isAdmin: false, // New users created by admin are not admins by default
+      is_admin: false,
       name: name || undefined,
       surname: surname || undefined,
       created_at: new Date().toISOString(),
     };
-    users.push(newUser);
 
-    const userWithoutHash: Omit<User, 'password_hash'> = { ...newUser };
-    return userWithoutHash;
+    const result = await dbClient.query(
+      'INSERT INTO users (id, username, password_hash, is_admin, name, surname, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
+      [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.created_at]
+    );
+    return result.rows[0];
   });
 
   // Update a user (Admin only)
   authenticatedFastify.put('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
-    const { username, name, surname, profile_image_url, isAdmin } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; isAdmin?: boolean };
+    const { username, name, surname, profile_image_url, is_admin } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean };
 
-    if (!request.user || !request.user.isAdmin) {
+    if (!request.user || !request.user.is_admin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
     }
 
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
+    const existingUserResult = await dbClient.query('SELECT username FROM users WHERE id = $1', [id]);
+    if (existingUserResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
+    const existingUsername = existingUserResult.rows[0].username;
 
-    const existingUser = users[userIndex];
-
-    if (username && username !== existingUser.username && users.some(u => u.username === username && u.id !== id)) {
-      return reply.code(409).send({ message: 'Username already exists' });
+    if (username && username !== existingUsername) {
+      const conflictCheck = await dbClient.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
+      if (conflictCheck.rows.length > 0) {
+        return reply.code(409).send({ message: 'Username already exists' });
+      }
     }
 
-    users[userIndex] = {
-      ...existingUser,
-      username: username || existingUser.username,
-      name: name === null ? undefined : (name || existingUser.name),
-      surname: surname === null ? undefined : (surname || existingUser.surname),
-      profile_image_url: profile_image_url === null ? undefined : (profile_image_url || existingUser.profile_image_url),
-      isAdmin: isAdmin !== undefined ? isAdmin : existingUser.isAdmin, // Admin can change isAdmin status
-    };
+    const result = await dbClient.query(
+      `UPDATE users SET
+        username = COALESCE($1, username),
+        name = $2,
+        surname = $3,
+        profile_image_url = $4,
+        is_admin = COALESCE($5, is_admin)
+       WHERE id = $6
+       RETURNING id, username, is_admin, name, surname, profile_image_url, created_at`,
+      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, id]
+    );
 
-    const updatedUser = users[userIndex];
-    const userWithoutHash: Omit<User, 'password_hash'> = { ...updatedUser };
-    return userWithoutHash;
+    if (result.rows.length === 0) {
+      return reply.code(404).send({ message: 'User not found' });
+    }
+    return result.rows[0];
   });
 
   // Reset user password (Admin only)
@@ -443,19 +531,20 @@ fastify.register(async (authenticatedFastify) => {
     const { id } = request.params as { id: string };
     const { newPassword } = request.body as { newPassword?: string };
 
-    if (!request.user || !request.user.isAdmin) {
+    if (!request.user || !request.user.is_admin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can reset user passwords.' });
     }
     if (!newPassword) {
       return reply.code(400).send({ message: 'New password is required' });
     }
 
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) {
+    const userResult = await dbClient.query('SELECT id FROM users WHERE id = $1', [id]);
+    if (userResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    users[userIndex].password_hash = await hashPassword(newPassword);
+    const password_hash = await hashPassword(newPassword);
+    await dbClient.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, id]);
     return reply.code(200).send({ message: 'Password reset successfully' });
   });
 
@@ -463,24 +552,19 @@ fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user || !request.user.isAdmin) {
+    if (!request.user || !request.user.is_admin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can delete users.' });
     }
     if (request.user.id === id) {
       return reply.code(403).send({ message: 'Forbidden: An administrator cannot delete their own account.' });
     }
 
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== id);
-    if (users.length === initialLength) {
+    const deleteResult = await dbClient.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+    if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    // Also delete their journeys, posts, and journey permissions
-    journeys = journeys.filter(j => j.user_id !== id);
-    posts = posts.filter(p => p.user_id !== id);
-    journeyUserPermissions = journeyUserPermissions.filter(jup => jup.user_id !== id);
-
+    // CASCADE DELETE should handle journeys, posts, and permissions automatically due to foreign key constraints
     return reply.code(204).send();
   });
 
@@ -488,23 +572,21 @@ fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.get('/users/search', async (request: FastifyRequest, reply) => {
     const { query } = request.query as { query: string };
 
-    if (!request.user) { // Only check for authentication, not isAdmin
+    if (!request.user) {
       return reply.code(401).send({ message: 'Authentication required to search users.' });
     }
     if (!query) {
       return reply.code(400).send({ message: 'Search query is required' });
     }
 
-    const searchLower = query.toLowerCase();
-    const results = users.filter(u =>
-      u.username.toLowerCase().includes(searchLower) ||
-      u.name?.toLowerCase().includes(searchLower) ||
-      u.surname?.toLowerCase().includes(searchLower)
-    ).map(u => {
-      const userWithoutHash: Omit<User, 'password_hash'> = { ...u };
-      return userWithoutHash;
-    });
-    return results;
+    const searchLower = `%${query.toLowerCase()}%`;
+    const result = await dbClient.query(
+      `SELECT id, username, is_admin, name, surname, profile_image_url, created_at
+       FROM users
+       WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
+      [searchLower, searchLower, searchLower]
+    );
+    return result.rows;
   });
 
   // --- Journey Management Routes ---
@@ -515,16 +597,15 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const userJourneys = journeys.filter(j => j.user_id === request.user?.id);
-    const collaboratorJourneys = journeyUserPermissions
-      .filter(jup => jup.user_id === request.user?.id)
-      .map(jup => journeys.find(j => j.id === jup.journey_id))
-      .filter((j): j is Journey => j !== undefined);
-
-    const allRelevantJourneys = [...userJourneys, ...collaboratorJourneys];
-    const uniqueJourneys = Array.from(new Map(allRelevantJourneys.map(j => [j.id, j])).values());
-
-    return uniqueJourneys;
+    const result = await dbClient.query(
+      `SELECT DISTINCT ON (j.id) j.*
+       FROM journeys j
+       LEFT JOIN journey_user_permissions jup ON j.id = jup.journey_id
+       WHERE j.user_id = $1 OR jup.user_id = $1
+       ORDER BY j.id, j.created_at DESC`,
+      [request.user.id]
+    );
+    return result.rows;
   });
 
   // Create a new journey
@@ -547,10 +628,16 @@ fastify.register(async (authenticatedFastify) => {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      is_public: false, // New journeys are private by default
+      is_public: false,
     };
-    journeys.push(newJourney);
-    return newJourney;
+
+    const result = await dbClient.query(
+      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
+    );
+    return result.rows[0];
   });
 
   // Update a journey
@@ -562,27 +649,29 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyIndex = journeys.findIndex(j => j.id === id);
-    if (journeyIndex === -1) {
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const existingJourney = journeys[journeyIndex];
-
-    // Only owner or admin can edit
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
-    journeys[journeyIndex] = {
-      ...existingJourney,
-      name: name || existingJourney.name,
-      is_public: is_public !== undefined ? is_public : existingJourney.is_public,
-    };
-    return journeys[journeyIndex];
+    const result = await dbClient.query(
+      `UPDATE journeys SET
+        name = COALESCE($1, name),
+        is_public = COALESCE($2, is_public)
+       WHERE id = $3
+       RETURNING *`,
+      [name, is_public, id]
+    );
+    return result.rows[0];
   });
 
   // Delete a journey
@@ -593,25 +682,26 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyIndex = journeys.findIndex(j => j.id === id);
-    if (journeyIndex === -1) {
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    const existingJourney = journeys[journeyIndex];
-
-    // Only owner or admin can delete
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
     }
 
-    journeys = journeys.filter(j => j.id !== id);
-    posts = posts.filter(p => p.journey_id !== id); // Delete associated posts
-    journeyUserPermissions = journeyUserPermissions.filter(jup => jup.journey_id !== id); // Delete associated permissions
+    const deleteResult = await dbClient.query('DELETE FROM journeys WHERE id = $1 RETURNING id', [id]);
+    if (deleteResult.rows.length === 0) {
+      return reply.code(404).send({ message: 'Journey not found' });
+    }
 
+    // CASCADE DELETE should handle posts and permissions automatically
     return reply.code(204).send();
   });
 
@@ -623,43 +713,28 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Only owner or admin can view collaborators
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
-    const collaboratorsForJourney = journeyUserPermissions
-      .filter(jup => jup.journey_id === journeyId)
-      .map(jup => {
-        const user = users.find(u => u.id === jup.user_id);
-        if (user) {
-          return {
-            id: jup.id,
-            journey_id: jup.journey_id,
-            user_id: user.id,
-            username: user.username,
-            name: user.name,
-            surname: user.surname,
-            profile_image_url: user.profile_image_url,
-            can_read_posts: jup.can_read_posts,
-            can_publish_posts: jup.can_publish_posts,
-            can_modify_post: jup.can_modify_post, // Include new permission
-            can_delete_posts: jup.can_delete_posts,
-          } as JourneyCollaborator;
-        }
-        return null;
-      })
-      .filter((c): c is JourneyCollaborator => c !== null);
-
-    return collaboratorsForJourney;
+    const result = await dbClient.query(
+      `SELECT jup.id, jup.journey_id, jup.user_id, jup.can_read_posts, jup.can_publish_posts, jup.can_modify_post, jup.can_delete_posts,
+              u.username, u.name, u.surname, u.profile_image_url
+       FROM journey_user_permissions jup
+       JOIN users u ON jup.user_id = u.id
+       WHERE jup.journey_id = $1`,
+      [journeyId]
+    );
+    return result.rows;
   });
 
   // Add a collaborator to a journey
@@ -671,27 +746,30 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Only owner or admin can add collaborators
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const targetUser = users.find(u => u.username === username);
+    const targetUserResult = await dbClient.query('SELECT id, username, name, surname, profile_image_url FROM users WHERE username = $1', [username]);
+    const targetUser = targetUserResult.rows[0];
     if (!targetUser) {
       return reply.code(404).send({ message: 'User to add not found' });
     }
     if (targetUser.id === journey.user_id) {
       return reply.code(400).send({ message: 'Cannot add journey owner as collaborator' });
     }
-    if (journeyUserPermissions.some(jup => jup.journey_id === journeyId && jup.user_id === targetUser.id)) {
+
+    const existingCollab = await dbClient.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, targetUser.id]);
+    if (existingCollab.rows.length > 0) {
       return reply.code(409).send({ message: 'User is already a collaborator' });
     }
 
@@ -703,13 +781,19 @@ fastify.register(async (authenticatedFastify) => {
       name: targetUser.name,
       surname: targetUser.surname,
       profile_image_url: targetUser.profile_image_url,
-      can_read_posts: true, // Default permission
-      can_publish_posts: true, // Default permission
-      can_modify_post: true, // Default permission for new collaborators
-      can_delete_posts: false, // Default permission
+      can_read_posts: true,
+      can_publish_posts: true,
+      can_modify_post: true,
+      can_delete_posts: false,
     };
-    journeyUserPermissions.push(newCollaborator);
-    return newCollaborator;
+
+    const result = await dbClient.query(
+      `INSERT INTO journey_user_permissions (id, journey_id, user_id, can_read_posts, can_publish_posts, can_modify_post, can_delete_posts)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [newCollaborator.id, newCollaborator.journey_id, newCollaborator.user_id, newCollaborator.can_read_posts, newCollaborator.can_publish_posts, newCollaborator.can_modify_post, newCollaborator.can_delete_posts]
+    );
+    return result.rows[0];
   });
 
   // Update collaborator permissions
@@ -718,7 +802,7 @@ fastify.register(async (authenticatedFastify) => {
     const { can_read_posts, can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
       can_read_posts?: boolean;
       can_publish_posts?: boolean;
-      can_modify_post?: boolean; // Include new permission
+      can_modify_post?: boolean;
       can_delete_posts?: boolean;
     };
 
@@ -726,33 +810,35 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Only owner or admin can update collaborators
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const collabIndex = journeyUserPermissions.findIndex(jup => jup.journey_id === journeyId && jup.user_id === userId);
-    if (collabIndex === -1) {
+    const collabResult = await dbClient.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, userId]);
+    if (collabResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Collaborator not found for this journey' });
     }
 
-    const existingCollab = journeyUserPermissions[collabIndex];
-    journeyUserPermissions[collabIndex] = {
-      ...existingCollab,
-      can_read_posts: can_read_posts !== undefined ? can_read_posts : existingCollab.can_read_posts,
-      can_publish_posts: can_publish_posts !== undefined ? can_publish_posts : existingCollab.can_publish_posts,
-      can_modify_post: can_modify_post !== undefined ? can_modify_post : existingCollab.can_modify_post, // Update new permission
-      can_delete_posts: can_delete_posts !== undefined ? can_delete_posts : existingCollab.can_delete_posts,
-    };
-    return journeyUserPermissions[collabIndex];
+    const result = await dbClient.query(
+      `UPDATE journey_user_permissions SET
+        can_read_posts = COALESCE($1, can_read_posts),
+        can_publish_posts = COALESCE($2, can_publish_posts),
+        can_modify_post = COALESCE($3, can_modify_post),
+        can_delete_posts = COALESCE($4, can_delete_posts)
+       WHERE journey_id = $5 AND user_id = $6
+       RETURNING *`,
+      [can_read_posts, can_publish_posts, can_modify_post, can_delete_posts, journeyId, userId]
+    );
+    return result.rows[0];
   });
 
   // Remove a collaborator from a journey
@@ -763,22 +849,21 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Only owner or admin can remove collaborators
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
+    const isAdmin = request.user.is_admin;
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const initialLength = journeyUserPermissions.length;
-    journeyUserPermissions = journeyUserPermissions.filter(jup => !(jup.journey_id === journeyId && jup.user_id === userId));
-    if (journeyUserPermissions.length === initialLength) {
+    const deleteResult = await dbClient.query('DELETE FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2 RETURNING id', [journeyId, userId]);
+    if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Collaborator not found for this journey' });
     }
     return reply.code(204).send();
@@ -799,22 +884,26 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(400).send({ message: 'journeyId is required' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Check if user is owner, admin, or a collaborator with can_read_posts
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
-    const collaboratorPerms = journeyUserPermissions.find(jup => jup.journey_id === journeyId && jup.user_id === request.user?.id);
-    const canRead = collaboratorPerms?.can_read_posts;
+    const isAdmin = request.user.is_admin;
+    const collaboratorPermsResult = await dbClient.query(
+      'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      [journeyId, request.user.id]
+    );
+    const canRead = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_read_posts : false;
 
     if (!isOwner && !isAdmin && !canRead) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to read posts in this journey.' });
     }
 
-    return posts.filter(p => p.journey_id === journeyId).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const postsResult = await dbClient.query('SELECT * FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+    return postsResult.rows;
   });
 
   // Create a new post
@@ -825,7 +914,7 @@ fastify.register(async (authenticatedFastify) => {
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
-      created_at?: string; // Allow created_at to be passed
+      created_at?: string;
     };
 
     if (!request.user) {
@@ -839,22 +928,23 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(400).send({ message: 'At least a title, message, media, or coordinates are required' });
     }
 
-    const journey = journeys.find(j => j.id === journeyId);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
 
-    // Check if user is owner, admin, or a collaborator with can_publish_posts
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
-    const collaboratorPerms = journeyUserPermissions.find(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id);
-    const canPublish = collaboratorPerms?.can_publish_posts;
+    const isAdmin = request.user.is_admin;
+    const collaboratorPermsResult = await dbClient.query(
+      'SELECT can_publish_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      [journeyId, request.user.id]
+    );
+    const canPublish = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_publish_posts : false;
 
     if (!isOwner && !isAdmin && !canPublish) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
     }
-
-    fastify.log.info(`Backend: Received created_at from frontend: ${created_at}`); // LOGGING
 
     const newPost: Post = {
       id: uuidv4(),
@@ -868,11 +958,19 @@ fastify.register(async (authenticatedFastify) => {
       message: message || '',
       media_items: media_items && media_items.length > 0 ? media_items : undefined,
       coordinates: coordinates || undefined,
-      created_at: created_at || new Date().toISOString(), // Use provided created_at or default
+      created_at: created_at || new Date().toISOString(),
     };
-    fastify.log.info(`Backend: Storing post with created_at: ${newPost.created_at}`); // LOGGING
-    posts.unshift(newPost); // Add to the beginning for newest first
-    return newPost;
+
+    const result = await dbClient.query(
+      `INSERT INTO posts (id, journey_id, user_id, author_username, author_name, author_surname, author_profile_image_url, title, message, media_items, coordinates, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING *`,
+      [
+        newPost.id, newPost.journey_id, newPost.user_id, newPost.author_username, newPost.author_name, newPost.author_surname,
+        newPost.author_profile_image_url, newPost.title, newPost.message, newPost.media_items, newPost.coordinates, newPost.created_at
+      ]
+    );
+    return result.rows[0];
   });
 
   // Update a post
@@ -883,44 +981,57 @@ fastify.register(async (authenticatedFastify) => {
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
-      created_at?: string; // Allow created_at to be updated
+      created_at?: string;
     };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const postIndex = posts.findIndex(p => p.id === id);
-    if (postIndex === -1) {
+    const postResult = await dbClient.query('SELECT user_id, journey_id FROM posts WHERE id = $1', [id]);
+    const existingPost = postResult.rows[0];
+    if (!existingPost) {
       return reply.code(404).send({ message: 'Post not found' });
     }
 
-    const existingPost = posts[postIndex];
-    const journey = journeys.find(j => j.id === existingPost.journey_id);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [existingPost.journey_id]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is author of the post, owner of the journey, or admin, or collaborator with can_modify_post
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
-    const collaboratorPerms = journeyUserPermissions.find(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id);
-    const canModify = collaboratorPerms?.can_modify_post; // Use new can_modify_post permission
+    const isAdmin = request.user.is_admin;
+    const collaboratorPermsResult = await dbClient.query(
+      'SELECT can_modify_post FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      [existingPost.journey_id, request.user.id]
+    );
+    const canModify = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_modify_post : false;
 
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canModify) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
     }
 
-    posts[postIndex] = {
-      ...existingPost,
-      title: title === null ? undefined : (title || existingPost.title),
-      message: message || existingPost.message,
-      media_items: media_items === null ? undefined : (media_items && media_items.length > 0 ? media_items : undefined),
-      coordinates: coordinates === null ? undefined : (coordinates || existingPost.coordinates),
-      created_at: created_at || existingPost.created_at, // Use provided created_at or existing
-    };
-    return posts[postIndex];
+    const result = await dbClient.query(
+      `UPDATE posts SET
+        title = $1,
+        message = COALESCE($2, message),
+        media_items = $3,
+        coordinates = $4,
+        created_at = COALESCE($5, created_at)
+       WHERE id = $6
+       RETURNING *`,
+      [
+        title === null ? null : title,
+        message,
+        media_items === null ? null : (media_items && media_items.length > 0 ? media_items : null),
+        coordinates === null ? null : coordinates,
+        created_at,
+        id
+      ]
+    );
+    return result.rows[0];
   });
 
   // Delete a post
@@ -931,31 +1042,33 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const postIndex = posts.findIndex(p => p.id === id);
-    if (postIndex === -1) {
+    const postResult = await dbClient.query('SELECT user_id, journey_id FROM posts WHERE id = $1', [id]);
+    const existingPost = postResult.rows[0];
+    if (!existingPost) {
       return reply.code(404).send({ message: 'Post not found' });
     }
 
-    const existingPost = posts[postIndex];
-    const journey = journeys.find(j => j.id === existingPost.journey_id);
+    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [existingPost.journey_id]);
+    const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Associated journey not found' });
     }
 
-    // Check if user is author of the post, owner of the journey, or admin, or collaborator with can_delete_posts
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.isAdmin;
-    const collaboratorPerms = journeyUserPermissions.find(jup => jup.journey_id === journey.id && jup.user_id === request.user?.id);
-    const canDelete = collaboratorPerms?.can_delete_posts;
+    const isAdmin = request.user.is_admin;
+    const collaboratorPermsResult = await dbClient.query(
+      'SELECT can_delete_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      [existingPost.journey_id, request.user.id]
+    );
+    const canDelete = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_delete_posts : false;
 
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canDelete) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this post.' });
     }
 
-    const initialLength = posts.length;
-    posts = posts.filter(p => p.id !== id);
-    if (posts.length === initialLength) {
+    const deleteResult = await dbClient.query('DELETE FROM posts WHERE id = $1 RETURNING id', [id]);
+    if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Post not found' });
     }
     return reply.code(204).send();
@@ -967,6 +1080,7 @@ fastify.register(async (authenticatedFastify) => {
 // Run the server
 const start = async () => {
   try {
+    await connectDb(); // Connect to DB before starting server
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
   } catch (err) {
