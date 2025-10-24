@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +29,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch"; // Import Switch component
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -569,71 +570,118 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`read-${collab.user_id}`}
-                          checked={collab.can_read_posts}
-                          onCheckedChange={(checked) =>
-                            handleUpdateCollaboratorPermissions(collab.user_id, {
-                              ...collab,
-                              can_read_posts: checked as boolean,
-                            })
-                          }
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                        />
-                        <Label htmlFor={`read-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Can read posts
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`publish-${collab.user_id}`}
-                          checked={collab.can_publish_posts}
-                          onCheckedChange={(checked) =>
-                            handleUpdateCollaboratorPermissions(collab.user_id, {
-                              ...collab,
-                              can_publish_posts: checked as boolean,
-                            })
-                          }
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                        />
-                        <Label htmlFor={`publish-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Can publish posts
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`modify-${collab.user_id}`}
-                          checked={collab.can_modify_post}
-                          onCheckedChange={(checked) =>
-                            handleUpdateCollaboratorPermissions(collab.user_id, {
-                              ...collab,
-                              can_modify_post: checked as boolean,
-                            })
-                          }
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                        />
-                        <Label htmlFor={`modify-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Can modify posts
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`delete-${collab.user_id}`}
-                          checked={collab.can_delete_posts}
-                          onCheckedChange={(checked) =>
-                            handleUpdateCollaboratorPermissions(collab.user_id, {
-                              ...collab,
-                              can_delete_posts: checked as boolean,
-                            })
-                          }
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
-                        />
-                        <Label htmlFor={`delete-${collab.user_id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          Can delete posts
-                        </Label>
-                      </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+                      {/* Can read posts */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
+                            <div className="flex items-center space-x-2">
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                              <Label htmlFor={`read-${collab.user_id}`} className="text-sm font-medium leading-none">
+                                Read
+                              </Label>
+                            </div>
+                            <Switch
+                              id={`read-${collab.user_id}`}
+                              checked={collab.can_read_posts}
+                              onCheckedChange={(checked) =>
+                                handleUpdateCollaboratorPermissions(collab.user_id, {
+                                  ...collab,
+                                  can_read_posts: checked as boolean,
+                                })
+                              }
+                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Allow user to read posts in this journey</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Can publish posts */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
+                            <div className="flex items-center space-x-2">
+                              <PlusCircle className="h-4 w-4 text-muted-foreground" />
+                              <Label htmlFor={`publish-${collab.user_id}`} className="text-sm font-medium leading-none">
+                                Publish
+                              </Label>
+                            </div>
+                            <Switch
+                              id={`publish-${collab.user_id}`}
+                              checked={collab.can_publish_posts}
+                              onCheckedChange={(checked) =>
+                                handleUpdateCollaboratorPermissions(collab.user_id, {
+                                  ...collab,
+                                  can_publish_posts: checked as boolean,
+                                })
+                              }
+                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Allow user to create new posts in this journey</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Can modify posts */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
+                            <div className="flex items-center space-x-2">
+                              <Pencil className="h-4 w-4 text-muted-foreground" />
+                              <Label htmlFor={`modify-${collab.user_id}`} className="text-sm font-medium leading-none">
+                                Modify
+                              </Label>
+                            </div>
+                            <Switch
+                              id={`modify-${collab.user_id}`}
+                              checked={collab.can_modify_post}
+                              onCheckedChange={(checked) =>
+                                handleUpdateCollaboratorPermissions(collab.user_id, {
+                                  ...collab,
+                                  can_modify_post: checked as boolean,
+                                })
+                              }
+                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Allow user to edit existing posts in this journey</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Can delete posts */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-between space-x-2 p-2 border rounded-md">
+                            <div className="flex items-center space-x-2">
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                              <Label htmlFor={`delete-${collab.user_id}`} className="text-sm font-medium leading-none">
+                                Delete
+                              </Label>
+                            </div>
+                            <Switch
+                              id={`delete-${collab.user_id}`}
+                              checked={collab.can_delete_posts}
+                              onCheckedChange={(checked) =>
+                                handleUpdateCollaboratorPermissions(collab.user_id, {
+                                  ...collab,
+                                  can_delete_posts: checked as boolean,
+                                })
+                              }
+                              disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Allow user to delete posts from this journey</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                 ))}
