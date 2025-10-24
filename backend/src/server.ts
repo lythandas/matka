@@ -166,6 +166,13 @@ const createTables = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
+      -- Add language column if it doesn't exist
+      DO $$ BEGIN
+          ALTER TABLE users ADD COLUMN language VARCHAR(10) DEFAULT 'en';
+      EXCEPTION
+          WHEN duplicate_column THEN NULL;
+      END $$;
+
       CREATE TABLE IF NOT EXISTS journeys (
         id VARCHAR(255) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -1105,7 +1112,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isPostAuthor = existingPost.user_id === request.user.id;
-    const isJourneyOwner = journey.user_id === request.user.id;
+    const isJourneyOwner = journey.user.id === request.user.id;
     const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_delete_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
