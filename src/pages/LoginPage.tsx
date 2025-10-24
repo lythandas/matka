@@ -6,9 +6,11 @@ import LoginDialog from '@/components/LoginDialog';
 import RegisterDialog from '@/components/RegisterDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError } from '@/utils/toast'; // Keep showError for other potential issues
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 
 const LoginPage: React.FC = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { isAuthenticated, usersExist, fetchUsersExist } = useAuth();
   const [showRegister, setShowRegister] = useState<boolean>(false);
 
@@ -29,14 +31,12 @@ const LoginPage: React.FC = () => {
     return null; // Or redirect to home, but App.tsx handles routing
   }
 
-  // Removed handleRegistrationSuccess as it's no longer needed
-
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-background">
       {/* Matka Logo and Name */}
       <div className="absolute top-6 left-6 flex items-center z-10">
         <Compass className="mr-2 h-8 w-8 text-blue-600 dark:text-foreground" />
-        <h1 className="text-3xl font-extrabold text-blue-600 dark:text-foreground">Matka</h1>
+        <h1 className="text-3xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
       </div>
 
       {/* Central Dialog */}
@@ -44,7 +44,7 @@ const LoginPage: React.FC = () => {
         {usersExist === null ? (
           <div className="flex flex-col items-center justify-center p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-lg">Checking user status...</p>
+            <p className="text-lg">{t('auth.checkingUserStatus')}</p>
           </div>
         ) : showRegister ? (
           <RegisterDialog />

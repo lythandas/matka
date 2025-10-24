@@ -1,0 +1,227 @@
+{
+  "app": {
+    "name": "Matka",
+    "footer": "Erstellt mit Dyad"
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "saveChanges": "Änderungen speichern",
+    "uploading": "Wird hochgeladen...",
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "name": "Vorname",
+    "surname": "Nachname",
+    "language": "Sprache",
+    "theme": "Thema",
+    "backToJourneys": "Zurück zu den Reisen",
+    "noUsersFound": "Keine Benutzer gefunden.",
+    "search": "Suchen"
+  },
+  "auth": {
+    "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
+    "enterCredentials": "Geben Sie Ihre Anmeldeinformationen ein, um auf Ihre Reisen und Beiträge zuzugreifen.",
+    "loggingIn": "Anmeldung läuft...",
+    "login": "Anmelden",
+    "welcomeRegisterAdmin": "Willkommen! Registrieren Sie Ihr Administratorkonto",
+    "firstAdminAccount": "Dies ist der erste (und einzige) Benutzer, den Sie registrieren können. Dieser Benutzer wird ein Administrator sein.",
+    "confirmPassword": "Passwort bestätigen",
+    "registering": "Registrierung läuft...",
+    "registerAdmin": "Admin registrieren",
+    "checkingUserStatus": "Benutzerstatus wird überprüft...",
+    "register": "Registrieren"
+  },
+  "topBar": {
+    "journeys": "Reisen",
+    "manageJourney": "Reise verwalten",
+    "administration": "Verwaltung",
+    "toggleMenu": "Menü umschalten",
+    "selectJourney": "Reise auswählen",
+    "createNewJourney": "Neue Reise erstellen"
+  },
+  "userProfileDropdown": {
+    "administration": "Verwaltung",
+    "manageAccount": "Konto verwalten",
+    "logOut": "Abmelden",
+    "openUserMenu": "Benutzermenü öffnen"
+  },
+  "manageAccountDialog": {
+    "manageYourAccount": "Ihr Konto verwalten",
+    "updatePersonalInfo": "Aktualisieren Sie Ihre persönlichen Informationen und Ihr Profilbild.",
+    "yourFirstName": "Ihr Vorname",
+    "yourLastName": "Ihr Nachname",
+    "uploadImage": "Bild hochladen",
+    "changeImage": "Bild ändern",
+    "profileImageCleared": "Profilbild gelöscht.",
+    "selectLanguage": "Sprache auswählen",
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español"
+  },
+  "themeToggle": {
+    "toggleDarkTheme": "Dunkles Thema umschalten",
+    "toggleSystemTheme": "Systemthema umschalten",
+    "toggleLightTheme": "Helles Thema umschalten",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System"
+  },
+  "sortToggle": {
+    "newestFirst": "Neueste zuerst",
+    "oldestFirst": "Älteste zuerst"
+  },
+  "viewToggle": {
+    "listView": "Listenansicht",
+    "gridView": "Rasteransicht",
+    "mapView": "Kartenansicht"
+  },
+  "createJourneyDialog": {
+    "createNewJourney": "Neue Reise erstellen",
+    "giveJourneyName": "Geben Sie Ihrer neuen Reise einen Namen. Dies wird eine Sammlung Ihrer Beiträge sein.",
+    "journeyName": "Reisename",
+    "mySummerTrip": "z.B. Meine Sommerreise",
+    "creating": "Wird erstellt...",
+    "createJourney": "Reise erstellen"
+  },
+  "createUserDialog": {
+    "createNewUser": "Neuen Benutzer erstellen",
+    "fillUserDetails": "Geben Sie die Details für das neue Benutzerkonto ein.",
+    "newUsername": "z.B. neuerbenutzer",
+    "passwordPlaceholder": "••••••••",
+    "firstNameOptional": "Vorname (optional)",
+    "lastNameOptional": "Nachname (optional)",
+    "creating": "Wird erstellt...",
+    "createUser": "Benutzer erstellen"
+  },
+  "resetPasswordDialog": {
+    "resetPasswordFor": "Passwort für {{username}} zurücksetzen",
+    "enterNewPassword": "Geben Sie ein neues Passwort für diesen Benutzer ein.",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "resetting": "Wird zurückgesetzt...",
+    "resetPassword": "Passwort zurücksetzen"
+  },
+  "editPostDialog": {
+    "editPost": "Beitrag bearbeiten",
+    "modifyPostContent": "Ändern Sie den Inhalt Ihres Beitrags.",
+    "titlePlaceholder": "Titel hinzufügen (optional)",
+    "messagePlaceholder": "Was beschäftigt Sie heute?",
+    "postDate": "Beitragsdatum",
+    "media": "Medien",
+    "location": "Standort",
+    "uploadMedia": "Bilder oder Videos hochladen (Max {{maxSize}}MB pro Datei)",
+    "changeAddMedia": "Medien ändern/hinzufügen",
+    "chooseMedia": "Medien auswählen",
+    "uploadingMedia": "Wird hochgeladen...",
+    "getCurrentLocation": "Aktuellen Standort abrufen",
+    "searchLocation": "Standort suchen",
+    "gettingLocation": "Standort wird abgerufen...",
+    "clearLocation": "Standort löschen",
+    "saving": "Wird gespeichert...",
+    "saveChanges": "Änderungen speichern"
+  },
+  "locationSearch": {
+    "searchForLocation": "Standort suchen",
+    "searchPlaceholder": "Nach einer Adresse oder einem Ort suchen...",
+    "searching": "Wird gesucht...",
+    "selected": "Ausgewählt: Breitengrad: {{lat}}, Längengrad: {{lng}}"
+  },
+  "journeyMapDialog": {
+    "journeyMap": "Reisekarte",
+    "explorePostLocations": "Erkunden Sie die Standorte der Beiträge auf dieser Reise. Klicken Sie auf eine Stecknadel, um die Beitragsdetails anzuzeigen.",
+    "noPostsWithLocation": "Keine Beiträge mit Standortdaten auf dieser Reise gefunden."
+  },
+  "postDetailDialog": {
+    "postDetails": "Beitragsdetails",
+    "by": "Von {{author}} • {{date}}",
+    "failedToLoadImage": "Bild konnte nicht geladen werden.",
+    "fullscreenNotSupported": "Der Vollbildmodus wird von Ihrem Browser nicht unterstützt.",
+    "failedToEnterFullscreen": "Fehler beim Aktivieren des Vollbildmodus."
+  },
+  "gridPostCard": {
+    "untitledPost": "Unbenannter Beitrag"
+  },
+  "indexPage": {
+    "shareYourDay": "Teilen Sie Ihren Tag",
+    "titleOptional": "Titel hinzufügen (optional)",
+    "messagePlaceholder": "Was beschäftigt Sie heute?",
+    "contentPreview": "Inhaltsvorschau:",
+    "uploadMedia": "Medien hochladen",
+    "getLocation": "Standort abrufen",
+    "post": "Posten",
+    "noJourneysYet": "Sie haben noch keine Reisen!",
+    "startByCreatingJourney": "Beginnen Sie mit der Erstellung Ihrer ersten Reise.",
+    "loadingJourneys": "Reisen werden geladen...",
+    "yourJourneyAwaits": "Ihre Reise wartet! Beginnen Sie mit dem Hinzufügen Ihres ersten Beitrags.",
+    "useShareSection": "Nutzen Sie den Bereich „Teilen Sie Ihren Tag“ oben, um zu beginnen.",
+    "loadingPosts": "Beiträge werden geladen...",
+    "noPostsWithLocation": "Keine Beiträge mit Standortdaten zum Anzeigen auf der Karte.",
+    "addPostsWithLocation": "Fügen Sie Beiträge mit Standortinformationen hinzu, um sie hier zu sehen!"
+  },
+  "adminPage": {
+    "adminDashboard": "Admin-Dashboard",
+    "manageUsers": "Benutzer verwalten",
+    "createNewUser": "Neuen Benutzer erstellen",
+    "loadingUsers": "Benutzer werden geladen...",
+    "user": "Benutzer",
+    "admin": "Admin",
+    "createdAt": "Erstellt am",
+    "actions": "Aktionen",
+    "resetPassword": "Passwort zurücksetzen",
+    "deleteUser": "Benutzer löschen",
+    "areYouSure": "Sind Sie absolut sicher?",
+    "deleteUserDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Benutzer <span class=\"font-bold\">@{{username}}</span> und alle damit verbundenen Reisen, Beiträge und Kollaborationen dauerhaft gelöscht.",
+    "continue": "Weiter",
+    "manageJourneys": "Reisen verwalten",
+    "loadingJourneys": "Reisen werden geladen...",
+    "journeyName": "Reisename",
+    "owner": "Besitzer",
+    "public": "Öffentlich",
+    "manageJourney": "Reise verwalten",
+    "deleteJourney": "Reise löschen",
+    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class=\"font-bold\">\"{{journeyName}}\"</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
+  },
+  "publicJourneyPage": {
+    "loadingPublicJourney": "Öffentliche Reise wird geladen...",
+    "journeyNotFound": "Reise nicht gefunden",
+    "journeyNotFoundDescription": "Die gesuchte öffentliche Reise existiert nicht oder ist nicht zugänglich.",
+    "returnToHome": "Zurück zur Startseite",
+    "aJourneyBy": "Eine Reise von {{author}}",
+    "createdOn": "Erstellt am {{date}}",
+    "noPublicPosts": "Diese Reise hat noch keine öffentlichen Beiträge.",
+    "checkBackLater": "Schauen Sie später wieder vorbei!",
+    "noPostsWithLocation": "Keine Beiträge mit Standortdaten zum Anzeigen auf der Karte.",
+    "addPostsWithLocation": "Fügen Sie Beiträge mit Standortinformationen hinzu, um sie hier zu sehen!"
+  },
+  "notFoundPage": {
+    "oopsPageNotFound": "Hoppla! Seite nicht gefunden",
+    "returnToHome": "Zurück zur Startseite"
+  },
+  "manageJourneyDialog": {
+    "manageJourney": "Reise verwalten: \"{{journeyName}}\"",
+    "updateDetailsCollaborators": "Reisedetails aktualisieren oder Kollaboratoren verwalten.",
+    "journeyOwner": "Reisebesitzer",
+    "ownerFullAccess": "(Besitzer hat vollen Zugriff und kann nicht entfernt werden.)",
+    "journeyName": "Reisename",
+    "saveJourneyName": "Reisename speichern",
+    "publicAccess": "Öffentlicher Zugang",
+    "makeJourneyPublic": "Reise öffentlich machen",
+    "shareableLink": "Teilbarer Link:",
+    "copyLink": "Link kopieren",
+    "anyoneCanView": "Jeder mit diesem Link kann die Beiträge Ihrer Reise ohne Anmeldung ansehen.",
+    "addNewCollaborator": "Neuen Kollaborator hinzufügen",
+    "searchUsernameToAdd": "Benutzernamen zum Hinzufügen suchen...",
+    "addingCollaborator": "Füge <span class=\"font-bold text-primary\">{{username}}</span> als Kollaborator hinzu. Er kann standardmäßig Beiträge auf dieser Reise lesen und veröffentlichen.",
+    "addCollaborator": "Kollaborator hinzufügen",
+    "currentCollaborators": "Aktuelle Kollaboratoren ({{count}})",
+    "noCollaboratorsAdded": "Noch keine Kollaboratoren hinzugefügt.",
+    "allowCreatePosts": "Benutzer erlauben, neue Beiträge in dieser Reise zu erstellen",
+    "allowEditPosts": "Benutzer erlauben, bestehende Beiträge in dieser Reise zu bearbeiten",
+    "allowDeletePosts": "Benutzer erlauben, Beiträge aus dieser Reise zu löschen",
+    "close": "Schließen",
+    "renaming": "Wird umbenannt..."
+  }
+}

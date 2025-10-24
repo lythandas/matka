@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface PostDatePickerProps {
   selectedDate: Date | undefined;
@@ -26,6 +27,7 @@ const PostDatePicker: React.FC<PostDatePickerProps> = ({
   disabled = false,
   className,
 }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -39,7 +41,7 @@ const PostDatePicker: React.FC<PostDatePickerProps> = ({
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+          {selectedDate ? format(selectedDate, "PPP") : <span>{t('common.pickADate')}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

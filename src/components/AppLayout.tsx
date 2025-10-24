@@ -6,12 +6,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import CreateJourneyDialog from './CreateJourneyDialog';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import AppFooter from './AppFooter'; // Import AppFooter
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const isMobile = useIsMobile();
   const { isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
 

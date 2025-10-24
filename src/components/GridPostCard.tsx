@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post } from '@/types';
 import { Compass } from 'lucide-react'; // Import the Compass icon
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface GridPostCardProps {
   post: Post;
@@ -16,6 +17,7 @@ interface GridPostCardProps {
 }
 
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const firstMedia = post.media_items?.[0]; // Get the first media item
   const displayName = post.author_name || post.author_username;
 
@@ -25,7 +27,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
     mediaElement = (
       <img
         src={firstMedia.urls.medium || '/placeholder.svg'}
-        alt={post.title || "Post image"}
+        alt={post.title || t('common.postImage')}
         className="object-cover w-full h-full"
         onError={(e) => {
           e.currentTarget.src = '/placeholder.svg';
@@ -49,7 +51,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
       <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center">
         <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 line-clamp-3">
-          {post.title || post.message.substring(0, 50) + (post.message.length > 50 ? '...' : '') || 'Untitled Post'}
+          {post.title || post.message.substring(0, 50) + (post.message.length > 50 ? '...' : '') || t('gridPostCard.untitledPost')}
         </h3>
       </div>
     );

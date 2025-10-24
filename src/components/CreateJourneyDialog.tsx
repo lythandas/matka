@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useJourneys } from '@/contexts/JourneyContext';
 import { Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface CreateJourneyDialogProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface CreateJourneyDialogProps {
 }
 
 const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const [journeyName, setJourneyName] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const { createJourney } = useJourneys();
@@ -42,38 +44,38 @@ const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create new journey</DialogTitle>
+          <DialogTitle>{t('createJourneyDialog.createNewJourney')}</DialogTitle>
           <DialogDescription>
-            Give your new journey a name. This will be a collection of your posts.
+            {t('createJourneyDialog.giveJourneyName')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              {t('createJourneyDialog.journeyName')}
             </Label>
             <Input
               id="name"
               value={journeyName}
               onChange={(e) => setJourneyName(e.target.value)}
               className="col-span-3"
-              placeholder="e.g., My Summer Trip"
+              placeholder={t('createJourneyDialog.mySummerTrip')}
               disabled={isCreating}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isCreating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCreate} disabled={!journeyName.trim() || isCreating} className="hover:ring-2 hover:ring-blue-500">
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {t('createJourneyDialog.creating')}
               </>
             ) : (
-              'Create journey'
+              t('createJourneyDialog.createJourney')
             )}
           </Button>
         </DialogFooter>
@@ -83,4 +85,3 @@ const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClo
 };
 
 export default CreateJourneyDialog;
-// Minor change to force re-compilation

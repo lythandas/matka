@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import PostDatePicker from './PostDatePicker'; // Import PostDatePicker
 import { parseISO } from 'date-fns'; // Import parseISO
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ interface EditPostDialogProps {
 }
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { user: currentUser, token } = useAuth();
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
@@ -97,7 +99,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || `Failed to upload media: ${file.name}`);
+          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name })); // Translated error
         }
 
         const data = await response.json();
@@ -106,10 +108,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       setCurrentMediaItems((prev) => [...prev, ...uploadedMedia]);
       setNewlySelectedFiles([]);
       setLocalPreviewUrls([]);
-      showSuccess('Media uploaded successfully!');
+      showSuccess(t('common.mediaUploadedSuccessfully')); // Translated success
     } catch (error: any) {
       console.error('Error uploading media:', error);
-      showError(error.message || 'Failed to upload media.');
+      showError(error.message || t('common.failedToUploadMediaGeneric')); // Translated error
       setNewlySelectedFiles([]);
       setLocalPreviewUrls([]);
     } finally {
@@ -125,11 +127,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
       for (const file of files) {
         if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
-          showError(`File '${file.name}' size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })); // Translated error
           continue;
         }
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          showError(`File '${file.name}' is not an image or video.`);
+          showError(t('common.fileNotImageOrVideo', { fileName: file.name })); // Translated error
           continue;
         }
         validFiles.push(file);
@@ -156,12 +158,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     if (currentMediaPreviewIndex >= currentMediaItems.length - 1) {
       setCurrentMediaPreviewIndex(Math.max(0, currentMediaItems.length - 2));
     }
-    showSuccess('Media item removed.');
+    showSuccess(t('common.mediaItemRemoved')); // Translated success
   };
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      showError('Geolocation is not supported by your browser.');
+      showError(t('common.geolocationNotSupported')); // Translated error
       return;
     }
 
@@ -170,21 +172,21 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
-        showSuccess('Location retrieved successfully!');
+        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated success
         setLocationLoading(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
-        let errorMessage = 'Failed to get your location.';
+        let errorMessage = t('common.failedToGetLocation'); // Translated error
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Permission to access location was denied. Please enable it in your browser settings.';
+            errorMessage = t('common.permissionDeniedLocation'); // Translated error
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.';
+            errorMessage = t('common.locationUnavailable'); // Translated error
             break;
           case error.TIMEOUT:
-            errorMessage = 'The request to get user location timed out.';
+            errorMessage = t('common.locationRequestTimedOut'); // Translated error
             break;
         }
         showError(errorMessage);
@@ -196,20 +198,20 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
   const handleClearLocation = () => {
     setCoordinates(null);
-    showSuccess('Location cleared.');
+    showSuccess(t('common.locationCleared')); // Translated success
   };
 
   const handleSave = async () => {
     if (!message.trim() && currentMediaItems.length === 0 && !coordinates) {
-      showError('At least a message, media, or coordinates are required.');
+      showError(t('common.atLeastMessageMediaOrCoordsRequired')); // Translated error
       return;
     }
     if (isUploadingMedia) {
-      showError('Please wait for media uploads to finish.');
+      showError(t('common.pleaseWaitForMediaUploads')); // Translated error
       return;
     }
     if (!currentUser) {
-      showError('Authentication required to update post.');
+      showError(t('common.authRequiredUpdatePost')); // Translated error
       return;
     }
 
@@ -222,7 +224,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator; // Use new permission
 
     if (!canEdit) {
-      showError('You do not have permission to edit this post.');
+      showError(t('common.noPermissionEditPost')); // Translated error
       return;
     }
 
@@ -245,16 +247,16 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update post');
+        throw new Error(errorData.message || t('common.failedToUpdatePost')); // Translated error
       }
 
       const updatedPost: Post = await response.json();
       onUpdate(updatedPost);
-      showSuccess('Post updated successfully!');
+      showSuccess(t('common.postUpdatedSuccessfully')); // Translated success
       onClose();
     } catch (error: any) {
       console.error('Error updating post:', error);
-      showError(error.message || 'Failed to update post.');
+      showError(error.message || t('common.failedToUpdatePost')); // Translated error
     } finally {
       setIsSaving(false);
     }
@@ -270,31 +272,31 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] min-h-[600px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Edit post</DialogTitle>
+          <DialogTitle>{t('editPostDialog.editPost')}</DialogTitle>
           <DialogDescription>
-            Modify the content of your post.
+            {t('editPostDialog.modifyPostContent')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Label htmlFor="title">Title</Label>
+          <Label htmlFor="title">{t('editPostDialog.title')}</Label>
           <Input
             id="title"
-            placeholder="Add a title (optional)"
+            placeholder={t('editPostDialog.titlePlaceholder')}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isSaving || isUploadingMedia || !canEditPostUI}
           />
-          <Label htmlFor="message">Message</Label>
+          <Label htmlFor="message">{t('editPostDialog.message')}</Label>
           <Textarea
             id="message"
-            placeholder="What's on your mind today?"
+            placeholder={t('editPostDialog.messagePlaceholder')}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             className="resize-none"
             disabled={isSaving || isUploadingMedia || !canEditPostUI}
           />
-          <Label htmlFor="post-date">Post date</Label>
+          <Label htmlFor="post-date">{t('editPostDialog.postDate')}</Label>
           <PostDatePicker
             selectedDate={postDate}
             onDateSelect={setPostDate}
@@ -304,14 +306,14 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         <Tabs defaultValue="media" className="w-full flex-grow flex flex-col">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="media" disabled={!canEditPostUI}>
-              <Image className="h-4 w-4 mr-2" /> Media
+              <Image className="h-4 w-4 mr-2" /> {t('editPostDialog.media')}
             </TabsTrigger>
             <TabsTrigger value="location" disabled={!canEditPostUI}>
-              <MapPin className="h-4 w-4 mr-2" /> Location
+              <MapPin className="h-4 w-4 mr-2" /> {t('editPostDialog.location')}
             </TabsTrigger>
           </TabsList>
           <TabsContent value="media" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <Label htmlFor="media-upload">Upload images or videos (Max {MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB per file)</Label>
+            <Label htmlFor="media-upload">{t('editPostDialog.uploadMedia', { maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })}</Label>
             <div className="flex items-center w-full">
               <Input
                 id="media-upload"
@@ -333,13 +335,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 {isUploadingMedia ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Upload className="mr-2 h-4 w-4" />
+                  newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} ${t('common.filesSelected')}` : (currentMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
                 )}
-                {newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} files selected` : (currentMediaItems.length > 0 ? "Change/Add media" : "Choose media")}
               </Button>
             </div>
             {isUploadingMedia && (
-              <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+              <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('editPostDialog.uploadingMedia')}</p>
             )}
 
             {displayedMedia.length > 0 && (
@@ -416,7 +417,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
-                <LocateFixed className="mr-2 h-4 w-4" /> Get current location
+                <LocateFixed className="mr-2 h-4 w-4" /> {t('editPostDialog.getCurrentLocation')}
               </Button>
               <Button
                 type="button"
@@ -428,7 +429,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 className="flex-1 hover:ring-2 hover:ring-blue-500"
                 disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
-                <Search className="mr-2 h-4 w-4" /> Search location
+                <Search className="mr-2 h-4 w-4" /> {t('editPostDialog.searchLocation')}
               </Button>
             </div>
 
@@ -443,23 +444,23 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   {locationLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Getting location...
+                      {t('editPostDialog.gettingLocation')}
                     </>
                   ) : (
                     <>
                       <MapPin className="mr-2 h-4 w-4" />
-                      Get current location
+                      {t('editPostDialog.getCurrentLocation')}
                     </>
                   )}
                 </Button>
                 {coordinates && (
                   <>
                     <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                      Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                      {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
                     </p>
                     <MapComponent coordinates={coordinates} className="h-48" />
                     <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPostUI}>
-                      Clear location
+                      {t('editPostDialog.clearLocation')}
                     </Button>
                   </>
                 )}
@@ -477,16 +478,16 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         </Tabs>
         <DialogFooter className="pt-4">
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('editPostDialog.saving')}
               </>
             ) : (
-              'Save changes'
+              t('common.saveChanges')
             )}
           </Button>
         </DialogFooter>

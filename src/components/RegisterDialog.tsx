@@ -8,14 +8,14 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError } from '@/utils/toast';
 import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
-
-// Removed Dialog imports as it will no longer be a modal
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface RegisterDialogProps {
   // Removed onRegistrationSuccess prop as it's no longer needed
 }
 
-const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen and onClose props
+const RegisterDialog: React.FC<RegisterDialogProps> = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { setAuthData } = useAuth(); // Use setAuthData directly
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -26,12 +26,12 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen 
     e.preventDefault();
 
     if (!username.trim() || !password.trim() || !confirmPassword.trim()) {
-      showError('All fields are required.');
+      showError(t('common.allFieldsRequired')); // Translated error
       return;
     }
 
     if (password !== confirmPassword) {
-      showError('Passwords do not match.');
+      showError(t('common.passwordsDoNotMatch')); // Translated error
       return;
     }
 
@@ -47,15 +47,14 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen 
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(errorData.message || t('common.registrationFailed')); // Translated error
       }
 
       const data = await response.json();
       setAuthData(data.user, data.token); // Immediately log in the user
-      // LoginPage will handle unmounting this component on successful login
     } catch (error: any) {
       console.error('Registration error:', error);
-      showError(error.message || 'Failed to register.');
+      showError(error.message || t('common.failedToRegister')); // Translated error
     } finally {
       setIsRegistering(false);
     }
@@ -64,14 +63,14 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen 
   return (
     <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground shadow-neon-blue bg-gradient-blue-light">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Welcome! Register your admin account</h2>
+        <h2 className="text-2xl font-bold">{t('auth.welcomeRegisterAdmin')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          This will be the first (and only) user you can register. This user will be an administrator.
+          {t('auth.firstAdminAccount')}
         </p>
       </div>
       <form onSubmit={handleRegister} className="grid gap-4 py-4">
         <div className="grid gap-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{t('common.username')}</Label>
           <Input
             id="username"
             value={username}
@@ -82,25 +81,25 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen 
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('common.password')}</Label>
           <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder={t('auth.passwordPlaceholder')}
             disabled={isRegistering}
             required
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="confirm-password">Confirm password</Label>
+          <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
           <Input
             id="confirm-password"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder={t('auth.passwordPlaceholder')}
             disabled={isRegistering}
             required
           />
@@ -110,10 +109,10 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => { // Removed isOpen 
             {isRegistering ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Registering...
+                {t('auth.registering')}
               </>
             ) : (
-              'Register admin'
+              t('auth.registerAdmin')
             )}
           </Button>
         </div>

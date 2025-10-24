@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   journey,
   onJourneyUpdated,
 }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isPublic, setIsPublic] = useState<boolean>(journey.is_public);
@@ -80,17 +82,17 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           setCollaborators([]);
           return;
         }
-        throw new Error('Failed to fetch journey collaborators');
+        throw new Error(t('common.failedToFetchJourneyCollaborators')); // Translated error
       }
       const data: JourneyCollaborator[] = await response.json();
       setCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
-      showError('Failed to load journey collaborators.');
+      showError(t('common.failedToLoadJourneyCollaborators')); // Translated error
     } finally {
       setLoadingCollaborators(false);
     }
-  }, [token, journey]);
+  }, [token, journey, t]);
 
   const searchUsers = useCallback(async (query: string) => {
     if (!query.trim() || query.trim().length < 2 || !token) {
@@ -105,7 +107,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to search users');
+        throw new Error(t('common.failedToSearchUsers')); // Translated error
       }
       const data: User[] = await response.json();
       const filteredData = data.filter(u =>
@@ -114,12 +116,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSearchResults(filteredData);
     } catch (error) {
       console.error('Error searching users:', error);
-      showError('Failed to search for users.');
+      showError(t('common.failedToSearchForUsers')); // Translated error
       setSearchResults([]);
     } finally {
       setLoadingSearch(false);
     }
-  }, [token, collaborators, journey.user_id]);
+  }, [token, collaborators, journey.user_id, t]);
 
   useEffect(() => {
     if (isOpen && journey) {
@@ -149,17 +151,17 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleRenameJourney = async () => {
     if (!journeyName.trim()) {
-      showError('Journey name cannot be empty.');
+      showError(t('common.journeyNameCannotBeEmpty')); // Translated error
       return;
     }
     if (!token || !currentUser) {
-      showError('Authentication required to update a journey.');
+      showError(t('common.authRequiredUpdateJourney')); // Translated error
       return;
     }
 
     const canEditJourneyName = currentUser.id === journey.user_id || currentUser.isAdmin;
     if (!canEditJourneyName) {
-      showError('You do not have permission to edit this journey.');
+      showError(t('common.noPermissionEditJourney')); // Translated error
       return;
     }
 
@@ -176,14 +178,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update journey');
+        throw new Error(errorData.message || t('common.failedToUpdateJourney')); // Translated error
       }
 
-      showSuccess(`Journey renamed to '${journeyName}' successfully!`);
+      showSuccess(t('common.journeyRenamedSuccessfully', { journeyName })); // Translated success
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error renaming journey:', error);
-      showError(error.message || 'Failed to rename journey.');
+      showError(error.message || t('common.failedToRenameJourney')); // Translated error
     } finally {
       setIsRenaming(false);
     }
@@ -191,13 +193,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleTogglePublic = async (checked: boolean) => {
     if (!token || !currentUser) {
-      showError('Authentication required to update a journey.');
+      showError(t('common.authRequiredUpdateJourney')); // Translated error
       return;
     }
 
     const canTogglePublic = currentUser.id === journey.user_id || currentUser.isAdmin;
     if (!canTogglePublic) {
-      showError('You do not have permission to change the public status of this journey.');
+      showError(t('common.noPermissionChangePublicStatus')); // Translated error
       return;
     }
 
@@ -214,15 +216,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update public status');
+        throw new Error(errorData.message || t('common.failedToUpdatePublicStatus')); // Translated error
       }
 
       setIsPublic(checked);
-      showSuccess(`Journey is now ${checked ? 'public' : 'private'}!`);
+      showSuccess(t('common.journeyPublicStatusUpdated', { status: checked ? t('common.public') : t('common.private') })); // Translated success
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error toggling public status:', error);
-      showError(error.message || 'Failed to update public status.');
+      showError(error.message || t('common.failedToUpdatePublicStatus')); // Translated error
     } finally {
       setIsTogglingPublic(false);
     }
@@ -230,13 +232,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleAddCollaborator = async () => {
     if (!selectedUserToAdd || !token) {
-      showError('Please select a user to add as a collaborator.');
+      showError(t('common.selectUserToAddCollaborator')); // Translated error
       return;
     }
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError('You do not have permission to add collaborators to this journey.');
+      showError(t('common.noPermissionAddCollaborators')); // Translated error
       return;
     }
 
@@ -256,10 +258,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add collaborator');
+        throw new Error(errorData.message || t('common.failedToAddCollaborator')); // Translated error
       }
 
-      showSuccess(`User '${selectedUserToAdd.username}' added as collaborator.`);
+      showSuccess(t('common.collaboratorAddedSuccessfully', { username: selectedUserToAdd.username })); // Translated success
       fetchCollaborators();
       onJourneyUpdated();
       setSearchUsername('');
@@ -267,7 +269,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSelectedUserToAdd(null);
     } catch (error: any) {
       console.error('Error adding collaborator:', error);
-      showError(error.message || 'Failed to add collaborator.');
+      showError(error.message || t('common.failedToAddCollaborator')); // Translated error
     } finally {
       setIsAddingCollaborator(false);
     }
@@ -281,7 +283,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError('You do not have permission to update collaborator permissions for this journey.');
+      showError(t('common.noPermissionUpdateCollaboratorPermissions')); // Translated error
       return;
     }
 
@@ -303,15 +305,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update collaborator permissions');
+        throw new Error(errorData.message || t('common.failedToUpdateCollaboratorPermissions')); // Translated error
       }
 
-      showSuccess(`Permissions updated for collaborator.`);
+      showSuccess(t('common.permissionsUpdatedSuccessfully')); // Translated success
       fetchCollaborators();
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error updating collaborator permissions:', error);
-      showError(error.message || 'Failed to update collaborator permissions.');
+      showError(error.message || t('common.failedToUpdateCollaboratorPermissions')); // Translated error
     } finally {
       setIsUpdatingCollaborator(false);
     }
@@ -322,7 +324,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError('You do not have permission to remove collaborators from this journey.');
+      showError(t('common.noPermissionRemoveCollaborators')); // Translated error
       return;
     }
 
@@ -337,15 +339,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove collaborator');
+        throw new Error(errorData.message || t('common.failedToRemoveCollaborator')); // Translated error
       }
 
-      showSuccess(`Collaborator '${username}' removed.`);
+      showSuccess(t('common.collaboratorRemovedSuccessfully', { username })); // Translated success
       fetchCollaborators();
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error removing collaborator:', error);
-      showError(error.message || 'Failed to remove collaborator.');
+      showError(error.message || t('common.failedToRemoveCollaborator')); // Translated error
     } finally {
       setIsUpdatingCollaborator(false);
     }
@@ -353,8 +355,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareLink)
-      .then(() => showSuccess('Share link copied to clipboard!'))
-      .catch(() => showError('Failed to copy link.'));
+      .then(() => showSuccess(t('common.shareLinkCopied'))) // Translated success
+      .catch(() => showError(t('common.failedToCopyLink'))); // Translated error
   };
 
   const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
@@ -365,15 +367,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manage journey: "{journey?.name}"</DialogTitle>
+          <DialogTitle>{t('manageJourneyDialog.manageJourney', { journeyName: journey?.name })}</DialogTitle>
           <DialogDescription>
-            Update journey details or manage collaborators.
+            {t('manageJourneyDialog.updateDetailsCollaborators')}
           </DialogDescription>
         </DialogHeader>
         <div className="p-4 space-y-4 flex-grow overflow-y-auto">
           {/* Journey Owner */}
           <div className="border rounded-md p-4 bg-muted/50">
-            <h3 className="text-lg font-semibold mb-2">Journey owner</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.journeyOwner')}</h3>
             <div className="flex items-center space-x-3 mb-4">
               <Avatar className="h-10 w-10">
                 {journey.owner_profile_image_url ? (
@@ -390,20 +392,20 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              (Owner has full access and cannot be removed.)
+              {t('manageJourneyDialog.ownerFullAccess')}
             </p>
 
             {/* Journey Name input */}
             <div className="grid grid-cols-4 items-center gap-4 mb-4">
               <Label htmlFor="journey-name" className="text-right">
-                Journey name
+                {t('manageJourneyDialog.journeyName')}
               </Label>
               <Input
                 id="journey-name"
                 value={journeyName}
                 onChange={(e) => setJourneyName(e.target.value)}
                 className="col-span-3"
-                placeholder="e.g., My summer trip"
+                placeholder={t('createJourneyDialog.mySummerTrip')}
                 disabled={isRenaming || !canEditJourneyName}
               />
             </div>
@@ -412,10 +414,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 {isRenaming ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Renaming...
+                    {t('manageJourneyDialog.renaming')}
                   </>
                 ) : (
-                  'Save journey name'
+                  t('manageJourneyDialog.saveJourneyName')
                 )}
               </Button>
             </div>
@@ -423,7 +425,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
           {/* Public Access Section */}
           <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-2">Public access</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.publicAccess')}</h3>
             <div className="flex items-center justify-between space-x-4 mb-4">
               <div className="flex items-center space-x-2">
                 <Switch
@@ -433,14 +435,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   disabled={isTogglingPublic || !canTogglePublicStatus}
                 />
                 <Label htmlFor="public-toggle" className="text-base">
-                  Make journey public
+                  {t('manageJourneyDialog.makeJourneyPublic')}
                 </Label>
               </div>
               {isTogglingPublic && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
             </div>
             {isPublic && (
               <div className="space-y-2">
-                <Label htmlFor="share-link" className="text-sm">Shareable link:</Label>
+                <Label htmlFor="share-link" className="text-sm">{t('manageJourneyDialog.shareableLink')}</Label>
                 <div className="flex items-center space-x-2">
                   <Input
                     id="share-link"
@@ -455,32 +457,32 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                     className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                   >
                     <Copy className="h-4 w-4" />
-                    <span className="sr-only">Copy link</span>
+                    <span className="sr-only">{t('manageJourneyDialog.copyLink')}</span>
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">Anyone with this link can view your journey's posts without logging in.</p>
+                <p className="text-sm text-muted-foreground">{t('manageJourneyDialog.anyoneCanView')}</p>
               </div>
             )}
           </div>
 
           {/* Add Collaborator Section with Autocomplete */}
           <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-2">Add new collaborator</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.addNewCollaborator')}</h3>
             <Command className="rounded-lg border shadow-md mb-4">
               <CommandInput
-                placeholder="Search username to add..."
+                placeholder={t('manageJourneyDialog.searchUsernameToAdd')}
                 value={searchUsername}
                 onValueChange={setSearchUsername}
                 disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
               />
               <CommandList>
                 {loadingSearch && <CommandEmpty>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('common.searching')}
                 </CommandEmpty>}
                 {!loadingSearch && searchResults.length === 0 && searchUsername.length >= 2 && (
-                  <CommandEmpty>No users found.</CommandEmpty>
+                  <CommandEmpty>{t('common.noUsersFound')}</CommandEmpty>
                 )}
-                <CommandGroup heading="Users">
+                <CommandGroup heading={t('common.users')}>
                   {searchResults.map((userResult) => (
                     <CommandItem
                       key={userResult.id}
@@ -512,17 +514,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
             {selectedUserToAdd && (
               <div className="space-y-3">
-                <p className="text-sm font-medium mb-2">
-                  Adding <span className="font-bold text-primary">{selectedUserToAdd.name || selectedUserToAdd.username}</span> as a collaborator.
-                  They will be able to read posts and publish posts on this journey by default.
-                </p>
+                <p className="text-sm font-medium mb-2" dangerouslySetInnerHTML={{ __html: t('manageJourneyDialog.addingCollaborator', { username: selectedUserToAdd.name || selectedUserToAdd.username }) }} />
                 <Button
                   onClick={handleAddCollaborator}
                   disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
                   className="w-full hover:ring-2 hover:ring-blue-500"
                 >
                   {isAddingCollaborator ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Add collaborator
+                  {t('manageJourneyDialog.addCollaborator')}
                 </Button>
               </div>
             )}
@@ -530,14 +529,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
           {/* Current Collaborators Section */}
           <div className="border rounded-md p-4">
-            <h3 className="text-lg font-semibold mb-2">Current collaborators ({collaborators.length})</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.currentCollaborators', { count: collaborators.length })}</h3>
             {loadingCollaborators ? (
               <div className="flex justify-center items-center h-24">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                <p className="ml-2 text-gray-600 dark:text-gray-400">Loading collaborators...</p>
+                <p className="ml-2 text-gray-600 dark:text-gray-400">{t('common.loadingCollaborators')}</p>
               </div>
             ) : collaborators.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No collaborators added yet.</p>
+              <p className="text-muted-foreground text-sm">{t('manageJourneyDialog.noCollaboratorsAdded')}</p>
             ) : (
               <div className="space-y-4">
                 {collaborators.map((collab) => (
@@ -562,7 +561,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         <ToggleGroup
                           type="multiple"
                           value={[
-                            // can_read_posts is implicitly true, no toggle needed
                             collab.can_publish_posts ? 'publish' : '',
                             collab.can_modify_post ? 'modify' : '',
                             collab.can_delete_posts ? 'delete' : '',
@@ -584,7 +582,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             <TooltipTrigger asChild>
                               <ToggleGroupItem
                                 value="publish"
-                                aria-label="Toggle publish permission"
+                                aria-label={t('manageJourneyDialog.allowCreatePosts')}
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_publish_posts
@@ -596,7 +594,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                               </ToggleGroupItem>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Allow user to create new posts in this journey</p>
+                              <p>{t('manageJourneyDialog.allowCreatePosts')}</p>
                             </TooltipContent>
                           </Tooltip>
 
@@ -605,7 +603,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             <TooltipTrigger asChild>
                               <ToggleGroupItem
                                 value="modify"
-                                aria-label="Toggle modify permission"
+                                aria-label={t('manageJourneyDialog.allowEditPosts')}
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_modify_post
@@ -617,7 +615,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                               </ToggleGroupItem>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Allow user to edit existing posts in this journey</p>
+                              <p>{t('manageJourneyDialog.allowEditPosts')}</p>
                             </TooltipContent>
                           </Tooltip>
 
@@ -626,7 +624,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             <TooltipTrigger asChild>
                               <ToggleGroupItem
                                 value="delete"
-                                aria-label="Toggle delete permission"
+                                aria-label={t('manageJourneyDialog.allowDeletePosts')}
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_delete_posts
@@ -638,7 +636,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                               </ToggleGroupItem>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Allow user to delete posts from this journey</p>
+                              <p>{t('manageJourneyDialog.allowDeletePosts')}</p>
                             </TooltipContent>
                           </Tooltip>
                         </ToggleGroup>
@@ -661,7 +659,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isTogglingPublic} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            Close
+            {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

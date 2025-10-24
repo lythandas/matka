@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { API_BASE_URL } from '@/config/api';
 import { User } from '@/types'; // Import User type
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface CreateUserDialogProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CreateUserDialogProps {
 }
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, onUserCreated }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { token, user: currentUser } = useAuth();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -34,12 +36,12 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
 
   const handleCreateUser = async () => {
     if (!username.trim() || !password.trim()) {
-      showError('Username and password are required.');
+      showError(t('common.usernameAndPasswordRequired')); // Translated error
       return;
     }
 
     if (!token || !currentUser?.isAdmin) {
-      showError('Authentication required or not authorized to create users.');
+      showError(t('common.authRequiredNotAuthorizedCreateUsers')); // Translated error
       return;
     }
 
@@ -61,11 +63,11 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
+        throw new Error(errorData.message || t('common.failedToCreateUser')); // Translated error
       }
 
       const newUser: User = await response.json();
-      showSuccess(`User '${newUser.username}' created successfully!`);
+      showSuccess(t('common.userCreatedSuccessfully', { username: newUser.username })); // Translated success
       onUserCreated(newUser);
       onClose();
       setUsername('');
@@ -74,7 +76,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
       setSurname('');
     } catch (error: any) {
       console.error('Error creating user:', error);
-      showError(error.message || 'Failed to create user.');
+      showError(error.message || t('common.failedToCreateUser')); // Translated error
     } finally {
       setIsCreating(false);
     }
@@ -89,29 +91,29 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create new user</DialogTitle>
+          <DialogTitle>{t('createUserDialog.createNewUser')}</DialogTitle>
           <DialogDescription>
-            Fill in the details for the new user account.
+            {t('createUserDialog.fillUserDetails')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="username" className="text-right">
-              Username
+              {t('common.username')}
             </Label>
             <Input
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="col-span-3"
-              placeholder="e.g., newuser"
+              placeholder={t('createUserDialog.newUsername')}
               disabled={isCreating}
               required
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="password" className="text-right">
-              Password
+              {t('common.password')}
             </Label>
             <Input
               id="password"
@@ -119,50 +121,50 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onClose, on
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="col-span-3"
-              placeholder="••••••••"
+              placeholder={t('createUserDialog.passwordPlaceholder')}
               disabled={isCreating}
               required
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              {t('common.name')}
             </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="col-span-3"
-              placeholder="First name (optional)"
+              placeholder={t('createUserDialog.firstNameOptional')}
               disabled={isCreating}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="surname" className="text-right">
-              Surname
+              {t('common.surname')}
             </Label>
             <Input
               id="surname"
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               className="col-span-3"
-              placeholder="Last name (optional)"
+              placeholder={t('createUserDialog.lastNameOptional')}
               disabled={isCreating}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isCreating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleCreateUser} disabled={!username.trim() || !password.trim() || isCreating} className="hover:ring-2 hover:ring-blue-500">
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {t('createUserDialog.creating')}
               </>
             ) : (
-              'Create user'
+              t('createUserDialog.createUser')
             )}
           </Button>
         </DialogFooter>

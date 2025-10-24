@@ -6,10 +6,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface ThreeButtonThemeToggleProps extends React.ComponentPropsWithoutRef<typeof ToggleGroup> {}
 
 export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonThemeToggleProps) {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { theme, setTheme } = useTheme();
 
   return (
@@ -26,14 +28,14 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
         <TooltipTrigger asChild>
           <ToggleGroupItem
             value="light"
-            aria-label="Set light theme"
+            aria-label={t('themeToggle.toggleLightTheme')}
             className={cn("flex-1", theme === "light" && "ring-2 ring-blue-500")}
           >
-            <Sun className="h-4 w-4 mr-2" /> Light
+            <Sun className="h-4 w-4 mr-2" /> {t('themeToggle.light')}
           </ToggleGroupItem>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Set light theme</p>
+          <p>{t('themeToggle.toggleLightTheme')}</p>
         </TooltipContent>
       </Tooltip>
 
@@ -41,14 +43,14 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
         <TooltipTrigger asChild>
           <ToggleGroupItem
             value="dark"
-            aria-label="Set dark theme"
+            aria-label={t('themeToggle.toggleDarkTheme')}
             className={cn("flex-1", theme === "dark" && "ring-2 ring-blue-500")}
           >
-            <Moon className="h-4 w-4 mr-2" /> Dark
+            <Moon className="h-4 w-4 mr-2" /> {t('themeToggle.dark')}
           </ToggleGroupItem>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Set dark theme</p>
+          <p>{t('themeToggle.toggleDarkTheme')}</p>
         </TooltipContent>
       </Tooltip>
 
@@ -56,14 +58,14 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
         <TooltipTrigger asChild>
           <ToggleGroupItem
             value="system"
-            aria-label="Set system theme"
+            aria-label={t('themeToggle.toggleSystemTheme')}
             className={cn("flex-1", theme === "system" && "ring-2 ring-blue-500")}
           >
-            <Monitor className="h-4 w-4 mr-2" /> System
+            <Monitor className="h-4 w-4 mr-2" /> {t('themeToggle.system')}
           </ToggleGroupItem>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Set system theme</p>
+          <p>{t('themeToggle.toggleSystemTheme')}</p>
         </TooltipContent>
       </Tooltip>
     </ToggleGroup>

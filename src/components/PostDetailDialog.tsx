@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post, MediaInfo, Journey } from '@/types'; // Import Journey type
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface PostDetailDialogProps {
   post: Post;
@@ -33,6 +34,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   onPrevious,
   journey, // Destructure journey prop
 }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
   const [isMediaFullscreen, setIsMediaFullscreen] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0); // For cycling through multiple media items
@@ -40,15 +42,9 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
 
-  // Debugging logs
-  console.log('PostDetailDialog rendering for post:', post.id, post.title);
-  console.log('Current Index:', currentIndex, 'Total Posts:', totalPosts);
-  console.log('Can go previous:', canGoPrevious, 'Can go next:', canGoNext);
-
-
   const handleToggleFullscreen = (mediaElement: HTMLImageElement | HTMLVideoElement | null) => {
     if (!document.fullscreenEnabled) {
-      showError("Fullscreen mode is not supported by your browser.");
+      showError(t('postDetailDialog.fullscreenNotSupported')); // Translated error
       return;
     }
 
@@ -57,7 +53,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     } else {
       mediaElement?.requestFullscreen().catch((err) => {
         console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-        showError("Failed to enter full-screen mode.");
+        showError(t('postDetailDialog.failedToEnterFullscreen')); // Translated error
       });
     }
   };
@@ -77,22 +73,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     setCurrentMediaIndex(0); // Reset media index when post changes
   }, [post]);
 
-  // Removed handleShare function as the button is being removed.
-
   const displayName = post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
 
-  // Debugging logs for media
-  console.log('Media items:', mediaItems);
-  console.log('Current media index:', currentMediaIndex);
-  console.log('Current media:', currentMedia);
-
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[950px] max-h-[98vh] flex flex-col">
-        <> {/* Start of React.Fragment */}
+        <>
           <DialogHeader className="p-6 pb-0 relative">
             <div className="flex items-center mb-2">
               <Avatar className="h-10 w-10 mr-3">
@@ -105,15 +93,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 )}
               </Avatar>
               <div>
-                <DialogTitle>{post.title || "Post details"}</DialogTitle>
+                <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
                 <DialogDescription>
-                  By {displayName} &bull; {format(new Date(post.created_at), 'PPP p')}
+                  {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p') })}
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
           
-          {/* Main content wrapper for TransitionGroup and navigation buttons */}
           <div className="relative flex-grow overflow-hidden flex">
             <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full">
               {mediaItems.length > 0 && (
@@ -122,12 +109,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     <img
                       ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                       src={currentMedia.urls.large || '/placeholder.svg'}
-                      alt={post.title || "Post image"}
+                      alt={post.title || t('common.postImage')}
                       className="w-full h-auto object-contain rounded-md mx-auto"
                       onError={(e) => {
                         e.currentTarget.src = '/placeholder.svg';
                         e.currentTarget.onerror = null;
-                        console.error(`Failed to load image: ${currentMedia.urls.large}`);
+                        console.error(t('postDetailDialog.failedToLoadImage'), currentMedia.urls.large); // Translated error
                       }}
                     />
                   )}
@@ -201,29 +188,28 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
             {canGoPrevious && (
               <Button
-                variant="ghost" // Changed to ghost for more subtle background
+                variant="ghost"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors" // Larger, semi-transparent
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors"
                 onClick={onPrevious}
               >
-                <ChevronLeft className="h-7 w-7" /> {/* Larger icon */}
+                <ChevronLeft className="h-7 w-7" />
               </Button>
             )}
             {canGoNext && (
               <Button
-                variant="ghost" // Changed to ghost for more subtle background
+                variant="ghost"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors" // Larger, semi-transparent
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors"
                 onClick={onNext}
               >
-                <ChevronRight className="h-7 w-7" /> {/* Larger icon */}
+                <ChevronRight className="h-7 w-7" />
               </Button>
             )}
           </div>
           <DialogFooter className="p-6 pt-0 flex justify-end">
-            {/* Share Journey button removed */}
           </DialogFooter>
-        </> {/* End of React.Fragment */}
+        </>
       </DialogContent>
     </Dialog>
   );

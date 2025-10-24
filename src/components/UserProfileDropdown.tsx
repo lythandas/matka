@@ -18,8 +18,10 @@ import RegisterDialog from './RegisterDialog';
 import ManageAccountDialog from './ManageAccountDialog';
 import { getAvatarInitials } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 const UserProfileDropdown: React.FC = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { isAuthenticated, user, logout, usersExist } = useAuth();
   const navigate = useNavigate();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState<boolean>(false);
@@ -49,7 +51,7 @@ const UserProfileDropdown: React.FC = () => {
     return (
       <>
         <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-          {usersExist === false ? 'Register' : 'Login'}
+          {usersExist === false ? t('auth.register') : t('auth.login')}
         </Button>
         {usersExist === false && (
           <RegisterDialog
@@ -81,7 +83,7 @@ const UserProfileDropdown: React.FC = () => {
                 </AvatarFallback>
               )}
             </Avatar>
-            <span className="sr-only">Open user menu</span>
+            <span className="sr-only">{t('userProfileDropdown.openUserMenu')}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -95,17 +97,17 @@ const UserProfileDropdown: React.FC = () => {
           {user?.isAdmin && ( // Only show Admin link if user is an admin
             <DropdownMenuItem onClick={() => navigate('/admin')}>
               <Users className="mr-2 h-4 w-4" />
-              <span>Administration</span> {/* Changed from "Admin (Users)" to "Administration" */}
+              <span>{t('userProfileDropdown.administration')}</span>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => setIsManageAccountDialogOpen(true)}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Manage account</span>
+            <span>{t('userProfileDropdown.manageAccount')}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>{t('userProfileDropdown.logOut')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

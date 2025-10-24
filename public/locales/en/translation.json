@@ -1,0 +1,227 @@
+{
+  "app": {
+    "name": "Matka",
+    "footer": "Made with Dyad"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "uploading": "Uploading...",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "username": "Username",
+    "password": "Password",
+    "name": "Name",
+    "surname": "Surname",
+    "language": "Language",
+    "theme": "Theme",
+    "backToJourneys": "Back to Journeys",
+    "noUsersFound": "No users found.",
+    "search": "Search"
+  },
+  "auth": {
+    "loginToYourAccount": "Login to your account",
+    "enterCredentials": "Enter your credentials to access your journeys and posts.",
+    "loggingIn": "Logging in...",
+    "login": "Login",
+    "welcomeRegisterAdmin": "Welcome! Register your admin account",
+    "firstAdminAccount": "This will be the first (and only) user you can register. This user will be an administrator.",
+    "confirmPassword": "Confirm password",
+    "registering": "Registering...",
+    "registerAdmin": "Register admin",
+    "checkingUserStatus": "Checking user status...",
+    "register": "Register"
+  },
+  "topBar": {
+    "journeys": "Journeys",
+    "manageJourney": "Manage journey",
+    "administration": "Administration",
+    "toggleMenu": "Toggle menu",
+    "selectJourney": "Select journey",
+    "createNewJourney": "Create new journey"
+  },
+  "userProfileDropdown": {
+    "administration": "Administration",
+    "manageAccount": "Manage account",
+    "logOut": "Log out",
+    "openUserMenu": "Open user menu"
+  },
+  "manageAccountDialog": {
+    "manageYourAccount": "Manage your account",
+    "updatePersonalInfo": "Update your personal information and profile picture.",
+    "yourFirstName": "Your first name",
+    "yourLastName": "Your last name",
+    "uploadImage": "Upload image",
+    "changeImage": "Change image",
+    "profileImageCleared": "Profile image cleared.",
+    "selectLanguage": "Select a language",
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español"
+  },
+  "themeToggle": {
+    "toggleDarkTheme": "Toggle dark theme",
+    "toggleSystemTheme": "Toggle system theme",
+    "toggleLightTheme": "Toggle light theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "sortToggle": {
+    "newestFirst": "Newest First",
+    "oldestFirst": "Oldest First"
+  },
+  "viewToggle": {
+    "listView": "List view",
+    "gridView": "Grid view",
+    "mapView": "Map view"
+  },
+  "createJourneyDialog": {
+    "createNewJourney": "Create new journey",
+    "giveJourneyName": "Give your new journey a name. This will be a collection of your posts.",
+    "journeyName": "Journey name",
+    "mySummerTrip": "e.g., My Summer Trip",
+    "creating": "Creating...",
+    "createJourney": "Create journey"
+  },
+  "createUserDialog": {
+    "createNewUser": "Create new user",
+    "fillUserDetails": "Fill in the details for the new user account.",
+    "newUsername": "e.g., newuser",
+    "passwordPlaceholder": "••••••••",
+    "firstNameOptional": "First name (optional)",
+    "lastNameOptional": "Last name (optional)",
+    "creating": "Creating...",
+    "createUser": "Create user"
+  },
+  "resetPasswordDialog": {
+    "resetPasswordFor": "Reset password for {{username}}",
+    "enterNewPassword": "Enter a new password for this user.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "resetting": "Resetting...",
+    "resetPassword": "Reset password"
+  },
+  "editPostDialog": {
+    "editPost": "Edit post",
+    "modifyPostContent": "Modify the content of your post.",
+    "titlePlaceholder": "Add a title (optional)",
+    "messagePlaceholder": "What's on your mind today?",
+    "postDate": "Post date",
+    "media": "Media",
+    "location": "Location",
+    "uploadMedia": "Upload images or videos (Max {{maxSize}}MB per file)",
+    "changeAddMedia": "Change/Add media",
+    "chooseMedia": "Choose media",
+    "uploadingMedia": "Uploading...",
+    "getCurrentLocation": "Get current location",
+    "searchLocation": "Search location",
+    "gettingLocation": "Getting location...",
+    "clearLocation": "Clear location",
+    "saving": "Saving...",
+    "saveChanges": "Save changes"
+  },
+  "locationSearch": {
+    "searchForLocation": "Search for a location",
+    "searchPlaceholder": "Search for an address or place...",
+    "searching": "Searching...",
+    "selected": "Selected: Lat: {{lat}}, Lng: {{lng}}"
+  },
+  "journeyMapDialog": {
+    "journeyMap": "Journey Map",
+    "explorePostLocations": "Explore the locations of posts in this journey. Click a pin to view the post details.",
+    "noPostsWithLocation": "No posts with location data found in this journey."
+  },
+  "postDetailDialog": {
+    "postDetails": "Post details",
+    "by": "By {{author}} • {{date}}",
+    "failedToLoadImage": "Failed to load image.",
+    "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
+    "failedToEnterFullscreen": "Failed to enter full-screen mode."
+  },
+  "gridPostCard": {
+    "untitledPost": "Untitled Post"
+  },
+  "indexPage": {
+    "shareYourDay": "Share your day",
+    "titleOptional": "Add a title (optional)",
+    "messagePlaceholder": "What's on your mind today?",
+    "contentPreview": "Content preview:",
+    "uploadMedia": "Upload Media",
+    "getLocation": "Get Location",
+    "post": "Post",
+    "noJourneysYet": "You don't have any journeys yet!",
+    "startByCreatingJourney": "Start by creating your first journey.",
+    "loadingJourneys": "Loading journeys...",
+    "yourJourneyAwaits": "Your journey awaits! Start by adding your first post.",
+    "useShareSection": "Use the \"Share your day\" section above to begin.",
+    "loadingPosts": "Loading posts...",
+    "noPostsWithLocation": "No posts with location data to display on the map.",
+    "addPostsWithLocation": "Add posts with location information to see them here!"
+  },
+  "adminPage": {
+    "adminDashboard": "Admin dashboard",
+    "manageUsers": "Manage users",
+    "createNewUser": "Create new user",
+    "loadingUsers": "Loading users...",
+    "user": "User",
+    "admin": "Admin",
+    "createdAt": "Created at",
+    "actions": "Actions",
+    "resetPassword": "Reset password",
+    "deleteUser": "Delete user",
+    "areYouSure": "Are you absolutely sure?",
+    "deleteUserDescription": "This action cannot be undone. This will permanently delete the user <span class=\"font-bold\">@{{username}}</span> and all their associated journeys, posts, and collaborations.",
+    "continue": "Continue",
+    "manageJourneys": "Manage journeys",
+    "loadingJourneys": "Loading journeys...",
+    "journeyName": "Journey Name",
+    "owner": "Owner",
+    "public": "Public",
+    "manageJourney": "Manage journey",
+    "deleteJourney": "Delete journey",
+    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class=\"font-bold\">\"{{journeyName}}\"</span> and all its associated posts and collaborator permissions."
+  },
+  "publicJourneyPage": {
+    "loadingPublicJourney": "Loading public journey...",
+    "journeyNotFound": "Journey Not Found",
+    "journeyNotFoundDescription": "The public journey you are looking for does not exist or is not accessible.",
+    "returnToHome": "Return to Home",
+    "aJourneyBy": "A journey by {{author}}",
+    "createdOn": "Created on {{date}}",
+    "noPublicPosts": "This journey has no public posts yet.",
+    "checkBackLater": "Check back later!",
+    "noPostsWithLocation": "No posts with location data to display on the map.",
+    "addPostsWithLocation": "Add posts with location information to see them here!"
+  },
+  "notFoundPage": {
+    "oopsPageNotFound": "Oops! Page not found",
+    "returnToHome": "Return to Home"
+  },
+  "manageJourneyDialog": {
+    "manageJourney": "Manage journey: \"{{journeyName}}\"",
+    "updateDetailsCollaborators": "Update journey details or manage collaborators.",
+    "journeyOwner": "Journey owner",
+    "ownerFullAccess": "(Owner has full access and cannot be removed.)",
+    "journeyName": "Journey name",
+    "saveJourneyName": "Save journey name",
+    "publicAccess": "Public access",
+    "makeJourneyPublic": "Make journey public",
+    "shareableLink": "Shareable link:",
+    "copyLink": "Copy link",
+    "anyoneCanView": "Anyone with this link can view your journey's posts without logging in.",
+    "addNewCollaborator": "Add new collaborator",
+    "searchUsernameToAdd": "Search username to add...",
+    "addingCollaborator": "Adding <span class=\"font-bold text-primary\">{{username}}</span> as a collaborator. They will be able to read posts and publish posts on this journey by default.",
+    "addCollaborator": "Add collaborator",
+    "currentCollaborators": "Current collaborators ({{count}})",
+    "noCollaboratorsAdded": "No collaborators added yet.",
+    "allowCreatePosts": "Allow user to create new posts in this journey",
+    "allowEditPosts": "Allow user to edit existing posts in this journey",
+    "allowDeletePosts": "Allow user to delete posts from this journey",
+    "close": "Close",
+    "renaming": "Renaming..."
+  }
+}

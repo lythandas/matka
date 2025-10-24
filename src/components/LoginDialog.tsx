@@ -6,10 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
-// Removed Dialog imports as it will no longer be a modal
-
-const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
+const LoginDialog: React.FC = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { login } = useAuth();
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -20,20 +20,19 @@ const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
     setIsLoggingIn(true);
     await login(username, password);
     setIsLoggingIn(false);
-    // LoginPage will handle unmounting this component on successful login
   };
 
   return (
     <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground shadow-neon-blue bg-gradient-blue-light">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Login to your account</h2>
+        <h2 className="text-2xl font-bold">{t('auth.loginToYourAccount')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Enter your credentials to access your journeys and posts.
+          {t('auth.enterCredentials')}
         </p>
       </div>
       <form onSubmit={handleLogin} className="grid gap-4 py-4">
         <div className="grid gap-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username">{t('common.username')}</Label>
           <Input
             id="username"
             value={username}
@@ -44,13 +43,13 @@ const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t('common.password')}</Label>
           <Input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder={t('auth.passwordPlaceholder')}
             disabled={isLoggingIn}
             required
           />
@@ -60,10 +59,10 @@ const LoginDialog: React.FC = () => { // Removed isOpen and onClose props
             {isLoggingIn ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging in...
+                {t('auth.loggingIn')}
               </>
             ) : (
-              'Login'
+              t('auth.login')
             )}
           </Button>
         </div>

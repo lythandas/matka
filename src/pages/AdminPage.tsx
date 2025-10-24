@@ -27,8 +27,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 const AdminPage: React.FC = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const navigate = useNavigate();
   const { user: currentUser, token } = useAuth();
 
@@ -58,17 +60,17 @@ const AdminPage: React.FC = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch users');
+        throw new Error(t('common.failedToFetchUsers')); // Translated error
       }
       const data: User[] = await response.json();
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
-      showError('Failed to load users.');
+      showError(t('common.failedToLoadUsers')); // Translated error
     } finally {
       setLoadingUsers(false);
     }
-  }, [token, currentUser]);
+  }, [token, currentUser, t]);
 
   const fetchJourneys = useCallback(async () => { // New function to fetch journeys
     if (!token || !currentUser?.isAdmin) {
@@ -83,27 +85,27 @@ const AdminPage: React.FC = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch journeys');
+        throw new Error(t('common.failedToFetchJourneys')); // Translated error
       }
       const data: Journey[] = await response.json();
       setJourneys(data);
     } catch (error) {
       console.error('Error fetching journeys:', error);
-      showError('Failed to load journeys.');
+      showError(t('common.failedToLoadJourneys')); // Translated error
     } finally {
       setLoadingJourneys(false);
     }
-  }, [token, currentUser]);
+  }, [token, currentUser, t]);
 
   useEffect(() => {
     if (currentUser?.isAdmin) {
       fetchUsers();
       fetchJourneys(); // Fetch journeys when component mounts
     } else {
-      showError('Access denied: You must be an administrator to view this page.');
+      showError(t('common.accessDeniedAdminPage')); // Translated error
       navigate('/');
     }
-  }, [currentUser, navigate, fetchUsers, fetchJourneys]);
+  }, [currentUser, navigate, fetchUsers, fetchJourneys, t]);
 
   const handleUserCreated = (newUser: User) => {
     setUsers((prev) => [...prev, newUser]);
@@ -111,11 +113,11 @@ const AdminPage: React.FC = () => {
 
   const handleDeleteUser = async (userId: string, username: string) => {
     if (!token || !currentUser?.isAdmin) {
-      showError('Authentication required or not authorized to delete users.');
+      showError(t('common.authRequiredNotAuthorizedDeleteUsers')); // Translated error
       return;
     }
     if (currentUser.id === userId) {
-      showError('You cannot delete your own admin account.');
+      showError(t('common.cannotDeleteOwnAdminAccount')); // Translated error
       return;
     }
 
@@ -130,14 +132,14 @@ const AdminPage: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete user');
+        throw new Error(errorData.message || t('common.failedToDeleteUser')); // Translated error
       }
 
-      showSuccess(`User '${username}' deleted successfully!`);
+      showSuccess(t('common.userDeletedSuccessfully', { username })); // Translated success
       setUsers((prev) => prev.filter((user) => user.id !== userId));
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      showError(error.message || 'Failed to delete user.');
+      showError(error.message || t('common.failedToDeleteUser')); // Translated error
     } finally {
       setIsDeletingUser(false);
     }
@@ -159,7 +161,7 @@ const AdminPage: React.FC = () => {
 
   const handleDeleteJourney = async (journeyId: string, journeyName: string) => { // New function to delete journey
     if (!token || !currentUser?.isAdmin) {
-      showError('Authentication required or not authorized to delete journeys.');
+      showError(t('common.authRequiredNotAuthorizedDeleteJourneys')); // Translated error
       return;
     }
 
@@ -174,14 +176,14 @@ const AdminPage: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete journey');
+        throw new Error(errorData.message || t('common.failedToDeleteJourney')); // Translated error
       }
 
-      showSuccess(`Journey '${journeyName}' deleted successfully!`);
+      showSuccess(t('common.journeyDeletedSuccessfully', { journeyName })); // Translated success
       setJourneys((prev) => prev.filter((journey) => journey.id !== journeyId));
     } catch (error: any) {
       console.error('Error deleting journey:', error);
-      showError(error.message || 'Failed to delete journey.');
+      showError(error.message || t('common.failedToDeleteJourney')); // Translated error
     } finally {
       setIsDeletingJourney(false);
     }
@@ -192,41 +194,41 @@ const AdminPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8"> {/* Increased max-w */}
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between mb-8">
         <Button
           variant="outline"
           onClick={() => navigate('/')}
           className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Journeys
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t('common.backToJourneys')}
         </Button>
-        <h1 className="text-3xl font-bold">Admin dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('adminPage.adminDashboard')}</h1>
       </div>
 
       {/* Manage Users Section */}
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">Manage users</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('adminPage.manageUsers')}</CardTitle>
           <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-            <Plus className="mr-2 h-4 w-4" /> Create new user
+            <Plus className="mr-2 h-4 w-4" /> {t('adminPage.createNewUser')}
           </Button>
         </CardHeader>
         <CardContent>
           {loadingUsers ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="ml-2 text-gray-600 dark:text-gray-400">Loading users...</p>
+              <p className="ml-2 text-gray-600 dark:text-gray-400">{t('adminPage.loadingUsers')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Admin</TableHead>
-                    <TableHead>Created at</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('adminPage.user')}</TableHead>
+                    <TableHead>{t('adminPage.admin')}</TableHead>
+                    <TableHead>{t('adminPage.createdAt')}</TableHead>
+                    <TableHead className="text-right">{t('adminPage.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -249,7 +251,7 @@ const AdminPage: React.FC = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{user.isAdmin ? 'Yes' : 'No'}</TableCell>
+                      <TableCell>{user.isAdmin ? t('common.yes') : t('common.no')}</TableCell>
                       <TableCell>{format(new Date(user.created_at!), 'PPP')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
@@ -261,7 +263,7 @@ const AdminPage: React.FC = () => {
                             className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                           >
                             <KeyRound className="h-4 w-4" />
-                            <span className="sr-only">Reset password</span>
+                            <span className="sr-only">{t('adminPage.resetPassword')}</span>
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -272,22 +274,20 @@ const AdminPage: React.FC = () => {
                                 className="hover:ring-2 hover:ring-blue-500"
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete user</span>
+                                <span className="sr-only">{t('adminPage.deleteUser')}</span>
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the user{' '}
-                                  <span className="font-bold">@{user.username}</span> and all their associated
-                                  journeys, posts, and collaborations.
+                                  {t('adminPage.deleteUserDescription', { username: user.username })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.username)}>
-                                  Continue
+                                  {t('adminPage.continue')}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -306,25 +306,24 @@ const AdminPage: React.FC = () => {
       {/* Manage Journeys Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">Manage journeys</CardTitle>
-          {/* No "Create new journey" button here, as it's available in the main app */}
+          <CardTitle className="text-2xl font-bold">{t('adminPage.manageJourneys')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loadingJourneys ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="ml-2 text-gray-600 dark:text-gray-400">Loading journeys...</p>
+              <p className="ml-2 text-gray-600 dark:text-gray-400">{t('adminPage.loadingJourneys')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Journey Name</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Public</TableHead>
-                    <TableHead>Created at</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('adminPage.journeyName')}</TableHead>
+                    <TableHead>{t('adminPage.owner')}</TableHead>
+                    <TableHead>{t('adminPage.public')}</TableHead>
+                    <TableHead>{t('adminPage.createdAt')}</TableHead>
+                    <TableHead className="text-right">{t('adminPage.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -359,7 +358,7 @@ const AdminPage: React.FC = () => {
                             className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                           >
                             <Wrench className="h-4 w-4" />
-                            <span className="sr-only">Manage journey</span>
+                            <span className="sr-only">{t('adminPage.manageJourney')}</span>
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -370,22 +369,20 @@ const AdminPage: React.FC = () => {
                                 className="hover:ring-2 hover:ring-blue-500"
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete journey</span>
+                                <span className="sr-only">{t('adminPage.deleteJourney')}</span>
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the journey{' '}
-                                  <span className="font-bold">"{journey.name}"</span> and all its associated
-                                  posts and collaborator permissions.
+                                  {t('adminPage.deleteJourneyDescription', { journeyName: journey.name })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => handleDeleteJourney(journey.id, journey.name)}>
-                                  Continue
+                                  {t('adminPage.continue')}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>

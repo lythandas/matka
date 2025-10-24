@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"; // Import Select components
+import { useTranslation } from 'react-i18next'; // Import useTranslation
+import i18n from '@/i18n'; // Import i18n instance
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
@@ -36,6 +38,7 @@ interface ManageAccountDialogProps {
 }
 
 const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClose, currentUser }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { token, updateUser } = useAuth(); // Get token from useAuth
   const [name, setName] = useState<string>(currentUser.name || '');
   const [surname, setSurname] = useState<string>(currentUser.surname || '');
@@ -93,10 +96,10 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
       // For profile images, mediaInfo.urls.medium will contain the URL
       setProfileImageUrl(data.mediaInfo.urls.medium || data.mediaInfo.urls.original);
       setLocalPreviewUrl(null); // Clear local preview once server URL is available
-      showSuccess('Profile image uploaded successfully!');
+      showSuccess(t('common.successProfileImageUpload')); // Translated toast
     } catch (error: any) {
       console.error('Error uploading image:', error);
-      showError(error.message || 'Failed to upload image.');
+      showError(error.message || t('common.errorUploadingImage')); // Translated toast
       setSelectedFile(null);
       setProfileImageUrl(currentUser.profile_image_url); // Revert to current user's image on error
       setLocalPreviewUrl(null); // Clear local preview on error
@@ -110,7 +113,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
       const file = event.target.files[0];
 
       if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) { // Use new constant
-        showError(`Image size exceeds ${MAX_PROFILE_IMAGE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+        showError(t('common.imageSizeExceeds', { maxSize: MAX_PROFILE_IMAGE_SIZE_BYTES / (1024 * 1024) })); // Translated error
         setSelectedFile(null);
         setProfileImageUrl(currentUser.profile_image_url);
         setLocalPreviewUrl(null); // Clear local preview
@@ -119,7 +122,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
       }
 
       if (!file.type.startsWith('image/')) {
-        showError('Only image files are allowed for profile pictures.');
+        showError(t('common.onlyImageFilesAllowed')); // Translated error
         setSelectedFile(null);
         setProfileImageUrl(currentUser.profile_image_url);
         setLocalPreviewUrl(null); // Clear local preview
@@ -145,12 +148,12 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    showSuccess('Profile image cleared.');
+    showSuccess(t('manageAccountDialog.profileImageCleared')); // Translated toast
   };
 
   const handleSave = async () => {
     if (!token) {
-      showError('Authentication required to update profile.');
+      showError(t('common.authRequiredUpdateProfile')); // Translated error
       return;
     }
 
@@ -172,16 +175,17 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update profile');
+        throw new Error(errorData.message || t('common.failedToUpdateProfile')); // Translated error
       }
 
       const data = await response.json();
       updateUser(data.user, data.token); // Update context and local storage
-      showSuccess('Profile updated successfully!');
+      i18n.changeLanguage(selectedLanguage); // Change i18n language
+      showSuccess(t('common.profileUpdatedSuccessfully')); // Translated toast
       onClose();
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      showError(error.message || 'Failed to update profile.');
+      showError(error.message || t('common.failedToUpdateProfile')); // Translated error
     } finally {
       setIsSaving(false);
     }
@@ -193,9 +197,9 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Manage your account</DialogTitle>
+          <DialogTitle>{t('manageAccountDialog.manageYourAccount')}</DialogTitle>
           <DialogDescription>
-            Update your personal information and profile picture.
+            {t('manageAccountDialog.updatePersonalInfo')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -229,10 +233,10 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 {isUploadingImage ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+                    {t('common.uploading')}
                   </>
                 ) : (
-                  selectedFile ? selectedFile.name : (profileImageUrl ? "Change image" : "Upload image")
+                  selectedFile ? selectedFile.name : (profileImageUrl ? t('manageAccountDialog.changeImage') : t('manageAccountDialog.uploadImage'))
                 )}
               </Button>
               {profileImageUrl && (
@@ -249,13 +253,13 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
               )}
             </div>
             {isUploadingImage && (
-              <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+              <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('common.uploading')}</p>
             )}
           </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="username" className="text-right">
-              Username
+              {t('common.username')}
             </Label>
             <Input
               id="username"
@@ -266,48 +270,48 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Name
+              {t('common.name')}
             </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="col-span-3"
-              placeholder="Your first name"
+              placeholder={t('manageAccountDialog.yourFirstName')}
               disabled={isSaving || isUploadingImage}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="surname" className="text-right">
-              Surname
+              {t('common.surname')}
             </Label>
             <Input
               id="surname"
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
               className="col-span-3"
-              placeholder="Your last name"
+              placeholder={t('manageAccountDialog.yourLastName')}
               disabled={isSaving || isUploadingImage}
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="language" className="text-right">
-              Language
+              {t('common.language')}
             </Label>
             <Select value={selectedLanguage} onValueChange={setSelectedLanguage} disabled={isSaving || isUploadingImage}>
               <SelectTrigger id="language" className="col-span-3">
-                <SelectValue placeholder="Select a language" />
+                <SelectValue placeholder={t('manageAccountDialog.selectLanguage')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="en">{t('manageAccountDialog.english')}</SelectItem>
+                <SelectItem value="fr">{t('manageAccountDialog.french')}</SelectItem>
+                <SelectItem value="de">{t('manageAccountDialog.german')}</SelectItem>
+                <SelectItem value="es">{t('manageAccountDialog.spanish')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Theme</Label>
+            <Label className="text-right">{t('common.theme')}</Label>
             <div className="col-span-3">
               <ThreeButtonThemeToggle className="w-full justify-start" />
             </div>
@@ -315,16 +319,16 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-blue-500">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t('common.saving')}
               </>
             ) : (
-              'Save changes'
+              t('common.saveChanges')
             )}
           </Button>
         </DialogFooter>

@@ -20,15 +20,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import ManageJourneyDialog from './ManageJourneyDialog';
-// Removed FloatingCalendar import
-// Removed Post type import
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
-  // Removed posts, selectedDate, onDateSelect props
 }
 
 const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -52,15 +51,15 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
           )}
         >
-          {selectedJourney ? selectedJourney.name : "Select journey"}
+          {selectedJourney ? selectedJourney.name : t('topBar.selectJourney')}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className={isMobileView ? "w-full" : "w-56"} align={isMobileView ? "start" : "end"}>
-        <DropdownMenuLabel>Your journeys</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('topBar.journeys')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {loadingJourneys ? (
-          <DropdownMenuItem disabled>Loading journeys...</DropdownMenuItem>
+          <DropdownMenuItem disabled>{t('common.loadingJourneys')}</DropdownMenuItem>
         ) : (
           journeys.map((journey) => (
             <DropdownMenuItem
@@ -80,7 +79,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             <DropdownMenuItem onClick={() => {
               setIsCreateJourneyDialogOpen(true);
             }}>
-              <Plus className="mr-2 h-4 w-4" /> Create new journey
+              <Plus className="mr-2 h-4 w-4" /> {t('topBar.createNewJourney')}
             </DropdownMenuItem>
           </>
         )}
@@ -96,13 +95,13 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
                 <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">{t('topBar.toggleMenu')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
               <div className="p-4 border-b dark:border-gray-800 flex items-center">
                 <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-                <h1 className="text-xl font-extrabold text-blue-600 dark:text-foreground">Matka</h1>
+                <h1 className="text-xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
               </div>
               <nav className="flex-grow p-4 space-y-2">
                 {isAuthenticated && (
@@ -112,7 +111,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                       className="w-full justify-start text-lg font-semibold"
                       onClick={() => { navigate('/'); }}
                     >
-                      Journeys
+                      {t('topBar.journeys')}
                     </Button>
                     {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
                     {canManageSelectedJourney && (
@@ -121,7 +120,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         className="w-full justify-start text-lg font-semibold"
                         onClick={() => setIsManageJourneyDialogOpen(true)}
                       >
-                        <Wrench className="mr-2 h-4 w-4" /> Manage journey
+                        <Wrench className="mr-2 h-4 w-4" /> {t('topBar.manageJourney')}
                       </Button>
                     )}
                     {user?.isAdmin && ( // Only show Admin link if user is an admin
@@ -130,10 +129,9 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         className="w-full justify-start text-lg font-semibold"
                         onClick={() => navigate('/admin')}
                       >
-                        <Users className="mr-2 h-4 w-4" /> Admin (Users)
+                        <Users className="mr-2 h-4 w-4" /> {t('topBar.administration')}
                       </Button>
                     )}
-                    {/* Removed FloatingCalendar from mobile sidebar */}
                   </>
                 )}
               </nav>
@@ -143,7 +141,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
         {!isMobile && (
           <div className="flex items-center">
             <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-            <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">Matka</h1>
+            <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
           </div>
         )}
       </div>
@@ -159,10 +157,9 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
             >
               <Wrench className="h-4 w-4" />
-              <span className="sr-only">Manage journey</span>
+              <span className="sr-only">{t('topBar.manageJourney')}</span>
             </Button>
           )}
-          {/* Removed FloatingCalendar from desktop top bar */}
         </div>
       )}
 
@@ -177,7 +174,6 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
           journey={selectedJourney}
           onJourneyUpdated={() => {
             fetchJourneys(); // Refresh journeys list
-            // No need to fetch collaborators here, as ManageJourneyDialog handles its own collaborator fetching
           }}
         />
       )}

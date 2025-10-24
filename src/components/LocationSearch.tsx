@@ -8,6 +8,7 @@ import { Loader2, Search, MapPin, XCircle } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface LocationSearchProps {
   onSelectLocation: (coords: { lat: number; lng: number } | null) => void;
@@ -28,6 +29,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   currentCoordinates,
   disabled = false,
 }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
@@ -52,16 +54,16 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           `${NOMINATIM_API_URL}?q=${encodeURIComponent(searchTerm)}&format=json&limit=5`
         );
         if (!response.ok) {
-          throw new Error('Failed to fetch search results from OpenStreetMap.');
+          throw new Error(t('common.failedToFetchSearchResults')); // Translated error
         }
         const data: NominatimResult[] = await response.json();
         setSearchResults(data);
         if (data.length === 0) {
-          showError('No results found for your search.');
+          showError(t('common.noResultsFound')); // Translated error
         }
       } catch (error: any) {
         console.error('Location search error:', error);
-        showError(error.message || 'Failed to search for locations.');
+        showError(error.message || t('common.failedToSearchLocations')); // Translated error
         setSearchResults([]);
       } finally {
         setLoadingSearch(false);
@@ -73,14 +75,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [searchTerm]);
+  }, [searchTerm, t]);
 
   const handleSelectResult = (result: NominatimResult) => {
     setSelectedSearchResult(result);
     onSelectLocation({ lat: parseFloat(result.lat), lng: parseFloat(result.lon) });
     setSearchResults([]); // Clear search results after selection
     setSearchTerm(result.display_name); // Set search term to display name
-    showSuccess(`Location selected: ${result.display_name}`);
+    showSuccess(t('common.locationSelected', { location: result.display_name })); // Translated success
   };
 
   const handleClearSearch = () => {
@@ -92,11 +94,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="location-search">Search for a location</Label>
+      <Label htmlFor="location-search">{t('locationSearch.searchForLocation')}</Label>
       <div className="flex items-center space-x-2">
         <Input
           id="location-search"
-          placeholder="Search for an address or place..."
+          placeholder={t('locationSearch.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           disabled={disabled}
@@ -118,7 +120,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
       {loadingSearch && (
         <div className="flex items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching...
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('locationSearch.searching')}
         </div>
       )}
 
@@ -142,7 +144,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       {currentCoordinates && (
         <div className="mt-4">
           <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
-            Selected: Lat: {currentCoordinates.lat.toFixed(4)}, Lng: {currentCoordinates.lng.toFixed(4)}
+            {t('locationSearch.selected', { lat: currentCoordinates.lat.toFixed(4), lng: currentCoordinates.lng.toFixed(4) })}
           </p>
           <MapComponent coordinates={currentCoordinates} className="h-48" />
         </div>

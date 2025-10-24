@@ -20,8 +20,10 @@ import { Button } from '@/components/ui/button';
 import SortToggle from '@/components/SortToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 const PublicJourneyPage: React.FC = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
   const { isAuthenticated } = useAuth();
   const [journey, setJourney] = useState<Journey | null>(null);
@@ -38,7 +40,7 @@ const PublicJourneyPage: React.FC = () => {
 
   const fetchJourney = useCallback(async () => {
     if (!ownerUsername || !journeyName) {
-      setError('Journey owner username or journey name is missing from the URL.');
+      setError(t('publicJourneyPage.journeyOwnerOrNameMissing')); // Translated error
       setLoadingJourney(false);
       return null;
     }
@@ -47,21 +49,21 @@ const PublicJourneyPage: React.FC = () => {
       const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${journeyName}`);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch public journey');
+        throw new Error(errorData.message || t('common.failedToFetchPublicJourney')); // Translated error
       }
       const data: Journey = await response.json();
       setJourney(data);
       return data.id;
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
-      setError(err.message || 'Failed to load journey. It might not exist or is not public.');
-      showError(err.message || 'Failed to load journey.');
+      setError(err.message || t('common.failedToLoadJourneyNotPublic')); // Translated error
+      showError(err.message || t('common.failedToLoadJourney')); // Translated error
       setJourney(null);
       return null;
     } finally {
       setLoadingJourney(false);
     }
-  }, [ownerUsername, journeyName]);
+  }, [ownerUsername, journeyName, t]);
 
   const fetchPosts = useCallback(async (id: string) => {
     if (!id) {
@@ -73,19 +75,19 @@ const PublicJourneyPage: React.FC = () => {
       const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts`);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch public posts');
+        throw new Error(errorData.message || t('common.failedToFetchPublicPosts')); // Translated error
       }
       const data: Post[] = await response.json();
       setPosts(data);
     } catch (err: any) {
       console.error('Error fetching public posts:', err);
-      setError(err.message || 'Failed to load posts for this journey.');
-      showError(err.message || 'Failed to load posts.');
+      setError(err.message || t('common.failedToLoadPostsForJourney')); // Translated error
+      showError(err.message || t('common.failedToLoadPosts')); // Translated error
       setPosts([]);
     } finally {
       setLoadingPosts(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const loadJourneyAndPosts = async () => {
@@ -146,26 +148,26 @@ const PublicJourneyPage: React.FC = () => {
     pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-        <p className="text-lg text-gray-600 dark:text-gray-400">Loading public journey...</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400">{t('publicJourneyPage.loadingPublicJourney')}</p>
       </div>
     );
   } else if (error) {
     pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 text-center">
-        <h1 className="text-4xl font-bold text-red-600 mb-4">Error</h1>
+        <h1 className="text-4xl font-bold text-red-600 mb-4">{t('common.error')}</h1>
         <p className="text-xl text-gray-700 dark:text-gray-300 mb-6">{error}</p>
         <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
+          {t('publicJourneyPage.returnToHome')}
         </a>
       </div>
     );
   } else if (!journey) {
     pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 text-center">
-        <h1 className="text-4xl font-bold text-gray-700 dark:text-gray-300 mb-4">Journey Not Found</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">The public journey you are looking for does not exist or is not accessible.</p>
+        <h1 className="text-4xl font-bold text-gray-700 dark:text-gray-300 mb-4">{t('publicJourneyPage.journeyNotFound')}</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">{t('publicJourneyPage.journeyNotFoundDescription')}</p>
         <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
+          {t('publicJourneyPage.returnToHome')}
         </a>
       </div>
     );
@@ -180,10 +182,10 @@ const PublicJourneyPage: React.FC = () => {
                 {journey.name}
               </CardTitle>
               <p className="text-lg text-gray-600 dark:text-gray-400">
-                A journey by {journey.owner_name || journey.owner_username}
+                {t('publicJourneyPage.aJourneyBy', { author: journey.owner_name || journey.owner_username })}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Created on {format(new Date(journey.created_at), 'PPP')}
+                {t('publicJourneyPage.createdOn', { date: format(new Date(journey.created_at), 'PPP') })}
               </p>
             </CardHeader>
           </Card>
@@ -204,10 +206,10 @@ const PublicJourneyPage: React.FC = () => {
             <div className="text-center py-12">
               <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
               <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                This journey has no public posts yet.
+                {t('publicJourneyPage.noPublicPosts')}
               </p>
               <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                Check back later!
+                {t('publicJourneyPage.checkBackLater')}
               </p>
             </div>
           ) : (
@@ -255,12 +257,12 @@ const PublicJourneyPage: React.FC = () => {
                               {mediaItem.type === 'image' && mediaItem.urls.large && (
                                 <img
                                   src={mediaItem.urls.large}
-                                  alt={`Post image ${mediaIndex + 1}`}
+                                  alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
                                   className="w-full h-auto max-h-96 object-cover rounded-md"
                                   onError={(e) => {
                                     e.currentTarget.src = '/placeholder.svg';
                                     e.currentTarget.onerror = null;
-                                    console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                    console.error(t('common.failedToLoadImage'), mediaItem.urls.large); // Translated error
                                   }}
                                 />
                               )}
@@ -311,10 +313,10 @@ const PublicJourneyPage: React.FC = () => {
                 <div className="text-center py-12">
                   <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
                   <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                    No posts with location data to display on the map.
+                    {t('publicJourneyPage.noPostsWithLocation')}
                   </p>
                   <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                    Add posts with location information to see them here!
+                    {t('publicJourneyPage.addPostsWithLocation')}
                   </p>
                 </div>
               )

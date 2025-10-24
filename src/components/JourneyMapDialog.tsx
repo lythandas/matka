@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react'; // Removed useState, useEffect, useRef
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Map as MapIcon } from 'lucide-react'; // Removed Loader2
-import { Post } from '@/types'; // Centralized Post interface
-import MapComponent from './MapComponent'; // Import the enhanced MapComponent
+import { Map as MapIcon } from 'lucide-react';
+import { Post } from '@/types';
+import MapComponent from './MapComponent';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface JourneyMapDialogProps {
   isOpen: boolean;
@@ -20,15 +21,16 @@ interface JourneyMapDialogProps {
 }
 
 const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, posts, onSelectPost }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const postsWithCoordinates = posts.filter(post => post.coordinates);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[90vw] max-w-[98vw] h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Journey Map</DialogTitle>
+          <DialogTitle>{t('journeyMapDialog.journeyMap')}</DialogTitle>
           <DialogDescription>
-            Explore the locations of posts in this journey. Click a pin to view the post details.
+            {t('journeyMapDialog.explorePostLocations')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow relative rounded-md overflow-hidden">
@@ -37,12 +39,12 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
               posts={postsWithCoordinates}
               onMarkerClick={onSelectPost}
               className="w-full h-full"
-              zoom={12} // Default zoom when fitting bounds, can be adjusted
+              zoom={12}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
-              <p className="text-lg">No posts with location data found in this journey.</p>
+              <p className="text-lg">{t('journeyMapDialog.noPostsWithLocation')}</p>
             </div>
           )}
         </div>

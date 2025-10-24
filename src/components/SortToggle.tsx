@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface SortToggleProps {
   sortOrder: 'asc' | 'desc';
@@ -13,11 +14,12 @@ interface SortToggleProps {
 }
 
 const SortToggle: React.FC<SortToggleProps> = ({ sortOrder, onSortOrderChange, className }) => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const handleToggleSort = () => {
     onSortOrderChange(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const tooltipText = sortOrder === 'desc' ? 'Newest First' : 'Oldest First';
+  const tooltipText = sortOrder === 'desc' ? t('sortToggle.newestFirst') : t('sortToggle.oldestFirst');
   const Icon = sortOrder === 'desc' ? ArrowDownWideNarrow : ArrowUpWideNarrow;
 
   return (

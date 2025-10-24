@@ -1,0 +1,227 @@
+{
+  "app": {
+    "name": "Matka",
+    "footer": "Fait avec Dyad"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "saveChanges": "Sauvegarder les modifications",
+    "uploading": "Téléchargement...",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "name": "Prénom",
+    "surname": "Nom de famille",
+    "language": "Langue",
+    "theme": "Thème",
+    "backToJourneys": "Retour aux voyages",
+    "noUsersFound": "Aucun utilisateur trouvé.",
+    "search": "Rechercher"
+  },
+  "auth": {
+    "loginToYourAccount": "Connectez-vous à votre compte",
+    "enterCredentials": "Entrez vos identifiants pour accéder à vos voyages et publications.",
+    "loggingIn": "Connexion en cours...",
+    "login": "Connexion",
+    "welcomeRegisterAdmin": "Bienvenue ! Enregistrez votre compte administrateur",
+    "firstAdminAccount": "Ce sera le premier (et unique) utilisateur que vous pourrez enregistrer. Cet utilisateur sera un administrateur.",
+    "confirmPassword": "Confirmer le mot de passe",
+    "registering": "Enregistrement...",
+    "registerAdmin": "Enregistrer l'administrateur",
+    "checkingUserStatus": "Vérification du statut de l'utilisateur...",
+    "register": "S'inscrire"
+  },
+  "topBar": {
+    "journeys": "Voyages",
+    "manageJourney": "Gérer le voyage",
+    "administration": "Administration",
+    "toggleMenu": "Basculer le menu",
+    "selectJourney": "Sélectionner un voyage",
+    "createNewJourney": "Créer un nouveau voyage"
+  },
+  "userProfileDropdown": {
+    "administration": "Administration",
+    "manageAccount": "Gérer le compte",
+    "logOut": "Se déconnecter",
+    "openUserMenu": "Ouvrir le menu utilisateur"
+  },
+  "manageAccountDialog": {
+    "manageYourAccount": "Gérer votre compte",
+    "updatePersonalInfo": "Mettez à jour vos informations personnelles et votre photo de profil.",
+    "yourFirstName": "Votre prénom",
+    "yourLastName": "Votre nom de famille",
+    "uploadImage": "Télécharger une image",
+    "changeImage": "Changer l'image",
+    "profileImageCleared": "Image de profil effacée.",
+    "selectLanguage": "Sélectionner une langue",
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español"
+  },
+  "themeToggle": {
+    "toggleDarkTheme": "Basculer le thème sombre",
+    "toggleSystemTheme": "Basculer le thème système",
+    "toggleLightTheme": "Basculer le thème clair",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "sortToggle": {
+    "newestFirst": "Du plus récent au plus ancien",
+    "oldestFirst": "Du plus ancien au plus récent"
+  },
+  "viewToggle": {
+    "listView": "Vue liste",
+    "gridView": "Vue grille",
+    "mapView": "Vue carte"
+  },
+  "createJourneyDialog": {
+    "createNewJourney": "Créer un nouveau voyage",
+    "giveJourneyName": "Donnez un nom à votre nouveau voyage. Ce sera une collection de vos publications.",
+    "journeyName": "Nom du voyage",
+    "mySummerTrip": "ex: Mon voyage d'été",
+    "creating": "Création...",
+    "createJourney": "Créer le voyage"
+  },
+  "createUserDialog": {
+    "createNewUser": "Créer un nouvel utilisateur",
+    "fillUserDetails": "Remplissez les détails du nouveau compte utilisateur.",
+    "newUsername": "ex: nouvelutilisateur",
+    "passwordPlaceholder": "••••••••",
+    "firstNameOptional": "Prénom (facultatif)",
+    "lastNameOptional": "Nom de famille (facultatif)",
+    "creating": "Création...",
+    "createUser": "Créer l'utilisateur"
+  },
+  "resetPasswordDialog": {
+    "resetPasswordFor": "Réinitialiser le mot de passe pour {{username}}",
+    "enterNewPassword": "Entrez un nouveau mot de passe pour cet utilisateur.",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "resetting": "Réinitialisation...",
+    "resetPassword": "Réinitialiser le mot de passe"
+  },
+  "editPostDialog": {
+    "editPost": "Modifier la publication",
+    "modifyPostContent": "Modifiez le contenu de votre publication.",
+    "titlePlaceholder": "Ajouter un titre (facultatif)",
+    "messagePlaceholder": "Qu'avez-vous en tête aujourd'hui ?",
+    "postDate": "Date de publication",
+    "media": "Média",
+    "location": "Emplacement",
+    "uploadMedia": "Télécharger des images ou des vidéos (Max {{maxSize}}Mo par fichier)",
+    "changeAddMedia": "Changer/Ajouter média",
+    "chooseMedia": "Choisir média",
+    "uploadingMedia": "Téléchargement...",
+    "getCurrentLocation": "Obtenir l'emplacement actuel",
+    "searchLocation": "Rechercher un emplacement",
+    "gettingLocation": "Obtention de l'emplacement...",
+    "clearLocation": "Effacer l'emplacement",
+    "saving": "Sauvegarde...",
+    "saveChanges": "Sauvegarder les modifications"
+  },
+  "locationSearch": {
+    "searchForLocation": "Rechercher un emplacement",
+    "searchPlaceholder": "Rechercher une adresse ou un lieu...",
+    "searching": "Recherche...",
+    "selected": "Sélectionné: Lat: {{lat}}, Lng: {{lng}}"
+  },
+  "journeyMapDialog": {
+    "journeyMap": "Carte du voyage",
+    "explorePostLocations": "Explorez les emplacements des publications de ce voyage. Cliquez sur une épingle pour voir les détails de la publication.",
+    "noPostsWithLocation": "Aucune publication avec des données de localisation trouvée dans ce voyage."
+  },
+  "postDetailDialog": {
+    "postDetails": "Détails de la publication",
+    "by": "Par {{author}} • {{date}}",
+    "failedToLoadImage": "Échec du chargement de l'image.",
+    "fullscreenNotSupported": "Le mode plein écran n'est pas pris en charge par votre navigateur.",
+    "failedToEnterFullscreen": "Échec de l'activation du mode plein écran."
+  },
+  "gridPostCard": {
+    "untitledPost": "Publication sans titre"
+  },
+  "indexPage": {
+    "shareYourDay": "Partagez votre journée",
+    "titleOptional": "Ajouter un titre (facultatif)",
+    "messagePlaceholder": "Qu'avez-vous en tête aujourd'hui ?",
+    "contentPreview": "Aperçu du contenu :",
+    "uploadMedia": "Télécharger des médias",
+    "getLocation": "Obtenir l'emplacement",
+    "post": "Publier",
+    "noJourneysYet": "Vous n'avez pas encore de voyages !",
+    "startByCreatingJourney": "Commencez par créer votre premier voyage.",
+    "loadingJourneys": "Chargement des voyages...",
+    "yourJourneyAwaits": "Votre voyage vous attend ! Commencez par ajouter votre première publication.",
+    "useShareSection": "Utilisez la section \"Partagez votre journée\" ci-dessus pour commencer.",
+    "loadingPosts": "Chargement des publications...",
+    "noPostsWithLocation": "Aucune publication avec des données de localisation à afficher sur la carte.",
+    "addPostsWithLocation": "Ajoutez des publications avec des informations de localisation pour les voir ici !"
+  },
+  "adminPage": {
+    "adminDashboard": "Tableau de bord administrateur",
+    "manageUsers": "Gérer les utilisateurs",
+    "createNewUser": "Créer un nouvel utilisateur",
+    "loadingUsers": "Chargement des utilisateurs...",
+    "user": "Utilisateur",
+    "admin": "Admin",
+    "createdAt": "Créé le",
+    "actions": "Actions",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "deleteUser": "Supprimer l'utilisateur",
+    "areYouSure": "Êtes-vous absolument sûr ?",
+    "deleteUserDescription": "Cette action est irréversible. Cela supprimera définitivement l'utilisateur <span class=\"font-bold\">@{{username}}</span> et tous ses voyages, publications et collaborations associés.",
+    "continue": "Continuer",
+    "manageJourneys": "Gérer les voyages",
+    "loadingJourneys": "Chargement des voyages...",
+    "journeyName": "Nom du voyage",
+    "owner": "Propriétaire",
+    "public": "Public",
+    "manageJourney": "Gérer le voyage",
+    "deleteJourney": "Supprimer le voyage",
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class=\"font-bold\">\"{{journeyName}}\"</span> et toutes ses publications et autorisations de collaborateurs associées."
+  },
+  "publicJourneyPage": {
+    "loadingPublicJourney": "Chargement du voyage public...",
+    "journeyNotFound": "Voyage introuvable",
+    "journeyNotFoundDescription": "Le voyage public que vous recherchez n'existe pas ou n'est pas accessible.",
+    "returnToHome": "Retour à l'accueil",
+    "aJourneyBy": "Un voyage par {{author}}",
+    "createdOn": "Créé le {{date}}",
+    "noPublicPosts": "Ce voyage n'a pas encore de publications publiques.",
+    "checkBackLater": "Revenez plus tard !",
+    "noPostsWithLocation": "Aucune publication avec des données de localisation à afficher sur la carte.",
+    "addPostsWithLocation": "Ajoutez des publications avec des informations de localisation pour les voir ici !"
+  },
+  "notFoundPage": {
+    "oopsPageNotFound": "Oups ! Page introuvable",
+    "returnToHome": "Retour à l'accueil"
+  },
+  "manageJourneyDialog": {
+    "manageJourney": "Gérer le voyage : \"{{journeyName}}\"",
+    "updateDetailsCollaborators": "Mettre à jour les détails du voyage ou gérer les collaborateurs.",
+    "journeyOwner": "Propriétaire du voyage",
+    "ownerFullAccess": "(Le propriétaire a un accès complet et ne peut pas être supprimé.)",
+    "journeyName": "Nom du voyage",
+    "saveJourneyName": "Sauvegarder le nom du voyage",
+    "publicAccess": "Accès public",
+    "makeJourneyPublic": "Rendre le voyage public",
+    "shareableLink": "Lien partageable :",
+    "copyLink": "Copier le lien",
+    "anyoneCanView": "Toute personne disposant de ce lien peut consulter les publications de votre voyage sans se connecter.",
+    "addNewCollaborator": "Ajouter un nouveau collaborateur",
+    "searchUsernameToAdd": "Rechercher un nom d'utilisateur à ajouter...",
+    "addingCollaborator": "Ajout de <span class=\"font-bold text-primary\">{{username}}</span> en tant que collaborateur. Il pourra lire et publier des publications sur ce voyage par défaut.",
+    "addCollaborator": "Ajouter un collaborateur",
+    "currentCollaborators": "Collaborateurs actuels ({{count}})",
+    "noCollaboratorsAdded": "Aucun collaborateur ajouté pour l'instant.",
+    "allowCreatePosts": "Autoriser l'utilisateur à créer de nouvelles publications dans ce voyage",
+    "allowEditPosts": "Autoriser l'utilisateur à modifier les publications existantes dans ce voyage",
+    "allowDeletePosts": "Autoriser l'utilisateur à supprimer des publications de ce voyage",
+    "close": "Fermer",
+    "renaming": "Renommage..."
+  }
+}

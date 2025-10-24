@@ -5,10 +5,12 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface ThemeToggleProps extends React.ComponentPropsWithoutRef<typeof Button> {}
 
 export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { theme, setTheme } = useTheme();
 
   const cycleTheme = () => {
@@ -28,10 +30,10 @@ export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
   }, [theme]);
 
   const tooltipText = React.useMemo(() => {
-    if (theme === "light") return "Toggle dark theme";
-    if (theme === "dark") return "Toggle system theme";
-    return "Toggle light theme";
-  }, [theme]);
+    if (theme === "light") return t('themeToggle.toggleDarkTheme');
+    if (theme === "dark") return t('themeToggle.toggleSystemTheme');
+    return t('themeToggle.toggleLightTheme');
+  }, [theme, t]);
 
   return (
     <Tooltip>

@@ -40,9 +40,10 @@ import JourneyMapDialog from '@/components/JourneyMapDialog';
 import PostDatePicker from './../components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
-// Removed ThemeToggle import as it's not needed here
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 const Index = () => {
+  const { t } = useTranslation(); // Initialize useTranslation
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
@@ -110,17 +111,17 @@ const Index = () => {
           setJourneyCollaborators([]);
           return;
         }
-        throw new Error('Failed to fetch journey collaborators');
+        throw new Error(t('common.failedToFetchJourneyCollaborators')); // Translated error
       }
       const data: JourneyCollaborator[] = await response.json();
       console.log(`Index.tsx: Fetched collaborators for journey ${journeyId}:`, data);
       setJourneyCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
-      showError('Failed to load journey collaborators.');
+      showError(t('common.failedToLoadJourneyCollaborators')); // Translated error
       setJourneyCollaborators([]);
     }
-  }, [user, token]);
+  }, [user, token, t]);
 
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
@@ -131,13 +132,13 @@ const Index = () => {
         },
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        throw new Error(t('common.failedToFetchPosts')); // Translated error
       }
       const data: Post[] = await response.json();
       setPosts(data);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      showError('Failed to load posts.');
+      showError(t('common.failedToLoadPosts')); // Translated error
     } finally {
       setLoadingPosts(false);
     }
@@ -154,7 +155,7 @@ const Index = () => {
       setLoadingPosts(false);
       setJourneyCollaborators([]);
     }
-  }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators, token]);
+  }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators, token, t]);
 
   const uploadMediaToServer = async (files: File[]) => {
     setIsUploadingMedia(true);
@@ -188,7 +189,7 @@ const Index = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || `Failed to upload media: ${file.name}`);
+          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name })); // Translated error
         }
 
         const data = await response.json();
@@ -196,10 +197,10 @@ const Index = () => {
       }
       setUploadedMediaItems((prev) => [...prev, ...newUploadedMedia]);
       setSelectedFiles([]);
-      showSuccess('Media uploaded successfully!');
+      showSuccess(t('common.mediaUploadedSuccessfully')); // Translated success
     } catch (error: any) {
       console.error('Error uploading media:', error);
-      showError(error.message || 'Failed to upload media.');
+      showError(error.message || t('common.failedToUploadMediaGeneric')); // Translated error
       setSelectedFiles([]);
     } finally {
       setIsUploadingMedia(false);
@@ -213,11 +214,11 @@ const Index = () => {
 
       for (const file of files) {
         if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
-          showError(`File '${file.name}' size exceeds ${MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024)}MB limit.`);
+          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })); // Translated error
           continue;
         }
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          showError(`File '${file.name}' is not an image or video.`);
+          showError(t('common.fileNotImageOrVideo', { fileName: file.name })); // Translated error
           continue;
         }
         validFiles.push(file);
@@ -237,12 +238,12 @@ const Index = () => {
 
   const handleRemoveMediaItem = (indexToRemove: number) => {
     setUploadedMediaItems((prev) => prev.filter((_, index) => index !== indexToRemove));
-    showSuccess('Media item removed.');
+    showSuccess(t('common.mediaItemRemoved')); // Translated success
   };
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      showError('Geolocation is not supported by your browser.');
+      showError(t('common.geolocationNotSupported')); // Translated error
       return;
     }
 
@@ -252,21 +253,21 @@ const Index = () => {
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
-        showSuccess('Location retrieved successfully!');
+        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated success
         setLoadingLocation(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
-        let errorMessage = 'Failed to get your location.';
+        let errorMessage = t('common.failedToGetLocation'); // Translated error
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Permission to access location was denied. Please enable it in your browser settings.';
+            errorMessage = t('common.permissionDeniedLocation'); // Translated error
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.';
+            errorMessage = t('common.locationUnavailable'); // Translated error
             break;
           case error.TIMEOUT:
-            errorMessage = 'The request to get user location timed out.';
+            errorMessage = t('common.locationRequestTimedOut'); // Translated error
             break;
         }
         showError(errorMessage);
@@ -281,19 +282,19 @@ const Index = () => {
   const handleClearLocation = () => {
     setCoordinates(null);
     setLocationSelectionMode('none');
-    showSuccess('Location cleared.');
+    showSuccess(t('common.locationCleared')); // Translated success
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!isAuthenticated) {
-      showError('You must be logged in to create a post.');
+      showError(t('common.authRequiredCreatePost')); // Translated error
       return;
     }
 
     if (!selectedJourney) {
-      showError('Please select a journey before creating a post.');
+      showError(t('common.selectJourneyBeforePost')); // Translated error
       return;
     }
 
@@ -304,16 +305,16 @@ const Index = () => {
     const canCreatePost = isOwner || isAdmin || canPublishAsCollaborator;
 
     if (!canCreatePost) {
-      showError('You do not have permission to create posts in this journey.');
+      showError(t('common.noPermissionCreatePost')); // Translated error
       return;
     }
 
     if (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) {
-      showError('Please enter a title, message, or add some content (media, location).');
+      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired')); // Translated error
       return;
     }
     if (isUploadingMedia) {
-      showError('Please wait for media uploads to finish.');
+      showError(t('common.pleaseWaitForMediaUploads')); // Translated error
       return;
     }
 
@@ -338,7 +339,7 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create post');
+        throw new Error(errorData.message || t('common.failedToCreatePost')); // Translated error
       }
 
       const newPost: Post = await response.json();
@@ -350,16 +351,16 @@ const Index = () => {
       setCoordinates(null);
       setLocationSelectionMode('none');
       setPostDate(new Date()); // Reset post date to today
-      showSuccess('Post created successfully!');
+      showSuccess(t('common.postCreatedSuccessfully')); // Translated success
     } catch (error: any) {
       console.error('Error creating post:', error);
-      showError(error.message || 'Failed to create post.');
+      showError(error.message || t('common.failedToCreatePost')); // Translated error
     }
   };
 
   const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string) => {
     if (!isAuthenticated) {
-      showError('You must be logged in to delete a post.');
+      showError(t('common.authRequiredDeletePost')); // Translated error
       return;
     }
 
@@ -370,7 +371,7 @@ const Index = () => {
     const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canDeleteAsCollaborator) {
-      showError('You do not have permission to delete this post.');
+      showError(t('common.noPermissionDeletePost')); // Translated error
       return;
     }
 
@@ -384,14 +385,14 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete post');
+        throw new Error(errorData.message || t('common.failedToDeletePost')); // Translated error
       }
 
       setPosts(posts.filter((post) => post.id !== id));
-      showSuccess('Post deleted successfully!');
+      showSuccess(t('common.postDeletedSuccessfully')); // Translated success
     } catch (error: any) {
       console.error('Error deleting post:', error);
-      showError(error.message || 'Failed to delete post.');
+      showError(error.message || t('common.failedToDeletePost')); // Translated error
     }
   };
 
@@ -453,15 +454,6 @@ const Index = () => {
   const canCreateJourneyUI = isAuthenticated; // All authenticated users can create journeys
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
-  // --- DEBUGGING LOGS ---
-  console.log("--- Index.tsx Debugging ---");
-  console.log("Current User (from AuthContext):", user);
-  console.log("Selected Journey (from JourneyContext):", selectedJourney);
-  console.log("Journey Collaborators (state):", journeyCollaborators);
-  console.log("canCreatePostUI:", canCreatePostUI);
-  console.log("---------------------------");
-  // --- END DEBUGGING LOGS ---
-
   let mainContent;
 
   if (!isAuthenticated) {
@@ -470,13 +462,12 @@ const Index = () => {
     mainContent = (
       <Card className="mb-8 shadow-lg shadow-neon-blue">
         <CardHeader className="flex flex-row items-center justify-end">
-          {/* Removed the "Manage Collaborators" button from here */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <Input
-                placeholder="Add a title (optional)"
+                placeholder={t('indexPage.titleOptional')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="flex-grow"
@@ -490,7 +481,7 @@ const Index = () => {
               />
             </div>
             <Textarea
-              placeholder="What's on your mind today?"
+              placeholder={t('indexPage.messagePlaceholder')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
@@ -500,7 +491,7 @@ const Index = () => {
 
             {(uploadedMediaItems.length > 0 || coordinates) && (
               <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-                <h4 className="text-lg font-semibold">Content preview:</h4>
+                <h4 className="text-lg font-semibold">{t('indexPage.contentPreview')}</h4>
                 {uploadedMediaItems.map((mediaItem, index) => (
                   <div key={index} className="relative">
                     {mediaItem.type === 'image' ? (
@@ -511,7 +502,7 @@ const Index = () => {
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder.svg';
                           e.currentTarget.onerror = null;
-                          console.error(`Failed to load media: ${mediaItem.urls.medium}`);
+                          console.error(t('common.failedToLoadMedia'), mediaItem.urls.medium); // Translated error
                         }}
                       />
                     ) : (
@@ -533,12 +524,12 @@ const Index = () => {
                   </div>
                 ))}
                 {isUploadingMedia && (
-                  <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">Uploading...</p>
+                  <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('common.uploading')}</p>
                 )}
                 {coordinates && (
                   <div className="relative">
                     <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
-                      Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+                      {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
                     </p>
                     <MapComponent coordinates={coordinates} className="h-48" />
                     <Button
@@ -576,12 +567,12 @@ const Index = () => {
                 {isUploadingMedia ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading Media...
+                    {t('indexPage.uploadingMedia')}
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload Media
+                    {t('indexPage.uploadMedia')}
                   </>
                 )}
               </Button>
@@ -596,11 +587,11 @@ const Index = () => {
                 {locationLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Getting location...
+                    {t('indexPage.gettingLocation')}
                   </>
                 ) : (
                   <>
-                    <LocateFixed className="mr-2 h-4 w-4" /> Get Location
+                    <LocateFixed className="mr-2 h-4 w-4" /> {t('indexPage.getLocation')}
                   </>
                 )}
               </Button>
@@ -614,7 +605,7 @@ const Index = () => {
                 className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
                 disabled={!canCreatePostUI || isUploadingMedia}
               >
-                <Search className="mr-2 h-4 w-4" /> Search Location
+                <Search className="mr-2 h-4 w-4" /> {t('indexPage.searchLocation')}
               </Button>
             </div>
 
@@ -630,7 +621,7 @@ const Index = () => {
 
             <div className="flex justify-center">
               <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
-                Post
+                {t('indexPage.post')}
               </Button>
             </div>
           </form>
@@ -642,17 +633,17 @@ const Index = () => {
       <div className="text-center py-12">
         <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
         <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-          You don't have any journeys yet!
+          {t('indexPage.noJourneysYet')}
         </p>
         <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
-          Start by creating your first journey.
+          {t('indexPage.startByCreatingJourney')}
         </p>
         {canCreateJourneyUI && (
           <Button
             onClick={() => setIsCreateJourneyDialogOpen(true)}
             className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
           >
-            <Plus className="mr-2 h-4 w-4" /> Create new journey
+            <Plus className="mr-2 h-4 w-4" /> {t('createJourneyDialog.createNewJourney')}
           </Button>
         )}
       </div>
@@ -661,7 +652,7 @@ const Index = () => {
     mainContent = (
       <div className="text-center py-12">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-        <p className="text-lg text-gray-600 dark:text-gray-400">Loading journeys...</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400">{t('indexPage.loadingJourneys')}</p>
       </div>
     );
   }
@@ -676,21 +667,20 @@ const Index = () => {
             <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
           </div>
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-          {/* ThemeToggle is intentionally removed from here as it's available in UserProfileDropdown */}
         </div>
       )}
 
       {loadingPosts ? (
-        <p className="text-center text-gray-600 dark:text-gray-400">Loading posts...</p>
+        <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
       ) : displayedPosts.length === 0 && selectedJourney ? (
         <div className="text-center py-12">
           <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
           <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-            Your journey awaits! Start by adding your first post.
+            {t('indexPage.yourJourneyAwaits')}
           </p>
           {isAuthenticated && canCreatePostUI && (
             <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-              Use the "Share your day" section above to begin.
+              {t('indexPage.useShareSection')}
             </p>
           )}
         </div>
@@ -757,7 +747,7 @@ const Index = () => {
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
                                   e.currentTarget.onerror = null;
-                                  console.error(`Failed to load image: ${mediaItem.urls.large}`);
+                                  console.error(t('common.failedToLoadImage'), mediaItem.urls.large); // Translated error
                                 }}
                               />
                             )}
@@ -795,16 +785,15 @@ const Index = () => {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your post
-                                    and remove its data from our servers.
+                                    {t('common.deletePostDescription')}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                    Continue
+                                    {t('adminPage.continue')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -847,10 +836,10 @@ const Index = () => {
             <div className="text-center py-12">
               <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
               <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                No posts with location data to display on the map.
+                {t('indexPage.noPostsWithLocation')}
               </p>
               <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                Add posts with location information to see them here!
+                {t('indexPage.addPostsWithLocation')}
               </p>
             </div>
           )
