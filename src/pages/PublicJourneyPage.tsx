@@ -20,11 +20,11 @@ import { Button } from '@/components/ui/button';
 import SortToggle from '@/components/SortToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
-import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
+import { useTranslation } from 'react-i18next';
+import { getDateFnsLocale } from '@/utils/date-locales';
 
 const PublicJourneyPage: React.FC = () => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
   const { isAuthenticated } = useAuth();
   const [journey, setJourney] = useState<Journey | null>(null);
@@ -34,32 +34,40 @@ const PublicJourneyPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
+  const currentLocale = getDateFnsLocale();
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
   const fetchJourney = useCallback(async () => {
+    console.log("PublicJourneyPage: Attempting to fetch journey with ownerUsername:", ownerUsername, "and journeyName:", journeyName);
     if (!ownerUsername || !journeyName) {
-      setError(t('publicJourneyPage.journeyOwnerOrNameMissing')); // Translated error
+      const errorMessage = t('publicJourneyPage.journeyOwnerOrNameMissing');
+      setError(errorMessage);
+      showError(errorMessage); // Show toast for immediate feedback
       setLoadingJourney(false);
       return null;
     }
     setLoadingJourney(true);
+    setError(null); // Clear previous errors
     try {
-      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${journeyName}`);
+      const encodedJourneyName = encodeURIComponent(journeyName); // Ensure journeyName is encoded for the URL
+      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToFetchPublicJourney')); // Translated error
+        const message = errorData.message || t('common.failedToFetchPublicJourney');
+        throw new Error(message);
       }
       const data: Journey = await response.json();
       setJourney(data);
+      console.log("PublicJourneyPage: Successfully fetched journey:", data);
       return data.id;
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
-      setError(err.message || t('common.failedToLoadJourneyNotPublic')); // Translated error
-      showError(err.message || t('common.failedToLoadJourney')); // Translated error
+      const errorMessage = err.message || t('common.failedToLoadJourneyNotPublic');
+      setError(errorMessage);
+      showError(errorMessage);
       setJourney(null);
       return null;
     } finally {
@@ -69,22 +77,27 @@ const PublicJourneyPage: React.FC = () => {
 
   const fetchPosts = useCallback(async (id: string) => {
     if (!id) {
+      console.warn("PublicJourneyPage: No journey ID provided to fetch posts.");
       setLoadingPosts(false);
       return;
     }
     setLoadingPosts(true);
+    setError(null); // Clear previous errors
     try {
       const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts`);
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToFetchPublicPosts')); // Translated error
+        const message = errorData.message || t('common.failedToFetchPublicPosts');
+        throw new Error(message);
       }
       const data: Post[] = await response.json();
       setPosts(data);
+      console.log("PublicJourneyPage: Successfully fetched posts:", data);
     } catch (err: any) {
       console.error('Error fetching public posts:', err);
-      setError(err.message || t('common.failedToLoadPostsForJourney')); // Translated error
-      showError(err.message || t('common.failedToLoadPosts')); // Translated error
+      const errorMessage = err.message || t('common.failedToLoadPostsForJourney');
+      setError(errorMessage);
+      showError(errorMessage);
       setPosts([]);
     } finally {
       setLoadingPosts(false);
@@ -93,15 +106,22 @@ const PublicJourneyPage: React.FC = () => {
 
   useEffect(() => {
     const loadJourneyAndPosts = async () => {
+      // Reset states when params change
+      setJourney(null);
+      setPosts([]);
+      setError(null);
+      setLoadingJourney(true);
+      setLoadingPosts(true);
+
       const id = await fetchJourney();
       if (id) {
-        fetchPosts(id);
+        await fetchPosts(id);
       } else {
-        setLoadingPosts(false);
+        setLoadingPosts(false); // Ensure loading is false if journey fetch fails
       }
     };
     loadJourneyAndPosts();
-  }, [fetchJourney, fetchPosts]);
+  }, [fetchJourney, fetchPosts, ownerUsername, journeyName]); // Added ownerUsername, journeyName to dependencies to re-trigger on URL change
 
   const handlePostClick = (post: Post, index: number) => {
     setSelectedPostForDetail(post);
@@ -264,7 +284,7 @@ const PublicJourneyPage: React.FC = () => {
                                   onError={(e) => {
                                     e.currentTarget.src = '/placeholder.svg';
                                     e.currentTarget.onerror = null;
-                                    console.error(t('common.failedToLoadImage'), mediaItem.urls.large); // Translated error
+                                    console.error(t('common.failedToLoadImage'), mediaItem.urls.large);
                                   }}
                                 />
                               )}

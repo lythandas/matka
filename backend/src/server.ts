@@ -340,12 +340,14 @@ fastify.get('/public/journeys/:id', async (request, reply) => {
 
 fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
   const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
+  const decodedJourneyName = decodeURIComponent(journeyName);
+  fastify.log.info(`Public Journey Request: ownerUsername=${ownerUsername}, decodedJourneyName=${decodedJourneyName}`); // Added for debugging
 
   const result = await dbClient.query(
     `SELECT j.* FROM journeys j
      JOIN users u ON j.user_id = u.id
      WHERE u.username ILIKE $1 AND j.name ILIKE $2 AND j.is_public = TRUE`,
-    [ownerUsername, decodeURIComponent(journeyName)]
+    [ownerUsername, decodedJourneyName]
   );
   const journey: Journey = result.rows[0];
 
