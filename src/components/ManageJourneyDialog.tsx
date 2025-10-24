@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Dialog, // Ensure Dialog is correctly imported
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -536,8 +536,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               <div className="space-y-4">
                 {collaborators.map((collab) => (
                   <div key={collab.user_id} className="border p-3 rounded-md">
-                    <div className="flex items-center justify-between gap-2"> {/* Adjusted gap */}
-                      <div className="flex items-center space-x-2 min-w-0"> {/* Added min-w-0 to allow shrinking */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2 min-w-0">
                         <Avatar className="h-9 w-9">
                           {collab.profile_image_url ? (
                             <AvatarImage src={collab.profile_image_url} alt={collab.name || collab.username} />
@@ -547,12 +547,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             </AvatarFallback>
                           )}
                         </Avatar>
-                        <div className="flex-grow truncate"> {/* Added truncate */}
+                        <div className="flex-grow truncate">
                           <p className="font-medium truncate">{collab.name || collab.username}</p>
                           {collab.name && <p className="text-sm text-muted-foreground truncate">@{collab.username}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1"> {/* Container for toggles and delete button */}
+                      <div className="flex items-center space-x-1">
                         <ToggleGroup
                           type="multiple"
                           value={[
@@ -570,7 +570,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                               can_delete_posts: newValues.includes('delete'),
                             });
                           }}
-                          className="flex space-x-1" {/* Changed to flex and smaller space */}
+                          className="flex space-x-1"
                           disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
                         >
                           {/* Can read posts */}
@@ -580,7 +580,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 value="read"
                                 aria-label="Toggle read permission"
                                 className={cn(
-                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  "h-7 w-7 p-0",
                                   collab.can_read_posts
                                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -601,7 +601,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 value="publish"
                                 aria-label="Toggle publish permission"
                                 className={cn(
-                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  "h-7 w-7 p-0",
                                   collab.can_publish_posts
                                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -622,7 +622,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 value="modify"
                                 aria-label="Toggle modify permission"
                                 className={cn(
-                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  "h-7 w-7 p-0",
                                   collab.can_modify_post
                                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -643,7 +643,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 value="delete"
                                 aria-label="Toggle delete permission"
                                 className={cn(
-                                  "h-7 w-7 p-0", // Smaller size, no padding
+                                  "h-7 w-7 p-0",
                                   collab.can_delete_posts
                                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -662,7 +662,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           size="icon"
                           onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
                           disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
-                          className="h-7 w-7 hover:ring-2 hover:ring-blue-500" // Smaller size
+                          className="h-7 w-7 hover:ring-2 hover:ring-blue-500"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
