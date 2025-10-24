@@ -88,7 +88,7 @@ interface Post {
 // Declare module 'fastify' to add 'user' property to FastifyRequest
 declare module 'fastify' {
   interface FastifyRequest {
-    user?: Omit<User, 'password_hash'>;
+    user?: Omit<User, 'password_hash'> & { isAdmin: boolean }; // Add isAdmin to request.user
   }
 }
 
@@ -194,7 +194,18 @@ const comparePassword = async (password: string, hash: string): Promise<boolean>
   return bcrypt.compare(password, hash);
 };
 
-const generateToken = (user: Omit<User, 'password_hash'>): string => {
+// Helper to transform DB user object to API user object
+const mapDbUserToApiUser = (dbUser: User): Omit<User, 'password_hash'> & { isAdmin: boolean } => ({
+  id: dbUser.id,
+  username: dbUser.username,
+  isAdmin: dbUser.is_admin, // Map is_admin to isAdmin
+  name: dbUser.name,
+  surname: dbUser.surname,
+  profile_image_url: dbUser.profile_image_url,
+  created_at: dbUser.created_at,
+});
+
+const generateToken = (user: Omit<User, 'password_hash'> & { isAdmin: boolean }): string => {
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
@@ -207,7 +218,7 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as Omit<User, 'password_hash'>;
+    const decoded = jwt.verify(token, JWT_SECRET) as Omit<User, 'password_hash'> & { isAdmin: boolean };
     request.user = decoded;
   } catch (err) {
     reply.code(401).send({ message: 'Invalid or expired token' });
@@ -257,17 +268,10 @@ fastify.post('/register', async (request, reply) => {
     [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.created_at]
   );
 
-  const userWithoutHash: Omit<User, 'password_hash'> = {
-    id: result.rows[0].id,
-    username: result.rows[0].username,
-    is_admin: result.rows[0].is_admin,
-    name: result.rows[0].name,
-    surname: result.rows[0].surname,
-    profile_image_url: result.rows[0].profile_image_url,
-    created_at: result.rows[0].created_at,
-  };
-  const token = generateToken(userWithoutHash);
-  return { user: userWithoutHash, token };
+  const userForApi = mapDbUserToApiUser(result.rows[0]);
+  fastify.log.info(`Backend /register: User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
+  const token = generateToken(userForApi);
+  return { user: userForApi, token };
 });
 
 // Login user
@@ -290,17 +294,10 @@ fastify.post('/login', async (request, reply) => {
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
 
-  const userWithoutHash: Omit<User, 'password_hash'> = {
-    id: user.id,
-    username: user.username,
-    is_admin: user.is_admin,
-    name: user.name,
-    surname: user.surname,
-    profile_image_url: user.profile_image_url,
-    created_at: user.created_at,
-  };
-  const token = generateToken(userWithoutHash);
-  return { user: userWithoutHash, token };
+  const userForApi = mapDbUserToApiUser(user);
+  fastify.log.info(`Backend /login: User ${userForApi.username} logged in. isAdmin: ${userForApi.isAdmin}`);
+  const token = generateToken(userForApi);
+  return { user: userForApi, token };
 });
 
 // Get a public journey by ID
@@ -366,7 +363,7 @@ fastify.register(async (authenticatedFastify) => {
     if (!user) {
       return reply.code(404).send({ message: 'User not found' });
     }
-    return user;
+    return mapDbUserToApiUser(user);
   });
 
   // Update current user profile
@@ -385,7 +382,7 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    const updatedUser: Omit<User, 'password_hash'> = result.rows[0];
+    const updatedUser = mapDbUserToApiUser(result.rows[0]);
     const newToken = generateToken(updatedUser);
     return { user: updatedUser, token: newToken };
   });
@@ -447,7 +444,7 @@ fastify.register(async (authenticatedFastify) => {
         [mediaInfo.urls.medium, request.user.id]
       );
       if (updateResult.rows.length > 0) {
-        request.user = updateResult.rows[0]; // Update request.user for new token generation
+        request.user = mapDbUserToApiUser(updateResult.rows[0]); // Update request.user for new token generation
       }
     }
 
@@ -458,20 +455,20 @@ fastify.register(async (authenticatedFastify) => {
 
   // Get all users (Admin only)
   authenticatedFastify.get('/users', async (request: FastifyRequest, reply) => {
-    if (!request.user || !request.user.is_admin) {
+    if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
     const result = await dbClient.query(
       'SELECT id, username, is_admin, name, surname, profile_image_url, created_at FROM users ORDER BY created_at DESC'
     );
-    return result.rows;
+    return result.rows.map(mapDbUserToApiUser); // Map all users
   });
 
   // Create a new user (Admin only)
   authenticatedFastify.post('/users', async (request: FastifyRequest, reply) => {
     const { username, password, name, surname } = request.body as { username?: string; password?: string; name?: string; surname?: string };
 
-    if (!request.user || !request.user.is_admin) {
+    if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can create users.' });
     }
     if (!username || !password) {
@@ -499,7 +496,7 @@ fastify.register(async (authenticatedFastify) => {
       'INSERT INTO users (id, username, password_hash, is_admin, name, surname, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, is_admin, name, surname, profile_image_url, created_at',
       [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.created_at]
     );
-    return result.rows[0];
+    return mapDbUserToApiUser(result.rows[0]); // Map the created user
   });
 
   // Update a user (Admin only)
@@ -507,7 +504,7 @@ fastify.register(async (authenticatedFastify) => {
     const { id } = request.params as { id: string };
     const { username, name, surname, profile_image_url, is_admin } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean };
 
-    if (!request.user || !request.user.is_admin) {
+    if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
     }
 
@@ -539,7 +536,7 @@ fastify.register(async (authenticatedFastify) => {
     if (result.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
-    return result.rows[0];
+    return mapDbUserToApiUser(result.rows[0]); // Map the updated user
   });
 
   // Reset user password (Admin only)
@@ -547,7 +544,7 @@ fastify.register(async (authenticatedFastify) => {
     const { id } = request.params as { id: string };
     const { newPassword } = request.body as { newPassword?: string };
 
-    if (!request.user || !request.user.is_admin) {
+    if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can reset user passwords.' });
     }
     if (!newPassword) {
@@ -568,7 +565,7 @@ fastify.register(async (authenticatedFastify) => {
   authenticatedFastify.delete('/users/:id', async (request: FastifyRequest, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user || !request.user.is_admin) {
+    if (!request.user || !request.user.isAdmin) { // Check isAdmin
       return reply.code(403).send({ message: 'Forbidden: Only administrators can delete users.' });
     }
     if (request.user.id === id) {
@@ -602,7 +599,7 @@ fastify.register(async (authenticatedFastify) => {
        WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
       [searchLower, searchLower, searchLower]
     );
-    return result.rows;
+    return result.rows.map(mapDbUserToApiUser); // Map search results
   });
 
   // --- Journey Management Routes ---
@@ -673,7 +670,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
@@ -706,7 +703,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = existingJourney.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
@@ -736,7 +733,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
@@ -769,7 +766,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -833,7 +830,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -872,7 +869,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
 
     if (!isOwner && !isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
@@ -907,7 +904,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_read_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
@@ -951,7 +948,7 @@ fastify.register(async (authenticatedFastify) => {
     }
 
     const isOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_publish_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
@@ -1020,7 +1017,7 @@ fastify.register(async (authenticatedFastify) => {
 
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_modify_post FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [existingPost.journey_id, request.user.id]
@@ -1074,7 +1071,7 @@ fastify.register(async (authenticatedFastify) => {
 
     const isPostAuthor = existingPost.user_id === request.user.id;
     const isJourneyOwner = journey.user_id === request.user.id;
-    const isAdmin = request.user.is_admin;
+    const isAdmin = request.user.isAdmin; // Check isAdmin
     const collaboratorPermsResult = await dbClient.query(
       'SELECT can_delete_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [existingPost.journey_id, request.user.id]
