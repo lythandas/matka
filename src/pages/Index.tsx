@@ -37,7 +37,7 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import LocationSearch from '@/components/LocationSearch';
 import JourneyMapDialog from '@/components/JourneyMapDialog';
-import PostDatePicker from '@/components/PostDatePicker';
+import PostDatePicker from './../components/PostDatePicker';
 import { useIsMobile } from '@/hooks/use-mobile';
 import SortToggle from '@/components/SortToggle';
 // Removed ThemeToggle import as it's not needed here
@@ -93,9 +93,11 @@ const Index = () => {
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
+      console.log("Index.tsx: Not authenticated or user/token missing, cannot fetch collaborators.");
       setJourneyCollaborators([]);
       return;
     }
+    console.log(`Index.tsx: Fetching collaborators for journey ${journeyId} with user ${user.username} (ID: ${user.id})`);
     try {
       const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
         headers: {
@@ -104,15 +106,18 @@ const Index = () => {
       });
       if (!response.ok) {
         if (response.status === 403 || response.status === 401) {
+          console.warn(`Index.tsx: Access denied to fetch collaborators for journey ${journeyId}. Status: ${response.status}`);
           setJourneyCollaborators([]);
           return;
         }
         throw new Error('Failed to fetch journey collaborators');
       }
       const data: JourneyCollaborator[] = await response.json();
+      console.log(`Index.tsx: Fetched collaborators for journey ${journeyId}:`, data);
       setJourneyCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
+      showError('Failed to load journey collaborators.');
       setJourneyCollaborators([]);
     }
   }, [user, token]);
@@ -140,9 +145,11 @@ const Index = () => {
 
   useEffect(() => {
     if (selectedJourney) {
+      console.log("Index.tsx: selectedJourney changed, fetching posts and collaborators for:", selectedJourney.id);
       fetchPosts(selectedJourney.id);
       fetchJourneyCollaborators(selectedJourney.id);
     } else {
+      console.log("Index.tsx: No selectedJourney, clearing posts and collaborators.");
       setPosts([]);
       setLoadingPosts(false);
       setJourneyCollaborators([]);
@@ -445,6 +452,15 @@ const Index = () => {
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
   const canCreateJourneyUI = isAuthenticated; // All authenticated users can create journeys
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
+
+  // --- DEBUGGING LOGS ---
+  console.log("--- Index.tsx Debugging ---");
+  console.log("Current User (from AuthContext):", user);
+  console.log("Selected Journey (from JourneyContext):", selectedJourney);
+  console.log("Journey Collaborators (state):", journeyCollaborators);
+  console.log("canCreatePostUI:", canCreatePostUI);
+  console.log("---------------------------");
+  // --- END DEBUGGING LOGS ---
 
   let mainContent;
 
