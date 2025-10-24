@@ -128,7 +128,8 @@
     "registering": "Enregistrement...",
     "registerAdmin": "Enregistrer l'administrateur",
     "checkingUserStatus": "Vérification du statut de l'utilisateur...",
-    "register": "S'inscrire"
+    "register": "S'inscrire",
+    "passwordPlaceholder": "••••••••"
   },
   "topBar": {
     "journeys": "Voyages",
@@ -227,7 +228,7 @@
     "searchForLocation": "Rechercher un emplacement",
     "searchPlaceholder": "Rechercher une adresse ou un lieu...",
     "searching": "Recherche...",
-    "selected": "Sélectionné: Lat: {{lat}}, Lng: {{lng}}"
+    "selected": "Position sélectionnée : Lat: {{lat}}, Lng: {{lng}}"
   },
   "journeyMapDialog": {
     "journeyMap": "Carte du voyage",

@@ -128,7 +128,8 @@
     "registering": "Registering...",
     "registerAdmin": "Register admin",
     "checkingUserStatus": "Checking user status...",
-    "register": "Register"
+    "register": "Register",
+    "passwordPlaceholder": "••••••••"
   },
   "topBar": {
     "journeys": "Journeys",

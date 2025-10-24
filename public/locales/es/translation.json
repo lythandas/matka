@@ -128,7 +128,8 @@
     "registering": "Registrando...",
     "registerAdmin": "Registrar administrador",
     "checkingUserStatus": "Comprobando estado del usuario...",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "passwordPlaceholder": "••••••••"
   },
   "topBar": {
     "journeys": "Viajes",
@@ -300,7 +301,7 @@
   },
   "notFoundPage": {
     "oopsPageNotFound": "¡Ups! Página no encontrada",
-    "returnToHome": "Volver al inicio"
+    "returnTo Home": "Volver al inicio"
   },
   "manageJourneyDialog": {
     "manageJourney": "Gestionar viaje: \"{{journeyName}}\"",

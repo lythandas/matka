@@ -128,7 +128,8 @@
     "registering": "Registrierung läuft...",
     "registerAdmin": "Admin registrieren",
     "checkingUserStatus": "Benutzerstatus wird überprüft...",
-    "register": "Registrieren"
+    "register": "Registrieren",
+    "passwordPlaceholder": "••••••••"
   },
   "topBar": {
     "journeys": "Reisen",
