@@ -333,7 +333,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 {isUploadingMedia ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('common.uploading')}
+                  </>
                 ) : (
                   newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} ${t('common.filesSelected')}` : (currentMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
                 )}
@@ -426,7 +429,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   setLocationSelectionMode('search');
                   setCoordinates(null);
                 }}
-                className="flex-1 hover:ring-2 hover:ring-blue-500"
+                className="flex-1 hover:ring-2 hover:ring-blue-500 whitespace-normal h-auto py-2"
                 disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 <Search className="mr-2 h-4 w-4" /> {t('editPostDialog.searchLocation')}
