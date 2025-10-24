@@ -218,7 +218,8 @@
     "gettingLocation": "Obteniendo ubicación...",
     "clearLocation": "Borrar ubicación",
     "saving": "Guardando...",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "clickGetLocation": "Haz clic en 'Obtener ubicación actual' para obtener tu posición."
   },
   "locationSearch": {
     "searchForLocation": "Buscar una ubicación",

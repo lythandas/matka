@@ -218,7 +218,8 @@
     "gettingLocation": "Standort wird abgerufen...",
     "clearLocation": "Standort löschen",
     "saving": "Wird gespeichert...",
-    "saveChanges": "Änderungen speichern"
+    "saveChanges": "Änderungen speichern",
+    "clickGetLocation": "Klicken Sie auf „Aktuellen Standort abrufen“, um Ihre Position abzurufen."
   },
   "locationSearch": {
     "searchForLocation": "Standort suchen",

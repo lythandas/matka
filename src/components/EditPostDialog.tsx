@@ -23,9 +23,9 @@ import { Post, MediaInfo, JourneyCollaborator } from '@/types';
 import LocationSearch from './LocationSearch';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import PostDatePicker from './PostDatePicker'; // Import PostDatePicker
-import { parseISO } from 'date-fns'; // Import parseISO
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import PostDatePicker from './PostDatePicker';
+import { parseISO } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ interface EditPostDialogProps {
 }
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const { user: currentUser, token } = useAuth();
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
@@ -53,7 +53,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentMediaPreviewIndex, setCurrentMediaPreviewIndex] = useState(0);
-  const [postDate, setPostDate] = useState<Date | undefined>(post.created_at ? parseISO(post.created_at) : undefined); // New state for post date
+  const [postDate, setPostDate] = useState<Date | undefined>(post.created_at ? parseISO(post.created_at) : undefined);
 
   useEffect(() => {
     setTitle(post.title || '');
@@ -64,7 +64,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     setCoordinates(post.coordinates || null);
     setLocationSelectionMode(post.coordinates ? 'current' : 'search');
     setCurrentMediaPreviewIndex(0);
-    setPostDate(post.created_at ? parseISO(post.created_at) : undefined); // Initialize post date
+    setPostDate(post.created_at ? parseISO(post.created_at) : undefined);
   }, [post, isOpen]);
 
   const uploadMediaToServer = async (files: File[]) => {
@@ -99,7 +99,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name })); // Translated error
+          throw new Error(errorData.message || t('common.failedToUploadMedia', { fileName: file.name }));
         }
 
         const data = await response.json();
@@ -108,10 +108,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       setCurrentMediaItems((prev) => [...prev, ...uploadedMedia]);
       setNewlySelectedFiles([]);
       setLocalPreviewUrls([]);
-      showSuccess(t('common.mediaUploadedSuccessfully')); // Translated success
+      showSuccess(t('common.mediaUploadedSuccessfully'));
     } catch (error: any) {
       console.error('Error uploading media:', error);
-      showError(error.message || t('common.failedToUploadMediaGeneric')); // Translated error
+      showError(error.message || t('common.failedToUploadMediaGeneric'));
       setNewlySelectedFiles([]);
       setLocalPreviewUrls([]);
     } finally {
@@ -127,11 +127,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
       for (const file of files) {
         if (file.size > MAX_CONTENT_FILE_SIZE_BYTES) {
-          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })); // Translated error
+          showError(t('common.fileSizeExceeds', { fileName: file.name, maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) }));
           continue;
         }
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-          showError(t('common.fileNotImageOrVideo', { fileName: file.name })); // Translated error
+          showError(t('common.fileNotImageOrVideo', { fileName: file.name }));
           continue;
         }
         validFiles.push(file);
@@ -150,7 +150,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       setNewlySelectedFiles([]);
       setLocalPreviewUrls([]);
     }
-    if (fileInputRef.current) fileInputRef.current.value = ''; // Clear input
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleRemoveMedia = (indexToRemove: number) => {
@@ -158,12 +158,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     if (currentMediaPreviewIndex >= currentMediaItems.length - 1) {
       setCurrentMediaPreviewIndex(Math.max(0, currentMediaItems.length - 2));
     }
-    showSuccess(t('common.mediaItemRemoved')); // Translated success
+    showSuccess(t('common.mediaItemRemoved'));
   };
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      showError(t('common.geolocationNotSupported')); // Translated error
+      showError(t('common.geolocationNotSupported'));
       return;
     }
 
@@ -172,25 +172,26 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       (position) => {
         const { latitude, longitude } = position.coords;
         setCoordinates({ lat: latitude, lng: longitude });
-        showSuccess(t('common.locationRetrievedSuccessfully')); // Translated success
+        showSuccess(t('common.locationRetrievedSuccessfully'));
         setLocationLoading(false);
       },
       (error) => {
         console.error('Geolocation error:', error);
-        let errorMessage = t('common.failedToGetLocation'); // Translated error
+        let errorMessage = t('common.failedToGetLocation');
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = t('common.permissionDeniedLocation'); // Translated error
+            errorMessage = t('common.permissionDeniedLocation');
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = t('common.locationUnavailable'); // Translated error
+            errorMessage = t('common.locationUnavailable');
             break;
           case error.TIMEOUT:
-            errorMessage = t('common.locationRequestTimedOut'); // Translated error
+            errorMessage = t('common.locationRequestTimedOut');
             break;
         }
         showError(errorMessage);
         setLocationLoading(false);
+        setCoordinates(null); // Clear coordinates on error
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -198,33 +199,32 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
   const handleClearLocation = () => {
     setCoordinates(null);
-    showSuccess(t('common.locationCleared')); // Translated success
+    showSuccess(t('common.locationCleared'));
   };
 
   const handleSave = async () => {
     if (!message.trim() && currentMediaItems.length === 0 && !coordinates) {
-      showError(t('common.atLeastMessageMediaOrCoordsRequired')); // Translated error
+      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired')); // Using a more general key here
       return;
     }
     if (isUploadingMedia) {
-      showError(t('common.pleaseWaitForMediaUploads')); // Translated error
+      showError(t('common.pleaseWaitForMediaUploads'));
       return;
     }
     if (!currentUser) {
-      showError(t('common.authRequiredUpdatePost')); // Translated error
+      showError(t('common.authRequiredUpdatePost'));
       return;
     }
 
-    // Permission check for editing a post
     const isPostAuthor = currentUser.id === post.user_id;
     const isJourneyOwner = currentUser.id === journeyOwnerId;
     const isAdmin = currentUser.isAdmin;
-    const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post); // Use new permission
+    const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post);
 
-    const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator; // Use new permission
+    const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
 
     if (!canEdit) {
-      showError(t('common.noPermissionEditPost')); // Translated error
+      showError(t('common.noPermissionEditPost'));
       return;
     }
 
@@ -241,29 +241,28 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           message: message.trim(),
           media_items: currentMediaItems.length > 0 ? currentMediaItems : null,
           coordinates: coordinates || null,
-          created_at: postDate ? postDate.toISOString() : undefined, // Include selected post date
+          created_at: postDate ? postDate.toISOString() : undefined,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToUpdatePost')); // Translated error
+        throw new Error(errorData.message || t('common.failedToUpdatePost'));
       }
 
       const updatedPost: Post = await response.json();
       onUpdate(updatedPost);
-      showSuccess(t('common.postUpdatedSuccessfully')); // Translated success
+      showSuccess(t('common.postUpdatedSuccessfully'));
       onClose();
     } catch (error: any) {
       console.error('Error updating post:', error);
-      showError(error.message || t('common.failedToUpdatePost')); // Translated error
+      showError(error.message || t('common.failedToUpdatePost'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Permission check for disabling UI elements
-  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post)); // Use new permission
+  const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post));
 
   const displayedMedia = [...currentMediaItems];
   const currentPreviewMedia = displayedMedia[currentMediaPreviewIndex];
@@ -312,6 +311,68 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               <MapPin className="h-4 w-4 mr-2" /> {t('editPostDialog.location')}
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="location" className="p-4 space-y-4 flex-grow overflow-y-auto">
+            <div className="flex flex-col space-y-2">
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('current');
+                  setCoordinates(null); // Clear coordinates when switching mode
+                  handleGetLocation(); // Directly trigger geolocation
+                }}
+                className="w-full hover:ring-2 hover:ring-blue-500"
+                disabled={isSaving || isUploadingMedia || !canEditPostUI || (locationLoading && locationSelectionMode === 'current')}
+              >
+                {locationLoading && locationSelectionMode === 'current' ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('editPostDialog.gettingLocation')}
+                  </>
+                ) : (
+                  <>
+                    <LocateFixed className="mr-2 h-4 w-4" /> {t('editPostDialog.getCurrentLocation')}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant={locationSelectionMode === 'search' ? 'default' : 'outline'}
+                onClick={() => {
+                  setLocationSelectionMode('search');
+                  setCoordinates(null); // Clear coordinates when switching mode
+                  setLocationLoading(false); // Ensure loading is false if switching from current
+                }}
+                className="w-full hover:ring-2 hover:ring-blue-500"
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
+              >
+                <Search className="mr-2 h-4 w-4" /> {t('editPostDialog.searchLocation')}
+              </Button>
+            </div>
+
+            {locationSelectionMode === 'current' && coordinates && (
+              <div className="space-y-4 mt-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
+                </p>
+                <MapComponent coordinates={coordinates} className="h-48" />
+                <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPostUI}>
+                  {t('editPostDialog.clearLocation')}
+                </Button>
+              </div>
+            )}
+            {locationSelectionMode === 'current' && !coordinates && !locationLoading && (
+              <p className="text-center text-muted-foreground mt-4">{t('editPostDialog.clickGetLocation')}</p>
+            )}
+
+            {locationSelectionMode === 'search' && (
+              <LocationSearch
+                onSelectLocation={setCoordinates}
+                currentCoordinates={coordinates}
+                disabled={isSaving || isUploadingMedia || !canEditPostUI}
+              />
+            )}
+          </TabsContent>
           <TabsContent value="media" className="p-4 space-y-4 flex-grow overflow-y-auto">
             <Label htmlFor="media-upload">{t('editPostDialog.uploadMedia', { maxSize: MAX_CONTENT_FILE_SIZE_BYTES / (1024 * 1024) })}</Label>
             <div className="flex items-center w-full">
@@ -403,76 +464,6 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   </>
                 )}
               </div>
-            )}
-          </TabsContent>
-          <TabsContent value="location" className="p-4 space-y-4 flex-grow overflow-y-auto">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant={locationSelectionMode === 'current' ? 'default' : 'outline'}
-                onClick={() => {
-                  setLocationSelectionMode('current');
-                  setCoordinates(null);
-                }}
-                className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia || !canEditPostUI}
-              >
-                <LocateFixed className="mr-2 h-4 w-4" /> {t('editPostDialog.getCurrentLocation')}
-              </Button>
-              <Button
-                type="button"
-                variant={locationSelectionMode === 'search' ? 'default' : 'outline'}
-                onClick={() => {
-                  setLocationSelectionMode('search');
-                  setCoordinates(null);
-                }}
-                className="flex-1 hover:ring-2 hover:ring-blue-500"
-                disabled={isSaving || isUploadingMedia || !canEditPostUI}
-              >
-                <Search className="mr-2 h-4 w-4" /> {t('editPostDialog.searchLocation')}
-              </Button>
-            </div>
-
-            {locationSelectionMode === 'current' && (
-              <div className="space-y-4">
-                <Button
-                  type="button"
-                  onClick={handleGetLocation}
-                  disabled={locationLoading || isSaving || isUploadingMedia || !canEditPostUI}
-                  className="w-full hover:ring-2 hover:ring-blue-500"
-                >
-                  {locationLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('editPostDialog.gettingLocation')}
-                    </>
-                  ) : (
-                    <>
-                      <MapPin className="mr-2 h-4 w-4" />
-                      {t('editPostDialog.getCurrentLocation')}
-                    </>
-                  )}
-                </Button>
-                {coordinates && (
-                  <>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                      {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
-                    </p>
-                    <MapComponent coordinates={coordinates} className="h-48" />
-                    <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPostUI}>
-                      {t('editPostDialog.clearLocation')}
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {locationSelectionMode === 'search' && (
-              <LocationSearch
-                onSelectLocation={setCoordinates}
-                currentCoordinates={coordinates}
-                disabled={isSaving || isUploadingMedia || !canEditPostUI}
-              />
             )}
           </TabsContent>
         </Tabs>
