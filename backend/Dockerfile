@@ -8,8 +8,8 @@ COPY package.json ./
 COPY tsconfig.json ./
 
 # Copy ESLint and Prettier config files
-COPY ./.eslintrc.js ./
-COPY ./.prettierrc ./
+COPY .eslintrc.js ./
+COPY .prettierrc ./
 
 # Install backend dependencies
 RUN npm install --omit=dev
