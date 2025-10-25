@@ -11,8 +11,8 @@ COPY tsconfig.json ./
 COPY .eslintrc.js ./
 COPY .prettierrc ./
 
-# Install backend dependencies
-RUN npm install --omit=dev
+# Install all backend dependencies (including devDependencies for the build step)
+RUN npm install
 
 # Copy the rest of the backend source code
 COPY src ./src
