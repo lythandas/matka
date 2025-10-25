@@ -6,7 +6,10 @@ WORKDIR /app
 # These files are specific to the backend directory due to docker-compose context
 COPY package.json ./
 COPY tsconfig.json ./
-COPY .eslintrc.js .prettierrc ./
+
+# Copy ESLint and Prettier config files
+COPY ./.eslintrc.js ./
+COPY ./.prettierrc ./
 
 # Install backend dependencies
 RUN npm install --omit=dev
