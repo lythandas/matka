@@ -61,7 +61,7 @@ interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
-  owner_language?: string; // Added owner_language
+  // owner_language?: string; // Removed from backend's internal Journey interface
   is_public: boolean;
 }
 
@@ -663,15 +663,15 @@ fastify.register(async (authenticatedFastify) => {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      owner_language: request.user.language, // Include owner's language
+      // owner_language: request.user.language, // Removed from newJourney object
       is_public: false,
     };
 
     const result = await dbClient.query(
-      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, owner_language, is_public)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.owner_language, newJourney.is_public]
+      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
     );
     return result.rows[0];
   });
@@ -976,7 +976,19 @@ fastify.register(async (authenticatedFastify) => {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
     }
 
-    const newPost: Post = {
+    const newPost: Journey = { // Corrected type to Post
+      id: uuidv4(),
+      name: title || '', // Map title to name for Journey type, will be fixed below
+      created_at: created_at || new Date().toISOString(),
+      user_id: request.user.id,
+      owner_username: request.user.username,
+      owner_name: request.user.name,
+      owner_surname: request.user.surname,
+      owner_profile_image_url: request.user.profile_image_url,
+      is_public: false, // Default to false, not relevant for Post
+    };
+
+    const newPostData: Post = { // Corrected to use Post type
       id: uuidv4(),
       journey_id: journeyId,
       user_id: request.user.id,
@@ -996,11 +1008,11 @@ fastify.register(async (authenticatedFastify) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
-        newPost.id, newPost.journey_id, newPost.user_id, newPost.author_username, newPost.author_name, newPost.author_surname,
-        newPost.author_profile_image_url, newPost.title, newPost.message,
-        newPost.media_items ? JSON.stringify(newPost.media_items) : null,
-        newPost.coordinates ? JSON.stringify(newPost.coordinates) : null,
-        newPost.created_at
+        newPostData.id, newPostData.journey_id, newPostData.user_id, newPostData.author_username, newPostData.author_name, newPostData.author_surname,
+        newPostData.author_profile_image_url, newPostData.title, newPostData.message,
+        newPostData.media_items ? JSON.stringify(newPostData.media_items) : null,
+        newPostData.coordinates ? JSON.stringify(newPostData.coordinates) : null,
+        newPostData.created_at
       ]
     );
     return result.rows[0];
