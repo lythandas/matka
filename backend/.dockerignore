@@ -1,0 +1,7 @@
+# Ignore node_modules and build artifacts
+node_modules
+dist
+
+# Explicitly include config files to ensure they are not ignored
+!.eslintrc.js
+!.prettierrc
