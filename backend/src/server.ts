@@ -170,6 +170,7 @@ const connectDb = async () => {
 
 const createTables = async () => {
   try {
+    await fs.mkdir(UPLOADS_DIR, { recursive: true }); // Ensure uploads directory exists
     await dbClient.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(255) PRIMARY KEY,
@@ -282,8 +283,13 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/users/exists', async (request, reply) => {
-  const result = await dbClient.query('SELECT COUNT(*) FROM users');
-  return { exists: parseInt(result.rows[0].count) > 0 };
+  try {
+    const result = await dbClient.query('SELECT COUNT(*) FROM users');
+    return { exists: parseInt(result.rows[0].count) > 0 };
+  } catch (error) {
+    fastify.log.error(error, 'Error checking if users exist in database');
+    return reply.code(500).send({ message: 'Internal server error: Could not check user existence.' });
+  }
 });
 
 fastify.post('/register', async (request, reply) => {
