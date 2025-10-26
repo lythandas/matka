@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Compass } from 'lucide-react';
 import { showError } from '@/utils/toast';
@@ -11,7 +11,7 @@ import ShineCard from '@/components/ShineCard';
 import { getAvatarInitials } from '@/lib/utils';
 import AppFooter from '@/components/AppFooter';
 import { API_BASE_URL } from '@/config/api';
-import { Post, Journey } from '@/types';
+import { Post, Journey, JourneyCollaborator } from '@/types'; // Import JourneyCollaborator
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
@@ -27,7 +27,9 @@ import i18n from '@/i18n'; // Import the i18n instance
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
   const { ownerUsername, journeyName } = useParams<{ ownerUsername: string; journeyName: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, token } = useAuth(); // Get user and token
+  const navigate = useNavigate(); // Initialize useNavigate
+
   const [journey, setJourney] = useState<Journey | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingJourney, setLoadingJourney] = useState<boolean>(true);
@@ -40,6 +42,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
+  const [isCheckingAccess, setIsCheckingAccess] = useState<boolean>(false); // New state for access check
 
   const fetchJourney = useCallback(async () => {
     console.log("PublicJourneyPage: Attempting to fetch journey with ownerUsername:", ownerUsername, "and journeyName:", journeyName);
@@ -69,7 +72,7 @@ const PublicJourneyPage: React.FC = () => {
         i18n.changeLanguage(data.owner_language);
       }
 
-      return data.id;
+      return data; // Return the full journey object
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       const errorMessage = err.message || t('common.failedToLoadJourneyNotPublic');
@@ -81,6 +84,27 @@ const PublicJourneyPage: React.FC = () => {
       setLoadingJourney(false);
     }
   }, [ownerUsername, journeyName, t, i18n]); // Added i18n to dependencies
+
+  const checkUserCollaboration = useCallback(async (journeyId: string) => {
+    if (!token || !user) return false;
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journeyId}/collaborators`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        // If 403 or 401, it means user is not a collaborator or token is invalid, which is fine.
+        // We don't need to show an error toast for this specific check.
+        return false;
+      }
+      const collaborators: JourneyCollaborator[] = await response.json();
+      return collaborators.some(collab => collab.user_id === user.id);
+    } catch (error) {
+      console.error('Error checking user collaboration:', error);
+      return false;
+    }
+  }, [token, user]);
 
   const fetchPosts = useCallback(async (id: string) => {
     if (!id) {
@@ -112,23 +136,38 @@ const PublicJourneyPage: React.FC = () => {
   }, [t]);
 
   useEffect(() => {
-    const loadJourneyAndPosts = async () => {
+    const loadJourneyAndCheckAccess = async () => {
       // Reset states when params change
       setJourney(null);
       setPosts([]);
       setError(null);
       setLoadingJourney(true);
       setLoadingPosts(true);
+      setIsCheckingAccess(true); // Start checking access
 
-      const id = await fetchJourney();
-      if (id) {
-        await fetchPosts(id);
+      const fetchedJourney = await fetchJourney();
+
+      if (fetchedJourney) {
+        // If authenticated, check if the user owns or collaborates on this journey
+        if (isAuthenticated && user) {
+          const isOwner = user.id === fetchedJourney.user_id;
+          const isCollaborator = await checkUserCollaboration(fetchedJourney.id);
+
+          if (isOwner || isCollaborator) {
+            console.log("PublicJourneyPage: Authenticated user has access to this journey. Redirecting to dashboard.");
+            navigate('/'); // Redirect to main dashboard
+            return; // Stop further rendering of public page
+          }
+        }
+        // If not redirected, proceed to fetch posts for public view
+        await fetchPosts(fetchedJourney.id);
       } else {
         setLoadingPosts(false); // Ensure loading is false if journey fetch fails
       }
+      setIsCheckingAccess(false); // Finish checking access
     };
-    loadJourneyAndPosts();
-  }, [fetchJourney, fetchPosts, ownerUsername, journeyName]); // Added ownerUsername, journeyName to dependencies to re-trigger on URL change
+    loadJourneyAndCheckAccess();
+  }, [fetchJourney, fetchPosts, checkUserCollaboration, isAuthenticated, user, navigate, ownerUsername, journeyName]); // Added ownerUsername, journeyName to dependencies to re-trigger on URL change
 
   const handlePostClick = (post: Post, index: number) => {
     setSelectedPostForDetail(post);
@@ -173,7 +212,7 @@ const PublicJourneyPage: React.FC = () => {
 
   let pageContent;
 
-  if (loadingJourney || loadingPosts) {
+  if (loadingJourney || loadingPosts || isCheckingAccess) { // Include isCheckingAccess in loading state
     pageContent = (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
