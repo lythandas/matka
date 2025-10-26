@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Matka",
-    "footer": "Fait avec Dyad"
+    "footer": "Fait avec Dyad",
+    "htmlTitle": "Matka - Partagez votre voyage"
   },
   "common": {
     "cancel": "Annuler",
@@ -248,7 +249,7 @@
   "indexPage": {
     "shareYourDay": "Partagez votre journée",
     "titleOptional": "Ajouter un titre (facultatif)",
-    "messagePlaceholder": "Qu'avez-vous en tête aujourd'hui ?",
+    "messagePlaceholder": "Qu'avez-vous en tête aujourd'sui ?",
     "contentPreview": "Aperçu du contenu :",
     "uploadMedia": "Télécharger des médias",
     "getLocation": "Obtenir l'emplacement",

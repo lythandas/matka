@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Matka",
-    "footer": "Erstellt mit Dyad"
+    "footer": "Erstellt mit Dyad",
+    "htmlTitle": "Matka - Teilen Sie Ihre Reise"
   },
   "common": {
     "cancel": "Abbrechen",

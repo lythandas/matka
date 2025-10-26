@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Matka",
-    "footer": "Made with Dyad"
+    "footer": "Made with Dyad",
+    "htmlTitle": "Matka - Share your journey"
   },
   "common": {
     "cancel": "Cancel",

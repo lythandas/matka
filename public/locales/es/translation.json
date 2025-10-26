@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Matka",
-    "footer": "Hecho con Dyad"
+    "footer": "Hecho con Dyad",
+    "htmlTitle": "Matka - Comparte tu viaje"
   },
   "common": {
     "cancel": "Cancelar",
@@ -301,7 +302,7 @@
   },
   "notFoundPage": {
     "oopsPageNotFound": "¡Ups! Página no encontrada",
-    "returnTo Home": "Volver al inicio"
+    "returnToHome": "Volver al inicio"
   },
   "manageJourneyDialog": {
     "manageJourney": "Gestionar viaje: \"{{journeyName}}\"",
