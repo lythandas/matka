@@ -125,6 +125,7 @@ declare module 'fastify' {
 
 // --- Database Client ---
 let dbClient: Client;
+let isDbConnected = false; // New flag to track DB connection status
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -139,7 +140,7 @@ const connectDb = async () => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     fastify.log.error('DATABASE_URL is not defined. Please set it in your environment variables.');
-    process.exit(1);
+    throw new Error('DATABASE_URL is not defined.'); // Throw instead of exit
   }
 
   dbClient = new Client({
@@ -154,6 +155,7 @@ const connectDb = async () => {
       await dbClient.connect();
       fastify.log.info('Connected to PostgreSQL database');
       await createTables();
+      isDbConnected = true; // Set flag on successful connection
       return;
     } catch (err: unknown) {
       retries++;
@@ -162,7 +164,8 @@ const connectDb = async () => {
         await new Promise(resolve => setTimeout(resolve, 5000));
       } else {
         fastify.log.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
-        process.exit(1);
+        isDbConnected = false; // Set flag on connection failure
+        throw new Error('Failed to connect to PostgreSQL after multiple retries'); // Throw instead of exit
       }
     }
   }
@@ -231,7 +234,7 @@ const createTables = async () => {
     fastify.log.info('Database tables checked/created successfully');
   } catch (err: unknown) {
     fastify.log.error(err as Error, 'Error creating database tables');
-    process.exit(1);
+    throw err; // Re-throw to be caught by connectDb
   }
 };
 
@@ -261,6 +264,11 @@ const generateToken = (user: ApiUser): string => {
 };
 
 const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
+  if (!isDbConnected) { // Check DB connection status before authentication
+    reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+    return reply.sent;
+  }
+
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     reply.code(401).send({ message: 'Authentication token required' });
@@ -283,6 +291,9 @@ fastify.get('/', async (request, reply) => {
 });
 
 fastify.get('/users/exists', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   try {
     const result = await dbClient.query('SELECT COUNT(*) FROM users');
     return { exists: parseInt(result.rows[0].count) > 0 };
@@ -293,6 +304,9 @@ fastify.get('/users/exists', async (request, reply) => {
 });
 
 fastify.post('/register', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   const { username, password } = request.body as { username?: string; password?: string };
 
   if (!username || !password) {
@@ -329,6 +343,9 @@ fastify.post('/register', async (request, reply) => {
 });
 
 fastify.post('/login', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   const { username, password } = request.body as { username?: string; password?: string };
 
   if (!username || !password) {
@@ -354,6 +371,9 @@ fastify.post('/login', async (request, reply) => {
 });
 
 fastify.get('/public/journeys/:id', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   const { id } = request.params as { id: string };
   const result = await dbClient.query(
     `SELECT j.*, u.language as owner_language
@@ -371,6 +391,9 @@ fastify.get('/public/journeys/:id', async (request, reply) => {
 });
 
 fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
   const decodedJourneyName = decodeURIComponent(journeyName);
   fastify.log.info(`Public Journey Request: ownerUsername=${ownerUsername}, decodedJourneyName=${decodedJourneyName}`); // Added for debugging
@@ -391,6 +414,9 @@ fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (reque
 });
 
 fastify.get('/public/journeys/:id/posts', async (request, reply) => {
+  if (!isDbConnected) { // Check DB connection status
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   const { id: journeyId } = request.params as { id: string };
   const journeyResult = await dbClient.query('SELECT id FROM journeys WHERE id = $1 AND is_public = TRUE', [journeyId]);
 
@@ -1136,12 +1162,21 @@ fastify.register(async (authenticatedFastify) => {
 // Run the server
 const start = async () => {
   try {
-    await connectDb();
+    await connectDb(); // This now throws if it fails
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
   } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Failed to start server');
-    process.exit(1);
+    fastify.log.error(err as Error, 'Failed to start server or connect to database');
+    // If connectDb fails, the server should still attempt to listen.
+    // Routes will then return 500 due to the isDbConnected flag.
+    // If listen itself fails, then we exit.
+    try {
+      await fastify.listen({ port: 3001, host: '0.0.0.0' });
+      fastify.log.info(`Server started but database connection failed. API routes will return 500 errors.`);
+    } catch (listenErr) {
+      fastify.log.error(listenErr as Error, 'Failed to start Fastify server');
+      process.exit(1); // Exit only if the server itself cannot start listening
+    }
   }
 };
 
