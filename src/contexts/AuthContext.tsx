@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Error fetching user existence:', error);
-      showError('Failed to determine if users exist.');
+      // Removed showError here to prevent toast on initial load
       setUsersExist(false); // Assume no users exist if check fails
       if (isAuthenticated) {
         logout(); // Force logout if check fails and frontend is authenticated
