@@ -20,6 +20,7 @@ export interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
+  owner_language?: string; // New: Owner's preferred language
   is_public: boolean; // New: Indicates if the journey is publicly viewable
 }
 

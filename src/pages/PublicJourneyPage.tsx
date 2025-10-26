@@ -22,6 +22,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
+import i18n from '@/i18n'; // Import the i18n instance
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -62,6 +63,12 @@ const PublicJourneyPage: React.FC = () => {
       const data: Journey = await response.json();
       setJourney(data);
       console.log("PublicJourneyPage: Successfully fetched journey:", data);
+
+      // Set i18n language to owner's language if available and different from current
+      if (data.owner_language && i18n.language !== data.owner_language) {
+        i18n.changeLanguage(data.owner_language);
+      }
+
       return data.id;
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
@@ -73,7 +80,7 @@ const PublicJourneyPage: React.FC = () => {
     } finally {
       setLoadingJourney(false);
     }
-  }, [ownerUsername, journeyName, t]);
+  }, [ownerUsername, journeyName, t, i18n]); // Added i18n to dependencies
 
   const fetchPosts = useCallback(async (id: string) => {
     if (!id) {

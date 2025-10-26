@@ -61,6 +61,7 @@ interface Journey {
   owner_name?: string;
   owner_surname?: string;
   owner_profile_image_url?: string;
+  owner_language?: string; // Added owner_language
   is_public: boolean;
 }
 
@@ -329,7 +330,13 @@ fastify.post('/login', async (request, reply) => {
 
 fastify.get('/public/journeys/:id', async (request, reply) => {
   const { id } = request.params as { id: string };
-  const result = await dbClient.query('SELECT * FROM journeys WHERE id = $1 AND is_public = TRUE', [id]);
+  const result = await dbClient.query(
+    `SELECT j.*, u.language as owner_language
+     FROM journeys j
+     JOIN users u ON j.user_id = u.id
+     WHERE j.id = $1 AND j.is_public = TRUE`,
+    [id]
+  );
   const journey: Journey = result.rows[0];
 
   if (!journey) {
@@ -344,7 +351,8 @@ fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (reque
   fastify.log.info(`Public Journey Request: ownerUsername=${ownerUsername}, decodedJourneyName=${decodedJourneyName}`); // Added for debugging
 
   const result = await dbClient.query(
-    `SELECT j.* FROM journeys j
+    `SELECT j.*, u.language as owner_language
+     FROM journeys j
      JOIN users u ON j.user_id = u.id
      WHERE u.username ILIKE $1 AND j.name ILIKE $2 AND j.is_public = TRUE`,
     [ownerUsername, decodedJourneyName]
@@ -655,14 +663,15 @@ fastify.register(async (authenticatedFastify) => {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
+      owner_language: request.user.language, // Include owner's language
       is_public: false,
     };
 
     const result = await dbClient.query(
-      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, owner_language, is_public)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
+      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.owner_language, newJourney.is_public]
     );
     return result.rows[0];
   });
