@@ -7,15 +7,11 @@ WORKDIR /app
 COPY package.json ./
 COPY tsconfig.json ./
 
-# Copy ESLint and Prettier config files
-COPY .eslintrc.js ./
-COPY .prettierrc ./
-
 # Install all backend dependencies (including devDependencies for the build step)
 RUN npm install
 
-# Copy the rest of the backend source code
-COPY src ./src
+# Copy the rest of the backend source code, including config files
+COPY . .
 
 # Build the TypeScript application
 RUN npm run build
