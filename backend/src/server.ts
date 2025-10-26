@@ -16,7 +16,26 @@ const fastify = Fastify({
 
 // Register CORS plugin
 fastify.register(cors, {
-  origin: ['http://localhost:8080', 'http://127.0.0.1:8080', '*'],
+  origin: (origin, callback) => {
+    // Allow requests from specific origins, including common development ports
+    const allowedOrigins = [
+      'http://localhost:8080', // Frontend in Docker Compose
+      'http://127.0.0.1:8080',
+      'http://localhost:5173', // Common Vite dev server port
+      'http://127.0.0.1:5173',
+      // Add any other specific origins if needed, e.g., for Vercel preview URLs
+    ];
+
+    // If no origin is provided (e.g., same-origin requests or direct tool access), allow it.
+    // If the origin is in the allowed list, allow it.
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // Log the blocked origin for debugging purposes
+      fastify.log.warn(`CORS: Blocking request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 });
@@ -975,18 +994,6 @@ fastify.register(async (authenticatedFastify) => {
     if (!isOwner && !isAdmin && !canPublish) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
     }
-
-    const newPost: Journey = { // Corrected type to Post
-      id: uuidv4(),
-      name: title || '', // Map title to name for Journey type, will be fixed below
-      created_at: created_at || new Date().toISOString(),
-      user_id: request.user.id,
-      owner_username: request.user.username,
-      owner_name: request.user.name,
-      owner_surname: request.user.surname,
-      owner_profile_image_url: request.user.profile_image_url,
-      is_public: false, // Default to false, not relevant for Post
-    };
 
     const newPostData: Post = { // Corrected to use Post type
       id: uuidv4(),
