@@ -136,11 +136,11 @@ const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localho
 const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
 // --- Database Connection and Schema Creation ---
-const connectDb = async () => {
+const connectDbAndCreateTables = async () => { // Renamed for clarity
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     fastify.log.error('DATABASE_URL is not defined. Please set it in your environment variables.');
-    throw new Error('DATABASE_URL is not defined.'); // Throw instead of exit
+    throw new Error('DATABASE_URL is not defined.');
   }
 
   dbClient = new Client({
@@ -165,11 +165,11 @@ const connectDb = async () => {
       } else {
         fastify.log.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
         isDbConnected = false; // Set flag on connection failure
-        throw new Error('Failed to connect to PostgreSQL after multiple retries'); // Throw instead of exit
+        throw new Error('Failed to connect to PostgreSQL after multiple retries');
       }
     }
-  }
-};
+  };
+}
 
 const createTables = async () => {
   try {
@@ -234,7 +234,7 @@ const createTables = async () => {
     fastify.log.info('Database tables checked/created successfully');
   } catch (err: unknown) {
     fastify.log.error(err as Error, 'Error creating database tables');
-    throw err; // Re-throw to be caught by connectDb
+    throw err; // Re-throw to be caught by connectDbAndCreateTables
   }
 };
 
@@ -287,6 +287,9 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 // --- Public Routes (No Authentication Required) ---
 
 fastify.get('/', async (request, reply) => {
+  if (!isDbConnected) { // All routes need to check this
+    return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+  }
   return { message: 'Hello from Fastify backend!' };
 });
 
@@ -1162,21 +1165,19 @@ fastify.register(async (authenticatedFastify) => {
 // Run the server
 const start = async () => {
   try {
-    await connectDb(); // This now throws if it fails
+    // Always start listening first
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
+
+    // Then attempt to connect to the database in the background
+    // This will set isDbConnected to true/false and log errors, but won't block server startup
+    connectDbAndCreateTables().catch(err => {
+      fastify.log.error(err, 'Initial database connection failed after server started. API routes will return 500 errors until reconnected.');
+    });
+
   } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Failed to start server or connect to database');
-    // If connectDb fails, the server should still attempt to listen.
-    // Routes will then return 500 due to the isDbConnected flag.
-    // If listen itself fails, then we exit.
-    try {
-      await fastify.listen({ port: 3001, host: '0.0.0.0' });
-      fastify.log.info(`Server started but database connection failed. API routes will return 500 errors.`);
-    } catch (listenErr) {
-      fastify.log.error(listenErr as Error, 'Failed to start Fastify server');
-      process.exit(1); // Exit only if the server itself cannot start listening
-    }
+    fastify.log.error(err as Error, 'Failed to start Fastify server');
+    process.exit(1); // Exit only if the server itself cannot start listening
   }
 };
 
