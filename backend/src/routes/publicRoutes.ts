@@ -23,20 +23,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
   //   }
   // });
 
-  fastify.get('/users/exists', async (request, reply) => {
-    if (!isDbConnected) {
-      return reply.code(500).type('application/json').send({ message: 'Database not connected. Please try again later.' });
-    }
-    try {
-      const result = await dbClient!.query('SELECT COUNT(*) FROM users');
-      return reply.send({ exists: parseInt(result.rows[0].count) > 0 });
-    } catch (error) {
-      fastify.log.error(error, 'Error checking if users exist in database');
-      return reply.status(500).type('application/json').send({ message: 'Internal server error: Could not check user existence.' });
-    }
-  });
-
-  // Removed /register and /login routes from here. They will be moved to userRoutes.ts.
+  // Removed /users/exists from here. It will be moved to userRoutes.ts.
 
   // Helper function to check passphrase
   const checkJourneyPassphrase = async (journeyId: string, providedPassphrase?: string): Promise<boolean> => {

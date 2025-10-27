@@ -7,7 +7,20 @@ import { User, ApiUser } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export default async function userRoutes(fastify: FastifyInstance) {
-  // Public routes for user authentication (no preHandler hook)
+  // Public routes for user authentication and existence check
+  fastify.get('/users/exists', async (request, reply) => {
+    if (!isDbConnected) {
+      return reply.code(500).type('application/json').send({ message: 'Database not connected. Please try again later.' });
+    }
+    try {
+      const result = await dbClient!.query('SELECT COUNT(*) FROM users');
+      return reply.send({ exists: parseInt(result.rows[0].count) > 0 });
+    } catch (error) {
+      fastify.log.error(error, 'Error checking if users exist in database');
+      return reply.status(500).type('application/json').send({ message: 'Internal server error: Could not check user existence.' });
+    }
+  });
+
   fastify.post('/register', async (request, reply) => {
     fastify.log.debug('[/api/register] Received registration request.');
     if (!isDbConnected) {
