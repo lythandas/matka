@@ -27,7 +27,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
       return reply.code(500).type('application/json').send({ message: 'Database not connected. Please try again later.' });
     }
     try {
-      const result = await dbClient.query('SELECT COUNT(*) FROM users');
+      const result = await dbClient!.query('SELECT COUNT(*) FROM users');
       return reply.send({ exists: parseInt(result.rows[0].count) > 0 });
     } catch (error) {
       fastify.log.error(error, 'Error checking if users exist in database');
@@ -50,7 +50,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
 
     try {
       fastify.log.debug(`[/register] Checking for existing user: ${username}`);
-      const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
+      const existingUser = await dbClient!.query('SELECT id FROM users WHERE username = $1', [username]);
       if (existingUser.rows.length > 0) {
         fastify.log.warn(`[/register] Username already exists: ${username}`);
         return reply.code(409).send({ message: 'Username already exists' });
@@ -58,7 +58,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
 
       fastify.log.debug('[/register] Hashing password and checking user count.');
       const password_hash = await hashPassword(password);
-      const usersCount = await dbClient.query('SELECT COUNT(*) FROM users');
+      const usersCount = await dbClient!.query('SELECT COUNT(*) FROM users');
       const isFirstUser = parseInt(usersCount.rows[0].count) === 0;
 
       const newUser: User = {
@@ -71,7 +71,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
       };
 
       fastify.log.debug(`[/register] Inserting new user: ${username}, isAdmin: ${isFirstUser}`);
-      const result = await dbClient.query(
+      const result = await dbClient!.query(
         'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
         [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
       );
@@ -105,7 +105,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     }
 
     try {
-      const result = await dbClient.query('SELECT * FROM users WHERE username = $1', [username]);
+      const result = await dbClient!.query('SELECT * FROM users WHERE username = $1', [username]);
       const user: User = result.rows[0];
 
       if (!user) {
@@ -135,7 +135,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
     const { id } = request.params as { id: string };
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT j.*, u.language as owner_language
        FROM journeys j
        JOIN users u ON j.user_id = u.id
@@ -158,7 +158,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     const decodedJourneyName = decodeURIComponent(journeyName);
     fastify.log.info(`Public Journey Request: ownerUsername=${ownerUsername}, decodedJourneyName=${decodedJourneyName}`);
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT j.*, u.language as owner_language
        FROM journeys j
        JOIN users u ON j.user_id = u.id
@@ -178,13 +178,13 @@ export default async function publicRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
     const { id: journeyId } = request.params as { id: string };
-    const journeyResult = await dbClient.query('SELECT id FROM journeys WHERE id = $1 AND is_public = TRUE', [journeyId]);
+    const journeyResult = await dbClient!.query('SELECT id FROM journeys WHERE id = $1 AND is_public = TRUE', [journeyId]);
 
     if (journeyResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Public journey not found or not accessible' });
     }
 
-    const postsResult = await dbClient.query('SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+    const postsResult = await dbClient!.query('SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
     return postsResult.rows;
   });
 }

@@ -14,7 +14,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users WHERE id = $1',
       [request.user.id]
     );
@@ -32,7 +32,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
     const { name, surname, profile_image_url, language } = request.body as { name?: string; surname?: string; profile_image_url?: string; language?: string };
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4 WHERE id = $5 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
       [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, language, request.user.id]
     );
@@ -52,7 +52,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users ORDER BY created_at DESC'
     );
     return result.rows.map(mapDbUserToApiUser);
@@ -68,7 +68,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ message: 'Username and password are required' });
     }
 
-    const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
+    const existingUser = await dbClient!.query('SELECT id FROM users WHERE username = $1', [username]);
     if (existingUser.rows.length > 0) {
       return reply.code(409).send({ message: 'Username already exists' });
     }
@@ -86,7 +86,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
       created_at: new Date().toISOString(),
     };
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       'INSERT INTO users (id, username, password_hash, is_admin, name, surname, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
       [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.language, newUser.created_at]
     );
@@ -101,20 +101,20 @@ export default async function userRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
     }
 
-    const existingUserResult = await dbClient.query('SELECT username FROM users WHERE id = $1', [id]);
+    const existingUserResult = await dbClient!.query('SELECT username FROM users WHERE id = $1', [id]);
     if (existingUserResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
     const existingUsername = existingUserResult.rows[0].username;
 
     if (username && username !== existingUsername) {
-      const conflictCheck = await dbClient.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
+      const conflictCheck = await dbClient!.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
       if (conflictCheck.rows.length > 0) {
         return reply.code(409).send({ message: 'Username already exists' });
       }
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `UPDATE users SET
         username = COALESCE($1, username),
         name = $2,
@@ -144,13 +144,13 @@ export default async function userRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ message: 'New password is required' });
     }
 
-    const userResult = await dbClient.query('SELECT id FROM users WHERE id = $1', [id]);
+    const userResult = await dbClient!.query('SELECT id FROM users WHERE id = $1', [id]);
     if (userResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
     const password_hash = await hashPassword(newPassword);
-    await dbClient.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, id]);
+    await dbClient!.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, id]);
     return reply.code(200).send({ message: 'Password reset successfully' });
   });
 
@@ -164,7 +164,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: An administrator cannot delete their own account.' });
     }
 
-    const deleteResult = await dbClient.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+    const deleteResult = await dbClient!.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
     if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
@@ -184,7 +184,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
 
     const searchLower = `%${query.toLowerCase()}%`;
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at
        FROM users
        WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
