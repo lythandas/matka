@@ -23,16 +23,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import i18n from '@/i18n'; // Import the i18n instance
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import PassphraseDialog from '@/components/PassphraseDialog'; // Import the new PassphraseDialog
 
 const PASSPHRASE_STORAGE_KEY = 'journey_passphrase_';
 
@@ -57,20 +48,19 @@ const PublicJourneyPage: React.FC = () => {
   const [isCheckingAccess, setIsCheckingAccess] = useState<boolean>(false); // New state for access check
 
   const [isPassphraseDialogOpen, setIsPassphraseDialogOpen] = useState<boolean>(false);
-  const [passphraseInput, setPassphraseInput] = useState<string>('');
   const [isVerifyingPassphrase, setIsVerifyingPassphrase] = useState<boolean>(false);
   const [currentPassphrase, setCurrentPassphrase] = useState<string | undefined>(undefined); // Stored passphrase for API calls
 
-  const getPassphraseFromStorage = useCallback((journeyId: string) => {
-    return sessionStorage.getItem(PASSPHRASE_STORAGE_KEY + journeyId) || undefined;
+  const getPassphraseFromStorage = useCallback((journeyIdentifier: string) => {
+    return sessionStorage.getItem(PASSPHRASE_STORAGE_KEY + journeyIdentifier) || undefined;
   }, []);
 
-  const setPassphraseInStorage = useCallback((journeyId: string, passphrase: string) => {
-    sessionStorage.setItem(PASSPHRASE_STORAGE_KEY + journeyId, passphrase);
+  const setPassphraseInStorage = useCallback((journeyIdentifier: string, passphrase: string) => {
+    sessionStorage.setItem(PASSPHRASE_STORAGE_KEY + journeyIdentifier, passphrase);
   }, []);
 
-  const clearPassphraseFromStorage = useCallback((journeyId: string) => {
-    sessionStorage.removeItem(PASSPHRASE_STORAGE_KEY + journeyId);
+  const clearPassphraseFromStorage = useCallback((journeyIdentifier: string) => {
+    sessionStorage.removeItem(PASSPHRASE_STORAGE_KEY + journeyIdentifier);
   }, []);
 
   const fetchJourney = useCallback(async (passphrase?: string) => {
@@ -174,26 +164,25 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, [t]);
 
-  const handlePassphraseSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePassphraseSubmit = async (passphraseInput: string) => {
     if (!journey) return;
 
     setIsVerifyingPassphrase(true);
+    const journeyIdentifier = `${ownerUsername}-${journeyName}`;
     try {
       const fetchedJourney = await fetchJourney(passphraseInput);
       if (fetchedJourney) {
-        setPassphraseInStorage(fetchedJourney.id, passphraseInput);
+        setPassphraseInStorage(journeyIdentifier, passphraseInput);
         setCurrentPassphrase(passphraseInput);
         setIsPassphraseDialogOpen(false);
-        setPassphraseInput('');
         await fetchPosts(fetchedJourney.id, passphraseInput);
       } else {
         showError(t('publicJourneyPage.incorrectPassphrase'));
-        clearPassphraseFromStorage(journey.id);
+        clearPassphraseFromStorage(journeyIdentifier);
       }
     } catch (err) {
       showError(t('publicJourneyPage.incorrectPassphrase'));
-      clearPassphraseFromStorage(journey.id);
+      clearPassphraseFromStorage(journeyIdentifier);
     } finally {
       setIsVerifyingPassphrase(false);
     }
@@ -210,7 +199,8 @@ const PublicJourneyPage: React.FC = () => {
       setIsCheckingAccess(true); // Start checking access
       setCurrentPassphrase(undefined); // Clear current passphrase
 
-      const storedPassphrase = ownerUsername && journeyName ? getPassphraseFromStorage(`${ownerUsername}-${journeyName}`) : undefined;
+      const journeyIdentifier = ownerUsername && journeyName ? `${ownerUsername}-${journeyName}` : '';
+      const storedPassphrase = journeyIdentifier ? getPassphraseFromStorage(journeyIdentifier) : undefined;
       setCurrentPassphrase(storedPassphrase);
 
       const fetchedJourney = await fetchJourney(storedPassphrase);
@@ -242,7 +232,7 @@ const PublicJourneyPage: React.FC = () => {
       setIsCheckingAccess(false); // Finish checking access
     };
     loadJourneyAndCheckAccess();
-  }, [fetchJourney, fetchPosts, checkUserCollaboration, isAuthenticated, user, navigate, ownerUsername, journeyName, getPassphraseFromStorage, setPassphraseInStorage]); // Added passphrase related functions to dependencies
+  }, [fetchJourney, fetchPosts, checkUserCollaboration, isAuthenticated, user, navigate, ownerUsername, journeyName, getPassphraseFromStorage, setPassphraseInStorage, clearPassphraseFromStorage]); // Added passphrase related functions to dependencies
 
   const handlePostClick = (post: Post, index: number) => {
     setSelectedPostForDetail(post);
@@ -489,47 +479,20 @@ const PublicJourneyPage: React.FC = () => {
       {pageContent}
 
       {journey && journey.passphrase_hash && (
-        <Dialog open={isPassphraseDialogOpen} onOpenChange={(open) => {
-          if (!open) {
+        <PassphraseDialog
+          isOpen={isPassphraseDialogOpen}
+          onClose={() => {
             // If user closes dialog without entering passphrase, redirect to home
-            navigate('/');
-          }
-        }}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{t('publicJourneyPage.enterPassphrase')}</DialogTitle>
-              <DialogDescription>
-                {t('publicJourneyPage.thisJourneyIsProtected', { journeyName: journey.name })}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handlePassphraseSubmit} className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="passphrase">{t('common.password')}</Label>
-                <Input
-                  id="passphrase"
-                  type="password"
-                  value={passphraseInput}
-                  onChange={(e) => setPassphraseInput(e.target.value)}
-                  placeholder={t('manageJourneyDialog.passphrasePlaceholder')}
-                  disabled={isVerifyingPassphrase}
-                  required
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={!passphraseInput.trim() || isVerifyingPassphrase} className="w-full hover:ring-2 hover:ring-blue-500">
-                  {isVerifyingPassphrase ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('publicJourneyPage.verifying')}
-                    </>
-                  ) : (
-                    t('publicJourneyPage.accessJourney')
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+            if (!currentPassphrase) { // Only redirect if no passphrase was successfully entered/stored
+              navigate('/');
+            }
+            setIsPassphraseDialogOpen(false);
+          }}
+          journeyName={journey.name}
+          journeyOwner={journey.owner_name || journey.owner_username}
+          onPassphraseSubmit={handlePassphraseSubmit}
+          isVerifying={isVerifyingPassphrase}
+        />
       )}
     </div>
   );

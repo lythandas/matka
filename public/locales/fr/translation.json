@@ -231,7 +231,7 @@
     "clearLocation": "Effacer l'emplacement",
     "saving": "Sauvegarde...",
     "saveChanges": "Sauvegarder les modifications",
-    "clickGetLocation": "Cliquez sur 'Obtenir l'emplacement actuel' pour récupérer votre position.",
+    "clickGetLocation": "Cliquez sur 'Obtener l'emplacement actuel' pour récupérer votre position.",
     "editDraft": "Modifier le brouillon",
     "publishing": "Publication...",
     "publishPost": "Publier la publication",
@@ -278,19 +278,19 @@
     "saveDraft": "Enregistrer le brouillon",
     "savingDraft": "Enregistrement du brouillon...",
     "publishedPosts": "Publications publiées",
-    "drafts": "Brouillons",
+    "drafts": "Borradores",
     "loadingDrafts": "Chargement des brouillons...",
     "noDraftsYet": "Vous n'avez pas encore de brouillons !",
-    "saveWorkAsDraft": "Enregistrez votre travail comme brouillon pour le terminer plus tard.",
+    "saveWorkAsDraft": "Enregistrez votre travail comme brouillon para terminarlo más tarde.",
     "lastSaved": "Dernière sauvegarde : {{date}}",
     "untitledDraft": "Brouillon sans titre",
     "loadDraft": "Charger le brouillon",
     "deleteDraft": "Supprimer le brouillon",
-    "deleteDraftDescription": "Cette action est irréversible. Cela supprimera définitivement le brouillon <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
-    "draftSavedSuccessfully": "Brouillon enregistré avec succès !",
+    "deleteDraftDescription": "Esta acción es irréversible. Esto eliminará definitivamente el borrador <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "draftSavedSuccessfully": "Brouillon enregistré con éxito !",
     "failedToSaveDraft": "Échec de l'enregistrement du brouillon.",
-    "draftLoadedSuccessfully": "Brouillon '{{title}}' chargé avec succès !",
-    "draftDeletedSuccessfully": "Brouillon supprimé avec succès !",
+    "draftLoadedSuccessfully": "Brouillon '{{title}}' cargado con éxito !",
+    "draftDeletedSuccessfully": "Brouillon supprimé con éxito !",
     "failedToFetchDrafts": "Échec de la récupération des brouillons."
   },
   "adminPage": {
@@ -375,5 +375,9 @@
     "noCropSelected": "No se ha seleccionado área de recorte.",
     "failedToCropImage": "Error al recortar la imagen.",
     "errorCroppingImage": "Error al recortar la imagen."
+  },
+  "passphraseDialog": {
+    "accessJourneyTitle": "Accéder au voyage : «{{journeyName}}»",
+    "accessJourneyDescription": "Ce voyage de {{journeyOwner}} est protégé par une phrase de passe."
   }
 }

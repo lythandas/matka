@@ -375,5 +375,9 @@
     "noCropSelected": "Kein Zuschnittbereich ausgewählt.",
     "failedToCropImage": "Fehler beim Zuschneiden des Bildes.",
     "errorCroppingImage": "Fehler beim Zuschneiden des Bildes."
+  },
+  "passphraseDialog": {
+    "accessJourneyTitle": "Zugriff auf Reise: „{{journeyName}}“",
+    "accessJourneyDescription": "Diese Reise von {{journeyOwner}} ist durch eine Passphrase geschützt."
   }
 }
