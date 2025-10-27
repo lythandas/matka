@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
+import { FastifyStaticOptions } from '@fastify/static'; // Import the type
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -48,9 +49,8 @@ fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to the frontend build output
   prefix: '/', // Serve from the root URL
   decorateReply: false,
-  // index: false, // No longer needed, 'fallback' handles the SPA routing
   fallback: 'index.html', // Serve index.html for any unmatched routes
-});
+} as FastifyStaticOptions); // Explicitly cast to FastifyStaticOptions
 
 // The explicit catch-all route is removed as fastifyStatic with 'fallback' handles it.
 
