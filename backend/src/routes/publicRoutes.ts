@@ -13,7 +13,7 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     if (isDbConnected) {
       return { message: 'Fastify backend is running and connected to database.' };
     } else {
-      reply.code(503).send({ message: 'Fastify backend is running but not connected to database.' });
+      return reply.code(503).send({ message: 'Fastify backend is running but not connected to database.' });
     }
   });
 
@@ -79,10 +79,13 @@ export default async function publicRoutes(fastify: FastifyInstance) {
       return { user: userForApi, token };
     } catch (error) {
       fastify.log.error(error, '[/register] Error during user registration');
+      // Ensure a JSON response is always sent if one hasn't been initiated yet.
       if (!reply.sent) {
-        reply.type('application/json').code(500).send({ message: 'Internal server error during registration.' });
+        return reply.code(500).send({ message: 'Internal server error during registration.' });
       }
-      return reply.sent;
+      // If reply.sent is true, it means a response was already initiated.
+      // We should not attempt to send another one, but ensure the function exits.
+      return;
     }
   });
 
@@ -116,9 +119,9 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     } catch (error) {
       fastify.log.error(error, 'Error during user login');
       if (!reply.sent) {
-        reply.type('application/json').code(500).send({ message: 'Internal server error during login.' });
+        return reply.code(500).send({ message: 'Internal server error during login.' });
       }
-      return reply.sent;
+      return;
     }
   });
 
