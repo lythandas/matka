@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
-import fs from 'fs/promises'; // Import fs.promises for readFile
+import fs from 'fs/promises';
 
 import { connectDbAndCreateTables } from './db';
 import { UPLOADS_DIR } from './config';
@@ -33,15 +33,6 @@ fastify.register(fastifyStatic, {
   decorateReply: false,
 });
 
-// Register @fastify/static to serve frontend static files (e.g., index.html, JS, CSS)
-// This should be registered before API routes to serve static assets directly.
-fastify.register(fastifyStatic, {
-  root: path.join(__dirname, '../../frontend-dist'), // Path to the frontend build output
-  prefix: '/', // Serve from the root URL
-  decorateReply: false,
-  index: false, // Do not automatically serve index.html for subpaths
-});
-
 // Register API routes with a prefix
 fastify.register(publicRoutes, { prefix: '/api' });
 fastify.register(userRoutes, { prefix: '/api' });
@@ -49,19 +40,19 @@ fastify.register(journeyRoutes, { prefix: '/api' });
 fastify.register(postRoutes, { prefix: '/api' });
 fastify.register(mediaRoutes, { prefix: '/api' });
 
-// Catch-all route for client-side routing (must be after all API and static asset routes)
-// This ensures that any route not matched by static files or API endpoints
-// will serve the frontend's index.html, allowing client-side routing to take over.
-fastify.get('/*', async (request, reply) => {
-  try {
-    const filePath = path.join(__dirname, '../../frontend-dist/index.html');
-    const fileContent = await fs.readFile(filePath, 'utf8'); // Corrected line
-    reply.type('text/html').send(fileContent);
-  } catch (error) {
-    fastify.log.error(error, 'Error serving index.html for client-side routing');
-    reply.code(404).send({ message: 'Not Found' });
-  }
+// Register @fastify/static to serve frontend static files (e.g., index.html, JS, CSS)
+// This should be registered AFTER API routes so API calls are handled first.
+// The 'fallback' option ensures that for any unmatched route, index.html is served,
+// allowing client-side routing to take over.
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../../frontend-dist'), // Path to the frontend build output
+  prefix: '/', // Serve from the root URL
+  decorateReply: false,
+  // index: false, // No longer needed, 'fallback' handles the SPA routing
+  fallback: 'index.html', // Serve index.html for any unmatched routes
 });
+
+// The explicit catch-all route is removed as fastifyStatic with 'fallback' handles it.
 
 // Run the server
 const start = async () => {
