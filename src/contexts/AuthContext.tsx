@@ -60,22 +60,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchUsersExist = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/users/exists`);
-      if (!response.ok) {
-        throw new Error('Failed to check user existence');
+      const responseText = await response.text(); // Read response as text first
+      let data;
+
+      if (!responseText) {
+        // Handle empty response explicitly
+        throw new Error('Empty response from server for user existence check.');
       }
-      const data = await response.json();
+
+      try {
+        data = JSON.parse(responseText); // Attempt to parse as JSON
+      } catch (jsonError) {
+        console.error('JSON parsing error for /users/exists:', jsonError);
+        console.error('Raw response text for /users/exists:', responseText);
+        throw new Error('Invalid JSON response from server for user existence check.');
+      }
+
+      if (!response.ok) {
+        // If response.ok is false, but we successfully parsed JSON, use its message
+        throw new Error(data.message || 'Failed to check user existence');
+      }
+
       setUsersExist(data.exists);
       console.log("AuthContext: Users exist check:", data.exists);
-      if (!data.exists && isAuthenticated) { // If no users exist in DB but frontend thinks it's authenticated
+      if (!data.exists && isAuthenticated) {
         console.warn("No users found in backend, but frontend is authenticated. Forcing logout.");
-        logout(); // Force logout to clear stale token
+        logout();
       }
     } catch (error) {
       console.error('Error fetching user existence:', error);
-      // Removed showError here to prevent toast on initial load
-      setUsersExist(false); // Assume no users exist if check fails
+      setUsersExist(false);
       if (isAuthenticated) {
-        logout(); // Force logout if check fails and frontend is authenticated
+        logout();
       }
     }
   }, [isAuthenticated, logout, setAuthData]);
