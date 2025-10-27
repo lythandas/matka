@@ -1,7 +1,8 @@
 # Stage 1: Build the backend
 FROM node:20-alpine as backend-builder
 WORKDIR /app/backend
-COPY backend/package.json /app/backend/ # Explicitly copy to the directory
+# Explicitly copy to the directory
+COPY backend/package.json /app/backend/
 RUN npm install             # This will generate package-lock.json
 COPY backend/src ./src
 COPY backend/tsconfig.json .
