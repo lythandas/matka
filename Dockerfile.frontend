@@ -1,22 +1,26 @@
 # Stage 1: Build the React application
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json yarn.lock* package-lock.json* ./
-RUN npm install --frozen-lockfile
+# Copy package.json and yarn.lock (or package-lock.json) to leverage Docker cache
+COPY package.json yarn.lock ./
+# Install dependencies
+RUN yarn install --frozen-lockfile
 
+# Copy the rest of the application code
 COPY . .
 
-RUN npm run build
+# Build the frontend application
+RUN yarn build
 
-# Stage 2: Serve the application with a lightweight server
+# Stage 2: Serve the application with `serve`
 FROM node:20-alpine
 
 WORKDIR /app
 
 # Install 'serve' globally
-RUN npm install -g serve
+RUN yarn global add serve
 
 # Copy the built application from the builder stage
 COPY --from=builder /app/dist ./dist
@@ -27,6 +31,8 @@ COPY serve.json .
 # Expose the port that 'serve' will listen on
 EXPOSE 8080
 
-# Command to run the application
-# 'serve' will serve static files from ./dist and use serve.json for proxying
-CMD ["serve", "-s", "dist", "-l", "8080"]
+# Command to run the application using 'serve'
+# '-s dist' serves static files from the 'dist' directory
+# '-l 8080' specifies the port
+# '-c serve.json' specifies the configuration file for rewrites/proxying
+CMD ["serve", "-s", "dist", "-l", "8080", "-c", "serve.json"]
