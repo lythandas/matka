@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY package.json ./
 RUN npm install
+# Explicitly install serve
+RUN npm install -g serve
 
 COPY . .
 
@@ -23,5 +25,5 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 8080
 
-# Correct the path to serve.json in the CMD command
-CMD ["npx", "serve", "-s", "dist", "-l", "8080", "-c", "dist/serve.json"]
+# Correct the path to serve.json in the CMD command and use globally installed serve
+CMD ["serve", "-s", "dist", "-l", "8080", "-c", "dist/serve.json"]
