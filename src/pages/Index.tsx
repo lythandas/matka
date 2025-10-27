@@ -186,7 +186,7 @@ const Index = () => {
           };
         });
 
-        const response = await fetch(`${API_BASE_URL}/upload-media`, {
+        const response = await fetch(`${API_BASE_URL}/media/upload-media`, { // Updated endpoint
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -708,10 +708,7 @@ const Index = () => {
                     {t('indexPage.uploadingMedia')}
                   </>
                 ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {t('indexPage.uploadMedia')}
-                  </>
+                  newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} ${t('common.filesSelected')}` : (uploadedMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
                 )}
               </Button>
 

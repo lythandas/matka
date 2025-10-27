@@ -82,7 +82,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
         };
       });
 
-      const response = await fetch(`${API_BASE_URL}/upload-media`, {
+      const response = await fetch(`${API_BASE_URL}/media/upload-media`, { // Updated endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

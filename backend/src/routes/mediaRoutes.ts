@@ -1,16 +1,17 @@
 // backend/src/routes/mediaRoutes.ts
 import { FastifyInstance } from 'fastify';
 import { dbClient } from '../db';
-import { authenticate } from '../auth';
+import { authenticate } from '../auth'; // This import is no longer needed here as the hook is applied in server.ts
 import { MediaInfo } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
-import { UPLOADS_DIR } from '../config'; // Removed BACKEND_EXTERNAL_URL
+import { UPLOADS_DIR } from '../config';
 import { mapDbUserToApiUser } from '../utils';
 
 export default async function mediaRoutes(fastify: FastifyInstance) {
-  fastify.addHook('preHandler', authenticate);
+  // The authentication hook is now applied in server.ts for this plugin.
+  // fastify.addHook('preHandler', authenticate); // Removed from here
 
   // Handle media upload
   fastify.post('/upload-media', async (request, reply) => {
@@ -37,7 +38,7 @@ export default async function mediaRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
 
-    const mediaBaseUrl = '/uploads'; // Changed to relative path
+    const mediaBaseUrl = '/uploads';
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {
