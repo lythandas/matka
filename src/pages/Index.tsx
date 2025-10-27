@@ -27,7 +27,7 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import EditPostDialog from '@/components/EditPostDialog';
-import { getAvatarInit from '@/lib/utils';
+import { getAvatarInitials } from '@/lib/utils'; // Corrected import
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, MediaInfo, JourneyCollaborator } from '@/types';
