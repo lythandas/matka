@@ -14,17 +14,18 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
     throw new Error('DATABASE_URL is not defined.');
   }
 
-  dbClient = new Client({
-    connectionString: databaseUrl,
-  });
-
   const MAX_RETRIES = 10;
   let retries = 0;
 
   while (retries < MAX_RETRIES) {
     try {
-      await dbClient.connect();
+      // Create a new client for each attempt
+      const currentAttemptClient = new Client({
+        connectionString: databaseUrl,
+      });
+      await currentAttemptClient.connect();
       logger.info('Connected to PostgreSQL database');
+      dbClient = currentAttemptClient; // Assign the successfully connected client to the global variable
       await createTables(logger);
       isDbConnected = true;
       return;
