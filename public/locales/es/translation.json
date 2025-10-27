@@ -227,7 +227,11 @@
     "clearLocation": "Borrar ubicación",
     "saving": "Guardando...",
     "saveChanges": "Guardar cambios",
-    "clickGetLocation": "Haz clic en 'Obtener ubicación actual' para obtener tu posición."
+    "clickGetLocation": "Haz clic en 'Obtener ubicación actual' para obtener tu posición.",
+    "editDraft": "Editar borrador",
+    "publishing": "Publicando...",
+    "publishPost": "Publicar publicación",
+    "noPermissionPublishDraft": "No tienes permiso para publicar publicaciones en este viaje."
   },
   "locationSearch": {
     "searchForLocation": "Buscar una ubicación",
@@ -266,7 +270,24 @@
     "loadingPosts": "Cargando publicaciones...",
     "noPostsWithLocation": "No hay publicaciones con datos de ubicación para mostrar en el mapa.",
     "addPostsWithLocation": "¡Añade publicaciones con información de ubicación para verlas aquí!",
-    "searchLocation": "Buscar ubicación"
+    "searchLocation": "Buscar ubicación",
+    "saveDraft": "Guardar borrador",
+    "savingDraft": "Guardando borrador...",
+    "publishedPosts": "Publicaciones publicadas",
+    "drafts": "Borradores",
+    "loadingDrafts": "Cargando borradores...",
+    "noDraftsYet": "¡Todavía no tienes borradores!",
+    "saveWorkAsDraft": "Guarda tu trabajo como borrador para terminarlo más tarde.",
+    "lastSaved": "Última vez guardado: {{date}}",
+    "untitledDraft": "Borrador sin título",
+    "loadDraft": "Cargar borrador",
+    "deleteDraft": "Eliminar borrador",
+    "deleteDraftDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el borrador <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "draftSavedSuccessfully": "¡Borrador guardado correctamente!",
+    "failedToSaveDraft": "Error al guardar el borrador.",
+    "draftLoadedSuccessfully": "¡Borrador '{{title}}' cargado correctamente!",
+    "draftDeletedSuccessfully": "¡Borrador eliminado correctamente!",
+    "failedToFetchDrafts": "Error al obtener los borradores."
   },
   "adminPage": {
     "adminDashboard": "Panel de administración",

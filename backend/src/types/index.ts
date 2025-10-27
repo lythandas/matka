@@ -66,4 +66,5 @@ export interface Post {
   media_items?: MediaInfo[];
   coordinates?: { lat: number; lng: number };
   created_at: string;
+  is_draft?: boolean; // New field for drafts
 }

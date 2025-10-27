@@ -227,7 +227,11 @@
     "clearLocation": "Standort löschen",
     "saving": "Wird gespeichert...",
     "saveChanges": "Änderungen speichern",
-    "clickGetLocation": "Klicken Sie auf „Aktuellen Standort abrufen“, um Ihre Position abzurufen."
+    "clickGetLocation": "Klicken Sie auf „Aktuellen Standort abrufen“, um Ihre Position abzurufen.",
+    "editDraft": "Entwurf bearbeiten",
+    "publishing": "Wird veröffentlicht...",
+    "publishPost": "Beitrag veröffentlichen",
+    "noPermissionPublishDraft": "Sie haben keine Berechtigung, Beiträge in dieser Reise zu veröffentlichen."
   },
   "locationSearch": {
     "searchForLocation": "Standort suchen",
@@ -266,7 +270,24 @@
     "loadingPosts": "Beiträge werden geladen...",
     "noPostsWithLocation": "Keine Beiträge mit Standortdaten zum Anzeigen auf der Karte.",
     "addPostsWithLocation": "Fügen Sie Beiträge mit Standortinformationen hinzu, um sie hier zu sehen!",
-    "searchLocation": "Standort suchen"
+    "searchLocation": "Standort suchen",
+    "saveDraft": "Entwurf speichern",
+    "savingDraft": "Entwurf wird gespeichert...",
+    "publishedPosts": "Veröffentlichte Beiträge",
+    "drafts": "Entwürfe",
+    "loadingDrafts": "Entwürfe werden geladen...",
+    "noDraftsYet": "Sie haben noch keine Entwürfe!",
+    "saveWorkAsDraft": "Speichern Sie Ihre Arbeit als Entwurf, um sie später fertigzustellen.",
+    "lastSaved": "Zuletzt gespeichert: {{date}}",
+    "untitledDraft": "Unbenannter Entwurf",
+    "loadDraft": "Entwurf laden",
+    "deleteDraft": "Entwurf löschen",
+    "deleteDraftDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Entwurf <span class=\"font-bold\">„{{draftTitle}}“</span> dauerhaft gelöscht.",
+    "draftSavedSuccessfully": "Entwurf erfolgreich gespeichert!",
+    "failedToSaveDraft": "Fehler beim Speichern des Entwurfs.",
+    "draftLoadedSuccessfully": "Entwurf „{{title}}“ erfolgreich geladen!",
+    "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
+    "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe."
   },
   "adminPage": {
     "adminDashboard": "Admin-Dashboard",

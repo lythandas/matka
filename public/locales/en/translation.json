@@ -227,7 +227,11 @@
     "clearLocation": "Clear location",
     "saving": "Saving...",
     "saveChanges": "Save changes",
-    "clickGetLocation": "Click 'Get current location' to fetch your position."
+    "clickGetLocation": "Click 'Get current location' to fetch your position.",
+    "editDraft": "Edit Draft",
+    "publishing": "Publishing...",
+    "publishPost": "Publish Post",
+    "noPermissionPublishDraft": "You do not have permission to publish posts in this journey."
   },
   "locationSearch": {
     "searchForLocation": "Search for a location",
@@ -266,7 +270,24 @@
     "loadingPosts": "Loading posts...",
     "noPostsWithLocation": "No posts with location data to display on the map.",
     "addPostsWithLocation": "Add posts with location information to see them here!",
-    "searchLocation": "Search Location"
+    "searchLocation": "Search Location",
+    "saveDraft": "Save Draft",
+    "savingDraft": "Saving Draft...",
+    "publishedPosts": "Published Posts",
+    "drafts": "Drafts",
+    "loadingDrafts": "Loading drafts...",
+    "noDraftsYet": "You don't have any drafts yet!",
+    "saveWorkAsDraft": "Save your work as a draft to finish it later.",
+    "lastSaved": "Last saved: {{date}}",
+    "untitledDraft": "Untitled Draft",
+    "loadDraft": "Load Draft",
+    "deleteDraft": "Delete Draft",
+    "deleteDraftDescription": "This action cannot be undone. This will permanently delete the draft <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "draftSavedSuccessfully": "Draft saved successfully!",
+    "failedToSaveDraft": "Failed to save draft.",
+    "draftLoadedSuccessfully": "Draft '{{title}}' loaded successfully!",
+    "draftDeletedSuccessfully": "Draft deleted successfully!",
+    "failedToFetchDrafts": "Failed to fetch drafts."
   },
   "adminPage": {
     "adminDashboard": "Admin dashboard",

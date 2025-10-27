@@ -115,7 +115,7 @@ const PublicJourneyPage: React.FC = () => {
     setLoadingPosts(true);
     setError(null); // Clear previous errors
     try {
-      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts`);
+      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`); // Fetch only published posts
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicPosts');

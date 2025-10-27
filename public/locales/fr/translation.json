@@ -227,7 +227,11 @@
     "clearLocation": "Effacer l'emplacement",
     "saving": "Sauvegarde...",
     "saveChanges": "Sauvegarder les modifications",
-    "clickGetLocation": "Cliquez sur 'Obtenir l'emplacement actuel' pour récupérer votre position."
+    "clickGetLocation": "Cliquez sur 'Obtenir l'emplacement actuel' pour récupérer votre position.",
+    "editDraft": "Modifier le brouillon",
+    "publishing": "Publication...",
+    "publishPost": "Publier la publication",
+    "noPermissionPublishDraft": "Vous n'avez pas la permission de publier des publications dans ce voyage."
   },
   "locationSearch": {
     "searchForLocation": "Rechercher un emplacement",
@@ -266,7 +270,24 @@
     "loadingPosts": "Cargando publicaciones...",
     "noPostsWithLocation": "No hay publicaciones con datos de ubicación para mostrar en el mapa.",
     "addPostsWithLocation": "¡Añade publicaciones con información de ubicación para verlas aquí!",
-    "searchLocation": "Buscar ubicación"
+    "searchLocation": "Buscar ubicación",
+    "saveDraft": "Enregistrer le brouillon",
+    "savingDraft": "Enregistrement du brouillon...",
+    "publishedPosts": "Publications publiées",
+    "drafts": "Brouillons",
+    "loadingDrafts": "Chargement des brouillons...",
+    "noDraftsYet": "Vous n'avez pas encore de brouillons !",
+    "saveWorkAsDraft": "Enregistrez votre travail comme brouillon pour le terminer plus tard.",
+    "lastSaved": "Dernière sauvegarde : {{date}}",
+    "untitledDraft": "Brouillon sans titre",
+    "loadDraft": "Charger le brouillon",
+    "deleteDraft": "Supprimer le brouillon",
+    "deleteDraftDescription": "Cette action est irréversible. Cela supprimera définitivement le brouillon <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "draftSavedSuccessfully": "Brouillon enregistré avec succès !",
+    "failedToSaveDraft": "Échec de l'enregistrement du brouillon.",
+    "draftLoadedSuccessfully": "Brouillon '{{title}}' chargé avec succès !",
+    "draftDeletedSuccessfully": "Brouillon supprimé avec succès !",
+    "failedToFetchDrafts": "Échec de la récupération des brouillons."
   },
   "adminPage": {
     "adminDashboard": "Panel de administración",
@@ -324,7 +345,7 @@
     "searchUsernameToAdd": "Buscar nombre de usuario para añadir...",
     "addingCollaborator": "Añadiendo a <span class=\"font-bold text-primary\">{{username}}</span> como colaborador. Podrá leer y publicar publicaciones en este viaje por defecto.",
     "addCollaborator": "Añadir colaborador",
-    "currentCollaborators": "Colaboradores actuales ({{count}})",
+    "currentCollaborators": "Colaboradores actuels ({{count}})",
     "noCollaboratorsAdded": "Aún no se han añadido colaboradores.",
     "allowCreatePosts": "Permitir al usuario crear nuevas publicaciones en este viaje",
     "allowEditPosts": "Permitir al usuario editar publicaciones existentes en este viaje",

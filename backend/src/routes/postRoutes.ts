@@ -9,7 +9,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authenticate);
 
   fastify.get('/posts', async (request, reply) => {
-    const { journeyId } = request.query as { journeyId: string };
+    const { journeyId, is_draft } = request.query as { journeyId: string; is_draft?: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -37,18 +37,25 @@ export default async function postRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to read posts in this journey.' });
     }
 
-    const postsResult = await dbClient!.query('SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 ORDER BY created_at DESC', [journeyId]);
+    // Filter by is_draft. If not provided, default to fetching published posts (is_draft = FALSE)
+    const isDraftFilter = is_draft === 'true' ? true : false;
+
+    const postsResult = await dbClient!.query(
+      'SELECT *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items FROM posts WHERE journey_id = $1 AND is_draft = $2 ORDER BY created_at DESC',
+      [journeyId, isDraftFilter]
+    );
     return postsResult.rows;
   });
 
   fastify.post('/posts', async (request, reply) => {
-    const { journeyId, title, message, media_items, coordinates, created_at } = request.body as {
+    const { journeyId, title, message, media_items, coordinates, created_at, is_draft } = request.body as {
       journeyId?: string;
       title?: string;
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
       created_at?: string;
+      is_draft?: boolean; // Allow creating as a draft
     };
 
     if (!request.user) {
@@ -76,9 +83,15 @@ export default async function postRoutes(fastify: FastifyInstance) {
     );
     const canPublish = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_publish_posts : false;
 
-    if (!isOwner && !isAdmin && !canPublish) {
-      return reply.code(403).send({ message: 'Forbidden: You do not have permission to create posts in this journey.' });
+    // Only allow publishing if user has permission or it's a draft
+    if (!is_draft && !isOwner && !isAdmin && !canPublish) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to create published posts in this journey.' });
     }
+    // Allow saving drafts for anyone who can publish, or the owner/admin
+    if (is_draft && !isOwner && !isAdmin && !canPublish) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to create drafts in this journey.' });
+    }
+
 
     const newPostData: Post = {
       id: uuidv4(),
@@ -93,11 +106,12 @@ export default async function postRoutes(fastify: FastifyInstance) {
       media_items: media_items && media_items.length > 0 ? media_items : undefined,
       coordinates: coordinates || undefined,
       created_at: created_at || new Date().toISOString(),
+      is_draft: is_draft || false, // Set is_draft based on payload, default to false
     };
 
     const result = await dbClient!.query(
-      `INSERT INTO posts (id, journey_id, user_id, author_username, author_name, author_surname, author_profile_image_url, title, message, media_items, coordinates, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO posts (id, journey_id, user_id, author_username, author_name, author_surname, author_profile_image_url, title, message, media_items, coordinates, created_at, is_draft)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
         newPostData.id,
@@ -111,7 +125,8 @@ export default async function postRoutes(fastify: FastifyInstance) {
         newPostData.message,
         newPostData.media_items ? JSON.stringify(newPostData.media_items) : null,
         newPostData.coordinates ? JSON.stringify(newPostData.coordinates) : null,
-        newPostData.created_at
+        newPostData.created_at,
+        newPostData.is_draft
       ]
     );
     return result.rows[0];
@@ -119,19 +134,20 @@ export default async function postRoutes(fastify: FastifyInstance) {
 
   fastify.put('/posts/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { title, message, media_items, coordinates, created_at } = request.body as {
+    const { title, message, media_items, coordinates, created_at, is_draft } = request.body as {
       title?: string;
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
       created_at?: string;
+      is_draft?: boolean; // Allow updating is_draft status
     };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const postResult = await dbClient!.query('SELECT user_id, journey_id FROM posts WHERE id = $1', [id]);
+    const postResult = await dbClient!.query('SELECT user_id, journey_id, is_draft FROM posts WHERE id = $1', [id]);
     const existingPost = postResult.rows[0];
     if (!existingPost) {
       return reply.code(404).send({ message: 'Post not found' });
@@ -147,13 +163,23 @@ export default async function postRoutes(fastify: FastifyInstance) {
     const isJourneyOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin;
     const collaboratorPermsResult = await dbClient!.query(
-      'SELECT can_modify_post FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
+      'SELECT can_modify_post, can_publish_posts FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [existingPost.journey_id, request.user.id]
     );
     const canModify = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_modify_post : false;
+    const canPublish = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_publish_posts : false;
 
+
+    // Permission check for modifying the post/draft
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canModify) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
+    }
+
+    // Additional permission check if trying to publish a draft (change is_draft from true to false)
+    if (existingPost.is_draft === true && is_draft === false) {
+      if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canPublish) {
+        return reply.code(403).send({ message: 'Forbidden: You do not have permission to publish posts in this journey.' });
+      }
     }
 
     const result = await dbClient!.query(
@@ -162,8 +188,9 @@ export default async function postRoutes(fastify: FastifyInstance) {
         message = COALESCE($2, message),
         media_items = $3,
         coordinates = $4,
-        created_at = COALESCE($5, created_at)
-       WHERE id = $6
+        created_at = COALESCE($5, created_at),
+        is_draft = COALESCE($6, is_draft)
+       WHERE id = $7
        RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
         title === null ? null : title,
@@ -171,6 +198,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
         media_items && media_items.length > 0 ? JSON.stringify(media_items) : null,
         coordinates ? JSON.stringify(coordinates) : null,
         created_at,
+        is_draft, // Update is_draft status
         id
       ]
     );

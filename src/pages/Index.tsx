@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2 } from 'lucide-react';
+import { Trash2, Plus, XCircle, Compass, Edit, Upload, MapPin, LocateFixed, Search, Loader2, Save } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
@@ -27,7 +27,7 @@ import { useJourneys } from '@/contexts/JourneyContext';
 import ViewToggle from '@/components/ViewToggle';
 import GridPostCard from '@/components/GridPostCard';
 import EditPostDialog from '@/components/EditPostDialog';
-import { getAvatarInitials } from '@/lib/utils';
+import { getAvatarInit from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';
 import { MAX_CONTENT_FILE_SIZE_BYTES, SUPPORTED_MEDIA_TYPES } from '@/config/constants';
 import { Post, MediaInfo, JourneyCollaborator } from '@/types';
@@ -38,6 +38,10 @@ import PostDatePicker from './../components/PostDatePicker';
 import SortToggle from '@/components/SortToggle';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from '@/lib/utils';
+
+const AUTO_SAVE_INTERVAL_MS = 60 * 1000; // 1 minute
 
 const Index = () => {
   const { t } = useTranslation();
@@ -53,7 +57,9 @@ const Index = () => {
   const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [drafts, setDrafts] = useState<Post[]>([]); // New state for drafts
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
+  const [loadingDrafts, setLoadingDrafts] = useState<boolean>(true); // New state for loading drafts
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list');
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
@@ -72,6 +78,9 @@ const Index = () => {
 
   const [postDate, setPostDate] = useState<Date | undefined>(new Date());
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null); // ID of the draft currently being edited
+  const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
@@ -103,7 +112,7 @@ const Index = () => {
   const fetchPosts = async (journeyId: string) => {
     setLoadingPosts(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}`, {
+      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}&is_draft=false`, { // Fetch only published posts
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -121,13 +130,37 @@ const Index = () => {
     }
   };
 
+  const fetchDrafts = async (journeyId: string) => {
+    setLoadingDrafts(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/posts?journeyId=${journeyId}&is_draft=true`, { // Fetch only drafts
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(t('indexPage.failedToFetchDrafts'));
+      }
+      const data: Post[] = await response.json();
+      setDrafts(data);
+    } catch (error) {
+      console.error('Error fetching drafts:', error);
+      showError(t('indexPage.failedToLoadDrafts'));
+    } finally {
+      setLoadingDrafts(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedJourney) {
       fetchPosts(selectedJourney.id);
+      fetchDrafts(selectedJourney.id); // Fetch drafts as well
       fetchJourneyCollaborators(selectedJourney.id);
     } else {
       setPosts([]);
+      setDrafts([]);
       setLoadingPosts(false);
+      setLoadingDrafts(false);
       setJourneyCollaborators([]);
     }
   }, [selectedJourney, isAuthenticated, fetchJourneyCollaborators, token, t]);
@@ -260,7 +293,96 @@ const Index = () => {
     showSuccess(t('common.locationCleared'));
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const resetForm = () => {
+    setTitle('');
+    setMessage('');
+    setSelectedFiles([]);
+    setUploadedMediaItems([]);
+    setCoordinates(null);
+    setLocationSelectionMode('none');
+    setPostDate(new Date());
+    setCurrentDraftId(null);
+  };
+
+  const saveDraft = useCallback(async () => {
+    if (!isAuthenticated || !selectedJourney || isUploadingMedia || isSavingDraft) return;
+
+    const isOwner = user?.id === selectedJourney.user_id;
+    const isAdmin = user?.isAdmin;
+    const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts);
+    const canCreatePost = isOwner || isAdmin || canPublishAsCollaborator;
+
+    if (!canCreatePost) return; // Cannot save draft if no permission to create posts
+
+    // Only save if there's actual content
+    if (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) {
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      const postData = {
+        journeyId: selectedJourney.id,
+        title: title.trim() || undefined,
+        message: message.trim(),
+        media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
+        coordinates: coordinates || undefined,
+        created_at: postDate ? postDate.toISOString() : undefined,
+        is_draft: true,
+      };
+
+      let response;
+      if (currentDraftId) {
+        response = await fetch(`${API_BASE_URL}/posts/${currentDraftId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(postData),
+        });
+      } else {
+        response = await fetch(`${API_BASE_URL}/posts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(postData),
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('indexPage.failedToSaveDraft'));
+      }
+
+      const savedDraft: Post = await response.json();
+      setCurrentDraftId(savedDraft.id);
+      fetchDrafts(selectedJourney.id); // Refresh drafts list
+      showSuccess(t('indexPage.draftSavedSuccessfully'));
+    } catch (error: any) {
+      console.error('Error saving draft:', error);
+      showError(error.message || t('indexPage.failedToSaveDraft'));
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }, [isAuthenticated, selectedJourney, isUploadingMedia, isSavingDraft, user, journeyCollaborators, title, message, uploadedMediaItems, coordinates, postDate, currentDraftId, token, fetchDrafts, t]);
+
+  useEffect(() => {
+    let autoSaveTimer: number;
+    if (isAuthenticated && selectedJourney) {
+      autoSaveTimer = window.setInterval(saveDraft, AUTO_SAVE_INTERVAL_MS);
+    }
+    return () => {
+      if (autoSaveTimer) {
+        clearInterval(autoSaveTimer);
+      }
+    };
+  }, [isAuthenticated, selectedJourney, saveDraft]);
+
+
+  const handleSubmit = async (event: React.FormEvent, publish: boolean = true) => {
     event.preventDefault();
 
     if (!isAuthenticated) {
@@ -293,44 +415,60 @@ const Index = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/posts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          journeyId: selectedJourney.id,
-          title: title.trim() || undefined,
-          message: message.trim(),
-          media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
-          coordinates: coordinates || undefined,
-          created_at: postDate ? postDate.toISOString() : undefined,
-        }),
-      });
+      const postData = {
+        journeyId: selectedJourney.id,
+        title: title.trim() || undefined,
+        message: message.trim(),
+        media_items: uploadedMediaItems.length > 0 ? uploadedMediaItems : undefined,
+        coordinates: coordinates || undefined,
+        created_at: postDate ? postDate.toISOString() : undefined,
+        is_draft: !publish, // If publish is true, is_draft is false. If publish is false (save draft), is_draft is true.
+      };
+
+      let response;
+      if (currentDraftId) {
+        // Update existing draft or publish it
+        response = await fetch(`${API_BASE_URL}/posts/${currentDraftId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(postData),
+        });
+      } else {
+        // Create new post or draft
+        response = await fetch(`${API_BASE_URL}/posts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(postData),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToCreatePost'));
+        throw new Error(errorData.message || (publish ? t('common.failedToCreatePost') : t('indexPage.failedToSaveDraft')));
       }
 
-      const newPost: Post = await response.json();
-      setPosts([newPost, ...posts]);
-      setTitle('');
-      setMessage('');
-      setSelectedFiles([]);
-      setUploadedMediaItems([]);
-      setCoordinates(null);
-      setLocationSelectionMode('none');
-      setPostDate(new Date());
-      showSuccess(t('common.postCreatedSuccessfully'));
+      const resultPost: Post = await response.json();
+      if (publish) {
+        setPosts((prev) => [resultPost, ...prev]);
+        showSuccess(t('common.postCreatedSuccessfully'));
+      } else {
+        fetchDrafts(selectedJourney.id); // Refresh drafts list
+        showSuccess(t('indexPage.draftSavedSuccessfully'));
+      }
+      resetForm();
     } catch (error: any) {
-      console.error('Error creating post:', error);
-      showError(error.message || t('common.failedToCreatePost'));
+      console.error('Error creating/saving post:', error);
+      showError(error.message || (publish ? t('common.failedToCreatePost') : t('indexPage.failedToSaveDraft')));
     }
   };
 
-  const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string) => {
+  const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string, isDraft: boolean = false) => {
     if (!isAuthenticated) {
       showError(t('common.authRequiredDeletePost'));
       return;
@@ -359,9 +497,17 @@ const Index = () => {
         throw new Error(errorData.message || t('common.failedToDeletePost'));
       }
 
-      setPosts(posts.filter((post) => post.id !== id));
-      showSuccess(t('common.postDeletedSuccessfully'));
-    } catch (error: any) { // Corrected syntax here
+      if (isDraft) {
+        setDrafts(drafts.filter((draft) => draft.id !== id));
+        if (currentDraftId === id) {
+          resetForm();
+        }
+        showSuccess(t('indexPage.draftDeletedSuccessfully'));
+      } else {
+        setPosts(posts.filter((post) => post.id !== id));
+        showSuccess(t('common.postDeletedSuccessfully'));
+      }
+    } catch (error: any) {
       console.error('Error deleting post:', error);
       showError(error.message || t('common.failedToDeletePost'));
     }
@@ -401,7 +547,14 @@ const Index = () => {
   };
 
   const handlePostUpdated = (updatedPost: Post) => {
-    setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+    if (updatedPost.is_draft) {
+      setDrafts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+    } else {
+      setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+      // If a draft was published, remove it from drafts list
+      setDrafts((prev) => prev.filter((p) => p.id !== updatedPost.id));
+    }
+
     if (selectedPostForDetail?.id === updatedPost.id) {
       setSelectedPostForDetail(updatedPost);
     }
@@ -411,17 +564,33 @@ const Index = () => {
     handlePostClick(post, index);
   };
 
+  const handleLoadDraft = (draft: Post) => {
+    setTitle(draft.title || '');
+    setMessage(draft.message);
+    setUploadedMediaItems(draft.media_items || []);
+    setCoordinates(draft.coordinates || null);
+    setPostDate(draft.created_at ? parseISO(draft.created_at) : new Date());
+    setCurrentDraftId(draft.id);
+    showSuccess(t('indexPage.draftLoadedSuccessfully', { title: draft.title || draft.message.substring(0, 20) + '...' }));
+  };
+
   const sortedPosts = [...posts].sort((a, b) => {
     const dateA = new Date(a.created_at).getTime();
     const dateB = new Date(b.created_at).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
+  const sortedDrafts = [...drafts].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return dateB - dateA; // Always newest first for drafts
+  });
+
   const displayedPosts = sortedPosts;
+  const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
   const canCreateJourneyUI = isAuthenticated;
-  const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
   let mainContent;
 
@@ -433,7 +602,7 @@ const Index = () => {
         <CardHeader className="flex flex-row items-center justify-end">
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => handleSubmit(e, true)} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <Input
                 placeholder={t('indexPage.titleOptional')}
@@ -588,8 +757,30 @@ const Index = () => {
               </div>
             )}
 
-            <div className="flex justify-center">
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500" disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}>
+            <div className="flex justify-center gap-2">
+              <Button
+                type="button"
+                onClick={(e) => handleSubmit(e, false)} // Save as draft
+                className="bg-gray-600 hover:bg-gray-700 text-white hover:ring-2 hover:ring-gray-500"
+                disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) || isSavingDraft}
+              >
+                {isSavingDraft ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('indexPage.savingDraft')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {t('indexPage.saveDraft')}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="submit" // Publish post
+                className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+                disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}
+              >
                 {t('indexPage.post')}
               </Button>
             </div>
@@ -630,187 +821,267 @@ const Index = () => {
     <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
       {mainContent}
 
-      {displayedPosts.length > 0 && (
-        <div className="relative flex items-center justify-center mb-6 h-10">
-          <div className="absolute left-0">
-            <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
-          </div>
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        </div>
-      )}
+      {selectedJourney && (posts.length > 0 || drafts.length > 0) && (
+        <Tabs defaultValue="posts" className="w-full mt-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="posts">{t('indexPage.publishedPosts')}</TabsTrigger>
+            <TabsTrigger value="drafts">{t('indexPage.drafts')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="posts" className="mt-4">
+            {displayedPosts.length > 0 && (
+              <div className="relative flex items-center justify-center mb-6 h-10">
+                <div className="absolute left-0">
+                  <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+                </div>
+                <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              </div>
+            )}
 
-      {loadingPosts ? (
-        <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
-      ) : displayedPosts.length === 0 && selectedJourney ? (
-        <div className="text-center py-12">
-          <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-          <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-            {t('indexPage.yourJourneyAwaits')}
-          </p>
-          {isAuthenticated && canCreatePostUI && (
-            <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-              {t('indexPage.useShareSection')}
-            </p>
-          )}
-        </div>
-      ) : (
-        viewMode === 'list' ? (
-          <div className="space-y-6">
-            {displayedPosts.map((post, index) => {
-              const isPostAuthor = user?.id === post.user_id;
-              const isJourneyOwner = selectedJourney?.user_id === user?.id;
-              const isAdmin = user?.isAdmin;
-              const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
-              const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+            {loadingPosts ? (
+              <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
+            ) : displayedPosts.length === 0 && selectedJourney ? (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  {t('indexPage.yourJourneyAwaits')}
+                </p>
+                {isAuthenticated && canCreatePostUI && (
+                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                    {t('indexPage.useShareSection')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              viewMode === 'list' ? (
+                <div className="space-y-6">
+                  {displayedPosts.map((post, index) => {
+                    const isPostAuthor = user?.id === post.user_id;
+                    const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                    const isAdmin = user?.isAdmin;
+                    const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                    const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
-              const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
-              const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+                    const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                    const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
-              return (
-                <ShineCard
-                  key={post.id}
-                  className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                  onClick={() => handlePostClick(post, index)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      {post.author_profile_image_url ? (
-                        <img
-                          src={post.author_profile_image_url}
-                          alt={post.author_name || post.author_username}
-                          className="w-10 h-10 rounded-full object-cover mr-3"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                          {getAvatarInitials(post.author_name, post.author_username)}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">
-                          {post.author_name || post.author_username}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
-                        </p>
-                      </div>
-                    </div>
-                    {post.title && (
-                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                    )}
-                    {post.media_items && post.media_items.length > 0 && (
-                      <div className={
-                        post.media_items.length === 1
-                          ? "mb-4"
-                          : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                      }>
-                        {post.media_items.map((mediaItem, mediaIndex) => (
-                          <div key={mediaIndex} className="relative">
-                            {mediaItem.type === 'image' && mediaItem.urls.large && (
+                    return (
+                      <ShineCard
+                        key={post.id}
+                        className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                        onClick={() => handlePostClick(post, index)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-center mb-4">
+                            {post.author_profile_image_url ? (
                               <img
-                                src={mediaItem.urls.large}
-                                alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
-                                className="w-full h-auto max-h-96 object-cover rounded-md"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/placeholder.svg';
-                                  e.currentTarget.onerror = null;
-                                  showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
-                                }}
+                                src={post.author_profile_image_url}
+                                alt={post.author_name || post.author_username}
+                                className="w-10 h-10 rounded-full object-cover mr-3"
                               />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                                {getAvatarInitials(post.author_name, post.author_username)}
+                              </div>
                             )}
-                            {mediaItem.type === 'video' && mediaItem.url && (
-                              <video
-                                src={mediaItem.url}
-                                controls
-                                className="w-full h-auto max-h-96 object-cover rounded-md"
-                              />
-                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {post.author_name || post.author_username}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
+                              </p>
+                            </div>
                           </div>
-                        ))}
+                          {post.title && (
+                            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                          )}
+                          {post.media_items && post.media_items.length > 0 && (
+                            <div className={
+                              post.media_items.length === 1
+                                ? "mb-4"
+                                : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                            }>
+                              {post.media_items.map((mediaItem, mediaIndex) => (
+                                <div key={mediaIndex} className="relative">
+                                  {mediaItem.type === 'image' && mediaItem.urls.large && (
+                                    <img
+                                      src={mediaItem.urls.large}
+                                      alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
+                                      className="w-full h-auto max-h-96 object-cover rounded-md"
+                                      onError={(e) => {
+                                        e.currentTarget.src = '/placeholder.svg';
+                                        e.currentTarget.onerror = null;
+                                        showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
+                                      }}
+                                    />
+                                  )}
+                                  {mediaItem.type === 'video' && mediaItem.url && (
+                                    <video
+                                      src={mediaItem.url}
+                                      controls
+                                      className="w-full h-auto max-h-96 object-cover rounded-md"
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                            <div className="flex space-x-2">
+                              {isAuthenticated && selectedJourney && canEditPost && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {isAuthenticated && selectedJourney && canDeletePost && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <AlertDialog key={`delete-dialog-${post.id}`}>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {t('common.deletePostDescription')}
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                          {t('adminPage.continue')}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {post.coordinates && (
+                            <div className="mt-4">
+                              <MapComponent coordinates={post.coordinates} />
+                            </div>
+                          )}
+                        </CardContent>
+                      </ShineCard>
+                    );
+                  })}
+                </div>
+              ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayedPosts.map((post, index) => (
+                    <GridPostCard
+                      key={post.id}
+                      post={post}
+                      onClick={() => handlePostClick(post, index)}
+                    />
+                  ))}
+                </div>
+              ) : ( // viewMode === 'map'
+                hasPostsWithCoordinates ? (
+                  <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                    <MapComponent
+                      posts={displayedPosts}
+                      onMarkerClick={handleSelectPostFromMap}
+                      className="w-full h-full"
+                      zoom={7}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                    <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                      {t('indexPage.noPostsWithLocation')}
+                    </p>
+                    <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                      {t('indexPage.addPostsWithLocation')}
+                    </p>
+                  </div>
+                )
+              )
+            )}
+          </TabsContent>
+          <TabsContent value="drafts" className="mt-4">
+            {loadingDrafts ? (
+              <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingDrafts')}</p>
+            ) : sortedDrafts.length === 0 ? (
+              <div className="text-center py-12">
+                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  {t('indexPage.noDraftsYet')}
+                </p>
+                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  {t('indexPage.saveWorkAsDraft')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedDrafts.map((draft) => {
+                  const isDraftAuthor = user?.id === draft.user_id;
+                  const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                  const isAdmin = user?.isAdmin;
+                  const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                  const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+                  const canEditDraft = isDraftAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                  const canDeleteDraft = isDraftAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+
+                  return (
+                    <Card key={draft.id} className={cn("p-4 flex items-center justify-between", currentDraftId === draft.id && "ring-2 ring-blue-500")}>
+                      <div>
+                        <p className="font-semibold">{draft.title || draft.message.substring(0, 50) + (draft.message.length > 50 ? '...' : '') || t('indexPage.untitledDraft')}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t('indexPage.lastSaved', { date: format(new Date(draft.created_at), 'PPP p', { locale: currentLocale }) })}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
                       <div className="flex space-x-2">
-                        {isAuthenticated && selectedJourney && canEditPost && (
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                          >
-                            <Edit className="h-4 w-4" />
+                        {canEditDraft && (
+                          <Button variant="outline" size="sm" onClick={() => handleLoadDraft(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                            <Edit className="mr-2 h-4 w-4" /> {t('indexPage.loadDraft')}
                           </Button>
                         )}
-                        {isAuthenticated && selectedJourney && canDeletePost && (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <AlertDialog key={`delete-dialog-${post.id}`}>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {t('common.deletePostDescription')}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                    {t('adminPage.continue')}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                        {canDeleteDraft && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm" className="hover:ring-2 hover:ring-blue-500">
+                                <Trash2 className="mr-2 h-4 w-4" /> {t('indexPage.deleteDraft')}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeletePost(draft.id, draft.journey_id, draft.user_id, true)}>
+                                  {t('adminPage.continue')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
-                    </div>
-                    {post.coordinates && (
-                      <div className="mt-4">
-                        <MapComponent coordinates={post.coordinates} />
-                      </div>
-                    )}
-                  </CardContent>
-                </ShineCard>
-              );
-            })}
-          </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedPosts.map((post, index) => (
-              <GridPostCard
-                key={post.id}
-                post={post}
-                onClick={() => handlePostClick(post, index)}
-              />
-            ))}
-          </div>
-        ) : ( // viewMode === 'map'
-          hasPostsWithCoordinates ? (
-            <div className="w-full h-[70vh] rounded-md overflow-hidden">
-              <MapComponent
-                posts={displayedPosts}
-                onMarkerClick={handleSelectPostFromMap}
-                className="w-full h-full"
-                zoom={7}
-              />
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-              <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                {t('indexPage.noPostsWithLocation')}
-              </p>
-              <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                {t('indexPage.addPostsWithLocation')}
-              </p>
-            </div>
-          )
-        )
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
+
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
           post={selectedPostForDetail}
@@ -844,6 +1115,7 @@ const Index = () => {
             fetchJourneys();
             fetchJourneyCollaborators(selectedJourney.id);
             fetchPosts(selectedJourney.id);
+            fetchDrafts(selectedJourney.id);
           }}
         />
       )}

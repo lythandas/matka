@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Image, MapPin, Loader2, Trash2, Upload, XCircle, Video, LocateFixed, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Image, MapPin, Loader2, Trash2, Upload, XCircle, Video, LocateFixed, Search, ChevronLeft, ChevronRight, Save, Send } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import MapComponent from './MapComponent';
 import { API_BASE_URL } from '@/config/api';
@@ -54,6 +54,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentMediaPreviewIndex, setCurrentMediaPreviewIndex] = useState(0);
   const [postDate, setPostDate] = useState<Date | undefined>(post.created_at ? parseISO(post.created_at) : undefined);
+  const [isDraft, setIsDraft] = useState<boolean>(post.is_draft || false); // State for draft status
 
   useEffect(() => {
     setTitle(post.title || '');
@@ -65,6 +66,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     setLocationSelectionMode(post.coordinates ? 'current' : 'search');
     setCurrentMediaPreviewIndex(0);
     setPostDate(post.created_at ? parseISO(post.created_at) : undefined);
+    setIsDraft(post.is_draft || false); // Initialize isDraft from post prop
   }, [post, isOpen]);
 
   const uploadMediaToServer = async (files: File[]) => {
@@ -202,9 +204,9 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     showSuccess(t('common.locationCleared'));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (publish: boolean = false) => {
     if (!message.trim() && currentMediaItems.length === 0 && !coordinates) {
-      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired')); // Using a more general key here
+      showError(t('common.atLeastTitleMessageMediaOrCoordsRequired'));
       return;
     }
     if (isUploadingMedia) {
@@ -220,11 +222,19 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     const isJourneyOwner = currentUser.id === journeyOwnerId;
     const isAdmin = currentUser.isAdmin;
     const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post);
+    const canPublishAsCollaborator = journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts);
 
     const canEdit = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+    const canPublish = isPostAuthor || isJourneyOwner || isAdmin || canPublishAsCollaborator;
 
     if (!canEdit) {
       showError(t('common.noPermissionEditPost'));
+      return;
+    }
+
+    // If trying to publish (is_draft changes from true to false)
+    if (isDraft && publish && !canPublish) {
+      showError(t('editPostDialog.noPermissionPublishDraft'));
       return;
     }
 
@@ -242,6 +252,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           media_items: currentMediaItems.length > 0 ? currentMediaItems : null,
           coordinates: coordinates || null,
           created_at: postDate ? postDate.toISOString() : undefined,
+          is_draft: !publish, // Set is_draft based on whether we are publishing or just saving
         }),
       });
 
@@ -252,7 +263,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
       const updatedPost: Post = await response.json();
       onUpdate(updatedPost);
-      showSuccess(t('common.postUpdatedSuccessfully'));
+      showSuccess(publish ? t('editPostDialog.postPublishedSuccessfully') : t('common.postUpdatedSuccessfully'));
       onClose();
     } catch (error: any) {
       console.error('Error updating post:', error);
@@ -263,6 +274,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   };
 
   const canEditPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_modify_post));
+  const canPublishPostUI = currentUser && (currentUser.id === post.user_id || currentUser.id === journeyOwnerId || currentUser.isAdmin || journeyCollaborators.some(collab => collab.user_id === currentUser.id && collab.can_publish_posts));
 
   const displayedMedia = [...currentMediaItems];
   const currentPreviewMedia = displayedMedia[currentMediaPreviewIndex];
@@ -271,7 +283,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] min-h-[600px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('editPostDialog.editPost')}</DialogTitle>
+          <DialogTitle>{isDraft ? t('editPostDialog.editDraft') : t('editPostDialog.editPost')}</DialogTitle>
           <DialogDescription>
             {t('editPostDialog.modifyPostContent')}
           </DialogDescription>
@@ -471,14 +483,32 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
-            {isSaving ? (
+          {isDraft && canPublishPostUI && (
+            <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('editPostDialog.publishing')}
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  {t('editPostDialog.publishPost')}
+                </>
+              )}
+            </Button>
+          )}
+          <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
+            {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t('editPostDialog.saving')}
               </>
             ) : (
-              t('common.saveChanges')
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                {t('common.saveChanges')}
+              </>
             )}
           </Button>
         </DialogFooter>

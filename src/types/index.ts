@@ -42,6 +42,7 @@ export interface Post {
   author_surname?: string;
   author_profile_image_url?: string;
   journey_id: string; // Added journey_id to Post interface
+  is_draft?: boolean; // New field for drafts
 }
 
 // New: Interface for a user's permissions within a specific journey
