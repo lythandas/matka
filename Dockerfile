@@ -1,8 +1,8 @@
 # Stage 1: Build the backend
 FROM node:20-alpine as backend-builder
 WORKDIR /app/backend
-COPY backend/package.json backend/package-lock.json ./
-RUN npm install
+COPY backend/package.json ./ # Corrected: Only copy package.json
+RUN npm install             # This will generate package-lock.json
 COPY backend/src ./src
 COPY backend/tsconfig.json .
 RUN npm run build
@@ -24,7 +24,7 @@ WORKDIR /app
 # Copy backend build artifacts and production dependencies
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY backend/package.json ./backend/
-COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules # Corrected: Copy from backend-builder stage
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 
 # Copy frontend build artifacts
 COPY --from=frontend-builder /app/frontend/dist ./frontend-dist
