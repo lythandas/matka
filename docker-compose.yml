@@ -11,32 +11,22 @@ services:
     ports:
       - "5432:5432"
 
-  backend:
+  app: # Renamed to 'app' for the combined service
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: . # Build from the root directory
+      dockerfile: Dockerfile # Use the new Dockerfile
     restart: always
     environment:
       DATABASE_URL: postgres://user:password@db:5432/myjourney_db
       JWT_SECRET: supersecretjwtkey_dev
-      BACKEND_INTERNAL_URL: http://backend:3001
-      BACKEND_EXTERNAL_URL: http://backend:3001
+      BACKEND_EXTERNAL_URL: http://localhost:8080 # Backend listens on 8080 internally
     volumes:
-      - ./backend/uploads:/app/uploads
-    depends_on:
-      - db # Backend now only waits for DB to be started
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    environment:
-      VITE_API_BASE_URL: /api # 'serve' will proxy this to the backend
+      - db_data:/var/lib/postgresql/data # Mount db_data for the app service if needed, though typically only db needs it
+      - ./backend/uploads:/app/uploads # Mount uploads directory
     ports:
-      - "8080:8080" # Expose frontend service directly
-    restart: always
+      - "8080:8080" # Expose the single app port
     depends_on:
-      - backend # Frontend now only waits for backend to be started
+      - db # App now only waits for DB to be started
 
 volumes:
   db_data:
