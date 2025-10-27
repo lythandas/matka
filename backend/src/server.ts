@@ -20,21 +20,7 @@ const fastify = Fastify({
 
 // Register CORS plugin
 fastify.register(cors, {
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:8080',
-      'http://127.0.0.1:8080',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-    ];
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      fastify.log.warn(`CORS: Blocking request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'), false);
-    }
-  },
+  origin: '*', // Temporarily allow all origins for debugging
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 });
