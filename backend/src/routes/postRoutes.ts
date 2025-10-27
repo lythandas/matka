@@ -6,9 +6,9 @@ import { Post, MediaInfo } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export default async function postRoutes(fastify: FastifyInstance) {
-  fastify.addHook('preHandler', authenticate);
+  // The authentication hook is applied in server.ts for this plugin, no need to add it here again.
 
-  fastify.get('/posts', async (request, reply) => {
+  fastify.get('/', async (request, reply) => { // Changed from /posts to /
     const { journeyId, is_draft } = request.query as { journeyId: string; is_draft?: string };
 
     if (!request.user) {
@@ -47,7 +47,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
     return postsResult.rows;
   });
 
-  fastify.post('/posts', async (request, reply) => {
+  fastify.post('/', async (request, reply) => { // Changed from /posts to /
     const { journeyId, title, message, media_items, coordinates, created_at, is_draft } = request.body as {
       journeyId?: string;
       title?: string;
@@ -132,7 +132,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.put('/posts/:id', async (request, reply) => {
+  fastify.put('/:id', async (request, reply) => { // Changed from /posts/:id to /:id
     const { id } = request.params as { id: string };
     const { title, message, media_items, coordinates, created_at, is_draft } = request.body as {
       title?: string;
@@ -205,7 +205,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.delete('/posts/:id', async (request, reply) => {
+  fastify.delete('/:id', async (request, reply) => { // Changed from /posts/:id to /:id
     const { id } = request.params as { id: string };
 
     if (!request.user) {
