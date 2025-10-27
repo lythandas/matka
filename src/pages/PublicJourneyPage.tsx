@@ -23,6 +23,18 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import i18n from '@/i18n'; // Import the i18n instance
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const PASSPHRASE_STORAGE_KEY = 'journey_passphrase_';
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -44,7 +56,24 @@ const PublicJourneyPage: React.FC = () => {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [isCheckingAccess, setIsCheckingAccess] = useState<boolean>(false); // New state for access check
 
-  const fetchJourney = useCallback(async () => {
+  const [isPassphraseDialogOpen, setIsPassphraseDialogOpen] = useState<boolean>(false);
+  const [passphraseInput, setPassphraseInput] = useState<string>('');
+  const [isVerifyingPassphrase, setIsVerifyingPassphrase] = useState<boolean>(false);
+  const [currentPassphrase, setCurrentPassphrase] = useState<string | undefined>(undefined); // Stored passphrase for API calls
+
+  const getPassphraseFromStorage = useCallback((journeyId: string) => {
+    return sessionStorage.getItem(PASSPHRASE_STORAGE_KEY + journeyId) || undefined;
+  }, []);
+
+  const setPassphraseInStorage = useCallback((journeyId: string, passphrase: string) => {
+    sessionStorage.setItem(PASSPHRASE_STORAGE_KEY + journeyId, passphrase);
+  }, []);
+
+  const clearPassphraseFromStorage = useCallback((journeyId: string) => {
+    sessionStorage.removeItem(PASSPHRASE_STORAGE_KEY + journeyId);
+  }, []);
+
+  const fetchJourney = useCallback(async (passphrase?: string) => {
     console.log("PublicJourneyPage: Attempting to fetch journey with ownerUsername:", ownerUsername, "and journeyName:", journeyName);
     if (!ownerUsername || !journeyName) {
       const errorMessage = t('publicJourneyPage.journeyOwnerOrNameMissing');
@@ -57,7 +86,11 @@ const PublicJourneyPage: React.FC = () => {
     setError(null); // Clear previous errors
     try {
       const encodedJourneyName = encodeURIComponent(journeyName); // Ensure journeyName is encoded for the URL
-      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`);
+      const headers: HeadersInit = {};
+      if (passphrase) {
+        headers['X-Journey-Passphrase'] = passphrase;
+      }
+      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicJourney');
@@ -106,7 +139,7 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, [token, user]);
 
-  const fetchPosts = useCallback(async (id: string) => {
+  const fetchPosts = useCallback(async (id: string, passphrase?: string) => {
     if (!id) {
       console.warn("PublicJourneyPage: No journey ID provided to fetch posts.");
       setLoadingPosts(false);
@@ -115,7 +148,11 @@ const PublicJourneyPage: React.FC = () => {
     setLoadingPosts(true);
     setError(null); // Clear previous errors
     try {
-      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`); // Fetch only published posts
+      const headers: HeadersInit = {};
+      if (passphrase) {
+        headers['X-Journey-Passphrase'] = passphrase;
+      }
+      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`, { headers }); // Fetch only published posts
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicPosts');
@@ -135,6 +172,31 @@ const PublicJourneyPage: React.FC = () => {
     }
   }, [t]);
 
+  const handlePassphraseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!journey) return;
+
+    setIsVerifyingPassphrase(true);
+    try {
+      const fetchedJourney = await fetchJourney(passphraseInput);
+      if (fetchedJourney) {
+        setPassphraseInStorage(fetchedJourney.id, passphraseInput);
+        setCurrentPassphrase(passphraseInput);
+        setIsPassphraseDialogOpen(false);
+        setPassphraseInput('');
+        await fetchPosts(fetchedJourney.id, passphraseInput);
+      } else {
+        showError(t('publicJourneyPage.incorrectPassphrase'));
+        clearPassphraseFromStorage(journey.id);
+      }
+    } catch (err) {
+      showError(t('publicJourneyPage.incorrectPassphrase'));
+      clearPassphraseFromStorage(journey.id);
+    } finally {
+      setIsVerifyingPassphrase(false);
+    }
+  };
+
   useEffect(() => {
     const loadJourneyAndCheckAccess = async () => {
       // Reset states when params change
@@ -144,8 +206,12 @@ const PublicJourneyPage: React.FC = () => {
       setLoadingJourney(true);
       setLoadingPosts(true);
       setIsCheckingAccess(true); // Start checking access
+      setCurrentPassphrase(undefined); // Clear current passphrase
 
-      const fetchedJourney = await fetchJourney();
+      const storedPassphrase = ownerUsername && journeyName ? getPassphraseFromStorage(`${ownerUsername}-${journeyName}`) : undefined;
+      setCurrentPassphrase(storedPassphrase);
+
+      const fetchedJourney = await fetchJourney(storedPassphrase);
 
       if (fetchedJourney) {
         // If authenticated, check if the user owns or collaborates on this journey
@@ -159,15 +225,22 @@ const PublicJourneyPage: React.FC = () => {
             return; // Stop further rendering of public page
           }
         }
-        // If not redirected, proceed to fetch posts for public view
-        await fetchPosts(fetchedJourney.id);
+
+        // If journey has a passphrase and it wasn't provided or was incorrect
+        if (fetchedJourney.passphrase_hash && !storedPassphrase) {
+          setIsPassphraseDialogOpen(true);
+          setLoadingPosts(false); // Stop loading posts until passphrase is provided
+        } else {
+          // If no passphrase or correct passphrase was provided/stored, proceed to fetch posts
+          await fetchPosts(fetchedJourney.id, storedPassphrase);
+        }
       } else {
         setLoadingPosts(false); // Ensure loading is false if journey fetch fails
       }
       setIsCheckingAccess(false); // Finish checking access
     };
     loadJourneyAndCheckAccess();
-  }, [fetchJourney, fetchPosts, checkUserCollaboration, isAuthenticated, user, navigate, ownerUsername, journeyName]); // Added ownerUsername, journeyName to dependencies to re-trigger on URL change
+  }, [fetchJourney, fetchPosts, checkUserCollaboration, isAuthenticated, user, navigate, ownerUsername, journeyName, getPassphraseFromStorage, setPassphraseInStorage]); // Added passphrase related functions to dependencies
 
   const handlePostClick = (post: Post, index: number) => {
     setSelectedPostForDetail(post);
@@ -398,7 +471,7 @@ const PublicJourneyPage: React.FC = () => {
               isOpen={isDetailDialogOpen}
               onClose={handleCloseDetailDialog}
               currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
-              totalPosts={posts.length}
+                            totalPosts={posts.length}
               onNext={handleNextPost}
               onPrevious={handlePreviousPost}
               journey={journey}
@@ -412,6 +485,50 @@ const PublicJourneyPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col w-full bg-gray-50 dark:bg-gray-900">
       {pageContent}
+
+      {journey && journey.passphrase_hash && (
+        <Dialog open={isPassphraseDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            // If user closes dialog without entering passphrase, redirect to home
+            navigate('/');
+          }
+        }}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{t('publicJourneyPage.enterPassphrase')}</DialogTitle>
+              <DialogDescription>
+                {t('publicJourneyPage.thisJourneyIsProtected', { journeyName: journey.name })}
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handlePassphraseSubmit} className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="passphrase">{t('common.password')}</Label>
+                <Input
+                  id="passphrase"
+                  type="password"
+                  value={passphraseInput}
+                  onChange={(e) => setPassphraseInput(e.target.value)}
+                  placeholder={t('manageJourneyDialog.passphrasePlaceholder')}
+                  disabled={isVerifyingPassphrase}
+                  required
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={!passphraseInput.trim() || isVerifyingPassphrase} className="w-full hover:ring-2 hover:ring-blue-500">
+                  {isVerifyingPassphrase ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('publicJourneyPage.verifying')}
+                    </>
+                  ) : (
+                    t('publicJourneyPage.accessJourney')
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

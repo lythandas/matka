@@ -33,6 +33,7 @@ export interface Journey {
   owner_surname?: string;
   owner_profile_image_url?: string;
   is_public: boolean;
+  passphrase_hash?: string; // New: Hashed passphrase for public journeys
 }
 
 export interface JourneyCollaborator {
@@ -66,5 +67,5 @@ export interface Post {
   media_items?: MediaInfo[];
   coordinates?: { lat: number; lng: number };
   created_at: string;
-  is_draft?: boolean; // New field for drafts
+  is_draft?: boolean;
 }

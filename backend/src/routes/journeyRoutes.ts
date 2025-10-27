@@ -1,7 +1,7 @@
 // backend/src/routes/journeyRoutes.ts
 import { FastifyInstance } from 'fastify';
 import { dbClient, isDbConnected } from '../db';
-import { authenticate } from '../auth';
+import { authenticate, hashPassword } from '../auth'; // Import hashPassword
 import { Journey, JourneyCollaborator } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -44,10 +44,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name } = request.body as { name?: string };
+    const { name, is_public, passphrase } = request.body as { name?: string; is_public?: boolean; passphrase?: string };
 
     if (!name) {
       return reply.code(400).send({ message: 'Journey name is required' });
+    }
+
+    let passphrase_hash: string | undefined;
+    if (is_public && passphrase) {
+      passphrase_hash = await hashPassword(passphrase);
     }
 
     const newJourney: Journey = {
@@ -59,21 +64,22 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      is_public: false,
+      is_public: is_public || false,
+      passphrase_hash,
     };
 
     const result = await dbClient!.query(
-      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public, passphrase_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
+      [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public, newJourney.passphrase_hash]
     );
     return result.rows[0];
   });
 
   fastify.put('/journeys/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { name, is_public } = request.body as { name?: string; is_public?: boolean };
+    const { name, is_public, passphrase } = request.body as { name?: string; is_public?: boolean; passphrase?: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -93,13 +99,25 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
+    let passphrase_hash_update: string | null | undefined;
+    if (is_public === true && passphrase) { // If setting to public and a passphrase is provided
+      passphrase_hash_update = await hashPassword(passphrase);
+    } else if (is_public === false) { // If setting to private, clear passphrase
+      passphrase_hash_update = null;
+    } else if (is_public === true && passphrase === null) { // If setting to public and explicitly clearing passphrase
+      passphrase_hash_update = null;
+    } else { // If passphrase is not provided or is_public is not changed, keep existing hash
+      passphrase_hash_update = undefined; // Don't update the column
+    }
+
     const result = await dbClient!.query(
       `UPDATE journeys SET
         name = COALESCE($1, name),
-        is_public = COALESCE($2, is_public)
-       WHERE id = $3
+        is_public = COALESCE($2, is_public),
+        passphrase_hash = COALESCE($3, passphrase_hash)
+       WHERE id = $4
        RETURNING *`,
-      [name, is_public, id]
+      [name, is_public, passphrase_hash_update, id]
     );
     return result.rows[0];
   });

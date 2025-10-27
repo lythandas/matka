@@ -120,7 +120,11 @@
     "failedToLoadPostsForJourney": "Fehler beim Laden der Beiträge für diese Reise.",
     "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt.",
     "public": "Öffentlich",
-    "private": "Privat"
+    "private": "Privat",
+    "noPermissionChangePassphrase": "Sie haben keine Berechtigung, die Passphrase für diese Reise zu ändern.",
+    "failedToUpdatePassphrase": "Fehler beim Aktualisieren der Passphrase.",
+    "passphraseSetSuccessfully": "Passphrase erfolgreich festgelegt!",
+    "passphraseClearedSuccessfully": "Passphrase erfolgreich gelöscht!"
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
@@ -323,7 +327,12 @@
     "checkBackLater": "Schauen Sie später wieder vorbei!",
     "noPostsWithLocation": "Keine Beiträge mit Standortdaten zum Anzeigen auf der Karte.",
     "addPostsWithLocation": "Fügen Sie Beiträge mit Standortinformationen hinzu, um sie hier zu sehen!",
-    "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt."
+    "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt.",
+    "enterPassphrase": "Passphrase eingeben",
+    "thisJourneyIsProtected": "Diese Reise ({{journeyName}}) ist durch eine Passphrase geschützt.",
+    "verifying": "Wird überprüft...",
+    "accessJourney": "Reise zugreifen",
+    "incorrectPassphrase": "Falsche Passphrase. Bitte versuchen Sie es erneut."
   },
   "notFoundPage": {
     "oopsPageNotFound": "Hoppla! Seite nicht gefunden",
@@ -351,7 +360,11 @@
     "allowEditPosts": "Benutzer erlauben, bestehende Beiträge in dieser Reise zu bearbeiten",
     "allowDeletePosts": "Benutzer erlauben, Beiträge aus dieser Reise zu löschen",
     "close": "Schließen",
-    "renaming": "Wird umbenannt..."
+    "renaming": "Wird umbenannt...",
+    "passphraseOptional": "Passphrase (optional)",
+    "passphrasePlaceholder": "Passphrase eingeben",
+    "passphraseInfo": "Wenn festgelegt, benötigen Benutzer diese Passphrase, um Ihre öffentliche Reise anzuzeigen.",
+    "updatePassphrase": "Passphrase aktualisieren"
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",

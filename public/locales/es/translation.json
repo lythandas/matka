@@ -120,7 +120,11 @@
     "failedToLoadPostsForJourney": "Error al cargar las publicaciones para este viaje.",
     "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje.",
     "public": "Público",
-    "private": "Privado"
+    "private": "Privado",
+    "noPermissionChangePassphrase": "No tienes permiso para cambiar la frase de contraseña de este viaje.",
+    "failedToUpdatePassphrase": "Error al actualizar la frase de contraseña.",
+    "passphraseSetSuccessfully": "¡Frase de contraseña establecida correctamente!",
+    "passphraseClearedSuccessfully": "¡Frase de contraseña borrada correctamente!"
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",
@@ -323,7 +327,12 @@
     "checkBackLater": "¡Vuelve más tarde!",
     "noPostsWithLocation": "No hay publicaciones con datos de ubicación para mostrar en el mapa.",
     "addPostsWithLocation": "¡Añade publicaciones con información de ubicación para verlas aquí!",
-    "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje."
+    "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje.",
+    "enterPassphrase": "Introducir frase de contraseña",
+    "thisJourneyIsProtected": "Este viaje ({{journeyName}}) está protegido por una frase de contraseña.",
+    "verifying": "Verificando...",
+    "accessJourney": "Acceder al viaje",
+    "incorrectPassphrase": "Frase de contraseña incorrecta. Por favor, inténtalo de nuevo."
   },
   "notFoundPage": {
     "oopsPageNotFound": "¡Ups! Página no encontrada",
@@ -351,7 +360,11 @@
     "allowEditPosts": "Permitir al usuario editar publicaciones existentes en este viaje",
     "allowDeletePosts": "Permitir al usuario eliminar publicaciones de este viaje",
     "close": "Cerrar",
-    "renaming": "Renombrando..."
+    "renaming": "Renombrando...",
+    "passphraseOptional": "Frase de contraseña (opcional)",
+    "passphrasePlaceholder": "Introducir frase de contraseña",
+    "passphraseInfo": "Si se establece, los usuarios necesitarán esta frase de contraseña para ver tu viaje público.",
+    "updatePassphrase": "Actualizar frase de contraseña"
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",

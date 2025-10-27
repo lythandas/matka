@@ -120,7 +120,11 @@
     "failedToLoadPostsForJourney": "Failed to load posts for this journey.",
     "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing.",
     "public": "Public",
-    "private": "Private"
+    "private": "Private",
+    "noPermissionChangePassphrase": "You do not have permission to change the passphrase for this journey.",
+    "failedToUpdatePassphrase": "Failed to update passphrase.",
+    "passphraseSetSuccessfully": "Passphrase set successfully!",
+    "passphraseClearedSuccessfully": "Passphrase cleared successfully!"
   },
   "auth": {
     "loginToYourAccount": "Login to your account",
@@ -323,7 +327,12 @@
     "checkBackLater": "Check back later!",
     "noPostsWithLocation": "No posts with location data to display on the map.",
     "addPostsWithLocation": "Add posts with location information to see them here!",
-    "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing."
+    "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing.",
+    "enterPassphrase": "Enter Passphrase",
+    "thisJourneyIsProtected": "This journey ({{journeyName}}) is protected by a passphrase.",
+    "verifying": "Verifying...",
+    "accessJourney": "Access Journey",
+    "incorrectPassphrase": "Incorrect passphrase. Please try again."
   },
   "notFoundPage": {
     "oopsPageNotFound": "Oops! Page not found",
@@ -351,7 +360,11 @@
     "allowEditPosts": "Allow user to edit existing posts in this journey",
     "allowDeletePosts": "Allow user to delete posts from this journey",
     "close": "Close",
-    "renaming": "Renaming..."
+    "renaming": "Renaming...",
+    "passphraseOptional": "Passphrase (optional)",
+    "passphrasePlaceholder": "Enter a passphrase",
+    "passphraseInfo": "If set, users will need this passphrase to view your public journey.",
+    "updatePassphrase": "Update Passphrase"
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",

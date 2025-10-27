@@ -50,8 +50,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isPublic, setIsPublic] = useState<boolean>(journey.is_public);
+  const [passphrase, setPassphrase] = useState<string>(''); // New state for passphrase
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
   const [isTogglingPublic, setIsTogglingPublic] = useState<boolean>(false);
+  const [isUpdatingPassphrase, setIsUpdatingPassphrase] = useState<boolean>(false); // New state for passphrase update
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -127,6 +129,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     if (isOpen && journey) {
       setJourneyName(journey.name);
       setIsPublic(journey.is_public);
+      setPassphrase(''); // Clear passphrase field on open
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -211,7 +214,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ is_public: checked }),
+        body: JSON.stringify({ is_public: checked, passphrase: checked ? passphrase.trim() || null : null }), // Clear passphrase if setting to private
       });
 
       if (!response.ok) {
@@ -220,6 +223,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       }
 
       setIsPublic(checked);
+      if (!checked) setPassphrase(''); // Clear passphrase state if journey becomes private
       showSuccess(t('common.journeyPublicStatusUpdated', { status: checked ? t('common.public') : t('common.private') })); // Translated success
       onJourneyUpdated();
     } catch (error: any) {
@@ -227,6 +231,48 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError(error.message || t('common.failedToUpdatePublicStatus')); // Translated error
     } finally {
       setIsTogglingPublic(false);
+    }
+  };
+
+  const handleUpdatePassphrase = async () => {
+    if (!token || !currentUser) {
+      showError(t('common.authRequiredUpdateJourney'));
+      return;
+    }
+
+    const canManageJourney = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canManageJourney) {
+      showError(t('common.noPermissionChangePassphrase'));
+      return;
+    }
+
+    setIsUpdatingPassphrase(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          is_public: true, // Ensure it remains public
+          passphrase: passphrase.trim() || null, // Set new passphrase or clear it
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToUpdatePassphrase'));
+      }
+
+      showSuccess(passphrase.trim() ? t('common.passphraseSetSuccessfully') : t('common.passphraseClearedSuccessfully'));
+      setPassphrase(''); // Clear input field after update
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error updating passphrase:', error);
+      showError(error.message || t('common.failedToUpdatePassphrase'));
+    } finally {
+      setIsUpdatingPassphrase(false);
     }
   };
 
@@ -460,7 +506,36 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                     <span className="sr-only">{t('manageJourneyDialog.copyLink')}</span>
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">{t('manageJourneyDialog.anyoneCanView')}</p>
+                <p className="text-sm text-muted-foreground mb-4">{t('manageJourneyDialog.anyoneCanView')}</p>
+
+                {/* Passphrase input for public journeys */}
+                <Label htmlFor="passphrase" className="text-sm">{t('manageJourneyDialog.passphraseOptional')}</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="passphrase"
+                    type="password"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="flex-grow"
+                    placeholder={t('manageJourneyDialog.passphrasePlaceholder')}
+                    disabled={isUpdatingPassphrase || !canManageJourney}
+                  />
+                  <Button
+                    onClick={handleUpdatePassphrase}
+                    disabled={isUpdatingPassphrase || !canManageJourney}
+                    className="hover:ring-2 hover:ring-blue-500"
+                  >
+                    {isUpdatingPassphrase ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">{t('manageJourneyDialog.updatePassphrase')}</span>
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t('manageJourneyDialog.passphraseInfo')}
+                </p>
               </div>
             )}
           </div>
@@ -658,7 +733,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isTogglingPublic} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isTogglingPublic || isUpdatingPassphrase} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>
