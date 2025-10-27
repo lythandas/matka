@@ -1,5 +1,5 @@
 # Stage 1: Build the backend
-FROM node:20-alpine as backend-builder
+FROM node:20-alpine AS backend-builder
 WORKDIR /app/backend
 # Explicitly copy to the directory
 COPY backend/package.json /app/backend/
@@ -9,7 +9,7 @@ COPY backend/tsconfig.json .
 RUN npm run build
 
 # Stage 2: Build the frontend
-FROM node:20-alpine as frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY package.json ./
 RUN npm install
