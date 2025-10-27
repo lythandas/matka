@@ -1166,19 +1166,16 @@ fastify.register(async (authenticatedFastify) => {
 // Run the server
 const start = async () => {
   try {
-    // Always start listening first
+    // Connect to the database and create tables first
+    await connectDbAndCreateTables();
+
+    // Then start listening for requests
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
 
-    // Then attempt to connect to the database in the background
-    // This will set isDbConnected to true/false and log errors, but won't block server startup
-    connectDbAndCreateTables().catch(err => {
-      fastify.log.error(err, 'Initial database connection failed after server started. API routes will return 500 errors until reconnected.');
-    });
-
   } catch (err: unknown) {
-    fastify.log.error(err as Error, 'Failed to start Fastify server');
-    process.exit(1); // Exit only if the server itself cannot start listening
+    fastify.log.error(err as Error, 'Failed to start Fastify server or connect to database');
+    process.exit(1); // Exit if server cannot start or DB connection fails
   }
 };
 
