@@ -3,7 +3,7 @@ FROM node:20-alpine as builder
 WORKDIR /app
 
 COPY package.json ./
-COPY package-lock.json ./
+# Removed: COPY package-lock.json ./
 RUN npm install
 
 COPY . .
@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY serve.json ./dist/  # Changed this line to copy serve.json into the dist directory
+COPY serve.json ./dist/
 
 EXPOSE 8080
 
