@@ -52,8 +52,8 @@ fastify.register(fastifyStatic, {
 // Register public user routes (no authentication hook applied here)
 fastify.register(userRoutes, { prefix: '/api' });
 
-// Register public journey API routes under /api
-fastify.register(publicJourneyApiRoutes, { prefix: '/api' });
+// Register public journey API routes directly (without /api prefix)
+fastify.register(publicJourneyApiRoutes);
 
 // Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
