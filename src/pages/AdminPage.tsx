@@ -82,7 +82,7 @@ const AdminPage: React.FC = () => {
     setLoadingJourneys(true);
     try {
       // Use the new admin-specific endpoint to fetch all journeys
-      const response = await fetch(`${API_BASE_URL}/admin/journeys`, {
+      const response = await fetch(`${API_BASE_URL}/journeys/admin`, { // Corrected endpoint path
         headers: {
           'Authorization': `Bearer ${token}`,
         },
