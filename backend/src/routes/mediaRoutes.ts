@@ -6,7 +6,7 @@ import { MediaInfo } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import path from 'path';
-import { BACKEND_EXTERNAL_URL, UPLOADS_DIR } from '../config';
+import { UPLOADS_DIR } from '../config'; // Removed BACKEND_EXTERNAL_URL
 import { mapDbUserToApiUser } from '../utils';
 
 export default async function mediaRoutes(fastify: FastifyInstance) {
@@ -37,7 +37,7 @@ export default async function mediaRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
 
-    const mediaBaseUrl = `${BACKEND_EXTERNAL_URL}/uploads`;
+    const mediaBaseUrl = '/uploads'; // Changed to relative path
 
     let mediaInfo: MediaInfo;
     if (fileType.startsWith('image/')) {

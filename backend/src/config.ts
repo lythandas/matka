@@ -7,5 +7,4 @@ if (!JWT_SECRET) {
   process.exit(1); // Exit if secret is not set
 }
 
-export const BACKEND_EXTERNAL_URL = process.env.BACKEND_EXTERNAL_URL || 'http://localhost:3001';
 export const UPLOADS_DIR = path.join(__dirname, '../uploads');
