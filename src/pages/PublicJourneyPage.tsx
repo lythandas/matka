@@ -90,7 +90,8 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
+      // Removed API_BASE_URL prefix for public journey fetches
+      const response = await fetch(`/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicJourney');
@@ -152,7 +153,8 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`, { headers }); // Fetch only published posts
+      // Removed API_BASE_URL prefix for public posts fetches
+      const response = await fetch(`/public/journeys/${id}/posts?is_draft=false`, { headers }); // Fetch only published posts
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicPosts');

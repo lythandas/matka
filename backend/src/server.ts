@@ -27,6 +27,10 @@ fastify.register(cors, {
   allowedHeaders: ['Content-Type', 'Authorization']
 });
 
+// Register public routes at the root level, BEFORE other API routes
+// This allows routes like /public/journeys/by-name/... to be directly accessible
+fastify.register(publicRoutes);
+
 // Redirect old public journey path to new one at the root level
 fastify.get('/public-journey/:ownerUsername/:journeyName', async (request, reply) => {
   const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
@@ -41,15 +45,14 @@ fastify.register(fastifyStatic, {
   decorateReply: false,
 });
 
-// Register API routes with a prefix
-fastify.register(publicRoutes, { prefix: '/api' });
+// Register other API routes with a prefix
 fastify.register(userRoutes, { prefix: '/api' });
 fastify.register(journeyRoutes, { prefix: '/api' });
 fastify.register(postRoutes, { prefix: '/api' });
 fastify.register(mediaRoutes, { prefix: '/api' });
 
 // Register @fastify/static to serve frontend static files (e.g., index.html, JS, CSS)
-// This should be registered AFTER API routes so API calls are handled first.
+// This should be registered AFTER all API routes so API calls are handled first.
 // The 'fallback' option ensures that for any unmatched route, index.html is served,
 // allowing client-side routing to take over.
 fastify.register(fastifyStatic, {
