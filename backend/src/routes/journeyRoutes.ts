@@ -45,17 +45,14 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name, is_public, passphrase } = request.body as { name?: string; is_public?: boolean; passphrase?: string };
+    // Removed is_public and passphrase from destructuring, new journeys default to private
+    const { name } = request.body as { name?: string };
 
     if (!name) {
       return reply.code(400).send({ message: 'Journey name is required' });
     }
 
-    let passphrase_hash: string | undefined;
-    if (is_public && passphrase) {
-      passphrase_hash = await hashPassword(passphrase);
-    }
-
+    // No passphrase_hash logic here, as new journeys are private by default
     const newJourney: Journey = {
       id: uuidv4(),
       name,
@@ -65,8 +62,8 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      is_public: is_public || false,
-      passphrase_hash,
+      is_public: false, // New journeys are private by default
+      passphrase_hash: undefined, // No passphrase on creation
     };
 
     const result = await dbClient!.query(

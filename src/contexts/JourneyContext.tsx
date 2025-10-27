@@ -11,7 +11,7 @@ interface JourneyContextType {
   selectedJourney: Journey | null;
   setSelectedJourney: (journey: Journey) => void;
   fetchJourneys: () => Promise<void>; // Renamed to reflect it fetches the list
-  createJourney: (name: string, is_public?: boolean, passphrase?: string) => Promise<Journey | null>; // Updated signature
+  createJourney: (name: string) => Promise<Journey | null>; // Updated signature
   loadingJourneys: boolean;
 }
 
@@ -87,7 +87,7 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [journeys]); // This effect only depends on journeys, breaking the loop
 
-  const createJourney = async (name: string, is_public: boolean = false, passphrase?: string): Promise<Journey | null> => {
+  const createJourney = async (name: string): Promise<Journey | null> => { // Updated signature
     if (!token) {
       showError('Authentication required to create a journey.');
       return null;
@@ -99,7 +99,7 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, // Include the authentication token
         },
-        body: JSON.stringify({ name, is_public, passphrase }), // Pass is_public and passphrase
+        body: JSON.stringify({ name }), // Only send name, is_public will default to false on backend
       });
 
       if (!response.ok) {
