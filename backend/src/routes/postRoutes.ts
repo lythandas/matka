@@ -100,8 +100,15 @@ export default async function postRoutes(fastify: FastifyInstance) {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
-        newPostData.id, newPostData.journey_id, newPostData.user_id, newPostData.author_username, newPostData.author_name,
-        newPostData.author_profile_image_url, newPostData.title, newPostData.message,
+        newPostData.id,
+        newPostData.journey_id,
+        newPostData.user_id,
+        newPostData.author_username,
+        newPostData.author_name,
+        newPostData.author_surname, // Added missing parameter here
+        newPostData.author_profile_image_url,
+        newPostData.title,
+        newPostData.message,
         newPostData.media_items ? JSON.stringify(newPostData.media_items) : null,
         newPostData.coordinates ? JSON.stringify(newPostData.coordinates) : null,
         newPostData.created_at
