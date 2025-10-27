@@ -3,24 +3,24 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package.json and yarn.lock (or package-lock.json) to leverage Docker cache
-COPY package.json yarn.lock ./
-# Install dependencies
-RUN yarn install --frozen-lockfile
+# Copy package.json to leverage Docker cache
+COPY package.json ./
+# Install dependencies using npm
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the frontend application
-RUN yarn build
+RUN npm run build
 
 # Stage 2: Serve the application with `serve`
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install 'serve' globally
-RUN yarn global add serve
+# Install 'serve' globally using npm
+RUN npm install -g serve
 
 # Copy the built application from the builder stage
 COPY --from=builder /app/dist ./dist
