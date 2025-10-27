@@ -10,8 +10,8 @@ RUN npm run build
 # Stage 2: Build the frontend
 FROM node:20-alpine as frontend-builder
 WORKDIR /app/frontend
-COPY package.json ./  # Corrected: Only copy package.json
-RUN npm install       # This will generate package-lock.json
+COPY package.json ./
+RUN npm install
 COPY . .
 # Set VITE_API_BASE_URL during the build process
 ENV VITE_API_BASE_URL=/api
@@ -24,7 +24,7 @@ WORKDIR /app
 # Copy backend build artifacts and production dependencies
 COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY backend/package.json ./backend/
-COPY backend/node_modules ./backend/node_modules
+COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules # Corrected: Copy from backend-builder stage
 
 # Copy frontend build artifacts
 COPY --from=frontend-builder /app/frontend/dist ./frontend-dist
