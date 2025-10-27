@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { UPLOADS_DIR } from './config';
 import { FastifyBaseLogger } from 'fastify'; // Import FastifyBaseLogger type
 
-export let dbClient: Client;
+export let dbClient: Client; // This will be assigned on successful connection
 export let isDbConnected = false;
 
 export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
@@ -14,23 +14,31 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
     throw new Error('DATABASE_URL is not defined.');
   }
 
-  dbClient = new Client({
-    connectionString: databaseUrl,
-  });
-
   const MAX_RETRIES = 10;
   let retries = 0;
 
   while (retries < MAX_RETRIES) {
+    let currentClient: Client | null = null; // Create a new client for each attempt
     try {
-      await dbClient.connect();
+      currentClient = new Client({
+        connectionString: databaseUrl,
+      });
+      await currentClient.connect();
       logger.info('Connected to PostgreSQL database');
-      await createTables(logger);
+      await createTables(logger, currentClient); // Pass currentClient to createTables
+      dbClient = currentClient; // Assign to global dbClient only on success
       isDbConnected = true;
       return;
     } catch (err: unknown) {
       retries++;
       logger.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
+      if (currentClient) {
+        try {
+          await currentClient.end(); // Ensure client is ended on failure
+        } catch (endErr) {
+          logger.error(`Error ending client after failed connection: ${(endErr as Error).message}`);
+        }
+      }
       if (retries < MAX_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, 5000));
       } else {
@@ -42,10 +50,10 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
   }
 };
 
-const createTables = async (logger: FastifyBaseLogger) => {
+const createTables = async (logger: FastifyBaseLogger, client: Client) => { // Accept client as argument
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
-    await dbClient.query(`
+    await client.query(` // Use the passed client
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(255) PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
