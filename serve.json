@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api/**",
-      "destination": "http://backend:3001"
+      "source": "/api/(.*)",
+      "destination": "http://backend:3001/$1"
     }
   ],
   "headers": [
