@@ -699,6 +699,7 @@ fastify.register(async (authenticatedFastify) => {
 
   // --- Journey Management Routes ---
 
+  // Get journeys for the authenticated user (owner or collaborator)
   authenticatedFastify.get('/journeys', async (request: FastifyRequest, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -711,6 +712,21 @@ fastify.register(async (authenticatedFastify) => {
        WHERE j.user_id = $1 OR jup.user_id = $1
        ORDER BY j.id, j.created_at DESC`,
       [request.user.id]
+    );
+    return result.rows;
+  });
+
+  // Admin-only: Get all journeys in the system
+  authenticatedFastify.get('/admin/journeys', async (request: FastifyRequest, reply) => {
+    if (!request.user || !request.user.isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: Only administrators can view all journeys.' });
+    }
+
+    const result = await dbClient.query(
+      `SELECT j.*, u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
+       FROM journeys j
+       JOIN users u ON j.user_id = u.id
+       ORDER BY j.created_at DESC`
     );
     return result.rows;
   });
@@ -1067,7 +1083,7 @@ fastify.register(async (authenticatedFastify) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *, to_jsonb(coordinates) as coordinates, to_jsonb(media_items) as media_items`,
       [
-        newPostData.id, newPostData.journey_id, newPostData.user_id, newPostData.author_username, newPostData.author_name, newPostData.author_surname,
+        newPostData.id, newPostData.journey_id, newPostData.user_id, newPostData.author_username, newPostData.author_surname,
         newPostData.author_profile_image_url, newPostData.title, newPostData.message,
         newPostData.media_items ? JSON.stringify(newPostData.media_items) : null,
         newPostData.coordinates ? JSON.stringify(newPostData.coordinates) : null,

@@ -34,7 +34,7 @@ const AdminPage: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
   const navigate = useNavigate();
   const { user: currentUser, token } = useAuth();
-  const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
+  const currentLocale = getDateFnsLocale();
 
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
@@ -81,7 +81,8 @@ const AdminPage: React.FC = () => {
     }
     setLoadingJourneys(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/journeys`, { // Admin can fetch all journeys
+      // Use the new admin-specific endpoint to fetch all journeys
+      const response = await fetch(`${API_BASE_URL}/admin/journeys`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
