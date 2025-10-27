@@ -20,9 +20,10 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
   let retries = 0;
 
   while (retries < MAX_RETRIES) {
-    let clientForAttempt: Client; // Declare here, will be assigned in try
+    let clientForAttempt: Client | null = null; // Initialize to null
     try {
-      clientForAttempt = new Client({ // This line is where the new client is created
+      // Create a new client for each attempt
+      clientForAttempt = new Client({
         connectionString: databaseUrl,
       });
       await clientForAttempt.connect();

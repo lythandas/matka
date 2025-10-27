@@ -14,7 +14,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT DISTINCT ON (j.id) j.*
        FROM journeys j
        LEFT JOIN journey_user_permissions jup ON j.id = jup.journey_id
@@ -31,7 +31,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all journeys.' });
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT j.*, u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
        FROM journeys j
        JOIN users u ON j.user_id = u.id
@@ -62,7 +62,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       is_public: false,
     };
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
@@ -79,7 +79,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
     const existingJourney = journeyResult.rows[0];
 
     if (!existingJourney) {
@@ -93,7 +93,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `UPDATE journeys SET
         name = COALESCE($1, name),
         is_public = COALESCE($2, is_public)
@@ -111,7 +111,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
     const existingJourney = journeyResult.rows[0];
 
     if (!existingJourney) {
@@ -125,7 +125,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to delete this journey.' });
     }
 
-    const deleteResult = await dbClient.query('DELETE FROM journeys WHERE id = $1 RETURNING id', [id]);
+    const deleteResult = await dbClient!.query('DELETE FROM journeys WHERE id = $1 RETURNING id', [id]);
     if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Journey not found' });
     }
@@ -140,7 +140,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
@@ -149,7 +149,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     const isOwner = journey.user_id === request.user.id;
     const isAdmin = request.user.isAdmin;
 
-    const isCollaborator = await dbClient.query(
+    const isCollaborator = await dbClient!.query(
       'SELECT 1 FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2',
       [journeyId, request.user.id]
     );
@@ -158,7 +158,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to view collaborators for this journey.' });
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `SELECT jup.id, jup.journey_id, jup.user_id, jup.can_read_posts, jup.can_publish_posts, jup.can_modify_post, jup.can_delete_posts,
               u.username, u.name, u.surname, u.profile_image_url
        FROM journey_user_permissions jup
@@ -177,7 +177,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
@@ -190,7 +190,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const targetUserResult = await dbClient.query('SELECT id, username, name, surname, profile_image_url FROM users WHERE username = $1', [username]);
+    const targetUserResult = await dbClient!.query('SELECT id, username, name, surname, profile_image_url FROM users WHERE username = $1', [username]);
     const targetUser = targetUserResult.rows[0];
     if (!targetUser) {
       return reply.code(404).send({ message: 'User to add not found' });
@@ -199,7 +199,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ message: 'Cannot add journey owner as collaborator' });
     }
 
-    const existingCollab = await dbClient.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, targetUser.id]);
+    const existingCollab = await dbClient!.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, targetUser.id]);
     if (existingCollab.rows.length > 0) {
       return reply.code(409).send({ message: 'User is already a collaborator' });
     }
@@ -218,7 +218,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       can_delete_posts: false,
     };
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `INSERT INTO journey_user_permissions (id, journey_id, user_id, can_read_posts, can_publish_posts, can_modify_post, can_delete_posts)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
@@ -239,7 +239,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
@@ -252,12 +252,12 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const collabResult = await dbClient.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, userId]);
+    const collabResult = await dbClient!.query('SELECT id FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2', [journeyId, userId]);
     if (collabResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Collaborator not found for this journey' });
     }
 
-    const result = await dbClient.query(
+    const result = await dbClient!.query(
       `UPDATE journey_user_permissions SET
         can_publish_posts = COALESCE($1, can_publish_posts),
         can_modify_post = COALESCE($2, can_modify_post),
@@ -276,7 +276,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    const journeyResult = await dbClient.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
     const journey = journeyResult.rows[0];
     if (!journey) {
       return reply.code(404).send({ message: 'Journey not found' });
@@ -289,7 +289,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage collaborators for this journey.' });
     }
 
-    const deleteResult = await dbClient.query('DELETE FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2 RETURNING id', [journeyId, userId]);
+    const deleteResult = await dbClient!.query('DELETE FROM journey_user_permissions WHERE journey_id = $1 AND user_id = $2 RETURNING id', [journeyId, userId]);
     if (deleteResult.rows.length === 0) {
       return reply.code(404).send({ message: 'Collaborator not found for this journey' });
     }
