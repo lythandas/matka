@@ -55,7 +55,7 @@ fastify.register(mediaRoutes, { prefix: '/api' });
 fastify.get('/*', async (request, reply) => {
   try {
     const filePath = path.join(__dirname, '../../frontend-dist/index.html');
-    const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    const fileContent = await fs.readFile(filePath, 'utf8'); // Corrected line
     reply.type('text/html').send(fileContent);
   } catch (error) {
     fastify.log.error(error, 'Error serving index.html for client-side routing');
