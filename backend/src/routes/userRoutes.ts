@@ -1,7 +1,7 @@
 // backend/src/routes/userRoutes.ts
 import { FastifyInstance } from 'fastify';
 import { dbClient, isDbConnected } from '../db';
-import { authenticate, generateToken, hashPassword, comparePassword } from '../auth'; // Import comparePassword
+import { authenticate, generateToken, hashPassword, comparePassword } from '../auth';
 import { mapDbUserToApiUser } from '../utils';
 import { User, ApiUser } from '../types';
 import { v4 as uuidv4 } from 'uuid';
