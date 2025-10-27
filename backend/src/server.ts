@@ -27,6 +27,13 @@ fastify.register(cors, {
   allowedHeaders: ['Content-Type', 'Authorization']
 });
 
+// Redirect old public journey path to new one at the root level
+fastify.get('/public-journey/:ownerUsername/:journeyName', async (request, reply) => {
+  const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
+  const newPath = `/public/journeys/by-name/${ownerUsername}/${journeyName}`;
+  reply.redirect(301, newPath); // 301 Permanent Redirect
+});
+
 // Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
 fastify.register(fastifyStatic, {
   root: UPLOADS_DIR,
