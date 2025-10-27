@@ -44,7 +44,7 @@ const AuthConditionalContent: React.FC = () => {
           />
           {/* Public journey route is still accessible even if authenticated,
               but PublicJourneyPage itself will redirect if user has access. */}
-          <Route path="/public-journey/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
+          <Route path="/public/journeys/by-name/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -53,12 +53,12 @@ const AuthConditionalContent: React.FC = () => {
   } else {
     return (
       <Routes>
-        <Route path="/public-journey/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
+        <Route path="/public/journeys/by-name/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
         <Route path="/" element={<LoginPage />} />
         {/* Redirect any other path to login if not authenticated */}
         <Route path="*" element={
           // If not authenticated and not on a public journey page, redirect to login
-          window.location.pathname.startsWith('/public-journey/') ? <NotFound /> : <Navigate to="/" replace />
+          window.location.pathname.startsWith('/public/journeys/by-name/') ? <NotFound /> : <Navigate to="/" replace />
         } />
       </Routes>
     );

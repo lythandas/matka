@@ -7,4 +7,5 @@ if (!JWT_SECRET) {
   process.exit(1); // Exit if secret is not set
 }
 
-export const UPLOADS_DIR = path.join(__dirname, '../uploads');
+// Use an environment variable for UPLOADS_DIR, with a fallback for local development
+export const UPLOADS_DIR = process.env.UPLOADS_PATH || path.join(__dirname, '../uploads');

@@ -19,6 +19,7 @@ services:
     environment:
       DATABASE_URL: postgres://user:password@db:5432/myjourney_db
       JWT_SECRET: supersecretjwtkey_dev
+      UPLOADS_PATH: /app/uploads # Add this line to specify the uploads directory in the container
       # BACKEND_EXTERNAL_URL removed as it's no longer needed
     volumes:
       - db_data:/var/lib/postgresql/data # Mount db_data for the app service if needed, though typically only db needs it
