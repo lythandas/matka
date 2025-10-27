@@ -24,14 +24,14 @@ export default async function publicRoutes(fastify: FastifyInstance) {
 
   fastify.get('/users/exists', async (request, reply) => {
     if (!isDbConnected) {
-      return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
+      return reply.code(500).type('application/json').send({ message: 'Database not connected. Please try again later.' });
     }
     try {
       const result = await dbClient.query('SELECT COUNT(*) FROM users');
-      return { exists: parseInt(result.rows[0].count) > 0 };
+      return reply.send({ exists: parseInt(result.rows[0].count) > 0 });
     } catch (error) {
       fastify.log.error(error, 'Error checking if users exist in database');
-      return reply.code(500).send({ message: 'Internal server error: Could not check user existence.' });
+      return reply.status(500).type('application/json').send({ message: 'Internal server error: Could not check user existence.' });
     }
   });
 
