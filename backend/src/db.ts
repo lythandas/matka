@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { UPLOADS_DIR } from './config';
 import { FastifyBaseLogger } from 'fastify'; // Import FastifyBaseLogger type
 
-export let dbClient: Client;
+export let dbClient: Client | null = null; // Initialize as null
 export let isDbConnected = false;
 
 export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
@@ -14,29 +14,43 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
     throw new Error('DATABASE_URL is not defined.');
   }
 
+  isDbConnected = false; // Ensure it's false at the start of connection process
+
   const MAX_RETRIES = 10;
   let retries = 0;
 
   while (retries < MAX_RETRIES) {
+    let clientForAttempt: Client; // Declare here, will be assigned in try
     try {
-      // Create a new client for each attempt
-      const currentAttemptClient = new Client({
+      clientForAttempt = new Client({ // This line is where the new client is created
         connectionString: databaseUrl,
       });
-      await currentAttemptClient.connect();
+      await clientForAttempt.connect();
       logger.info('Connected to PostgreSQL database');
-      dbClient = currentAttemptClient; // Assign the successfully connected client to the global variable
+      dbClient = clientForAttempt; // Assign the successfully connected client
       await createTables(logger);
       isDbConnected = true;
-      return;
+      return; // Success, exit function
     } catch (err: unknown) {
       retries++;
       logger.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
+      // If clientForAttempt was successfully initialized before the error, try to end it.
+      // This check is important because clientForAttempt might not be assigned if new Client() itself failed.
+      if (clientForAttempt && typeof clientForAttempt.end === 'function') {
+        try {
+          await clientForAttempt.end();
+          logger.debug('Closed client after failed attempt.');
+        } catch (endErr) {
+          logger.error(endErr, 'Error ending client after failed connection attempt.');
+        }
+      }
+
       if (retries < MAX_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, 5000));
       } else {
         logger.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
         isDbConnected = false;
+        dbClient = null; // Ensure global dbClient is null on final failure
         throw new Error('Failed to connect to PostgreSQL after multiple retries');
       }
     }
@@ -46,7 +60,7 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
 const createTables = async (logger: FastifyBaseLogger) => {
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
-    await dbClient.query(`
+    await dbClient!.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(255) PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
