@@ -23,4 +23,5 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 8080
 
-CMD ["npx", "serve", "-s", "dist", "-l", "8080", "-c", "serve.json"]
+# Correct the path to serve.json in the CMD command
+CMD ["npx", "serve", "-s", "dist", "-l", "8080", "-c", "dist/serve.json"]
