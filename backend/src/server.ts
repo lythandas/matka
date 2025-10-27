@@ -13,6 +13,7 @@ import protectedUserRoutes from './routes/protectedUserRoutes'; // Protected use
 import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
+import publicJourneyApiRoutes from './routes/publicJourneyApiRoutes'; // Import the new public journey API routes
 import { authenticate } from './auth'; // Import authenticate hook
 
 const fastify = Fastify({
@@ -29,15 +30,17 @@ fastify.register(cors, {
   allowedHeaders: ['Content-Type', 'Authorization']
 });
 
-// Register public routes at the root level, BEFORE other API routes
-fastify.register(publicRoutes);
+// Register @fastify/static to serve frontend static files (e.g., index.html, JS, CSS)
+// This should be registered early to ensure frontend routes are handled by the SPA.
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../../frontend-dist'), // Path to the frontend build output
+  prefix: '/', // Serve from the root URL
+  decorateReply: false,
+  fallback: 'index.html', // Serve index.html for any unmatched routes
+} as FastifyStaticOptions);
 
-// Redirect old public journey path to new one at the root level
-fastify.get('/public-journey/:ownerUsername/:journeyName', async (request, reply) => {
-  const { ownerUsername, journeyName } = request.params as { ownerUsername: string; journeyName: string };
-  const newPath = `/public/journeys/by-name/${ownerUsername}/${journeyName}`;
-  reply.redirect(301, newPath); // 301 Permanent Redirect
-});
+// Register public routes (now only health check and old redirects)
+fastify.register(publicRoutes);
 
 // Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
 fastify.register(fastifyStatic, {
@@ -49,6 +52,9 @@ fastify.register(fastifyStatic, {
 // Register public user routes (no authentication hook applied here)
 fastify.register(userRoutes, { prefix: '/api' });
 
+// Register public journey API routes under /api
+fastify.register(publicJourneyApiRoutes, { prefix: '/api' });
+
 // Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
   authenticatedInstance.addHook('preHandler', authenticate);
@@ -57,14 +63,6 @@ fastify.register(async (authenticatedInstance) => {
   authenticatedInstance.register(postRoutes, { prefix: '/posts' });
   authenticatedInstance.register(mediaRoutes, { prefix: '/media' }); // Changed to /media for consistency
 }, { prefix: '/api' }); // All these routes will be under /api and authenticated
-
-// Register @fastify/static to serve frontend static files (e.g., index.html, JS, CSS)
-fastify.register(fastifyStatic, {
-  root: path.join(__dirname, '../../frontend-dist'), // Path to the frontend build output
-  prefix: '/', // Serve from the root URL
-  decorateReply: false,
-  fallback: 'index.html', // Serve index.html for any unmatched routes
-} as FastifyStaticOptions);
 
 // The explicit catch-all route is removed as fastifyStatic with 'fallback' handles it.
 
