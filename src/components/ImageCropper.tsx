@@ -66,6 +66,12 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
     }
   };
 
+  const handleWheelZoom = useCallback((e: WheelEvent) => {
+    e.preventDefault(); // Prevent page scrolling
+    const zoomAmount = e.deltaY * -0.001; // Adjust sensitivity
+    setZoom((prevZoom) => Math.max(1, Math.min(3, prevZoom + zoomAmount))); // Clamp zoom between 1 and 3
+  }, []);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] flex flex-col h-[550px]">
@@ -90,6 +96,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
               containerClassName: 'w-full h-full',
               mediaClassName: 'object-contain',
             }}
+            onWheelRequest={handleWheelZoom} // Add the wheel event handler here
           />
         </div>
         <div className="flex items-center space-x-4 py-2">
