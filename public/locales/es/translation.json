@@ -29,6 +29,7 @@
     "imageSizeExceeds": "El tamaño de la imagen excede el límite de {{maxSize}}MB.",
     "onlyImageFilesAllowed": "Solo se permiten archivos de imagen para fotos de perfil.",
     "profileUpdatedSuccessfully": "¡Perfil actualizado correctamente!",
+    "successProfileImageUpload": "¡Imagen de perfil subida correctamente!",
     "failedToUpdateProfile": "Error al actualizar el perfil.",
     "allFieldsRequired": "Todos los campos son obligatorios.",
     "passwordsDoNotMatch": "Las contraseñas no coinciden.",

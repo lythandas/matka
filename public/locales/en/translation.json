@@ -29,6 +29,7 @@
     "imageSizeExceeds": "Image size exceeds {{maxSize}}MB limit.",
     "onlyImageFilesAllowed": "Only image files are allowed for profile pictures.",
     "profileUpdatedSuccessfully": "Profile updated successfully!",
+    "successProfileImageUpload": "Profile image uploaded successfully!",
     "failedToUpdateProfile": "Failed to update profile.",
     "allFieldsRequired": "All fields are required.",
     "passwordsDoNotMatch": "Passwords do not match.",
@@ -230,7 +231,7 @@
     "searchForLocation": "Search for a location",
     "searchPlaceholder": "Search for an address or place...",
     "searching": "Searching...",
-    "selected": "Selected: Lat: {{lat}}, Lng: {{lng}}"
+    "selected": "Location selected: Lat: {{lat}}, Lng: {{lng}}"
   },
   "journeyMapDialog": {
     "journeyMap": "Journey Map",
