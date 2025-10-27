@@ -287,11 +287,11 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
 // --- Public Routes (No Authentication Required) ---
 
 fastify.get('/', async (request, reply) => {
-  // This endpoint is primarily for health checks and basic connectivity.
-  // It should always return 200 OK if the server is running,
-  // regardless of DB connection status, to allow healthchecks to pass.
-  // Other routes will handle DB connectivity errors.
-  return { message: 'Fastify backend is running.' };
+  if (isDbConnected) {
+    return { message: 'Fastify backend is running and connected to database.' };
+  } else {
+    reply.code(503).send({ message: 'Fastify backend is running but not connected to database.' });
+  }
 });
 
 fastify.get('/users/exists', async (request, reply) => {
