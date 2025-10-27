@@ -3,10 +3,12 @@ FROM node:20-alpine as builder
 WORKDIR /app
 
 COPY package.json ./
-# Removed: COPY package-lock.json ./
 RUN npm install
 
 COPY . .
+
+# Set VITE_API_BASE_URL during the build process
+ENV VITE_API_BASE_URL=/api
 
 RUN npm run build
 
