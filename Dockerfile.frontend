@@ -1,38 +1,23 @@
-# Stage 1: Build the React application
-FROM node:20-alpine AS builder
+FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# Copy package.json to leverage Docker cache
 COPY package.json ./
-# Install dependencies using npm
+COPY package-lock.json ./
 RUN npm install
 
-# Copy the rest of the application code
 COPY . .
 
-# Build the frontend application
 RUN npm run build
 
-# Stage 2: Serve the application with `serve`
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install 'serve' globally using npm
-RUN npm install -g serve
-
-# Copy the built application from the builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY serve.json ./dist/  # Changed this line to copy serve.json into the dist directory
 
-# Copy the serve.json configuration file
-COPY serve.json .
-
-# Expose the port that 'serve' will listen on
 EXPOSE 8080
 
-# Command to run the application using 'serve'
-# '-s dist' serves static files from the 'dist' directory
-# '-l 8080' specifies the port
-# '-c serve.json' specifies the configuration file for rewrites/proxying
-CMD ["serve", "-s", "dist", "-l", "8080", "-c", "serve.json"]
+CMD ["npx", "serve", "-s", "dist", "-l", "8080", "-c", "serve.json"]
