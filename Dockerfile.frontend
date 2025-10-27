@@ -12,13 +12,14 @@ ENV VITE_API_BASE_URL=/api
 
 RUN npm run build
 
+# Copy serve.json into the dist directory
+COPY serve.json ./dist/
+
 FROM node:20-alpine
 
 WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
-# Copy serve.json to the root of the WORKDIR so 'serve' can find it
-COPY serve.json ./
 
 EXPOSE 8080
 
