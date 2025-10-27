@@ -17,8 +17,8 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY serve.json ./dist/
+# Copy serve.json to the root of the WORKDIR so 'serve' can find it
+COPY serve.json ./
 
 EXPOSE 8080
 
