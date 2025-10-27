@@ -317,7 +317,7 @@ fastify.post('/register', async (request, reply) => {
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
-  try { // Added try-catch block
+  try {
     const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
     if (existingUser.rows.length > 0) {
       return reply.code(409).send({ message: 'Username already exists' });
@@ -347,7 +347,10 @@ fastify.post('/register', async (request, reply) => {
     return { user: userForApi, token };
   } catch (error) {
     fastify.log.error(error, 'Error during user registration');
-    return reply.code(500).send({ message: 'Internal server error during registration.' });
+    if (!reply.sent) {
+      reply.type('application/json').code(500).send({ message: 'Internal server error during registration.' });
+    }
+    return reply.sent;
   }
 });
 
@@ -361,22 +364,30 @@ fastify.post('/login', async (request, reply) => {
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
-  const result = await dbClient.query('SELECT * FROM users WHERE username = $1', [username]);
-  const user: User = result.rows[0];
+  try { // Added try-catch block for login as well
+    const result = await dbClient.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user: User = result.rows[0];
 
-  if (!user) {
-    return reply.code(401).send({ message: 'Invalid credentials' });
+    if (!user) {
+      return reply.code(401).send({ message: 'Invalid credentials' });
+    }
+
+    const isPasswordValid = await comparePassword(password, user.password_hash);
+    if (!isPasswordValid) {
+      return reply.code(401).send({ message: 'Invalid credentials' });
+    }
+
+    const userForApi = mapDbUserToApiUser(user);
+    fastify.log.info(`User ${userForApi.username} logged in. isAdmin: ${userForApi.isAdmin}`);
+    const token = generateToken(userForApi);
+    return { user: userForApi, token };
+  } catch (error) {
+    fastify.log.error(error, 'Error during user login');
+    if (!reply.sent) {
+      reply.type('application/json').code(500).send({ message: 'Internal server error during login.' });
+    }
+    return reply.sent;
   }
-
-  const isPasswordValid = await comparePassword(password, user.password_hash);
-  if (!isPasswordValid) {
-    return reply.code(401).send({ message: 'Invalid credentials' });
-  }
-
-  const userForApi = mapDbUserToApiUser(user);
-  fastify.log.info(`User ${userForApi.username} logged in. isAdmin: ${userForApi.isAdmin}`);
-  const token = generateToken(userForApi);
-  return { user: userForApi, token };
 });
 
 fastify.get('/public/journeys/:id', async (request, reply) => {
