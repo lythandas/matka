@@ -80,8 +80,8 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      // IMPORTANT: Removed API_BASE_URL here
-      const response = await fetch(`/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
+      // IMPORTANT: Added API_BASE_URL here
+      const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
 
       if (response.status === 401) {
         const errorData = await response.json();
@@ -149,8 +149,8 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      // IMPORTANT: Removed API_BASE_URL here
-      const response = await fetch(`/public/journeys/${id}/posts?is_draft=false`, { headers });
+      // IMPORTANT: Added API_BASE_URL here
+      const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`, { headers });
       if (!response.ok) {
         const errorData = await response.json();
         const message = errorData.message || t('common.failedToFetchPublicPosts');
