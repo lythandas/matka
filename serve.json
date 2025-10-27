@@ -1,0 +1,19 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/**",
+      "destination": "http://backend:3001/api/"
+    }
+  ],
+  "headers": [
+    {
+      "source": "**/*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
