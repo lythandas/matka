@@ -9,6 +9,11 @@ import { comparePassword } from '../auth'; // Import comparePassword
 
 export default async function publicRoutes(fastify: FastifyInstance) {
 
+  // Health check endpoint for Docker
+  fastify.get('/health', async (request, reply) => {
+    return reply.code(200).send({ status: 'ok' });
+  });
+
   fastify.get('/', async (request, reply) => {
     if (isDbConnected) {
       return { message: 'Fastify backend is running and connected to database.' };

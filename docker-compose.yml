@@ -30,7 +30,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"] # Updated health check endpoint
       interval: 10s
       timeout: 5s
       retries: 5
