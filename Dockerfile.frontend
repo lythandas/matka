@@ -27,4 +27,4 @@ EXPOSE 8080
 # Command to run the application
 # 'serve' will serve static files from ./dist
 # and proxy /api requests to the backend service
-CMD ["serve", "-s", "dist", "-l", "8080", "--proxy", "api:http://backend:3001"]
+CMD ["serve", "-s", "dist", "-l", "8080", "--proxy", "/api:http://backend:3001"]
