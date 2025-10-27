@@ -42,6 +42,15 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
 
     const updatedUser = mapDbUserToApiUser(result.rows[0]);
+
+    // If profile_image_url was updated, also update all posts by this user
+    if (profile_image_url !== undefined) { // Check if the profile_image_url was part of the update request
+      await dbClient!.query(
+        'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
+        [profile_image_url === null ? null : profile_image_url, request.user.id]
+      );
+    }
+
     const newToken = generateToken(updatedUser);
     return { user: updatedUser, token: newToken };
   });
@@ -130,6 +139,15 @@ export default async function userRoutes(fastify: FastifyInstance) {
     if (result.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
+
+    // If profile_image_url was updated, also update all posts by this user
+    if (profile_image_url !== undefined) { // Check if the profile_image_url was part of the update request
+      await dbClient!.query(
+        'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
+        [profile_image_url === null ? null : profile_image_url, id]
+      );
+    }
+
     return mapDbUserToApiUser(result.rows[0]);
   });
 
