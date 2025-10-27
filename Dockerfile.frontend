@@ -3,23 +3,28 @@ FROM node:20-alpine as builder
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+COPY package.json yarn.lock* package-lock.json* ./
+RUN npm install --frozen-lockfile
 
 COPY . .
+
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:alpine
+# Stage 2: Serve the application with a lightweight server
+FROM node:20-alpine
 
-# Copy the custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy the built React app from the builder stage to the Nginx HTML directory
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Install 'serve' globally
+RUN npm install -g serve
 
-# Expose port 80
-EXPOSE 80
+# Copy the built application from the builder stage
+COPY --from=builder /app/dist ./dist
 
-# Start Nginx when the container starts
-CMD ["nginx", "-g", "daemon off;"]
+# Expose the port that 'serve' will listen on
+EXPOSE 8080
+
+# Command to run the application
+# 'serve' will serve static files from ./dist
+# and proxy /api requests to the backend service
+CMD ["serve", "-s", "dist", "-l", "8080", "--proxy", "api:http://backend:3001"]

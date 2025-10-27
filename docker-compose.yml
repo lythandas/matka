@@ -30,7 +30,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"] # This will now hit the updated / endpoint
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,23 +43,12 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     environment:
-      VITE_API_BASE_URL: /api
+      VITE_API_BASE_URL: /api # 'serve' will proxy this to the backend
     depends_on:
       backend:
         condition: service_healthy
-    # Frontend service no longer needs to expose ports directly, Nginx will serve it.
-    # It will build its static assets into /app/dist which Nginx will then serve.
-
-  nginx:
-    image: nginx:alpine
     ports:
-      - "8080:80" # Expose Nginx on port 8080
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro # Mount frontend build output
-    depends_on:
-      - frontend
-      - backend
+      - "8080:8080" # Expose frontend service directly
     restart: always
 
 volumes:
