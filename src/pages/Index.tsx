@@ -708,7 +708,7 @@ const Index = () => {
                     {t('indexPage.uploadingMedia')}
                   </>
                 ) : (
-                  newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} ${t('common.filesSelected')}` : (uploadedMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
+                  selectedFiles.length > 0 ? `${selectedFiles.length} ${t('common.filesSelected')}` : (uploadedMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
                 )}
               </Button>
 
