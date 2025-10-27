@@ -118,7 +118,9 @@
     "failedToLoadJourney": "Échec du chargement du voyage.",
     "failedToFetchPublicPosts": "Échec de la récupération des publications publiques.",
     "failedToLoadPostsForJourney": "Échec du chargement des publications pour ce voyage.",
-    "journeyOwnerOrNameMissing": "Le nom d'utilisateur du propriétaire du voyage ou le nom du voyage est manquant."
+    "journeyOwnerOrNameMissing": "Le nom d'utilisateur du propriétaire du voyage ou le nom du voyage est manquant.",
+    "public": "Public",
+    "private": "Privé"
   },
   "auth": {
     "loginToYourAccount": "Connectez-vous à votre compte",
@@ -287,7 +289,7 @@
     "public": "Public",
     "manageJourney": "Gérer le voyage",
     "deleteJourney": "Supprimer le voyage",
-    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class=\"font-bold\">\"{{journeyName}}\"</span> et toutes ses publications et autorisations de collaborateurs associées."
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class=\"font-bold\">\"{{journeyName}}\"</span> et toutes ses publications et autorisations de collaborateurs associée."
   },
   "publicJourneyPage": {
     "loadingPublicJourney": "Chargement du voyage public...",

@@ -118,7 +118,9 @@
     "failedToLoadJourney": "Failed to load journey.",
     "failedToFetchPublicPosts": "Failed to fetch public posts.",
     "failedToLoadPostsForJourney": "Failed to load posts for this journey.",
-    "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing."
+    "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing.",
+    "public": "Public",
+    "private": "Private"
   },
   "auth": {
     "loginToYourAccount": "Login to your account",

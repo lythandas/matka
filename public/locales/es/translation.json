@@ -118,7 +118,9 @@
     "failedToLoadJourney": "Error al cargar el viaje.",
     "failedToFetchPublicPosts": "Error al obtener las publicaciones públicas.",
     "failedToLoadPostsForJourney": "Error al cargar las publicaciones para este viaje.",
-    "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje."
+    "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje.",
+    "public": "Público",
+    "private": "Privado"
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",

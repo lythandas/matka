@@ -118,7 +118,9 @@
     "failedToLoadJourney": "Fehler beim Laden der Reise.",
     "failedToFetchPublicPosts": "Fehler beim Abrufen der öffentlichen Beiträge.",
     "failedToLoadPostsForJourney": "Fehler beim Laden der Beiträge für diese Reise.",
-    "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt."
+    "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt.",
+    "public": "Öffentlich",
+    "private": "Privat"
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
