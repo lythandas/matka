@@ -1,18 +1,16 @@
 // backend/src/db.ts
 import { Client } from 'pg';
-import Fastify from 'fastify'; // Import Fastify for logging
 import fs from 'fs/promises';
 import { UPLOADS_DIR } from './config';
-
-const fastifyLogger = Fastify().log; // Create a logger instance for this module
+import { FastifyBaseLogger } from 'fastify'; // Import FastifyBaseLogger type
 
 export let dbClient: Client;
 export let isDbConnected = false;
 
-export const connectDbAndCreateTables = async () => {
+export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    fastifyLogger.error('DATABASE_URL is not defined. Please set it in your environment variables.');
+    logger.error('DATABASE_URL is not defined. Please set it in your environment variables.');
     throw new Error('DATABASE_URL is not defined.');
   }
 
@@ -26,17 +24,17 @@ export const connectDbAndCreateTables = async () => {
   while (retries < MAX_RETRIES) {
     try {
       await dbClient.connect();
-      fastifyLogger.info('Connected to PostgreSQL database');
-      await createTables();
+      logger.info('Connected to PostgreSQL database');
+      await createTables(logger);
       isDbConnected = true;
       return;
     } catch (err: unknown) {
       retries++;
-      fastifyLogger.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
+      logger.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
       if (retries < MAX_RETRIES) {
         await new Promise(resolve => setTimeout(resolve, 5000));
       } else {
-        fastifyLogger.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
+        logger.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
         isDbConnected = false;
         throw new Error('Failed to connect to PostgreSQL after multiple retries');
       }
@@ -44,7 +42,7 @@ export const connectDbAndCreateTables = async () => {
   }
 };
 
-const createTables = async () => {
+const createTables = async (logger: FastifyBaseLogger) => {
   try {
     await fs.mkdir(UPLOADS_DIR, { recursive: true });
     await dbClient.query(`
@@ -104,9 +102,9 @@ const createTables = async () => {
         UNIQUE (journey_id, user_id)
       );
     `);
-    fastifyLogger.info('Database tables checked/created successfully');
+    logger.info('Database tables checked/created successfully');
   } catch (err: unknown) {
-    fastifyLogger.error(err as Error, 'Error creating database tables');
+    logger.error(err as Error, 'Error creating database tables');
     throw err;
   }
 };

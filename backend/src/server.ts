@@ -57,7 +57,7 @@ fastify.register(mediaRoutes);
 // Run the server
 const start = async () => {
   try {
-    await connectDbAndCreateTables();
+    await connectDbAndCreateTables(fastify.log); // Pass the main fastify.log instance
     await fastify.listen({ port: 3001, host: '0.0.0.0' });
     fastify.log.info(`Server listening on ${fastify.server.address()}`);
   } catch (err: unknown) {
