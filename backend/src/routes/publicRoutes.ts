@@ -14,13 +14,14 @@ export default async function publicRoutes(fastify: FastifyInstance) {
     return reply.code(200).send({ status: 'ok' });
   });
 
-  fastify.get('/', async (request, reply) => {
-    if (isDbConnected) {
-      return { message: 'Fastify backend is running and connected to database.' };
-    } else {
-      return reply.code(503).send({ message: 'Fastify backend is running but not connected to database.' });
-    }
-  });
+  // Removed the conflicting root route:
+  // fastify.get('/', async (request, reply) => {
+  //   if (isDbConnected) {
+  //     return { message: 'Fastify backend is running and connected to database.' };
+  //   } else {
+  //     return reply.code(503).send({ message: 'Fastify backend is running but not connected to database.' });
+  //   }
+  // });
 
   fastify.get('/users/exists', async (request, reply) => {
     if (!isDbConnected) {
