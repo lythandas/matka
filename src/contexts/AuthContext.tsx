@@ -60,26 +60,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchUsersExist = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/users/exists`);
-      const responseText = await response.text(); // Read response as text first
-      let data;
-
-      if (!responseText) {
-        // Handle empty response explicitly
-        throw new Error('Empty response from server for user existence check.');
-      }
-
-      try {
-        data = JSON.parse(responseText); // Attempt to parse as JSON
-      } catch (jsonError) {
-        console.error('JSON parsing error for /users/exists:', jsonError);
-        console.error('Raw response text for /users/exists:', responseText);
-        throw new Error('Invalid JSON response from server for user existence check.');
-      }
 
       if (!response.ok) {
-        // If response.ok is false, but we successfully parsed JSON, use its message
-        throw new Error(data.message || 'Failed to check user existence');
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        throw new Error(errorData.message || 'Failed to check user existence');
       }
+
+      const data = await response.json(); // Directly parse JSON here
 
       setUsersExist(data.exists);
       console.log("AuthContext: Users exist check:", data.exists);
@@ -94,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout();
       }
     }
-  }, [isAuthenticated, logout, setAuthData]);
+  }, [isAuthenticated, logout]); // Removed setAuthData from dependencies as it's not used here
 
   // Load auth state from localStorage on initial render
   useEffect(() => {
