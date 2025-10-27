@@ -10,7 +10,9 @@ import fastifyStatic from '@fastify/static';
 import { Client } from 'pg';
 
 const fastify = Fastify({
-  logger: true,
+  logger: {
+    level: 'debug', // Set logger level to debug
+  },
   bodyLimit: 12 * 1024 * 1024, // Set body limit to 12MB
 });
 
@@ -308,21 +310,27 @@ fastify.get('/users/exists', async (request, reply) => {
 });
 
 fastify.post('/register', async (request, reply) => {
+  fastify.log.debug('[/register] Received registration request.');
   if (!isDbConnected) { // Check DB connection status
+    fastify.log.error('[/register] Database not connected.');
     return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
   }
   const { username, password } = request.body as { username?: string; password?: string };
 
   if (!username || !password) {
+    fastify.log.warn('[/register] Missing username or password.');
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
   try {
+    fastify.log.debug(`[/register] Checking for existing user: ${username}`);
     const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
     if (existingUser.rows.length > 0) {
+      fastify.log.warn(`[/register] Username already exists: ${username}`);
       return reply.code(409).send({ message: 'Username already exists' });
     }
 
+    fastify.log.debug('[/register] Hashing password and checking user count.');
     const password_hash = await hashPassword(password);
     const usersCount = await dbClient.query('SELECT COUNT(*) FROM users');
     const isFirstUser = parseInt(usersCount.rows[0].count) === 0;
@@ -336,17 +344,20 @@ fastify.post('/register', async (request, reply) => {
       created_at: new Date().toISOString(),
     };
 
+    fastify.log.debug(`[/register] Inserting new user: ${username}, isAdmin: ${isFirstUser}`);
     const result = await dbClient.query(
       'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
       [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
     );
+    fastify.log.debug('[/register] User inserted into database.');
 
     const userForApi = mapDbUserToApiUser(result.rows[0]);
     fastify.log.info(`User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
     const token = generateToken(userForApi);
+    fastify.log.debug('[/register] Generated token and preparing response.');
     return { user: userForApi, token };
   } catch (error) {
-    fastify.log.error(error, 'Error during user registration');
+    fastify.log.error(error, '[/register] Error during user registration');
     if (!reply.sent) {
       reply.type('application/json').code(500).send({ message: 'Internal server error during registration.' });
     }
