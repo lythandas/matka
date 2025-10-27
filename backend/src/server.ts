@@ -317,33 +317,38 @@ fastify.post('/register', async (request, reply) => {
     return reply.code(400).send({ message: 'Username and password are required' });
   }
 
-  const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
-  if (existingUser.rows.length > 0) {
-    return reply.code(409).send({ message: 'Username already exists' });
+  try { // Added try-catch block
+    const existingUser = await dbClient.query('SELECT id FROM users WHERE username = $1', [username]);
+    if (existingUser.rows.length > 0) {
+      return reply.code(409).send({ message: 'Username already exists' });
+    }
+
+    const password_hash = await hashPassword(password);
+    const usersCount = await dbClient.query('SELECT COUNT(*) FROM users');
+    const isFirstUser = parseInt(usersCount.rows[0].count) === 0;
+
+    const newUser: User = {
+      id: uuidv4(),
+      username,
+      password_hash,
+      is_admin: isFirstUser,
+      language: 'en',
+      created_at: new Date().toISOString(),
+    };
+
+    const result = await dbClient.query(
+      'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+      [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
+    );
+
+    const userForApi = mapDbUserToApiUser(result.rows[0]);
+    fastify.log.info(`User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
+    const token = generateToken(userForApi);
+    return { user: userForApi, token };
+  } catch (error) {
+    fastify.log.error(error, 'Error during user registration');
+    return reply.code(500).send({ message: 'Internal server error during registration.' });
   }
-
-  const password_hash = await hashPassword(password);
-  const usersCount = await dbClient.query('SELECT COUNT(*) FROM users');
-  const isFirstUser = parseInt(usersCount.rows[0].count) === 0;
-
-  const newUser: User = {
-    id: uuidv4(),
-    username,
-    password_hash,
-    is_admin: isFirstUser,
-    language: 'en',
-    created_at: new Date().toISOString(),
-  };
-
-  const result = await dbClient.query(
-    'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
-    [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
-  );
-
-  const userForApi = mapDbUserToApiUser(result.rows[0]);
-  fastify.log.info(`User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
-  const token = generateToken(userForApi);
-  return { user: userForApi, token };
 });
 
 fastify.post('/login', async (request, reply) => {
