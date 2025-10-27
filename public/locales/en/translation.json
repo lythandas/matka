@@ -331,5 +331,15 @@
     "allowDeletePosts": "Allow user to delete posts from this journey",
     "close": "Close",
     "renaming": "Renaming..."
+  },
+  "imageCropper": {
+    "cropProfilePicture": "Crop Profile Picture",
+    "adjustImageInstructions": "Adjust the image to fit the circular crop area. Use the slider to zoom.",
+    "zoom": "Zoom",
+    "apply": "Apply",
+    "applying": "Applying...",
+    "noCropSelected": "No crop area selected.",
+    "failedToCropImage": "Failed to crop image.",
+    "errorCroppingImage": "Error cropping image."
   }
 }

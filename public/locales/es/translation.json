@@ -331,5 +331,15 @@
     "allowDeletePosts": "Permitir al usuario eliminar publicaciones de este viaje",
     "close": "Cerrar",
     "renaming": "Renombrando..."
+  },
+  "imageCropper": {
+    "cropProfilePicture": "Recortar foto de perfil",
+    "adjustImageInstructions": "Ajusta la imagen para que encaje en el área de recorte circular. Usa el deslizador para hacer zoom.",
+    "zoom": "Zoom",
+    "apply": "Aplicar",
+    "applying": "Aplicando...",
+    "noCropSelected": "No se ha seleccionado área de recorte.",
+    "failedToCropImage": "Error al recortar la imagen.",
+    "errorCroppingImage": "Error al recortar la imagen."
   }
 }

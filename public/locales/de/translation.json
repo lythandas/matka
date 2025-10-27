@@ -331,5 +331,15 @@
     "allowDeletePosts": "Benutzer erlauben, Beiträge aus dieser Reise zu löschen",
     "close": "Schließen",
     "renaming": "Wird umbenannt..."
+  },
+  "imageCropper": {
+    "cropProfilePicture": "Profilbild zuschneiden",
+    "adjustImageInstructions": "Passen Sie das Bild an den kreisförmigen Zuschnittbereich an. Verwenden Sie den Schieberegler zum Zoomen.",
+    "zoom": "Zoom",
+    "apply": "Anwenden",
+    "applying": "Wird angewendet...",
+    "noCropSelected": "Kein Zuschnittbereich ausgewählt.",
+    "failedToCropImage": "Fehler beim Zuschneiden des Bildes.",
+    "errorCroppingImage": "Fehler beim Zuschneiden des Bildes."
   }
 }
