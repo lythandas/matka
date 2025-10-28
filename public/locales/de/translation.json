@@ -68,7 +68,7 @@
     "permissionsUpdatedSuccessfully": "Berechtigungen erfolgreich aktualisiert!",
     "noPermissionRemoveCollaborators": "Sie haben keine Berechtigung, Kollaboratoren von dieser Reise zu entfernen.",
     "failedToRemoveCollaborator": "Fehler beim Entfernen des Kollaborators.",
-    "collaboratorRemovedSuccessfully": "Kollaborator '@{{username}}' erfolgreich entfernt!",
+    "collaboratorRemovedSuccessfully": "Kollaborator '@{{username}}' entfernt erfolgreich!",
     "shareLinkCopied": "Freigabelink in die Zwischenablage kopiert!",
     "failedToCopyLink": "Fehler beim Kopieren des Links.",
     "failedToFetchJourneyCollaborators": "Fehler beim Abrufen der Reise-Kollaboratoren.",
@@ -286,10 +286,10 @@
     "untitledDraft": "Unbenannter Entwurf",
     "loadDraft": "Entwurf laden",
     "deleteDraft": "Entwurf löschen",
-    "deleteDraftDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Entwurf <span class=\"font-bold\">„{{draftTitle}}“</span> dauerhaft gelöscht.",
+    "deleteDraftDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Entwurf <span class='font-bold'>'{{draftTitle}}'</span> dauerhaft gelöscht.",
     "draftSavedSuccessfully": "Entwurf erfolgreich gespeichert!",
     "failedToSaveDraft": "Fehler beim Speichern des Entwurfs.",
-    "draftLoadedSuccessfully": "Entwurf „{{title}}“ erfolgreich geladen!",
+    "draftLoadedSuccessfully": "Entwurf '{{title}}' erfolgreich geladen!",
     "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
     "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe."
   },
@@ -305,7 +305,7 @@
     "resetPassword": "Passwort zurücksetzen",
     "deleteUser": "Benutzer löschen",
     "areYouSure": "Sind Sie absolut sicher?",
-    "deleteUserDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Benutzer <span class=\"font-bold\">@{{username}}</span> und alle damit verbundenen Reisen, Beiträge und Kollaborationen dauerhaft gelöscht.",
+    "deleteUserDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Benutzer <span class='font-bold'>@{{username}}</span> und alle damit verbundenen Reisen, Beiträge und Kollaborationen dauerhaft gelöscht.",
     "continue": "Weiter",
     "manageJourneys": "Reisen verwalten",
     "loadingJourneys": "Reisen werden geladen...",
@@ -314,7 +314,7 @@
     "public": "Öffentlich",
     "manageJourney": "Reise verwalten",
     "deleteJourney": "Reise löschen",
-    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class=\"font-bold\">\"{{journeyName}}\"</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
+    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class='font-bold'>'{{journeyName}}'</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
   },
   "publicJourneyPage": {
     "loadingPublicJourney": "Öffentliche Reise wird geladen...",
@@ -352,7 +352,7 @@
     "anyoneCanView": "Jeder mit diesem Link kann die Beiträge Ihrer Reise ohne Anmeldung ansehen.",
     "addNewCollaborator": "Neuen Kollaborator hinzufügen",
     "searchUsernameToAdd": "Benutzernamen zum Hinzufügen suchen...",
-    "addingCollaborator": "Füge <span class=\"font-bold text-primary\">{{username}}</span> als Kollaborator hinzu. Er kann standardmäßig Beiträge auf dieser Reise lesen und veröffentlichen.",
+    "addingCollaborator": "Füge <span class='font-bold text-primary'>{{username}}</span> als Kollaborator hinzu. Er kann standardmäßig Beiträge auf dieser Reise lesen und veröffentlichen.",
     "addCollaborator": "Kollaborator hinzufügen",
     "currentCollaborators": "Aktuelle Kollaboratoren ({{count}})",
     "noCollaboratorsAdded": "Noch keine Kollaboratoren hinzugefügt.",

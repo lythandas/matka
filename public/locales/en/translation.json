@@ -286,7 +286,7 @@
     "untitledDraft": "Untitled Draft",
     "loadDraft": "Load Draft",
     "deleteDraft": "Delete Draft",
-    "deleteDraftDescription": "This action cannot be undone. This will permanently delete the draft <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "deleteDraftDescription": "This action cannot be undone. This will permanently delete the draft <span class='font-bold'>'{{draftTitle}}'</span>.",
     "draftSavedSuccessfully": "Draft saved successfully!",
     "failedToSaveDraft": "Failed to save draft.",
     "draftLoadedSuccessfully": "Draft '{{title}}' loaded successfully!",
@@ -305,7 +305,7 @@
     "resetPassword": "Reset password",
     "deleteUser": "Delete user",
     "areYouSure": "Are you absolutely sure?",
-    "deleteUserDescription": "This action cannot be undone. This will permanently delete the user <span class=\"font-bold\">@{{username}}</span> and all their associated journeys, posts, and collaborations.",
+    "deleteUserDescription": "This action cannot be undone. This will permanently delete the user <span class='font-bold'>@{{username}}</span> and all their associated journeys, posts, and collaborations.",
     "continue": "Continue",
     "manageJourneys": "Manage journeys",
     "loadingJourneys": "Loading journeys...",
@@ -314,7 +314,7 @@
     "public": "Public",
     "manageJourney": "Manage journey",
     "deleteJourney": "Delete journey",
-    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class=\"font-bold\">\"{{journeyName}}\"</span> and all its associated posts and collaborator permissions."
+    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class='font-bold'>'{{journeyName}}'</span> and all its associated posts and collaborator permissions."
   },
   "publicJourneyPage": {
     "loadingPublicJourney": "Loading public journey...",
@@ -336,7 +336,7 @@
   },
   "notFoundPage": {
     "oopsPageNotFound": "Oops! Page not found",
-    "returnToHome": "Return to Home"
+    "returnTo Home": "Return to Home"
   },
   "manageJourneyDialog": {
     "manageJourney": "Manage journey: \"{{journeyName}}\"",
@@ -352,7 +352,7 @@
     "anyoneCanView": "Anyone with this link can view your journey's posts without logging in.",
     "addNewCollaborator": "Add new collaborator",
     "searchUsernameToAdd": "Search username to add...",
-    "addingCollaborator": "Adding <span class=\"font-bold text-primary\">{{username}}</span> as a collaborator. They will be able to read posts and publish posts on this journey by default.",
+    "addingCollaborator": "Adding <span class='font-bold text-primary'>{{username}}</span> as a collaborator. They will be able to read posts and publish posts on this journey by default.",
     "addCollaborator": "Add collaborator",
     "currentCollaborators": "Current collaborators ({{count}})",
     "noCollaboratorsAdded": "No collaborators added yet.",

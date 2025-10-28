@@ -286,7 +286,7 @@
     "untitledDraft": "Borrador sin título",
     "loadDraft": "Cargar borrador",
     "deleteDraft": "Eliminar borrador",
-    "deleteDraftDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el borrador <span class=\"font-bold\">\"{{draftTitle}}\"</span>.",
+    "deleteDraftDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el borrador <span class='font-bold'>'{{draftTitle}}'</span>.",
     "draftSavedSuccessfully": "¡Borrador guardado correctamente!",
     "failedToSaveDraft": "Error al guardar el borrador.",
     "draftLoadedSuccessfully": "¡Borrador '{{title}}' cargado correctamente!",
@@ -305,7 +305,7 @@
     "resetPassword": "Restablecer contraseña",
     "deleteUser": "Eliminar usuario",
     "areYouSure": "¿Estás absolutamente seguro?",
-    "deleteUserDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente al usuario <span class=\"font-bold\">@{{username}}</span> y todos sus viajes, publicaciones y colaboraciones asociados.",
+    "deleteUserDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente al usuario <span class='font-bold'>@{{username}}</span> y todos sus viajes, publicaciones y colaboraciones asociados.",
     "continue": "Continuar",
     "manageJourneys": "Gestionar viajes",
     "loadingJourneys": "Cargando viajes...",
@@ -314,7 +314,7 @@
     "public": "Público",
     "manageJourney": "Gestionar viaje",
     "deleteJourney": "Eliminar viaje",
-    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class=\"font-bold\">\"{{journeyName}}\"</span> y todas sus publicaciones y permisos de colaborador asociados."
+    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados."
   },
   "publicJourneyPage": {
     "loadingPublicJourney": "Cargando viaje público...",
@@ -352,7 +352,7 @@
     "anyoneCanView": "Cualquiera con este enlace puede ver las publicaciones de tu viaje sin iniciar sesión.",
     "addNewCollaborator": "Añadir nuevo colaborador",
     "searchUsernameToAdd": "Buscar nombre de usuario para añadir...",
-    "addingCollaborator": "Añadiendo a <span class=\"font-bold text-primary\">{{username}}</span> como colaborador. Podrá leer y publicar publicaciones en este viaje por defecto.",
+    "addingCollaborator": "Añadiendo a <span class='font-bold text-primary'>{{username}}</span> como colaborador. Podrá leer y publicar publicaciones en este viaje por defecto.",
     "addCollaborator": "Añadir colaborador",
     "currentCollaborators": "Colaboradores actuales ({{count}})",
     "noCollaboratorsAdded": "Aún no se han añadido colaboradores.",
