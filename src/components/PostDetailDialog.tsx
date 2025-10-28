@@ -194,7 +194,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="absolute left-8 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={onPrevious}
           >
             <ChevronLeft className="h-7 w-7" />
@@ -204,7 +204,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="absolute right-8 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={onNext}
           >
             <ChevronRight className="h-7 w-7" />
