@@ -9,6 +9,7 @@ import { showError } from '@/utils/toast';
 import AppFooter from '@/components/AppFooter';
 import MapComponent from '@/components/MapComponent';
 import GridPostCard from '@/components/GridPostCard';
+import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 import PostDetailDialog from '@/components/PostDetailDialog';
 import { format } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,6 +19,7 @@ import { getDateFnsLocale } from '@/utils/date-locales';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ShineCard from '@/components/ShineCard';
+import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -32,6 +34,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // New state for view mode
 
   const fetchPublicJourney = async () => {
     if (!publicLinkId) {
@@ -93,6 +96,7 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
+  const hasPostsWithCoordinates = postsWithCoordinates.length > 0;
 
   if (loading) {
     return (
@@ -170,33 +174,52 @@ const PublicJourneyPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {postsWithCoordinates.length > 0 && (
-              <Card className="shadow-lg">
-                <CardContent className="p-0">
-                  <div className="w-full h-80 rounded-t-lg overflow-hidden">
-                    <MapComponent
-                      posts={postsWithCoordinates}
-                      onMarkerClick={handlePostClick}
-                      className="w-full h-full"
-                      zoom={7}
-                    />
-                  </div>
-                  <div className="p-4 text-center text-muted-foreground text-sm">
-                    {t('publicJourneyPage.exploreMap')}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post, index) => (
-                <GridPostCard
-                  key={post.id}
-                  post={post}
-                  onClick={() => handlePostClick(post, index)}
-                />
-              ))}
+            <div className="relative flex items-center justify-center mb-6 h-10">
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
+
+            {viewMode === 'list' ? (
+              <div className="space-y-6">
+                {posts.map((post, index) => (
+                  <ListPostCard
+                    key={post.id}
+                    post={post}
+                    onClick={() => handlePostClick(post, index)}
+                  />
+                ))}
+              </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {posts.map((post, index) => (
+                  <GridPostCard
+                    key={post.id}
+                    post={post}
+                    onClick={() => handlePostClick(post, index)}
+                  />
+                ))}
+              </div>
+            ) : ( // viewMode === 'map'
+              hasPostsWithCoordinates ? (
+                <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                  <MapComponent
+                    posts={postsWithCoordinates}
+                    onMarkerClick={handlePostClick}
+                    className="w-full h-full"
+                    zoom={7}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                    {t('indexPage.noPostsWithLocation')}
+                  </p>
+                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                    {t('indexPage.addPostsWithLocation')}
+                  </p>
+                </div>
+              )
+            )}
           </div>
         )}
       </main>
