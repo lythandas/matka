@@ -134,7 +134,9 @@
     "confirmPassword": "Confirm password",
     "registering": "Registering...",
     "registerAdmin": "Register admin",
-    "passwordPlaceholder": "••••••••"
+    "passwordPlaceholder": "••••••••",
+    "checkingUserStatus": "Checking user status...",
+    "register": "Register"
   },
   "topBar": {
     "journeys": "Journeys",
