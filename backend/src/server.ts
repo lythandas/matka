@@ -11,7 +11,7 @@ import protectedUserRoutes from './routes/protectedUserRoutes'; // Protected use
 import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
-import publicJourneyApiRoutes from './routes/publicJourneyApiRoutes'; // Import the new public journey API routes
+// publicJourneyApiRoutes is removed
 import { authenticate } from './auth'; // Import authenticate hook
 
 const fastify = Fastify({
@@ -36,8 +36,7 @@ fastify.get('/health', async (request, reply) => {
 // 1. Register all API routes (both public and protected) with the /api prefix.
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
 
-// Register public journey API routes with the full /api/public/journeys prefix
-fastify.register(publicJourneyApiRoutes, { prefix: '/api/public/journeys' });
+// publicJourneyApiRoutes registration removed
 
 // Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {

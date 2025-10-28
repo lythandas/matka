@@ -99,7 +99,7 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, // Include the authentication token
         },
-        body: JSON.stringify({ name }), // Only send name, is_public will default to false on backend
+        body: JSON.stringify({ name, is_public: false }), // Explicitly set is_public to false
       });
 
       if (!response.ok) {

@@ -113,11 +113,6 @@
     "postImageAlt": "Post image {{index}}",
     "failedToLoadMedia": "Failed to load media.",
     "failedToUploadMediaGeneric": "Failed to upload media.",
-    "failedToFetchPublicJourney": "Failed to fetch public journey.",
-    "failedToLoadJourneyNotPublic": "Failed to load journey or it is not public.",
-    "failedToLoadJourney": "Failed to load journey.",
-    "failedToFetchPublicPosts": "Failed to fetch public posts.",
-    "failedToLoadPostsForJourney": "Failed to load posts for this journey.",
     "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing.",
     "public": "Public",
     "private": "Private",
@@ -316,24 +311,6 @@
     "deleteJourney": "Delete journey",
     "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class='font-bold'>'{{journeyName}}'</span> and all its associated posts and collaborator permissions."
   },
-  "publicJourneyPage": {
-    "loadingPublicJourney": "Loading public journey...",
-    "journeyNotFound": "Journey Not Found",
-    "journeyNotFoundDescription": "The public journey you are looking for does not exist or is not accessible.",
-    "returnToHome": "Return to Home",
-    "aJourneyBy": "A journey by {{author}}",
-    "createdOn": "Created on {{date}}",
-    "noPublicPosts": "This journey has no public posts yet.",
-    "checkBackLater": "Check back later!",
-    "noPostsWithLocation": "No posts with location data to display on the map.",
-    "addPostsWithLocation": "Add posts with location information to see them here!",
-    "journeyOwnerOrNameMissing": "Journey owner username or journey name is missing.",
-    "enterPassphrase": "Enter Passphrase",
-    "thisJourneyIsProtected": "This journey ({{journeyName}}) is protected by a passphrase.",
-    "verifying": "Verifying...",
-    "accessJourney": "Access Journey",
-    "incorrectPassphrase": "Incorrect passphrase. Please try again."
-  },
   "notFoundPage": {
     "oopsPageNotFound": "Oops! Page not found",
     "returnTo Home": "Return to Home"
@@ -345,11 +322,6 @@
     "ownerFullAccess": "(Owner has full access and cannot be removed.)",
     "journeyName": "Journey name",
     "saveJourneyName": "Save journey name",
-    "publicAccess": "Public access",
-    "makeJourneyPublic": "Make journey public",
-    "shareableLink": "Shareable link:",
-    "copyLink": "Copy link",
-    "anyoneCanView": "Anyone with this link can view your journey's posts without logging in.",
     "addNewCollaborator": "Add new collaborator",
     "searchUsernameToAdd": "Search username to add...",
     "addingCollaborator": "Adding <span class='font-bold text-primary'>{{username}}</span> as a collaborator. They will be able to read posts and publish posts on this journey by default.",
@@ -360,11 +332,7 @@
     "allowEditPosts": "Allow user to edit existing posts in this journey",
     "allowDeletePosts": "Allow user to delete posts from this journey",
     "close": "Close",
-    "renaming": "Renaming...",
-    "passphraseOptional": "Passphrase (optional)",
-    "passphrasePlaceholder": "Enter a passphrase",
-    "passphraseInfo": "If set, users will need this passphrase to view your public journey.",
-    "updatePassphrase": "Update Passphrase"
+    "renaming": "Renaming..."
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",
@@ -375,9 +343,5 @@
     "noCropSelected": "No crop area selected.",
     "failedToCropImage": "Failed to crop image.",
     "errorCroppingImage": "Error cropping image."
-  },
-  "passphraseDialog": {
-    "accessJourneyTitle": "Access Journey: \"{{journeyName}}\"",
-    "accessJourneyDescription": "This journey by {{journeyOwner}} is protected by a passphrase."
   }
 }

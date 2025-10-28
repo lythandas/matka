@@ -89,15 +89,11 @@ const createTables = async (logger: FastifyBaseLogger) => {
         owner_name VARCHAR(255),
         owner_surname VARCHAR(255),
         owner_profile_image_url TEXT,
-        is_public BOOLEAN DEFAULT FALSE,
-        passphrase_hash VARCHAR(255) -- New column for passphrase
+        is_public BOOLEAN DEFAULT FALSE
+        -- passphrase_hash VARCHAR(255) -- Removed column for passphrase
       );
 
-      DO $$ BEGIN
-          ALTER TABLE journeys ADD COLUMN passphrase_hash VARCHAR(255);
-      EXCEPTION
-          WHEN duplicate_column THEN NULL;
-      END $$;
+      -- Removed DO $$ BEGIN ALTER TABLE journeys ADD COLUMN passphrase_hash VARCHAR(255); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
       CREATE TABLE IF NOT EXISTS posts (
         id VARCHAR(255) PRIMARY KEY,

@@ -113,11 +113,6 @@
     "postImageAlt": "Beitragsbild {{index}}",
     "failedToLoadMedia": "Medien konnten nicht geladen werden.",
     "failedToUploadMediaGeneric": "Fehler beim Hochladen von Medien.",
-    "failedToFetchPublicJourney": "Fehler beim Abrufen der öffentlichen Reise.",
-    "failedToLoadJourneyNotPublic": "Fehler beim Laden der Reise oder sie ist nicht öffentlich.",
-    "failedToLoadJourney": "Fehler beim Laden der Reise.",
-    "failedToFetchPublicPosts": "Fehler beim Abrufen der öffentlichen Beiträge.",
-    "failedToLoadPostsForJourney": "Fehler beim Laden der Beiträge für diese Reise.",
     "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt.",
     "public": "Öffentlich",
     "private": "Privat",
@@ -316,24 +311,6 @@
     "deleteJourney": "Reise löschen",
     "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class='font-bold'>'{{journeyName}}'</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
   },
-  "publicJourneyPage": {
-    "loadingPublicJourney": "Öffentliche Reise wird geladen...",
-    "journeyNotFound": "Reise nicht gefunden",
-    "journeyNotFoundDescription": "Die gesuchte öffentliche Reise existiert nicht oder ist nicht zugänglich.",
-    "returnToHome": "Zurück zur Startseite",
-    "aJourneyBy": "Eine Reise von {{author}}",
-    "createdOn": "Erstellt am {{date}}",
-    "noPublicPosts": "Diese Reise hat noch keine öffentlichen Beiträge.",
-    "checkBackLater": "Schauen Sie später wieder vorbei!",
-    "noPostsWithLocation": "Keine Beiträge mit Standortdaten zum Anzeigen auf der Karte.",
-    "addPostsWithLocation": "Fügen Sie Beiträge mit Standortinformationen hinzu, um sie hier zu sehen!",
-    "journeyOwnerOrNameMissing": "Benutzername des Reisebesitzers oder Reisename fehlt.",
-    "enterPassphrase": "Passphrase eingeben",
-    "thisJourneyIsProtected": "Diese Reise ({{journeyName}}) ist durch eine Passphrase geschützt.",
-    "verifying": "Wird überprüft...",
-    "accessJourney": "Reise zugreifen",
-    "incorrectPassphrase": "Falsche Passphrase. Bitte versuchen Sie es erneut."
-  },
   "notFoundPage": {
     "oopsPageNotFound": "Hoppla! Seite nicht gefunden",
     "returnToHome": "Zurück zur Startseite"
@@ -345,11 +322,6 @@
     "ownerFullAccess": "(Besitzer hat vollen Zugriff und kann nicht entfernt werden.)",
     "journeyName": "Reisename",
     "saveJourneyName": "Reisename speichern",
-    "publicAccess": "Öffentlicher Zugang",
-    "makeJourneyPublic": "Reise öffentlich machen",
-    "shareableLink": "Teilbarer Link:",
-    "copyLink": "Link kopieren",
-    "anyoneCanView": "Jeder mit diesem Link kann die Beiträge Ihrer Reise ohne Anmeldung ansehen.",
     "addNewCollaborator": "Neuen Kollaborator hinzufügen",
     "searchUsernameToAdd": "Benutzernamen zum Hinzufügen suchen...",
     "addingCollaborator": "Füge <span class='font-bold text-primary'>{{username}}</span> als Kollaborator hinzu. Er kann standardmäßig Beiträge auf dieser Reise lesen und veröffentlichen.",
@@ -360,11 +332,7 @@
     "allowEditPosts": "Benutzer erlauben, bestehende Beiträge in dieser Reise zu bearbeiten",
     "allowDeletePosts": "Benutzer erlauben, Beiträge aus dieser Reise zu löschen",
     "close": "Schließen",
-    "renaming": "Wird umbenannt...",
-    "passphraseOptional": "Passphrase (optional)",
-    "passphrasePlaceholder": "Passphrase eingeben",
-    "passphraseInfo": "Wenn festgelegt, benötigen Benutzer diese Passphrase, um Ihre öffentliche Reise anzuzeigen.",
-    "updatePassphrase": "Passphrase aktualisieren"
+    "renaming": "Wird umbenannt..."
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",
@@ -375,9 +343,5 @@
     "noCropSelected": "Kein Zuschnittbereich ausgewählt.",
     "failedToCropImage": "Fehler beim Zuschneiden des Bildes.",
     "errorCroppingImage": "Fehler beim Zuschneiden des Bildes."
-  },
-  "passphraseDialog": {
-    "accessJourneyTitle": "Zugriff auf Reise: „{{journeyName}}“",
-    "accessJourneyDescription": "Diese Reise von {{journeyOwner}} ist durch eine Passphrase geschützt."
   }
 }

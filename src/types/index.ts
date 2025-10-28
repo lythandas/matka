@@ -22,7 +22,7 @@ export interface Journey {
   owner_profile_image_url?: string;
   owner_language?: string; // New: Owner's preferred language
   is_public: boolean; // New: Indicates if the journey is publicly viewable
-  passphrase_hash?: string; // New: Hashed passphrase for public journeys
+  // passphrase_hash?: string; // Removed: Hashed passphrase for public journeys
 }
 
 // Define the structure for media content

@@ -8,7 +8,7 @@ import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
 import LoginPage from '@/pages/LoginPage';
 import NotFound from '@/pages/NotFound';
-import PublicJourneyPage from '@/pages/PublicJourneyPage';
+// PublicJourneyPage is removed
 
 // ProtectedRoute component to guard admin access
 const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element; adminOnly?: boolean }) => {
@@ -42,9 +42,7 @@ const AuthConditionalContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* Public journey route is still accessible even if authenticated,
-              but PublicJourneyPage itself will redirect if user has access. */}
-          <Route path="/public/journeys/by-name/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
+          {/* Public journey route removed */}
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -53,13 +51,10 @@ const AuthConditionalContent: React.FC = () => {
   } else {
     return (
       <Routes>
-        <Route path="/public/journeys/by-name/:ownerUsername/:journeyName" element={<PublicJourneyPage />} />
+        {/* Public journey route removed */}
         <Route path="/" element={<LoginPage />} />
         {/* Redirect any other path to login if not authenticated */}
-        <Route path="*" element={
-          // If not authenticated and not on a public journey page, redirect to login
-          window.location.pathname.startsWith('/public/journeys/by-name/') ? <NotFound /> : <Navigate to="/" replace />
-        } />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }
