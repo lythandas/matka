@@ -4,12 +4,9 @@ import { dbClient } from '../db';
 
 export default async function publicJourneyRoutes(fastify: FastifyInstance) {
   // Get a public journey by its public_link_id
-  fastify.get('/public-journeys/:publicLinkId', { // This path will be prefixed with /api from server.ts
-    // Explicitly tell Fastify not to parse the body for this GET request,
-    // even if a Content-Type header is present.
-    schema: {
-      body: false,
-    }
+  fastify.get('/public-journeys/:publicLinkId', {
+    // Removed schema: { body: false } as GET requests do not have a body,
+    // and this was causing a FastifyWarning.
   }, async (request, reply) => {
     const { publicLinkId } = request.params as { publicLinkId: string };
 
