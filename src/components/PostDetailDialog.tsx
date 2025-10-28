@@ -13,6 +13,7 @@ import { getAvatarInitials } from '@/lib/utils';
 import { Post, MediaInfo, Journey } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 interface PostDetailDialogProps {
   post: Post;
@@ -40,6 +41,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const [isWideViewActive, setIsWideViewActive] = useState(false); // New state for custom wide view
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const currentLocale = getDateFnsLocale();
+  const isMobile = useIsMobile(); // Use the mobile hook
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < totalPosts - 1;
@@ -71,14 +73,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         {/* Main content area, handles layout based on media presence and wide view */}
         <div className={cn(
           "flex flex-grow overflow-hidden",
-          isWideViewActive ? "p-0 gap-0" : "p-6 pt-4 gap-6", // Adjust padding and gap for the main content area
+          isMobile ? "p-0 gap-0" : (isWideViewActive ? "p-0 gap-0" : "p-6 pt-4 gap-6"), // Adjust padding and gap for the main content area
           (hasMedia || hasCoordinates) ? "" : "flex-col" // Only flex-col if no media/coords, otherwise default flex row
         )}>
           {/* Left Column: Media OR Map */}
           {(hasMedia || hasCoordinates) && (
             <div className={cn(
               "flex flex-col items-center justify-center relative",
-              isWideViewActive ? "w-full" : "w-4/5" // Adjust width based on wide view
+              isMobile ? "w-full" : (isWideViewActive ? "w-full" : "w-4/5") // Adjust width based on mobile/wide view
             )}>
               {hasMedia ? (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -168,7 +170,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           {/* Right Column: Details (Title, Author, Message) */}
           <div className={cn(
             "flex flex-col overflow-y-auto",
-            isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5" : "w-full" // Hide if wide view, else adjust width
+            isMobile ? "hidden" : (isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5" : "w-full") // Hide if mobile or wide view, else adjust width
           )}>
             <div className="p-4"> {/* Added padding here for the actual text content */}
               <div className="flex items-center mb-4">
