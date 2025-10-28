@@ -367,5 +367,8 @@
     "noPostsYet": "No posts in this journey yet!",
     "ownerHasNotAddedPosts": "The journey owner has not added any posts to this public journey yet.",
     "exploreMap": "Explore post locations on the map."
+  },
+  "scrollToTopButton": {
+    "label": "Scroll to top"
   }
 }

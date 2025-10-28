@@ -7,6 +7,7 @@ import CreateJourneyDialog from './CreateJourneyDialog';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import AppFooter from './AppFooter'; // Import AppFooter
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import ScrollToTopButton from './ScrollToTopButton'; // Import the new component
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -33,6 +34,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
       <AppFooter /> {/* AppFooter moved here */}
+      <ScrollToTopButton /> {/* Add the ScrollToTopButton here */}
     </div>
   );
 };

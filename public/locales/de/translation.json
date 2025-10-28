@@ -356,5 +356,8 @@
     "noCropSelected": "Kein Zuschnittbereich ausgewählt.",
     "failedToCropImage": "Fehler beim Zuschneiden des Bildes.",
     "errorCroppingImage": "Fehler beim Zuschneiden des Bildes."
+  },
+  "scrollToTopButton": {
+    "label": "Nach oben scrollen"
   }
 }

@@ -107,22 +107,7 @@
     "failedToFetchSearchResults": "Échec de la récupération des résultats de recherche.",
     "noResultsFound": "Aucun résultat trouvé.",
     "failedToSearchLocations": "Échec de la recherche de positions.",
-    "locationSelected": "Position sélectionnée : Lat: {{lat}}, Lng: {{lng}}",
-    "pickADate": "Choisir une date",
-    "postImage": "Image de publication",
-    "postImageAlt": "Image de publication {{index}}",
-    "failedToLoadMedia": "Échec du chargement du média.",
-    "failedToUploadMediaGeneric": "Échec du téléchargement du média.",
-    "journeyOwnerOrNameMissing": "Le nom d'utilisateur du propriétaire du voyage ou le nom du voyage est manquant.",
-    "public": "Public",
-    "private": "Privé",
-    "noPermissionChangePassphrase": "Vous n'avez pas la permission de modifier la phrase secrète de ce voyage.",
-    "failedToUpdatePassphrase": "Échec de la mise à jour de la phrase secrète.",
-    "passphraseSetSuccessfully": "Phrase secrète définie avec succès !",
-    "passphraseClearedSuccessfully": "Phrase secrète effacée avec succès !",
-    "authRequiredDeleteJourney": "Authentification requise ou non autorisé à supprimer des voyages.",
-    "journeyDeletedSuccessfully": "Voyage '{{journeyName}}' supprimé avec succès !",
-    "copy": "Copier"
+    "locationSelected": "Position sélectionnée : Lat: {{lat}}, Lng: {{lng}}"
   },
   "auth": {
     "loginToYourAccount": "Connectez-vous à votre compte",
@@ -356,5 +341,8 @@
     "noCropSelected": "Aucune zone de recadrage sélectionnée.",
     "failedToCropImage": "Échec du recadrage de l'image.",
     "errorCroppingImage": "Erreur lors du recadrage de l'image."
+  },
+  "scrollToTopButton": {
+    "label": "Faire défiler vers le haut"
   }
 }
