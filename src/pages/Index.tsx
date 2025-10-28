@@ -237,11 +237,9 @@ const Index = () => {
   };
 
   const handlePostUpdated = (updatedPost: Post) => {
-    if (updatedPost.is_draft) {
-      setDrafts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
-    } else {
-      setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
-      setDrafts((prev) => prev.filter((p) => p.id !== updatedPost.id)); // Remove from drafts if published
+    if (selectedJourney) {
+      fetchPosts(selectedJourney.id); // Re-fetch published posts
+      fetchDrafts(selectedJourney.id); // Re-fetch drafts
     }
 
     if (selectedPostForDetail?.id === updatedPost.id) {
@@ -264,7 +262,6 @@ const Index = () => {
     // For now, I'll just open the dialog and let the user manually copy content if needed,
     // or I'll add a prop to CreatePostDialog to pre-fill the form.
     // Let's add a prop to CreatePostDialog to pre-fill the form.
-    // This will require a state in Index.tsx to hold the draft to be loaded.
     // For now, I'll just open the dialog.
     showError(t('indexPage.loadDraftNotImplemented')); // Temporary message
   };
