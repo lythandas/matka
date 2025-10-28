@@ -55,7 +55,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     setIsWideViewActive(false); // Reset wide view when post changes or dialog opens
   }, [post, isOpen]);
 
-  const displayName = post.author_name || post.author_username;
+  const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
   const hasMedia = mediaItems.length > 0;

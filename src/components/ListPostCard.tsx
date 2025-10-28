@@ -19,7 +19,7 @@ interface ListPostCardProps {
 const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
   const { t } = useTranslation();
   const currentLocale = getDateFnsLocale();
-  const displayName = post.author_name || post.author_username;
+  const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
   const firstMedia = post.media_items?.[0];
 
   return (

@@ -354,6 +354,8 @@ const Index = () => {
                       const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
                       const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
+                      const postDisplayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
+
                       return (
                         <ShineCard
                           key={post.id}
@@ -366,7 +368,7 @@ const Index = () => {
                                 {post.author_profile_image_url ? (
                                   <img
                                     src={post.author_profile_image_url}
-                                    alt={post.author_name || post.author_username}
+                                    alt={postDisplayName}
                                     className="w-10 h-10 rounded-full object-cover mr-3"
                                   />
                                 ) : (
@@ -376,7 +378,7 @@ const Index = () => {
                                 )}
                                 <div>
                                   <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                    {post.author_name || post.author_username}
+                                    {postDisplayName}
                                   </p>
                                   <p className="text-sm text-gray-500 dark:text-gray-400">
                                     {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}

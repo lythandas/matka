@@ -20,7 +20,7 @@ interface GridPostCardProps {
 const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
   const { t } = useTranslation(); // Initialize useTranslation
   const firstMedia = post.media_items?.[0]; // Get the first media item
-  const displayName = post.author_name || post.author_username;
+  const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
   const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
 
   let mediaElement: React.ReactNode = null;

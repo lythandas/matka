@@ -136,6 +136,8 @@ const PublicJourneyPage: React.FC = () => {
     );
   }
 
+  const ownerDisplayName = journey.owner_name && journey.owner_surname ? `${journey.owner_name} ${journey.owner_surname}` : journey.owner_name || journey.owner_username;
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
@@ -154,14 +156,14 @@ const PublicJourneyPage: React.FC = () => {
           <div className="flex items-center justify-center text-gray-600 dark:text-gray-400 text-sm">
             <Avatar className="h-6 w-6 mr-2">
               {journey.owner_profile_image_url ? (
-                <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
+                <AvatarImage src={journey.owner_profile_image_url} alt={ownerDisplayName} />
               ) : (
                 <AvatarFallback className="bg-blue-500 text-white text-xs">
                   {getAvatarInitials(journey.owner_name, journey.owner_username)}
                 </AvatarFallback>
               )}
             </Avatar>
-            <span>{t('publicJourneyPage.byOwner', { owner: journey.owner_name || journey.owner_username })}</span>
+            <span>{t('publicJourneyPage.byOwner', { owner: ownerDisplayName })}</span>
             <span className="mx-2">•</span>
             <span>{format(new Date(journey.created_at), 'PPP', { locale: currentLocale })}</span>
           </div>
