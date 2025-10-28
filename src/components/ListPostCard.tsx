@@ -73,7 +73,7 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
             )}
           </div>
         )}
-        <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
+        <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
           {post.message}
         </p>
         {post.coordinates && (

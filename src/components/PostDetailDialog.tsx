@@ -190,7 +190,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   </p>
                 </div>
               </div>
-              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
+              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
                 {post.message}
               </p>
             </div>

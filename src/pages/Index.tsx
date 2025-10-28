@@ -43,7 +43,7 @@ const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
-  const currentLocale = getDateFnsLocale(); // Corrected function name
+  const currentLocale = getDateFnsLocale();
   const isMobile = useIsMobile(); // Use the mobile hook
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -454,7 +454,7 @@ const Index = () => {
                                 ))}
                               </div>
                             )}
-                            <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
+                            <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
                               {post.message}
                             </p>
                             {post.coordinates && (
