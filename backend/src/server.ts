@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import { connectDbAndCreateTables } from './db';
 import { UPLOADS_DIR } from './config';
 import userRoutes from './routes/userRoutes'; // Public user routes
-import protectedUserRoutes from './routes/protected/userRoutes'; // Protected user routes
+import protectedUserRoutes from './routes/protectedUserRoutes'; // Corrected import path for Protected user routes
 import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
@@ -54,13 +54,16 @@ fastify.register(fastifyStatic, {
   decorateReply: false,
 });
 
-// 3. SPA fallback: Serve index.html for any unmatched route
-// This MUST be the ABSOLUTE LAST route registered to act as a catch-all for frontend routes.
+// NEW: Register @fastify/static to serve frontend build assets
+// This must be registered BEFORE the wildcard route to ensure assets are served directly.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
-  fallback: 'index.html', // When a file is not found, fallback to index.html
+  // Corrected: 'fallback' option belongs directly in the fastifyStatic options object
+  fallback: 'index.html', 
 });
+
+// The explicit wildcard route is no longer needed as fastifyStatic's fallback handles it.
 
 
 // Run the server
