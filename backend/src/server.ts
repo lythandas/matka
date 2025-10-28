@@ -33,11 +33,10 @@ fastify.register(cors, {
 // 1. Register public routes that are NOT part of the /api prefix and are NOT frontend assets.
 fastify.register(publicRoutes); // Contains /health and a redirect for old public journey paths.
 
-// Register public journey API routes directly at the root, as expected by the frontend.
-fastify.register(publicJourneyApiRoutes); // NO PREFIX HERE
-
 // 2. Register all other API routes (both public and protected) with the /api prefix.
+// This includes the public journey API routes.
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
+fastify.register(publicJourneyApiRoutes, { prefix: '/api' }); // NOW WITH /api PREFIX
 
 // Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
