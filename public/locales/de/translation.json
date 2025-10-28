@@ -233,7 +233,8 @@
     "editDraft": "Entwurf bearbeiten",
     "publishing": "Wird veröffentlicht...",
     "publishPost": "Beitrag veröffentlichen",
-    "noPermissionPublishDraft": "Sie haben keine Berechtigung, Beiträge in dieser Reise zu veröffentlichen."
+    "noPermissionPublishDraft": "Sie haben keine Berechtigung, Beiträge in dieser Reise zu veröffentlichen.",
+    "postPublishedSuccessfully": "Beitrag erfolgreich veröffentlicht!"
   },
   "locationSearch": {
     "searchForLocation": "Standort suchen",

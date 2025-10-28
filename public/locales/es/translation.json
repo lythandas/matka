@@ -170,8 +170,8 @@
     "toggleDarkTheme": "Alternar tema oscuro",
     "toggleSystemTheme": "Alternar tema del sistema",
     "toggleLightTheme": "Alternar tema claro",
-    "light": "Claro",
     "dark": "Oscuro",
+    "light": "Claro",
     "system": "Sistema"
   },
   "sortToggle": {
@@ -233,7 +233,8 @@
     "editDraft": "Editar borrador",
     "publishing": "Publicando...",
     "publishPost": "Publicar publicación",
-    "noPermissionPublishDraft": "No tienes permiso para publicar publicaciones en este viaje."
+    "noPermissionPublishDraft": "No tienes permiso para publicar publicaciones en este viaje.",
+    "postPublishedSuccessfully": "¡Publicación publicada correctamente!"
   },
   "locationSearch": {
     "searchForLocation": "Buscar una ubicación",

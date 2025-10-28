@@ -134,8 +134,6 @@
     "confirmPassword": "Confirm password",
     "registering": "Registering...",
     "registerAdmin": "Register admin",
-    "checkingUserStatus": "Checking user status...",
-    "register": "Register",
     "passwordPlaceholder": "••••••••"
   },
   "topBar": {
@@ -233,7 +231,8 @@
     "editDraft": "Edit Draft",
     "publishing": "Publishing...",
     "publishPost": "Publish Post",
-    "noPermissionPublishDraft": "You do not have permission to publish posts in this journey."
+    "noPermissionPublishDraft": "You do not have permission to publish posts in this journey.",
+    "postPublishedSuccessfully": "Post published successfully!"
   },
   "locationSearch": {
     "searchForLocation": "Search for a location",
