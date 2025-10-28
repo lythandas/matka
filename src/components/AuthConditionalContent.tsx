@@ -8,7 +8,7 @@ import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
 import LoginPage from '@/pages/LoginPage';
 import NotFound from '@/pages/NotFound';
-// PublicJourneyPage is removed
+import PublicJourneyPage from '@/pages/PublicJourneyPage'; // Import the new PublicJourneyPage
 
 // ProtectedRoute component to guard admin access
 const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element; adminOnly?: boolean }) => {
@@ -42,7 +42,8 @@ const AuthConditionalContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* Public journey route removed */}
+          {/* NEW: Public journey route - accessible even when authenticated */}
+          <Route path="/public-journey/:publicLinkId" element={<PublicJourneyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -51,7 +52,8 @@ const AuthConditionalContent: React.FC = () => {
   } else {
     return (
       <Routes>
-        {/* Public journey route removed */}
+        {/* NEW: Public journey route - accessible when not authenticated */}
+        <Route path="/public-journey/:publicLinkId" element={<PublicJourneyPage />} />
         <Route path="/" element={<LoginPage />} />
         {/* Redirect any other path to login if not authenticated */}
         <Route path="*" element={<Navigate to="/" replace />} />

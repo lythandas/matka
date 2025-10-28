@@ -33,7 +33,7 @@ export interface Journey {
   owner_surname?: string;
   owner_profile_image_url?: string;
   is_public: boolean;
-  // passphrase_hash?: string; // Removed: Hashed passphrase for public journeys
+  public_link_id?: string; // New: Unique ID for public sharing link
 }
 
 export interface JourneyCollaborator {

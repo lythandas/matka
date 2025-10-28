@@ -11,7 +11,7 @@ import protectedUserRoutes from './routes/protectedUserRoutes'; // Protected use
 import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
-// publicJourneyApiRoutes is removed
+import publicJourneyRoutes from './routes/publicJourneyRoutes'; // Import new public journey routes
 import { authenticate } from './auth'; // Import authenticate hook
 
 const fastify = Fastify({
@@ -33,12 +33,11 @@ fastify.get('/health', async (request, reply) => {
   return reply.code(200).send({ status: 'ok' });
 });
 
-// 1. Register all API routes (both public and protected) with the /api prefix.
+// 1. Register public API routes (no authentication required)
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
+fastify.register(publicJourneyRoutes, { prefix: '/api' }); // NEW: Public journey routes
 
-// publicJourneyApiRoutes registration removed
-
-// Register protected API routes with a prefix and apply authentication hook
+// 2. Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
   authenticatedInstance.addHook('preHandler', authenticate);
   authenticatedInstance.register(protectedUserRoutes, { prefix: '/users' }); // Protected user routes (profile, admin user management)
@@ -47,7 +46,7 @@ fastify.register(async (authenticatedInstance) => {
   authenticatedInstance.register(mediaRoutes, { prefix: '/media' }); // Protected media upload route
 }, { prefix: '/api' }); // All these routes will be under /api and authenticated
 
-// 2. Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
+// 3. Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
 const uploadStaticOptions: FastifyStaticOptions = {
   root: UPLOADS_DIR,
   prefix: '/uploads/',
@@ -55,7 +54,7 @@ const uploadStaticOptions: FastifyStaticOptions = {
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 3. SPA fallback: Serve index.html for any unmatched route
+// 4. SPA fallback: Serve index.html for any unmatched route
 // This must be registered AFTER all other API routes to act as a catch-all for frontend routes.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files

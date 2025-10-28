@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,6 +63,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
+  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public); // State for public status
+  const [publicLinkId, setPublicLinkId] = useState<string | undefined>(journey.public_link_id); // State for public link ID
+  const [isUpdatingPublicStatus, setIsUpdatingPublicStatus] = useState<boolean>(false);
+
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
   const [isUpdatingCollaborator, setIsUpdatingCollaborator] = useState<boolean>(false);
@@ -72,7 +76,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
-  const [isDeletingJourney, setIsDeletingJourney] = useState<boolean>(false); // New state for deleting journey
+  const [isDeletingJourney, setIsDeletingJourney] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<number | null>(null);
 
@@ -134,6 +138,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   useEffect(() => {
     if (isOpen && journey) {
       setJourneyName(journey.name);
+      setIsPublic(journey.is_public);
+      setPublicLinkId(journey.public_link_id);
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -195,6 +201,59 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError(error.message || t('common.failedToRenameJourney')); // Translated error
     } finally {
       setIsRenaming(false);
+    }
+  };
+
+  const handleTogglePublicStatus = async (checked: boolean) => {
+    if (!token || !currentUser) {
+      showError(t('common.authRequiredUpdateJourney'));
+      return;
+    }
+
+    const canManageJourney = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canManageJourney) {
+      showError(t('common.noPermissionChangePublicStatus'));
+      return;
+    }
+
+    setIsUpdatingPublicStatus(true);
+    try {
+      const endpoint = checked ? `${API_BASE_URL}/journeys/${journey.id}/publish` : `${API_BASE_URL}/journeys/${journey.id}/unpublish`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToUpdatePublicStatus'));
+      }
+
+      const updatedJourney: Journey = await response.json();
+      setIsPublic(updatedJourney.is_public);
+      setPublicLinkId(updatedJourney.public_link_id);
+      showSuccess(t('common.journeyPublicStatusUpdated', { status: updatedJourney.is_public ? t('common.public') : t('common.private') }));
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error updating public status:', error);
+      showError(error.message || t('common.failedToUpdatePublicStatus'));
+    } finally {
+      setIsUpdatingPublicStatus(false);
+    }
+  };
+
+  const handleCopyPublicLink = () => {
+    if (publicLinkId) {
+      const publicUrl = `${window.location.origin}/public-journey/${publicLinkId}`;
+      navigator.clipboard.writeText(publicUrl)
+        .then(() => showSuccess(t('common.shareLinkCopied')))
+        .catch((err) => {
+          console.error('Failed to copy:', err);
+          showError(t('common.failedToCopyLink'));
+        });
     }
   };
 
@@ -425,6 +484,51 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             </div>
           </div>
 
+          {/* Public Sharing Section */}
+          {canManageJourney && (
+            <div className="border rounded-md p-4">
+              <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.publicSharing')}</h3>
+              <div className="flex items-center justify-between space-x-2 mb-4">
+                <div className="flex items-center space-x-2">
+                  <Globe className="h-5 w-5 text-muted-foreground" />
+                  <Label htmlFor="public-toggle">{t('manageJourneyDialog.makeJourneyPublic')}</Label>
+                </div>
+                <Switch
+                  id="public-toggle"
+                  checked={isPublic}
+                  onCheckedChange={handleTogglePublicStatus}
+                  disabled={isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                />
+              </div>
+
+              {isPublic && publicLinkId && (
+                <div className="space-y-2">
+                  <Label>{t('manageJourneyDialog.publicLink')}</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={`${window.location.origin}/public-journey/${publicLinkId}`}
+                      readOnly
+                      className="flex-grow"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyPublicLink}
+                      disabled={isUpdatingPublicStatus}
+                      className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span className="sr-only">{t('common.copy')}</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {isPublic && !publicLinkId && (
+                <p className="text-sm text-muted-foreground mt-2">{t('manageJourneyDialog.publicLinkGenerating')}</p>
+              )}
+            </div>
+          )}
+
           {/* Add Collaborator Section with Autocomplete */}
           <div className="border rounded-md p-4">
             <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.addNewCollaborator')}</h3>
@@ -623,7 +727,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                  disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isUpdatingPublicStatus}
                   className="hover:ring-2 hover:ring-blue-500"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.deleteJourney')}
@@ -643,7 +747,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>

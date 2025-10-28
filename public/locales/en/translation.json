@@ -121,7 +121,8 @@
     "passphraseSetSuccessfully": "Passphrase set successfully!",
     "passphraseClearedSuccessfully": "Passphrase cleared successfully!",
     "authRequiredDeleteJourney": "Authentication required or not authorized to delete journeys.",
-    "journeyDeletedSuccessfully": "Journey '{{journeyName}}' deleted successfully!"
+    "journeyDeletedSuccessfully": "Journey '{{journeyName}}' deleted successfully!",
+    "copy": "Copy"
   },
   "auth": {
     "loginToYourAccount": "Login to your account",
@@ -315,7 +316,7 @@
   },
   "notFoundPage": {
     "oopsPageNotFound": "Oops! Page not found",
-    "returnTo Home": "Return to Home"
+    "returnToHome": "Return to Home"
   },
   "manageJourneyDialog": {
     "manageJourney": "Manage journey: \"{{journeyName}}\"",
@@ -336,7 +337,11 @@
     "close": "Close",
     "renaming": "Renaming...",
     "deleteJourney": "Delete Journey",
-    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class='font-bold'>'{{journeyName}}'</span> and all its associated posts and collaborator permissions."
+    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class='font-bold'>'{{journeyName}}'</span> and all its associated posts and collaborator permissions.",
+    "publicSharing": "Public Sharing",
+    "makeJourneyPublic": "Make journey public",
+    "publicLink": "Public link",
+    "publicLinkGenerating": "Public link is being generated..."
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",
@@ -347,5 +352,16 @@
     "noCropSelected": "No crop area selected.",
     "failedToCropImage": "Failed to crop image.",
     "errorCroppingImage": "Error cropping image."
+  },
+  "publicJourneyPage": {
+    "invalidLink": "Invalid public journey link.",
+    "failedToLoadJourney": "Failed to load public journey.",
+    "loadingJourney": "Loading public journey...",
+    "journeyNotFound": "Public Journey Not Found",
+    "checkLink": "Please check the link and try again.",
+    "byOwner": "By {{owner}}",
+    "noPostsYet": "No posts in this journey yet!",
+    "ownerHasNotAddedPosts": "The journey owner has not added any posts to this public journey yet.",
+    "exploreMap": "Explore post locations on the map."
   }
 }

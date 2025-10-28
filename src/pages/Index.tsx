@@ -947,9 +947,7 @@ const Index = () => {
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          {t('common.deletePostDescription')}
-                                        </AlertDialogDescription>
+                                        <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
@@ -1056,9 +1054,7 @@ const Index = () => {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' })}
-                                </AlertDialogDescription>
+                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
@@ -1106,7 +1102,7 @@ const Index = () => {
       {selectedJourney && (
         <ManageJourneyDialog
           isOpen={isManageJourneyDialogOpen}
-          onClose={() => setIsManageJourneyDialogOpen(false)}
+          onClose={() => { setIsManageJourneyDialogOpen(false); fetchJourneys(); }}
           journey={selectedJourney}
           onJourneyUpdated={() => {
             fetchJourneys();

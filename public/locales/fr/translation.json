@@ -121,7 +121,8 @@
     "passphraseSetSuccessfully": "Phrase secrète définie avec succès !",
     "passphraseClearedSuccessfully": "Phrase secrète effacée avec succès !",
     "authRequiredDeleteJourney": "Authentification requise ou non autorisé à supprimer des voyages.",
-    "journeyDeletedSuccessfully": "Voyage '{{journeyName}}' supprimé avec succès !"
+    "journeyDeletedSuccessfully": "Voyage '{{journeyName}}' supprimé avec succès !",
+    "copy": "Copier"
   },
   "auth": {
     "loginToYourAccount": "Connectez-vous à votre compte",
@@ -336,7 +337,11 @@
     "close": "Cerrar",
     "renaming": "Renombrando...",
     "deleteJourney": "Supprimer le voyage",
-    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées."
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées.",
+    "publicSharing": "Partage public",
+    "makeJourneyPublic": "Rendre le voyage public",
+    "publicLink": "Lien public",
+    "publicLinkGenerating": "Le lien public est en cours de génération..."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",
@@ -347,5 +352,16 @@
     "noCropSelected": "No se ha seleccionado área de recorte.",
     "failedToCropImage": "Error al recortar la imagen.",
     "errorCroppingImage": "Error al recortar la imagen."
+  },
+  "publicJourneyPage": {
+    "invalidLink": "Lien de voyage public invalide.",
+    "failedToLoadJourney": "Échec du chargement du voyage public.",
+    "loadingJourney": "Chargement du voyage public...",
+    "journeyNotFound": "Voyage public introuvable",
+    "checkLink": "Veuillez vérifier le lien et réessayer.",
+    "byOwner": "Par {{owner}}",
+    "noPostsYet": "Aucune publication dans ce voyage pour l'instant !",
+    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
+    "exploreMap": "Explorez les emplacements des publications sur la carte."
   }
 }

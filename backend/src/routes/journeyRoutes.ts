@@ -16,9 +16,11 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     }
 
     const result = await dbClient!.query(
-      `SELECT DISTINCT ON (j.id) j.*
+      `SELECT DISTINCT ON (j.id) j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
+              u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
        FROM journeys j
        LEFT JOIN journey_user_permissions jup ON j.id = jup.journey_id
+       JOIN users u ON j.user_id = u.id
        WHERE j.user_id = $1 OR jup.user_id = $1
        ORDER BY j.id, j.created_at DESC`,
       [request.user.id]
@@ -33,7 +35,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     }
 
     const result = await dbClient!.query(
-      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public,
+      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
        FROM journeys j
        JOIN users u ON j.user_id = u.id
@@ -61,14 +63,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      is_public: false, // New journeys are always private
-      // passphrase_hash: undefined, // Removed
+      is_public: false, // New journeys are always private by default
+      public_link_id: undefined, // No public link initially
     };
 
     const result = await dbClient!.query(
       `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING *`,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
       [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
     );
     return result.rows[0];
@@ -96,15 +99,82 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
-    // Removed passphrase_hash_update logic
-    // Removed is_public update logic
-
     const result = await dbClient!.query(
       `UPDATE journeys SET
         name = COALESCE($1, name)
        WHERE id = $2
-       RETURNING *`,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
       [name, id]
+    );
+    return result.rows[0];
+  });
+
+  // New endpoint to publish a journey
+  fastify.post('/:id/publish', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    if (!request.user) {
+      return reply.code(401).send({ message: 'Unauthorized' });
+    }
+
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
+      return reply.code(404).send({ message: 'Journey not found' });
+    }
+
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to publish this journey.' });
+    }
+
+    const newPublicLinkId = uuidv4();
+    const result = await dbClient!.query(
+      `UPDATE journeys SET
+        is_public = TRUE,
+        public_link_id = $1
+       WHERE id = $2
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
+      [newPublicLinkId, id]
+    );
+    return result.rows[0];
+  });
+
+  // New endpoint to unpublish a journey
+  fastify.post('/:id/unpublish', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    if (!request.user) {
+      return reply.code(401).send({ message: 'Unauthorized' });
+    }
+
+    const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
+      return reply.code(404).send({ message: 'Journey not found' });
+    }
+
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to unpublish this journey.' });
+    }
+
+    const result = await dbClient!.query(
+      `UPDATE journeys SET
+        is_public = FALSE,
+        public_link_id = NULL
+       WHERE id = $1
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
+      [id]
     );
     return result.rows[0];
   });

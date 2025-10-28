@@ -121,7 +121,8 @@
     "passphraseSetSuccessfully": "¡Frase de contraseña establecida correctamente!",
     "passphraseClearedSuccessfully": "¡Frase de contraseña borrada correctamente!",
     "authRequiredDeleteJourney": "Autenticación requerida o no autorizado para eliminar viajes.",
-    "journeyDeletedSuccessfully": "¡Viaje '{{journeyName}}' eliminado correctamente!"
+    "journeyDeletedSuccessfully": "¡Viaje '{{journeyName}}' eliminado correctamente!",
+    "copy": "Copiar"
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",
@@ -336,7 +337,11 @@
     "close": "Cerrar",
     "renaming": "Renombrando...",
     "deleteJourney": "Eliminar viaje",
-    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados."
+    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados.",
+    "publicSharing": "Compartir públicamente",
+    "makeJourneyPublic": "Hacer viaje público",
+    "publicLink": "Enlace público",
+    "publicLinkGenerating": "El enlace público se está generando..."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",

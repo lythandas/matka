@@ -121,7 +121,8 @@
     "passphraseSetSuccessfully": "Passphrase erfolgreich festgelegt!",
     "passphraseClearedSuccessfully": "Passphrase erfolgreich gelöscht!",
     "authRequiredDeleteJourney": "Authentifizierung erforderlich oder nicht berechtigt, Reisen zu löschen.",
-    "journeyDeletedSuccessfully": "Reise '{{journeyName}}' erfolgreich gelöscht!"
+    "journeyDeletedSuccessfully": "Reise '{{journeyName}}' erfolgreich gelöscht!",
+    "copy": "Kopieren"
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
@@ -336,7 +337,11 @@
     "close": "Schließen",
     "renaming": "Wird umbenannt...",
     "deleteJourney": "Reise löschen",
-    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class='font-bold'>'{{journeyName}}'</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
+    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class='font-bold'>'{{journeyName}}'</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht.",
+    "publicSharing": "Öffentliche Freigabe",
+    "makeJourneyPublic": "Reise öffentlich machen",
+    "publicLink": "Öffentlicher Link",
+    "publicLinkGenerating": "Öffentlicher Link wird generiert..."
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",
