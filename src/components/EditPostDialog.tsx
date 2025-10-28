@@ -90,7 +90,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           };
         });
 
-        const response = await fetch(`${API_BASE_URL}/upload-media`, {
+        const response = await fetch(`${API_BASE_URL}/media/upload-media`, { // Corrected endpoint
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -406,7 +406,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 disabled={isSaving || isUploadingMedia || !canEditPostUI}
               >
                 {isUploadingMedia ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('editPostDialog.uploadingMedia')}
+                  </>
                 ) : (
                   newlySelectedFiles.length > 0 ? `${newlySelectedFiles.length} ${t('common.filesSelected')}` : (currentMediaItems.length > 0 ? t('editPostDialog.changeAddMedia') : t('editPostDialog.chooseMedia'))
                 )}
