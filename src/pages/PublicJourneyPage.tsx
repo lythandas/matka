@@ -20,11 +20,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ShineCard from '@/components/ShineCard';
 import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
   const { publicLinkId } = useParams<{ publicLinkId: string }>();
   const currentLocale = getDateFnsLocale();
+  const isMobile = useIsMobile(); // Use the mobile hook
 
   const [journey, setJourney] = useState<Journey | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -68,6 +70,9 @@ const PublicJourneyPage: React.FC = () => {
   }, [publicLinkId]);
 
   const handlePostClick = (post: Post, index: number) => {
+    if (isMobile) { // Disable post details on mobile
+      return;
+    }
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);

@@ -201,6 +201,9 @@ const Index = () => {
   };
 
   const handlePostClick = (post: Post, index: number) => {
+    if (isMobile) { // Disable post details on mobile
+      return;
+    }
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
