@@ -80,21 +80,24 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      // IMPORTANT: Added API_BASE_URL here
       const response = await fetch(`${API_BASE_URL}/public/journeys/by-name/${ownerUsername}/${encodedJourneyName}`, { headers });
 
-      if (response.status === 401) {
-        const errorData = await response.json();
-        if (errorData.message === 'Unauthorized: Invalid passphrase') {
+      if (!response.ok) {
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.warn("PublicJourneyPage: Failed to parse error response as JSON:", jsonError);
+        }
+
+        if (response.status === 401 && errorData.message === 'Unauthorized: Invalid passphrase') {
           console.log("PublicJourneyPage: Journey requires passphrase.");
           return { journey: null, requiresPassphrase: true };
+        } else {
+          console.error("PublicJourneyPage: Backend error response:", response.status, errorData);
+          const message = errorData.message || t('common.failedToFetchPublicJourney');
+          throw new Error(message);
         }
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const message = errorData.message || t('common.failedToFetchPublicJourney');
-        throw new Error(message);
       }
       const data: Journey = await response.json();
       setJourney(data);
@@ -149,10 +152,15 @@ const PublicJourneyPage: React.FC = () => {
       if (passphrase) {
         headers['X-Journey-Passphrase'] = passphrase;
       }
-      // IMPORTANT: Added API_BASE_URL here
       const response = await fetch(`${API_BASE_URL}/public/journeys/${id}/posts?is_draft=false`, { headers });
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.warn("PublicJourneyPage: Failed to parse posts error response as JSON:", jsonError);
+        }
+        console.error("PublicJourneyPage: Backend posts error response:", response.status, errorData);
         const message = errorData.message || t('common.failedToFetchPublicPosts');
         throw new Error(message);
       }
@@ -187,7 +195,10 @@ const PublicJourneyPage: React.FC = () => {
         showError(t('publicJourneyPage.incorrectPassphrase'));
         clearPassphraseFromStorage(journeyIdentifier);
       } else {
-        showError(t('publicJourneyPage.incorrectPassphrase'));
+        // This else block handles cases where fetchJourney returns null and requiresPassphrase is false,
+        // which means a generic error occurred or the journey wasn't found/public.
+        // In this scenario, we should still clear any stored passphrase and show an error.
+        showError(t('publicJourneyPage.incorrectPassphrase')); // Or a more generic error message
         clearPassphraseFromStorage(journeyIdentifier);
       }
     } catch (err) {
