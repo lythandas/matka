@@ -251,7 +251,8 @@
     "by": "Por {{author}} • {{date}}",
     "failedToLoadImage": "No se pudo cargar la imagen.",
     "fullscreenNotSupported": "El modo de pantalla completa no es compatible con tu navegador.",
-    "failedToEnterFullscreen": "No se pudo activar el modo de pantalla completa."
+    "failedToEnterFullscreen": "No se pudo activar el modo de pantalla completa.",
+    "noMedia": "No hay medios para esta publicación."
   },
   "gridPostCard": {
     "untitledPost": "Publicación sin título"

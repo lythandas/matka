@@ -251,7 +251,8 @@
     "by": "Par {{author}} • {{date}}",
     "failedToLoadImage": "Échec du chargement de l'image.",
     "fullscreenNotSupported": "Le mode plein écran n'est pas prise en charge par votre navigateur.",
-    "failedToEnterFullscreen": "Échec de l'activation du mode plein écran."
+    "failedToEnterFullscreen": "Échec de l'activation du mode plein écran.",
+    "noMedia": "Aucun média pour cette publication."
   },
   "gridPostCard": {
     "untitledPost": "Publication sans titre"
@@ -352,16 +353,5 @@
     "noCropSelected": "No se ha seleccionado área de recorte.",
     "failedToCropImage": "Error al recortar la imagen.",
     "errorCroppingImage": "Error al recortar la imagen."
-  },
-  "publicJourneyPage": {
-    "invalidLink": "Lien de voyage public invalide.",
-    "failedToLoadJourney": "Échec du chargement du voyage public.",
-    "loadingJourney": "Chargement du voyage public...",
-    "journeyNotFound": "Voyage public introuvable",
-    "checkLink": "Veuillez vérifier le lien et réessayer.",
-    "byOwner": "Par {{owner}}",
-    "noPostsYet": "Aucune publication dans ce voyage pour l'instant !",
-    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
-    "exploreMap": "Explorez les emplacements des publications sur la carte."
   }
 }

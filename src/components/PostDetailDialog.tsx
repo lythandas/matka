@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Maximize, Minimize, ChevronLeft, ChevronRight, Share2 } from 'lucide-react';
+import { Maximize, Minimize, ChevronLeft, ChevronRight, Compass } from 'lucide-react'; // Added Compass icon
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError, showSuccess } from '@/utils/toast';
@@ -81,37 +81,18 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[950px] max-h-[98vh] flex flex-col">
-        <DialogHeader className="p-6 pb-0 relative">
-          <div className="flex items-center mb-2">
-            <Avatar className="h-10 w-10 mr-3">
-              {post.author_profile_image_url ? (
-                <AvatarImage src={post.author_profile_image_url} alt={displayName} />
-              ) : (
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  {getAvatarInitials(post.author_name, post.author_username)}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div>
-              <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
-              <DialogDescription>
-                {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p', { locale: currentLocale }) })}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-        
-        <div className="relative flex-grow overflow-hidden flex">
-          <div className="flex-grow p-6 pt-4 flex flex-col overflow-y-auto h-full">
-            {mediaItems.length > 0 && (
-              <div className="relative mb-4 flex-shrink-0">
+      <DialogContent className="sm:max-w-[90vw] max-w-[98vw] max-h-[90vh] flex flex-col p-0"> {/* Increased width, removed default padding */}
+        <div className="flex flex-grow overflow-hidden p-6 pt-4 gap-6"> {/* Main content area for two columns */}
+          {/* Left Column: Media */}
+          <div className="w-1/2 flex flex-col items-center justify-center relative">
+            {mediaItems.length > 0 ? (
+              <div className="relative w-full h-full flex items-center justify-center">
                 {currentMedia?.type === 'image' && (
                   <img
                     ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                     src={currentMedia.urls.large || '/placeholder.svg'}
                     alt={post.title || t('common.postImage')}
-                    className="w-full h-auto object-contain rounded-md mx-auto"
+                    className="max-w-full max-h-full object-contain rounded-md"
                     onError={(e) => {
                       e.currentTarget.src = '/placeholder.svg';
                       e.currentTarget.onerror = null;
@@ -124,7 +105,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
                     src={currentMedia.url}
                     controls
-                    className="w-full h-auto object-contain rounded-md mx-auto"
+                    className="max-w-full max-h-full object-contain rounded-md"
                   />
                 )}
 
@@ -174,20 +155,45 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   </>
                 )}
               </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center rounded-md">
+                <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
+                <p className="text-lg text-muted-foreground">{t('postDetailDialog.noMedia')}</p>
+              </div>
             )}
-            <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 flex-shrink-0">
+          </div>
+
+          {/* Right Column: Details (Title, Author, Message, Map) */}
+          <div className="w-1/2 flex flex-col overflow-y-auto p-4"> {/* Added padding here */}
+            <div className="flex items-center mb-4">
+              <Avatar className="h-10 w-10 mr-3">
+                {post.author_profile_image_url ? (
+                  <AvatarImage src={post.author_profile_image_url} alt={displayName} />
+                ) : (
+                  <AvatarFallback className="bg-blue-500 text-white text-lg">
+                    {getAvatarInitials(post.author_name, post.author_username)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div>
+                <h2 className="text-xl font-bold">{post.title || t('postDetailDialog.postDetails')}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p', { locale: currentLocale }) })}
+                </p>
+              </div>
+            </div>
+            <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
               {post.message}
             </p>
             {post.coordinates && (
-              <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0">
+              <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0 mt-auto">
                 <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
               </div>
             )}
           </div>
         </div>
-        <DialogFooter className="p-6 pt-0 flex justify-end">
-        </DialogFooter>
 
+        {/* Post navigation buttons (outside two-column layout, relative to DialogContent) */}
         {canGoPrevious && (
           <Button
             variant="outline"

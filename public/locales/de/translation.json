@@ -251,7 +251,8 @@
     "by": "Von {{author}} • {{date}}",
     "failedToLoadImage": "Bild konnte nicht geladen werden.",
     "fullscreenNotSupported": "Der Vollbildmodus wird von Ihrem Browser nicht unterstützt.",
-    "failedToEnterFullscreen": "Fehler beim Aktivieren des Vollbildmodus."
+    "failedToEnterFullscreen": "Fehler beim Aktivieren des Vollbildmodus.",
+    "noMedia": "Keine Medien für diesen Beitrag."
   },
   "gridPostCard": {
     "untitledPost": "Unbenannter Beitrag"

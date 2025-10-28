@@ -251,7 +251,8 @@
     "by": "By {{author}} • {{date}}",
     "failedToLoadImage": "Failed to load image.",
     "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
-    "failedToEnterFullscreen": "Failed to enter full-screen mode."
+    "failedToEnterFullscreen": "Failed to enter full-screen mode.",
+    "noMedia": "No media for this post."
   },
   "gridPostCard": {
     "untitledPost": "Untitled Post"
