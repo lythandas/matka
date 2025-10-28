@@ -239,6 +239,7 @@ const PublicJourneyPage: React.FC = () => {
         }
         await fetchPosts(fetchedJourney.id, storedPassphrase);
       } else if (requiresPassphrase) {
+        console.log("PublicJourneyPage: Setting isPassphraseDialogOpen to true."); // Added log
         setIsPassphraseDialogOpen(true);
         setLoadingPosts(false);
       } else {
