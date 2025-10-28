@@ -283,9 +283,7 @@ const AdminPage: React.FC = () => {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t('adminPage.deleteUserDescription', { username: user.username })}
-                                </AlertDialogDescription>
+                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('adminPage.deleteUserDescription', { username: user.username }) }} />
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
@@ -378,9 +376,7 @@ const AdminPage: React.FC = () => {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t('adminPage.deleteJourneyDescription', { journeyName: journey.name })}
-                                </AlertDialogDescription>
+                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('adminPage.deleteJourneyDescription', { journeyName: journey.name }) }} />
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
