@@ -385,6 +385,42 @@ const Index = () => {
                             {post.title && (
                               <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
                             )}
+                            {/* Moved edit/delete buttons here */}
+                            <div className="flex justify-end space-x-2 mb-4">
+                              {isAuthenticated && selectedJourney && canEditPost && (
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {isAuthenticated && selectedJourney && canDeletePost && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <AlertDialog key={`delete-dialog-${post.id}`}>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                                        <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                          {t('adminPage.continue')}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              )}
+                            </div>
                             {post.media_items && post.media_items.length > 0 && (
                               <div className={
                                 post.media_items.length === 1
@@ -416,44 +452,9 @@ const Index = () => {
                                 ))}
                               </div>
                             )}
-                            <div className="flex justify-between items-start mb-2">
-                              <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                              <div className="flex space-x-2">
-                                {isAuthenticated && selectedJourney && canEditPost && (
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {isAuthenticated && selectedJourney && canDeletePost && (
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <AlertDialog key={`delete-dialog-${post.id}`}>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                          <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                            {t('adminPage.continue')}
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
+                              {post.message}
+                            </p>
                             {post.coordinates && (
                               <div className="mt-4">
                                 <MapComponent coordinates={post.coordinates} />
