@@ -44,6 +44,8 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ message: 'Public journey not found or not accessible' });
     }
 
+    fastify.log.debug(`[GET /public/journeys/:id] Journey ID: ${id}, Passphrase Hash: ${journey.passphrase_hash ? 'SET' : 'NOT SET'}`);
+
     if (journey.passphrase_hash && !(await comparePassword(providedPassphrase || '', journey.passphrase_hash))) {
       return reply.code(401).send({ message: 'Unauthorized: Invalid passphrase' });
     }
@@ -73,6 +75,8 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ message: 'Public journey not found or not accessible' });
     }
 
+    fastify.log.debug(`[GET /public/journeys/by-name] Journey Name: ${journey.name}, Passphrase Hash: ${journey.passphrase_hash ? 'SET' : 'NOT SET'}`);
+
     if (journey.passphrase_hash && !(await comparePassword(providedPassphrase || '', journey.passphrase_hash))) {
       return reply.code(401).send({ message: 'Unauthorized: Invalid passphrase' });
     }
@@ -93,6 +97,8 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
     if (!journey) {
       return reply.code(404).send({ message: 'Public journey not found or not accessible' });
     }
+
+    fastify.log.debug(`[GET /public/journeys/:id/posts] Journey ID: ${journeyId}, Passphrase Hash: ${journey.passphrase_hash ? 'SET' : 'NOT SET'}`);
 
     if (journey.passphrase_hash && !(await comparePassword(providedPassphrase || '', journey.passphrase_hash))) {
       return reply.code(401).send({ message: 'Unauthorized: Invalid passphrase' });
