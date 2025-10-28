@@ -107,7 +107,25 @@
     "failedToFetchSearchResults": "Error al obtener los resultados de búsqueda.",
     "noResultsFound": "No se encontraron resultados.",
     "failedToSearchLocations": "Error al buscar ubicaciones.",
-    "locationSelected": "Seleccionado: Lat: {{lat}}, Lng: {{lng}}"
+    "locationSelected": "Seleccionado: Lat: {{lat}}, Lng: {{lng}}",
+    "pickADate": "Fecha de publicación",
+    "postImage": "Imagen de publicación",
+    "postImageAlt": "Imagen de publicación {{index}}",
+    "failedToLoadMedia": "No se pudo cargar el medio.",
+    "failedToUploadMediaGeneric": "Error al subir el medio.",
+    "journeyOwnerOrNameMissing": "Falta el nombre de usuario del propietario del viaje o el nombre del viaje.",
+    "public": "Público",
+    "private": "Privado",
+    "noPermissionChangePassphrase": "No tienes permiso para cambiar la frase de contraseña de este viaje.",
+    "failedToUpdatePassphrase": "Error al actualizar la frase de contraseña.",
+    "passphraseSetSuccessfully": "¡Frase de contraseña establecida correctamente!",
+    "passphraseClearedSuccessfully": "¡Frase de contraseña borrada correctamente!",
+    "authRequiredDeleteJourney": "Autenticación requerida o no autorizado para eliminar viajes.",
+    "journeyDeletedSuccessfully": "¡Viaje '{{journeyName}}' eliminado correctamente!",
+    "copy": "Copiar",
+    "passphraseCannotBeEmpty": "La frase de contraseña no puede estar vacía.",
+    "passphraseMinLength": "La frase de contraseña debe tener al menos 6 caracteres.",
+    "passphrase": "Frase de contraseña"
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",
@@ -330,7 +348,15 @@
     "publicSharing": "Compartir públicamente",
     "makeJourneyPublic": "Hacer viaje público",
     "publicLink": "Enlace público",
-    "publicLinkGenerating": "El enlace público se está generando..."
+    "publicLinkGenerating": "El enlace público se está generando...",
+    "passphraseProtection": "Protección con frase de contraseña",
+    "enterNewPassphrase": "Introducir nueva frase de contraseña",
+    "setPassphraseOptional": "Establecer frase de contraseña (opcional)",
+    "clearPassphrase": "Borrar frase de contraseña",
+    "updatePassphrase": "Actualizar frase de contraseña",
+    "setPassphrase": "Establecer frase de contraseña",
+    "settingPassphrase": "Estableciendo frase de contraseña...",
+    "passphraseIsSet": "Se ha establecido una frase de contraseña para este viaje."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",
@@ -344,5 +370,23 @@
   },
   "scrollToTopButton": {
     "label": "Desplazarse hacia arriba"
+  },
+  "publicJourneyPage": {
+    "invalidLink": "Enlace de viaje público no válido.",
+    "failedToLoadJourney": "Error al cargar el viaje público.",
+    "loadingJourney": "Cargando viaje público...",
+    "journeyNotFound": "Viaje público no encontrado",
+    "checkLink": "Por favor, comprueba el enlace e inténtalo de nuevo.",
+    "byOwner": "Por {{owner}}",
+    "noPostsYet": "¡Todavía no hay publicaciones en este viaje!",
+    "ownerHasNotAddedPosts": "El propietario del viaje aún no ha añadido ninguna publicación a este viaje público.",
+    "exploreMap": "Explorar ubicaciones de publicaciones en el mapa.",
+    "journeyProtected": "Viaje protegido",
+    "enterPassphrase": "Por favor, introduce la frase de contraseña para acceder a este viaje.",
+    "passphrasePlaceholder": "Introducir frase de contraseña",
+    "incorrectPassphrase": "Frase de contraseña incorrecta.",
+    "verifying": "Verificando...",
+    "accessJourney": "Acceder al viaje",
+    "passphraseProtected": "Protegido con frase de contraseña"
   }
 }

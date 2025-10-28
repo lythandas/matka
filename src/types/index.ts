@@ -23,6 +23,7 @@ export interface Journey {
   owner_language?: string; // New: Owner's preferred language
   is_public: boolean; // New: Indicates if the journey is publicly viewable
   public_link_id?: string; // New: Unique ID for public sharing link
+  has_passphrase?: boolean; // New: Frontend flag to indicate if a passphrase is set
 }
 
 // Define the structure for media content

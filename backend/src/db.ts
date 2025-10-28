@@ -90,11 +90,18 @@ const createTables = async (logger: FastifyBaseLogger) => {
         owner_surname VARCHAR(255),
         owner_profile_image_url TEXT,
         is_public BOOLEAN DEFAULT FALSE,
-        public_link_id VARCHAR(255) UNIQUE -- New column for public sharing
+        public_link_id VARCHAR(255) UNIQUE,
+        passphrase_hash VARCHAR(255) -- New column for passphrase hash
       );
 
       DO $$ BEGIN
           ALTER TABLE journeys ADD COLUMN public_link_id VARCHAR(255) UNIQUE;
+      EXCEPTION
+          WHEN duplicate_column THEN NULL;
+      END $$;
+
+      DO $$ BEGIN
+          ALTER TABLE journeys ADD COLUMN passphrase_hash VARCHAR(255);
       EXCEPTION
           WHEN duplicate_column THEN NULL;
       END $$;

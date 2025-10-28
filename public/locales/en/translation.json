@@ -122,7 +122,10 @@
     "passphraseClearedSuccessfully": "Passphrase cleared successfully!",
     "authRequiredDeleteJourney": "Authentication required or not authorized to delete journeys.",
     "journeyDeletedSuccessfully": "Journey '{{journeyName}}' deleted successfully!",
-    "copy": "Copy"
+    "copy": "Copy",
+    "passphraseCannotBeEmpty": "Passphrase cannot be empty.",
+    "passphraseMinLength": "Passphrase must be at least 6 characters long.",
+    "passphrase": "Passphrase"
   },
   "auth": {
     "loginToYourAccount": "Login to your account",
@@ -345,7 +348,15 @@
     "publicSharing": "Public Sharing",
     "makeJourneyPublic": "Make journey public",
     "publicLink": "Public link",
-    "publicLinkGenerating": "Public link is being generated..."
+    "publicLinkGenerating": "Public link is being generated...",
+    "passphraseProtection": "Passphrase Protection",
+    "enterNewPassphrase": "Enter new passphrase",
+    "setPassphraseOptional": "Set passphrase (optional)",
+    "clearPassphrase": "Clear Passphrase",
+    "updatePassphrase": "Update Passphrase",
+    "setPassphrase": "Set Passphrase",
+    "settingPassphrase": "Setting passphrase...",
+    "passphraseIsSet": "A passphrase is set for this journey."
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",
@@ -366,7 +377,14 @@
     "byOwner": "By {{owner}}",
     "noPostsYet": "No posts in this journey yet!",
     "ownerHasNotAddedPosts": "The journey owner has not added any posts to this public journey yet.",
-    "exploreMap": "Explore post locations on the map."
+    "exploreMap": "Explore post locations on the map.",
+    "journeyProtected": "Journey Protected",
+    "enterPassphrase": "Please enter the passphrase to access this journey.",
+    "passphrasePlaceholder": "Enter passphrase",
+    "incorrectPassphrase": "Incorrect passphrase.",
+    "verifying": "Verifying...",
+    "accessJourney": "Access Journey",
+    "passphraseProtected": "Passphrase Protected"
   },
   "scrollToTopButton": {
     "label": "Scroll to top"

@@ -297,7 +297,7 @@
     "manageJourneys": "Gérer les voyages",
     "loadingJourneys": "Chargement des voyages...",
     "journeyName": "Nom du voyage",
-    "owner": "Propriétaire",
+    "owner": "Propiétaire",
     "public": "Public",
     "manageJourney": "Gérer le voyage",
     "deleteJourney": "Supprimer le voyage",
@@ -330,7 +330,15 @@
     "publicSharing": "Partage public",
     "makeJourneyPublic": "Rendre le voyage public",
     "publicLink": "Lien public",
-    "publicLinkGenerating": "Le lien public est en cours de génération..."
+    "publicLinkGenerating": "Le lien public est en cours de génération...",
+    "passphraseProtection": "Protection par mot de passe",
+    "enterNewPassphrase": "Entrez un nouveau mot de passe",
+    "setPassphraseOptional": "Définir un mot de passe (facultatif)",
+    "clearPassphrase": "Effacer le mot de passe",
+    "updatePassphrase": "Mettre à jour le mot de passe",
+    "setPassphrase": "Définir le mot de passe",
+    "settingPassphrase": "Définition du mot de passe...",
+    "passphraseIsSet": "Un mot de passe est défini pour ce voyage."
   },
   "imageCropper": {
     "cropProfilePicture": "Recadrer la photo de profil",
@@ -344,5 +352,23 @@
   },
   "scrollToTopButton": {
     "label": "Faire défiler vers le haut"
+  },
+  "publicJourneyPage": {
+    "invalidLink": "Lien de voyage public invalide.",
+    "failedToLoadJourney": "Échec du chargement du voyage public.",
+    "loadingJourney": "Chargement du voyage public...",
+    "journeyNotFound": "Voyage public introuvable",
+    "checkLink": "Veuillez vérifier le lien et réessayer.",
+    "byOwner": "Par {{owner}}",
+    "noPostsYet": "Aucune publication dans ce voyage pour le moment !",
+    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
+    "exploreMap": "Explorer les emplacements des publications sur la carte.",
+    "journeyProtected": "Voyage protégé",
+    "enterPassphrase": "Veuillez entrer le mot de passe pour accéder à ce voyage.",
+    "passphrasePlaceholder": "Entrez le mot de passe",
+    "incorrectPassphrase": "Mot de passe incorrect.",
+    "verifying": "Vérification...",
+    "accessJourney": "Accéder au voyage",
+    "passphraseProtected": "Protégé par mot de passe"
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Compass, Loader2, Map as MapIcon } from 'lucide-react';
+import { Compass, Loader2, Map as MapIcon, Lock } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api';
 import { Journey, Post } from '@/types';
 import { showError } from '@/utils/toast';
@@ -21,6 +21,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import ShineCard from '@/components/ShineCard';
 import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
@@ -32,13 +34,16 @@ const PublicJourneyPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [passphraseInput, setPassphraseInput] = useState<string>('');
+  const [passphraseSubmitted, setPassphraseSubmitted] = useState<boolean>(false);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // New state for view mode
 
-  const fetchPublicJourney = async () => {
+  const fetchPublicJourney = async (passphrase?: string) => {
     if (!publicLinkId) {
       setError(t('publicJourneyPage.invalidLink'));
       setLoading(false);
@@ -47,8 +52,16 @@ const PublicJourneyPage: React.FC = () => {
 
     setLoading(true);
     setError(null);
+    setIsAuthenticating(true); // Set authenticating state
     try {
-      const response = await fetch(`${API_BASE_URL}/public-journeys/${publicLinkId}`);
+      const response = await fetch(`${API_BASE_URL}/public-journeys/${publicLinkId}`, {
+        method: 'POST', // Changed to POST
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ passphrase }), // Include passphrase in the body
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || t('publicJourneyPage.failedToLoadJourney'));
@@ -56,18 +69,29 @@ const PublicJourneyPage: React.FC = () => {
       const data = await response.json();
       setJourney(data.journey);
       setPosts(data.posts);
+      setPassphraseSubmitted(true); // Mark passphrase as successfully submitted
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       setError(err.message || t('publicJourneyPage.failedToLoadJourney'));
       showError(err.message || t('publicJourneyPage.failedToLoadJourney'));
+      setPassphraseSubmitted(false); // Reset if authentication fails
     } finally {
       setLoading(false);
+      setIsAuthenticating(false); // Clear authenticating state
     }
   };
 
   useEffect(() => {
+    // On initial load, try to fetch without a passphrase first.
+    // If it requires a passphrase, the backend will return an error,
+    // and we'll then show the passphrase input.
     fetchPublicJourney();
   }, [publicLinkId]);
+
+  const handlePassphraseSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchPublicJourney(passphraseInput);
+  };
 
   const handlePostClick = (post: Post, index: number) => {
     if (isMobile) { // Disable post details on mobile
@@ -113,6 +137,54 @@ const PublicJourneyPage: React.FC = () => {
   }
 
   if (error) {
+    // If the error is specifically about passphrase required, show the input form
+    if (error === 'Passphrase required to access this journey.' || error === 'Incorrect passphrase.') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
+          <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 w-full max-w-3xl">
+            <div className="flex items-center">
+              <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
+              <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
+            </div>
+          </header>
+          <div className="flex-grow flex flex-col items-center justify-center p-4">
+            <Lock className="h-24 w-24 text-blue-500 mb-4" />
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.enterPassphrase')}</p>
+            <form onSubmit={handlePassphraseSubmit} className="w-full max-w-sm space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="passphrase">{t('common.passphrase')}</Label>
+                <Input
+                  id="passphrase"
+                  type="password"
+                  value={passphraseInput}
+                  onChange={(e) => setPassphraseInput(e.target.value)}
+                  placeholder={t('publicJourneyPage.passphrasePlaceholder')}
+                  disabled={isAuthenticating}
+                  required
+                />
+              </div>
+              {error === 'Incorrect passphrase.' && (
+                <p className="text-sm text-red-500">{t('publicJourneyPage.incorrectPassphrase')}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={isAuthenticating}>
+                {isAuthenticating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('publicJourneyPage.verifying')}
+                  </>
+                ) : (
+                  t('publicJourneyPage.accessJourney')
+                )}
+              </Button>
+            </form>
+          </div>
+          <AppFooter />
+        </div>
+      );
+    }
+
+    // Generic error display
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
         <Compass className="h-24 w-24 text-red-500 mb-4" />
@@ -166,6 +238,13 @@ const PublicJourneyPage: React.FC = () => {
             <span>{t('publicJourneyPage.byOwner', { owner: ownerDisplayName })}</span>
             <span className="mx-2">•</span>
             <span>{format(new Date(journey.created_at), 'PPP', { locale: currentLocale })}</span>
+            {journey.has_passphrase && (
+              <>
+                <span className="mx-2">•</span>
+                <Lock className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span className="text-muted-foreground">{t('publicJourneyPage.passphraseProtected')}</span>
+              </>
+            )}
           </div>
         </div>
 

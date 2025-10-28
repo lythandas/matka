@@ -17,7 +17,8 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
 
     const result = await dbClient!.query(
       `SELECT DISTINCT ON (j.id) j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
-              u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
+              u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
+              j.passphrase_hash IS NOT NULL as has_passphrase -- Expose if passphrase exists, not the hash itself
        FROM journeys j
        LEFT JOIN journey_user_permissions jup ON j.id = jup.journey_id
        JOIN users u ON j.user_id = u.id
@@ -36,7 +37,8 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
 
     const result = await dbClient!.query(
       `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
-              u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
+              u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
+              j.passphrase_hash IS NOT NULL as has_passphrase -- Expose if passphrase exists
        FROM journeys j
        JOIN users u ON j.user_id = u.id
        ORDER BY j.created_at DESC`
@@ -65,13 +67,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       owner_profile_image_url: request.user.profile_image_url,
       is_public: false, // New journeys are always private by default
       public_link_id: undefined, // No public link initially
+      passphrase_hash: undefined, // No passphrase initially
     };
 
     const result = await dbClient!.query(
       `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, name, created_at, user_id, is_public, public_link_id,
-                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
       [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
     );
     return result.rows[0];
@@ -104,15 +108,17 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
         name = COALESCE($1, name)
        WHERE id = $2
        RETURNING id, name, created_at, user_id, is_public, public_link_id,
-                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
       [name, id]
     );
     return result.rows[0];
   });
 
-  // New endpoint to publish a journey
+  // New endpoint to publish a journey (optionally with a passphrase)
   fastify.post('/:id/publish', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const { passphrase } = request.body as { passphrase?: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -133,19 +139,26 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     }
 
     const newPublicLinkId = uuidv4();
+    let passphraseHash = null;
+    if (passphrase) {
+      passphraseHash = await hashPassword(passphrase);
+    }
+
     const result = await dbClient!.query(
       `UPDATE journeys SET
         is_public = TRUE,
-        public_link_id = $1
-       WHERE id = $2
+        public_link_id = $1,
+        passphrase_hash = $2
+       WHERE id = $3
        RETURNING id, name, created_at, user_id, is_public, public_link_id,
-                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
-      [newPublicLinkId, id]
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
+      [newPublicLinkId, passphraseHash, id]
     );
     return result.rows[0];
   });
 
-  // New endpoint to unpublish a journey
+  // New endpoint to unpublish a journey (clears passphrase)
   fastify.post('/:id/unpublish', async (request, reply) => {
     const { id } = request.params as { id: string };
 
@@ -170,10 +183,92 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     const result = await dbClient!.query(
       `UPDATE journeys SET
         is_public = FALSE,
-        public_link_id = NULL
+        public_link_id = NULL,
+        passphrase_hash = NULL -- Clear passphrase when unpublishing
        WHERE id = $1
        RETURNING id, name, created_at, user_id, is_public, public_link_id,
-                 owner_username, owner_name, owner_surname, owner_profile_image_url`,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
+      [id]
+    );
+    return result.rows[0];
+  });
+
+  // New endpoint to set/update passphrase for an already public journey
+  fastify.post('/:id/set-passphrase', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { passphrase } = request.body as { passphrase: string };
+
+    if (!request.user) {
+      return reply.code(401).send({ message: 'Unauthorized' });
+    }
+    if (!passphrase) {
+      return reply.code(400).send({ message: 'Passphrase is required' });
+    }
+
+    const journeyResult = await dbClient!.query('SELECT user_id, is_public FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
+      return reply.code(404).send({ message: 'Journey not found' });
+    }
+    if (!existingJourney.is_public) {
+      return reply.code(400).send({ message: 'Cannot set passphrase for a private journey. Publish it first.' });
+    }
+
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage passphrase for this journey.' });
+    }
+
+    const passphraseHash = await hashPassword(passphrase);
+
+    const result = await dbClient!.query(
+      `UPDATE journeys SET
+        passphrase_hash = $1
+       WHERE id = $2
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
+      [passphraseHash, id]
+    );
+    return result.rows[0];
+  });
+
+  // New endpoint to clear passphrase for an already public journey
+  fastify.post('/:id/clear-passphrase', async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    if (!request.user) {
+      return reply.code(401).send({ message: 'Unauthorized' });
+    }
+
+    const journeyResult = await dbClient!.query('SELECT user_id, is_public FROM journeys WHERE id = $1', [id]);
+    const existingJourney = journeyResult.rows[0];
+
+    if (!existingJourney) {
+      return reply.code(404).send({ message: 'Journey not found' });
+    }
+    if (!existingJourney.is_public) {
+      return reply.code(400).send({ message: 'Cannot clear passphrase for a private journey.' });
+    }
+
+    const isOwner = existingJourney.user_id === request.user.id;
+    const isAdmin = request.user.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      return reply.code(403).send({ message: 'Forbidden: You do not have permission to manage passphrase for this journey.' });
+    }
+
+    const result = await dbClient!.query(
+      `UPDATE journeys SET
+        passphrase_hash = NULL
+       WHERE id = $1
+       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+                 owner_username, owner_name, owner_surname, owner_profile_image_url,
+                 passphrase_hash IS NOT NULL as has_passphrase`,
       [id]
     );
     return result.rows[0];

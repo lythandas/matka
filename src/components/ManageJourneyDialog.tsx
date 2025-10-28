@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil, Globe } from 'lucide-react';
+import { Loader2, Plus, Trash2, Search, Link as LinkIcon, Copy, Eye, PlusCircle, Pencil, Globe, Lock, Unlock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -65,7 +65,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const [isPublic, setIsPublic] = useState<boolean>(journey.is_public); // State for public status
   const [publicLinkId, setPublicLinkId] = useState<string | undefined>(journey.public_link_id); // State for public link ID
+  const [hasPassphrase, setHasPassphrase] = useState<boolean>(journey.has_passphrase || false); // New state for passphrase existence
+  const [passphrase, setPassphrase] = useState<string>(''); // New state for setting passphrase
   const [isUpdatingPublicStatus, setIsUpdatingPublicStatus] = useState<boolean>(false);
+  const [isSettingPassphrase, setIsSettingPassphrase] = useState<boolean>(false);
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -126,7 +129,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         !collaborators.some(collab => collab.user_id === u.id) && u.id !== journey.user_id
       );
       setSearchResults(filteredData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching users:', error);
       showError(t('common.failedToSearchForUsers')); // Translated error
       setSearchResults([]);
@@ -140,6 +143,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setJourneyName(journey.name);
       setIsPublic(journey.is_public);
       setPublicLinkId(journey.public_link_id);
+      setHasPassphrase(journey.has_passphrase || false); // Initialize hasPassphrase
+      setPassphrase(''); // Clear passphrase input
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -236,6 +241,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const updatedJourney: Journey = await response.json();
       setIsPublic(updatedJourney.is_public);
       setPublicLinkId(updatedJourney.public_link_id);
+      setHasPassphrase(updatedJourney.has_passphrase || false); // Update passphrase status
       showSuccess(t('common.journeyPublicStatusUpdated', { status: updatedJourney.is_public ? t('common.public') : t('common.private') }));
       onJourneyUpdated();
     } catch (error: any) {
@@ -243,6 +249,95 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       showError(error.message || t('common.failedToUpdatePublicStatus'));
     } finally {
       setIsUpdatingPublicStatus(false);
+    }
+  };
+
+  const handleSetPassphrase = async () => {
+    if (!passphrase.trim()) {
+      showError(t('common.passphraseCannotBeEmpty'));
+      return;
+    }
+    if (passphrase.trim().length < 6) {
+      showError(t('common.passphraseMinLength'));
+      return;
+    }
+    if (!token || !currentUser) {
+      showError(t('common.authRequiredUpdateJourney'));
+      return;
+    }
+
+    const canManageJourney = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canManageJourney) {
+      showError(t('common.noPermissionChangePassphrase'));
+      return;
+    }
+
+    setIsSettingPassphrase(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/set-passphrase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ passphrase: passphrase.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToUpdatePassphrase'));
+      }
+
+      const updatedJourney: Journey = await response.json();
+      setHasPassphrase(updatedJourney.has_passphrase || false);
+      setPassphrase('');
+      showSuccess(t('common.passphraseSetSuccessfully'));
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error setting passphrase:', error);
+      showError(error.message || t('common.failedToUpdatePassphrase'));
+    } finally {
+      setIsSettingPassphrase(false);
+    }
+  };
+
+  const handleClearPassphrase = async () => {
+    if (!token || !currentUser) {
+      showError(t('common.authRequiredUpdateJourney'));
+      return;
+    }
+
+    const canManageJourney = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canManageJourney) {
+      showError(t('common.noPermissionChangePassphrase'));
+      return;
+    }
+
+    setIsSettingPassphrase(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/clear-passphrase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToUpdatePassphrase'));
+      }
+
+      const updatedJourney: Journey = await response.json();
+      setHasPassphrase(updatedJourney.has_passphrase || false);
+      setPassphrase('');
+      showSuccess(t('common.passphraseClearedSuccessfully'));
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error clearing passphrase:', error);
+      showError(error.message || t('common.failedToUpdatePassphrase'));
+    } finally {
+      setIsSettingPassphrase(false);
     }
   };
 
@@ -498,12 +593,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   id="public-toggle"
                   checked={isPublic}
                   onCheckedChange={handleTogglePublicStatus}
-                  disabled={isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                  disabled={isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isSettingPassphrase}
                 />
               </div>
 
               {isPublic && publicLinkId && (
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   <Label>{t('manageJourneyDialog.publicLink')}</Label>
                   <div className="flex items-center space-x-2">
                     <Input
@@ -527,6 +622,68 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               {isPublic && !publicLinkId && (
                 <p className="text-sm text-muted-foreground mt-2">{t('manageJourneyDialog.publicLinkGenerating')}</p>
               )}
+
+              {isPublic && (
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="passphrase-input" className="flex items-center space-x-2">
+                    {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                    <span>{t('manageJourneyDialog.passphraseProtection')}</span>
+                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="passphrase-input"
+                      type="password"
+                      value={passphrase}
+                      onChange={(e) => setPassphrase(e.target.value)}
+                      placeholder={hasPassphrase ? t('manageJourneyDialog.enterNewPassphrase') : t('manageJourneyDialog.setPassphraseOptional')}
+                      className="flex-grow"
+                      disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                    />
+                    {hasPassphrase && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          >
+                            <Unlock className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.clearPassphrase')}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                            <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearPassphrase}>
+                              {t('adminPage.continue')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    <Button
+                      onClick={handleSetPassphrase}
+                      disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                      className="hover:ring-2 hover:ring-blue-500"
+                    >
+                      {isSettingPassphrase ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {t('manageJourneyDialog.settingPassphrase')}
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="mr-2 h-4 w-4" /> {hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {hasPassphrase && <p className="text-sm text-muted-foreground mt-1">{t('manageJourneyDialog.passphraseIsSet')}</p>}
+                </div>
+              )}
             </div>
           )}
 
@@ -538,7 +695,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 placeholder={t('manageJourneyDialog.searchUsernameToAdd')}
                 value={searchUsername}
                 onValueChange={setSearchUsername}
-                disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
+                disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
               />
               <CommandList>
                 {loadingSearch && <CommandEmpty>
@@ -582,7 +739,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 <p className="text-sm font-medium mb-2" dangerouslySetInnerHTML={{ __html: t('manageJourneyDialog.addingCollaborator', { username: selectedUserToAdd.name || selectedUserToAdd.username }) }} />
                 <Button
                   onClick={handleAddCollaborator}
-                  disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney}
+                  disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
                   className="w-full hover:ring-2 hover:ring-blue-500"
                 >
                   {isAddingCollaborator ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
@@ -640,7 +797,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             });
                           }}
                           className="flex space-x-1"
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney}
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
                         >
                           {/* Can publish posts */}
                           <Tooltip>
@@ -709,7 +866,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           variant="destructive"
                           size="icon"
                           onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
-                          disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney}
+                          disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
                           className="h-7 w-7 hover:ring-2 hover:ring-blue-500"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -722,13 +879,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             )}
           </div>
         </div>
-        <DialogFooter className="flex justify-between items-center">
+        <DialogFooter className="flex flex-wrap justify-end gap-2 pt-4">
           {canDeleteThisJourney && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="destructive"
-                  disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isUpdatingPublicStatus}
+                  disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isUpdatingPublicStatus || isSettingPassphrase}
                   className="hover:ring-2 hover:ring-blue-500"
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.deleteJourney')}
@@ -748,7 +905,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus || isSettingPassphrase} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>

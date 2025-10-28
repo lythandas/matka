@@ -122,7 +122,10 @@
     "passphraseClearedSuccessfully": "Passphrase erfolgreich gelöscht!",
     "authRequiredDeleteJourney": "Authentifizierung erforderlich oder nicht berechtigt, Reisen zu löschen.",
     "journeyDeletedSuccessfully": "Reise '{{journeyName}}' erfolgreich gelöscht!",
-    "copy": "Kopieren"
+    "copy": "Kopieren",
+    "passphraseCannotBeEmpty": "Die Passphrase darf nicht leer sein.",
+    "passphraseMinLength": "Die Passphrase muss mindestens 6 Zeichen lang sein.",
+    "passphrase": "Passphrase"
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
@@ -290,7 +293,7 @@
     "draftSavedSuccessfully": "Entwurf erfolgreich gespeichert!",
     "failedToSaveDraft": "Fehler beim Speichern des Entwurfs.",
     "draftLoadedSuccessfully": "Entwurf '{{title}}' erfolgreich geladen!",
-    "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
+    "draftDeletedSuccessfully": "Entwurf erfolgreich geladen!",
     "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe.",
     "createNewPost": "Neuen Beitrag erstellen",
     "loadDraftNotImplemented": "Das Laden von Entwürfen direkt in das Formular ist noch nicht implementiert."
@@ -345,7 +348,15 @@
     "publicSharing": "Öffentliche Freigabe",
     "makeJourneyPublic": "Reise öffentlich machen",
     "publicLink": "Öffentlicher Link",
-    "publicLinkGenerating": "Öffentlicher Link wird generiert..."
+    "publicLinkGenerating": "Öffentlicher Link wird generiert...",
+    "passphraseProtection": "Passphrase-Schutz",
+    "enterNewPassphrase": "Neue Passphrase eingeben",
+    "setPassphraseOptional": "Passphrase festlegen (optional)",
+    "clearPassphrase": "Passphrase löschen",
+    "updatePassphrase": "Passphrase aktualisieren",
+    "setPassphrase": "Passphrase festlegen",
+    "settingPassphrase": "Passphrase wird festgelegt...",
+    "passphraseIsSet": "Eine Passphrase ist für diese Reise festgelegt."
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",
@@ -359,5 +370,23 @@
   },
   "scrollToTopButton": {
     "label": "Nach oben scrollen"
+  },
+  "publicJourneyPage": {
+    "invalidLink": "Ungültiger öffentlicher Reiselink.",
+    "failedToLoadJourney": "Fehler beim Laden der öffentlichen Reise.",
+    "loadingJourney": "Öffentliche Reise wird geladen...",
+    "journeyNotFound": "Öffentliche Reise nicht gefunden",
+    "checkLink": "Bitte überprüfen Sie den Link und versuchen Sie es erneut.",
+    "byOwner": "Von {{owner}}",
+    "noPostsYet": "Noch keine Beiträge in dieser Reise!",
+    "ownerHasNotAddedPosts": "Der Reisebesitzer hat noch keine Beiträge zu dieser öffentlichen Reise hinzugefügt.",
+    "exploreMap": "Standorte der Beiträge auf der Karte erkunden.",
+    "journeyProtected": "Reise geschützt",
+    "enterPassphrase": "Bitte geben Sie die Passphrase ein, um auf diese Reise zuzugreifen.",
+    "passphrasePlaceholder": "Passphrase eingeben",
+    "incorrectPassphrase": "Falsche Passphrase.",
+    "verifying": "Wird überprüft...",
+    "accessJourney": "Reise zugreifen",
+    "passphraseProtected": "Passphrase geschützt"
   }
 }

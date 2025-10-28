@@ -34,6 +34,7 @@ export interface Journey {
   owner_profile_image_url?: string;
   is_public: boolean;
   public_link_id?: string; // New: Unique ID for public sharing link
+  passphrase_hash?: string; // New: Hashed passphrase for private public journeys
 }
 
 export interface JourneyCollaborator {
