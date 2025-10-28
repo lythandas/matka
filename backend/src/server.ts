@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
-// Removed: import { FastifyStaticOptions } from '@fastify/static'; // This import was causing type conflict
+import { FastifyStaticOptions } from '@fastify/static'; // Re-import for explicit typing
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -48,19 +48,21 @@ fastify.register(async (authenticatedInstance) => {
 }, { prefix: '/api' }); // All these routes will be under /api and authenticated
 
 // 2. Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
-fastify.register(fastifyStatic, {
+const uploadStaticOptions: FastifyStaticOptions = {
   root: UPLOADS_DIR,
   prefix: '/uploads/',
   decorateReply: false,
-});
+};
+fastify.register(fastifyStatic, uploadStaticOptions);
 
-// NEW: Register @fastify/static to serve frontend build assets
-// This must be registered BEFORE the wildcard route to ensure assets are served directly.
-fastify.register(fastifyStatic, {
+// 3. SPA fallback: Serve index.html for any unmatched route
+// This must be registered AFTER all other API routes to act as a catch-all for frontend routes.
+const frontendStaticOptions: FastifyStaticOptions = {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   fallback: 'index.html', // When a file is not found, fallback to index.html
-});
+};
+fastify.register(fastifyStatic, frontendStaticOptions);
 
 
 // Run the server
