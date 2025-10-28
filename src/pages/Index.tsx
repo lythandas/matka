@@ -817,12 +817,12 @@ const Index = () => {
   return (
     <div className="w-full md:w-4/5 mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row flex-grow h-full">
       {/* Left Column: Post Form (Static) */}
-      <div className="md:w-1/2 md:pr-2 flex-shrink-0 md:overflow-y-auto">
+      <div className="md:w-1/3 md:pr-2 flex-shrink-0 md:overflow-y-auto">
         {mainContent}
       </div>
 
       {/* Right Column: Post Feed (Scrollable) */}
-      <div className="md:w-1/2 md:pl-2 flex-grow overflow-y-auto">
+      <div className="md:w-2/3 md:pl-2 flex-grow overflow-y-auto">
         {selectedJourney && (posts.length > 0 || drafts.length > 0) && (
           <Tabs defaultValue="posts" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
