@@ -179,7 +179,7 @@ const PublicJourneyPage: React.FC = () => {
   }, [t]);
 
   const handlePassphraseSubmit = async (passphraseInput: string) => {
-    if (!journey && (!ownerUsername || !journeyName)) return;
+    if (!ownerUsername || !journeyName) return; // Ensure params are available
 
     setIsVerifyingPassphrase(true);
     const journeyIdentifier = `${ownerUsername}-${journeyName}`;
@@ -195,10 +195,7 @@ const PublicJourneyPage: React.FC = () => {
         showError(t('publicJourneyPage.incorrectPassphrase'));
         clearPassphraseFromStorage(journeyIdentifier);
       } else {
-        // This else block handles cases where fetchJourney returns null and requiresPassphrase is false,
-        // which means a generic error occurred or the journey wasn't found/public.
-        // In this scenario, we should still clear any stored passphrase and show an error.
-        showError(t('publicJourneyPage.incorrectPassphrase')); // Or a more generic error message
+        showError(t('publicJourneyPage.incorrectPassphrase'));
         clearPassphraseFromStorage(journeyIdentifier);
       }
     } catch (err) {
@@ -239,7 +236,7 @@ const PublicJourneyPage: React.FC = () => {
         }
         await fetchPosts(fetchedJourney.id, storedPassphrase);
       } else if (requiresPassphrase) {
-        console.log("PublicJourneyPage: Setting isPassphraseDialogOpen to true."); // Added log
+        console.log("PublicJourneyPage: Setting isPassphraseDialogOpen to true.");
         setIsPassphraseDialogOpen(true);
         setLoadingPosts(false);
       } else {
@@ -493,7 +490,7 @@ const PublicJourneyPage: React.FC = () => {
     <div className="min-h-screen flex flex-col w-full bg-gray-50 dark:bg-gray-900">
       {pageContent}
 
-      {isPassphraseDialogOpen && journey && ( // Only show if dialog is open AND journey data is available
+      {isPassphraseDialogOpen && ( // Removed 'journey' from this condition
         <PassphraseDialog
           isOpen={isPassphraseDialogOpen}
           onClose={() => {
@@ -502,8 +499,8 @@ const PublicJourneyPage: React.FC = () => {
             }
             setIsPassphraseDialogOpen(false);
           }}
-          journeyName={journey.name}
-          journeyOwner={journey.owner_name || journey.owner_username}
+          journeyName={journey?.name || journeyName || ''} // Use journey.name if available, else from useParams
+          journeyOwner={journey?.owner_name || journey?.owner_username || ownerUsername || ''} // Use journey.owner_name/username if available, else from useParams
           onPassphraseSubmit={handlePassphraseSubmit}
           isVerifying={isVerifyingPassphrase}
         />
