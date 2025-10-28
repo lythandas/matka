@@ -629,57 +629,62 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                     {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                     <span>{t('manageJourneyDialog.passphraseProtection')}</span>
                   </Label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      id="passphrase-input"
-                      type="password"
-                      value={passphrase}
-                      onChange={(e) => setPassphrase(e.target.value)}
-                      placeholder={hasPassphrase ? t('manageJourneyDialog.enterNewPassphrase') : t('manageJourneyDialog.setPassphraseOptional')}
-                      className="flex-grow"
-                      disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                    />
-                    {hasPassphrase && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                          >
-                            <Unlock className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.clearPassphrase')}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                            <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleClearPassphrase}>
-                              {t('adminPage.continue')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                    <Button
-                      onClick={handleSetPassphrase}
-                      disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                      className="hover:ring-2 hover:ring-blue-500"
-                    >
-                      {isSettingPassphrase ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t('manageJourneyDialog.settingPassphrase')}
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="mr-2 h-4 w-4" /> {hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase')}
-                        </>
+                  <div className="flex flex-col gap-2"> {/* Changed to flex-col to stack input and helper text */}
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="passphrase-input"
+                        type="password"
+                        value={passphrase}
+                        onChange={(e) => setPassphrase(e.target.value)}
+                        placeholder={hasPassphrase ? t('manageJourneyDialog.enterNewPassphrase') : t('manageJourneyDialog.setPassphraseOptional', { minLength: 6 })}
+                        className="flex-grow"
+                        disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                      />
+                      {hasPassphrase && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            >
+                              <Unlock className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.clearPassphrase')}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                              <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleClearPassphrase}>
+                                {t('adminPage.continue')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
-                    </Button>
+                      <Button
+                        onClick={handleSetPassphrase}
+                        disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                        className="hover:ring-2 hover:ring-blue-500"
+                      >
+                        {isSettingPassphrase ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('manageJourneyDialog.settingPassphrase')}
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="mr-2 h-4 w-4" /> {hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase')}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {passphrase.trim().length > 0 && passphrase.trim().length < 6 && (
+                      <p className="text-sm text-red-500 mt-1">{t('common.passphraseMinLength')}</p>
+                    )}
                   </div>
                   {hasPassphrase && <p className="text-sm text-muted-foreground mt-1">{t('manageJourneyDialog.passphraseIsSet')}</p>}
                 </div>
