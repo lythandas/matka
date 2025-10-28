@@ -815,7 +815,7 @@ const Index = () => {
   }
 
   return (
-    <div className="w-full md:w-4/5 mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row flex-grow h-full">
+    <div className="w-full p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row flex-grow h-full">
       {/* Left Column: Post Form (Static) */}
       <div className="md:w-1/3 md:pr-2 flex-shrink-0 md:overflow-y-auto">
         {mainContent}
