@@ -815,265 +815,271 @@ const Index = () => {
   }
 
   return (
-    <div className="flex-grow max-w-3xl mx-auto w-full p-4 sm:p-6 lg:p-8">
-      {mainContent}
+    <div className="flex flex-col md:flex-row flex-grow h-full">
+      {/* Left Column: Post Form (Static) */}
+      <div className="md:w-1/3 md:max-w-sm p-4 sm:p-6 lg:p-8 md:border-r dark:md:border-gray-800 flex-shrink-0 md:overflow-y-auto">
+        {mainContent}
+      </div>
 
-      {selectedJourney && (posts.length > 0 || drafts.length > 0) && (
-        <Tabs defaultValue="posts" className="w-full mt-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="posts">{t('indexPage.publishedPosts')}</TabsTrigger>
-            <TabsTrigger value="drafts">{t('indexPage.drafts')}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="posts" className="mt-4">
-            {displayedPosts.length > 0 && (
-              <div className="relative flex items-center justify-center mb-6 h-10">
-                <div className="absolute left-0">
-                  <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+      {/* Right Column: Post Feed (Scrollable) */}
+      <div className="md:w-2/3 flex-grow p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {selectedJourney && (posts.length > 0 || drafts.length > 0) && (
+          <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="posts">{t('indexPage.publishedPosts')}</TabsTrigger>
+              <TabsTrigger value="drafts">{t('indexPage.drafts')}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="posts" className="mt-4">
+              {displayedPosts.length > 0 && (
+                <div className="relative flex items-center justify-center mb-6 h-10">
+                  <div className="absolute left-0">
+                    <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+                  </div>
+                  <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
                 </div>
-                <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-              </div>
-            )}
+              )}
 
-            {loadingPosts ? (
-              <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
-            ) : displayedPosts.length === 0 && selectedJourney ? (
-              <div className="text-center py-12">
-                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                  {t('indexPage.yourJourneyAwaits')}
-                </p>
-                {isAuthenticated && canCreatePostUI && (
-                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                    {t('indexPage.useShareSection')}
+              {loadingPosts ? (
+                <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
+              ) : displayedPosts.length === 0 && selectedJourney ? (
+                <div className="text-center py-12">
+                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                    {t('indexPage.yourJourneyAwaits')}
                   </p>
-                )}
-              </div>
-            ) : (
-              viewMode === 'list' ? (
-                <div className="space-y-6">
-                  {displayedPosts.map((post, index) => {
-                    const isPostAuthor = user?.id === post.user_id;
+                  {isAuthenticated && canCreatePostUI && (
+                    <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                      {t('indexPage.useShareSection')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                viewMode === 'list' ? (
+                  <div className="space-y-6">
+                    {displayedPosts.map((post, index) => {
+                      const isPostAuthor = user?.id === post.user_id;
+                      const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                      const isAdmin = user?.isAdmin;
+                      const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                      const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+                      const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                      const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+
+                      return (
+                        <ShineCard
+                          key={post.id}
+                          className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                          onClick={() => handlePostClick(post, index)}
+                        >
+                          <CardContent className="p-6">
+                            <div className="flex items-center mb-4">
+                              {post.author_profile_image_url ? (
+                                <img
+                                  src={post.author_profile_image_url}
+                                  alt={post.author_name || post.author_username}
+                                  className="w-10 h-10 rounded-full object-cover mr-3"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
+                                  {getAvatarInitials(post.author_name, post.author_username)}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                  {post.author_name || post.author_username}
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
+                                </p>
+                              </div>
+                            </div>
+                            {post.title && (
+                              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                            )}
+                            {post.media_items && post.media_items.length > 0 && (
+                              <div className={
+                                post.media_items.length === 1
+                                  ? "mb-4"
+                                  : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
+                              }>
+                                {post.media_items.map((mediaItem, mediaIndex) => (
+                                  <div key={mediaIndex} className="relative">
+                                    {mediaItem.type === 'image' && mediaItem.urls.large && (
+                                      <img
+                                        src={mediaItem.urls.large}
+                                        alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
+                                        className="w-full h-auto max-h-96 object-cover rounded-md"
+                                        onError={(e) => {
+                                          e.currentTarget.src = '/placeholder.svg';
+                                          e.currentTarget.onerror = null;
+                                          showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
+                                        }}
+                                      />
+                                    )}
+                                    {mediaItem.type === 'video' && mediaItem.url && (
+                                      <video
+                                        src={mediaItem.url}
+                                        controls
+                                        className="w-full h-auto max-h-96 object-cover rounded-md"
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex justify-between items-start mb-2">
+                              <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
+                              <div className="flex space-x-2">
+                                {isAuthenticated && selectedJourney && canEditPost && (
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {isAuthenticated && selectedJourney && canDeletePost && (
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialog key={`delete-dialog-${post.id}`}>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                                          <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                            {t('adminPage.continue')}
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {post.coordinates && (
+                              <div className="mt-4">
+                                <MapComponent coordinates={post.coordinates} />
+                              </div>
+                            )}
+                          </CardContent>
+                        </ShineCard>
+                      );
+                    })}
+                  </div>
+                ) : viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {displayedPosts.map((post, index) => (
+                      <GridPostCard
+                        key={post.id}
+                        post={post}
+                        onClick={() => handlePostClick(post, index)}
+                      />
+                    ))}
+                  </div>
+                ) : ( // viewMode === 'map'
+                  hasPostsWithCoordinates ? (
+                    <div className="w-full h-[70vh] rounded-md overflow-hidden">
+                      <MapComponent
+                        posts={displayedPosts}
+                        onMarkerClick={handleSelectPostFromMap}
+                        className="w-full h-full"
+                        zoom={7}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                      <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                        {t('indexPage.noPostsWithLocation')}
+                      </p>
+                      <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                        {t('indexPage.addPostsWithLocation')}
+                      </p>
+                    </div>
+                  )
+                )
+              )}
+            </TabsContent>
+            <TabsContent value="drafts" className="mt-4">
+              {loadingDrafts ? (
+                <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingDrafts')}</p>
+              ) : sortedDrafts.length === 0 ? (
+                <div className="text-center py-12">
+                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                    {t('indexPage.noDraftsYet')}
+                  </p>
+                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                    {t('indexPage.saveWorkAsDraft')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedDrafts.map((draft) => {
+                    const isDraftAuthor = user?.id === draft.user_id;
                     const isJourneyOwner = selectedJourney?.user_id === user?.id;
                     const isAdmin = user?.isAdmin;
                     const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
                     const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
-                    const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
-                    const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+                    const canEditDraft = isDraftAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                    const canDeleteDraft = isDraftAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
                     return (
-                      <ShineCard
-                        key={post.id}
-                        className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
-                        onClick={() => handlePostClick(post, index)}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-center mb-4">
-                            {post.author_profile_image_url ? (
-                              <img
-                                src={post.author_profile_image_url}
-                                alt={post.author_name || post.author_username}
-                                className="w-10 h-10 rounded-full object-cover mr-3"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                                {getAvatarInitials(post.author_name, post.author_username)}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                {post.author_name || post.author_username}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
-                              </p>
-                            </div>
-                          </div>
-                          {post.title && (
-                            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+                      <Card key={draft.id} className={cn("p-4 flex items-center justify-between", currentDraftId === draft.id && "ring-2 ring-blue-500")}>
+                        <div>
+                          <p className="font-semibold">{draft.title || draft.message.substring(0, 50) + (draft.message.length > 50 ? '...' : '') || t('indexPage.untitledDraft')}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('indexPage.lastSaved', { date: format(new Date(draft.created_at), 'PPP p', { locale: currentLocale }) })}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          {canEditDraft && (
+                            <Button variant="outline" size="sm" onClick={() => handleLoadDraft(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                              <Edit className="mr-2 h-4 w-4" /> {t('indexPage.loadDraft')}
+                            </Button>
                           )}
-                          {post.media_items && post.media_items.length > 0 && (
-                            <div className={
-                              post.media_items.length === 1
-                                ? "mb-4"
-                                : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                            }>
-                              {post.media_items.map((mediaItem, mediaIndex) => (
-                                <div key={mediaIndex} className="relative">
-                                  {mediaItem.type === 'image' && mediaItem.urls.large && (
-                                    <img
-                                      src={mediaItem.urls.large}
-                                      alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
-                                      className="w-full h-auto max-h-96 object-cover rounded-md"
-                                      onError={(e) => {
-                                        e.currentTarget.src = '/placeholder.svg';
-                                        e.currentTarget.onerror = null;
-                                        showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
-                                      }}
-                                    />
-                                  )}
-                                  {mediaItem.type === 'video' && mediaItem.url && (
-                                    <video
-                                      src={mediaItem.url}
-                                      controls
-                                      className="w-full h-auto max-h-96 object-cover rounded-md"
-                                    />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex justify-between items-start mb-2">
-                            <p className="text-lg text-gray-800 dark:text-gray-200">{post.message}</p>
-                            <div className="flex space-x-2">
-                              {isAuthenticated && selectedJourney && canEditPost && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                                  className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                >
-                                  <Edit className="h-4 w-4" />
+                          {canDeleteDraft && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" className="hover:ring-2 hover:ring-blue-500">
+                                  <Trash2 className="mr-2 h-4 w-4" /> {t('indexPage.deleteDraft')}
                                 </Button>
-                              )}
-                              {isAuthenticated && selectedJourney && canDeletePost && (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <AlertDialog key={`delete-dialog-${post.id}`}>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                        <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                          {t('adminPage.continue')}
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {post.coordinates && (
-                            <div className="mt-4">
-                              <MapComponent coordinates={post.coordinates} />
-                            </div>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                                  <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeletePost(draft.id, draft.journey_id, draft.user_id, true)}>
+                                    {t('adminPage.continue')}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
-                        </CardContent>
-                      </ShineCard>
+                        </div>
+                      </Card>
                     );
                   })}
                 </div>
-              ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {displayedPosts.map((post, index) => (
-                    <GridPostCard
-                      key={post.id}
-                      post={post}
-                      onClick={() => handlePostClick(post, index)}
-                    />
-                  ))}
-                </div>
-              ) : ( // viewMode === 'map'
-                hasPostsWithCoordinates ? (
-                  <div className="w-full h-[70vh] rounded-md overflow-hidden">
-                    <MapComponent
-                      posts={displayedPosts}
-                      onMarkerClick={handleSelectPostFromMap}
-                      className="w-full h-full"
-                      zoom={7}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                    <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                      {t('indexPage.noPostsWithLocation')}
-                    </p>
-                    <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                      {t('indexPage.addPostsWithLocation')}
-                    </p>
-                  </div>
-                )
-              )
-            )}
-          </TabsContent>
-          <TabsContent value="drafts" className="mt-4">
-            {loadingDrafts ? (
-              <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingDrafts')}</p>
-            ) : sortedDrafts.length === 0 ? (
-              <div className="text-center py-12">
-                <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
-                  {t('indexPage.noDraftsYet')}
-                </p>
-                <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
-                  {t('indexPage.saveWorkAsDraft')}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {sortedDrafts.map((draft) => {
-                  const isDraftAuthor = user?.id === draft.user_id;
-                  const isJourneyOwner = selectedJourney?.user_id === user?.id;
-                  const isAdmin = user?.isAdmin;
-                  const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
-                  const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
-
-                  const canEditDraft = isDraftAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
-                  const canDeleteDraft = isDraftAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
-
-                  return (
-                    <Card key={draft.id} className={cn("p-4 flex items-center justify-between", currentDraftId === draft.id && "ring-2 ring-blue-500")}>
-                      <div>
-                        <p className="font-semibold">{draft.title || draft.message.substring(0, 50) + (draft.message.length > 50 ? '...' : '') || t('indexPage.untitledDraft')}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('indexPage.lastSaved', { date: format(new Date(draft.created_at), 'PPP p', { locale: currentLocale }) })}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        {canEditDraft && (
-                          <Button variant="outline" size="sm" onClick={() => handleLoadDraft(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-                            <Edit className="mr-2 h-4 w-4" /> {t('indexPage.loadDraft')}
-                          </Button>
-                        )}
-                        {canDeleteDraft && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" className="hover:ring-2 hover:ring-blue-500">
-                                <Trash2 className="mr-2 h-4 w-4" /> {t('indexPage.deleteDraft')}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeletePost(draft.id, draft.journey_id, draft.user_id, true)}>
-                                  {t('adminPage.continue')}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      )}
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
