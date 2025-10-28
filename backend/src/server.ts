@@ -54,17 +54,21 @@ const uploadStaticOptions: FastifyStaticOptions = {
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 4. Serve static frontend assets and handle SPA fallback
+// 4. Serve static frontend assets and handle SPA fallback using rewrites
 // This must be registered LAST to act as a catch-all for frontend routes.
-// The 'fallback' option ensures that any unmatched GET request will serve index.html.
+// The 'rewrites' option is a powerful way to handle SPA routing.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   decorateReply: false, // Do not decorate reply for this static instance
-  fallback: 'index.html', // Crucial for SPA routing
-} as FastifyStaticOptions); // Cast to FastifyStaticOptions to ensure 'fallback' is recognized
+  // Use rewrites to send all unmatched requests to index.html
+  rewrites: [{
+    from: '/*',
+    to: '/index.html'
+  }]
+} as FastifyStaticOptions); // Cast to FastifyStaticOptions to ensure 'rewrites' is recognized
 
-// Removed the explicit fastify.get('/*', ...) route as it's now fully handled by fastifyStatic's fallback.
+// Removed setNotFoundHandler as rewrites should handle the SPA fallback.
 
 
 // Run the server
