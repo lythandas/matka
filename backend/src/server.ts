@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
-import { FastifyStaticOptions } from '@fastify/static'; // Re-import for explicit typing
+import { FastifyStaticOptions } from '@fastify/static'; // Keep this for uploadStaticOptions
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -57,12 +57,12 @@ fastify.register(fastifyStatic, uploadStaticOptions);
 
 // 3. SPA fallback: Serve index.html for any unmatched route
 // This must be registered AFTER all other API routes to act as a catch-all for frontend routes.
-const frontendStaticOptions: FastifyStaticOptions = {
+// Inlining the options directly to help TypeScript inference.
+fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   fallback: 'index.html', // When a file is not found, fallback to index.html
-};
-fastify.register(fastifyStatic, frontendStaticOptions);
+});
 
 
 // Run the server
