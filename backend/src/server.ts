@@ -1,14 +1,14 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
-import { FastifyStaticOptions } from '@fastify/static';
+// Removed: import { FastifyStaticOptions } from '@fastify/static'; // This import was causing type conflict
 import path from 'path';
 import fs from 'fs/promises';
 
 import { connectDbAndCreateTables } from './db';
 import { UPLOADS_DIR } from './config';
 import userRoutes from './routes/userRoutes'; // Public user routes
-import protectedUserRoutes from './routes/protectedUserRoutes'; // Corrected import path for Protected user routes
+import protectedUserRoutes from './routes/protectedUserRoutes'; // Protected user routes
 import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
@@ -59,11 +59,8 @@ fastify.register(fastifyStatic, {
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
-  // Corrected: 'fallback' option belongs directly in the fastifyStatic options object
-  fallback: 'index.html', 
+  fallback: 'index.html', // When a file is not found, fallback to index.html
 });
-
-// The explicit wildcard route is no longer needed as fastifyStatic's fallback handles it.
 
 
 // Run the server
