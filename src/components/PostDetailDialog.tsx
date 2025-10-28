@@ -78,14 +78,15 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const displayName = post.author_name || post.author_username;
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
+  const hasMedia = mediaItems.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[90vw] max-w-[98vw] max-h-[90vh] flex flex-col p-0"> {/* Increased width, removed default padding */}
         <div className="flex flex-grow overflow-hidden p-6 pt-4 gap-6"> {/* Main content area for two columns */}
           {/* Left Column: Media */}
-          <div className="w-1/2 flex flex-col items-center justify-center relative">
-            {mediaItems.length > 0 ? (
+          {hasMedia ? (
+            <div className="w-4/5 flex flex-col items-center justify-center relative">
               <div className="relative w-full h-full flex items-center justify-center">
                 {currentMedia?.type === 'image' && (
                   <img
@@ -155,16 +156,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   </>
                 )}
               </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center rounded-md">
-                <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
-                <p className="text-lg text-muted-foreground">{t('postDetailDialog.noMedia')}</p>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {/* Right Column: Details (Title, Author, Message, Map) */}
-          <div className="w-1/2 flex flex-col overflow-y-auto p-4"> {/* Added padding here */}
+          <div className={cn(
+            "flex flex-col overflow-y-auto p-4",
+            hasMedia ? "w-1/5" : "w-full" // Adjust width based on media presence
+          )}>
             <div className="flex items-center mb-4">
               <Avatar className="h-10 w-10 mr-3">
                 {post.author_profile_image_url ? (
