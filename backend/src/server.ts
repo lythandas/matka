@@ -16,14 +16,14 @@ import { authenticate } from './auth'; // Import authenticate hook
 
 const fastify = Fastify({
   logger: {
-    level: 'debug',
+    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug', // Set logger level based on NODE_ENV
   },
   bodyLimit: 12 * 1024 * 1024,
 });
 
 // Register CORS plugin
 fastify.register(cors, {
-  origin: '*',
+  origin: '*', // CONSIDER: Restrict this to your specific frontend domain(s) in production
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 });
