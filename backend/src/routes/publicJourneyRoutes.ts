@@ -4,7 +4,7 @@ import { dbClient } from '../db';
 
 export default async function publicJourneyRoutes(fastify: FastifyInstance) {
   // Get a public journey by its public_link_id
-  fastify.get('/api/public-journeys/:publicLinkId', { // Added /api prefix here
+  fastify.get('/public-journeys/:publicLinkId', { // Removed /api prefix from here
     // Explicitly tell Fastify not to parse the body for this GET request,
     // even if a Content-Type header is present.
     schema: {
