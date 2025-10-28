@@ -107,3 +107,25 @@
   align-self: flex-start; /* Ensures it sticks to the top of its flex container */
   top: 64px; /* Height of the TopBar */
 }
+
+/* Custom class for the floating action button */
+.fab-button {
+  position: fixed;
+  bottom: 1.5rem; /* 24px */
+  right: 1.5rem; /* 24px */
+  z-index: 40; /* Ensure it's above most content */
+  height: 3.5rem; /* 56px */
+  width: 3.5rem; /* 56px */
+  border-radius: 9999px; /* Full rounded */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Shadow */
+  background-color: var(--primary); /* Use primary color */
+  color: var(--primary-foreground); /* Use primary foreground color */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.fab-button:hover {
+  background-color: hsl(var(--primary) / 0.9); /* Slightly darker on hover */
+}

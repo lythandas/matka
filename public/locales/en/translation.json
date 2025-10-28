@@ -290,7 +290,9 @@
     "failedToSaveDraft": "Failed to save draft.",
     "draftLoadedSuccessfully": "Draft '{{title}}' loaded successfully!",
     "draftDeletedSuccessfully": "Draft deleted successfully!",
-    "failedToFetchDrafts": "Failed to fetch drafts."
+    "failedToFetchDrafts": "Failed to fetch drafts.",
+    "createNewPost": "Create New Post",
+    "loadDraftNotImplemented": "Loading drafts directly into the form is not yet implemented."
   },
   "adminPage": {
     "adminDashboard": "Admin dashboard",

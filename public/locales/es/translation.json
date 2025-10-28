@@ -290,7 +290,9 @@
     "failedToSaveDraft": "Error al guardar el borrador.",
     "draftLoadedSuccessfully": "¡Borrador '{{title}}' cargado correctamente!",
     "draftDeletedSuccessfully": "¡Borrador eliminado correctamente!",
-    "failedToFetchDrafts": "Error al obtener los borradores."
+    "failedToFetchDrafts": "Error al obtener los borradores.",
+    "createNewPost": "Crear nueva publicación",
+    "loadDraftNotImplemented": "La carga de borradores directamente en el formulario aún no está implementada."
   },
   "adminPage": {
     "adminDashboard": "Panel de administración",

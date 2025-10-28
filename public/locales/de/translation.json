@@ -290,7 +290,9 @@
     "failedToSaveDraft": "Fehler beim Speichern des Entwurfs.",
     "draftLoadedSuccessfully": "Entwurf '{{title}}' erfolgreich geladen!",
     "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
-    "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe."
+    "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe.",
+    "createNewPost": "Neuen Beitrag erstellen",
+    "loadDraftNotImplemented": "Das Laden von Entwürfen direkt in das Formular ist noch nicht implementiert."
   },
   "adminPage": {
     "adminDashboard": "Admin-Dashboard",
