@@ -404,10 +404,10 @@ const Index = () => {
                                         </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                          <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
-                                        </AlertDialogHeader>
+                                        <AlertDialogTitle className="text-lg font-semibold mb-4">
+                                          {t('adminPage.areYouSure')}
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                           <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
@@ -468,7 +468,7 @@ const Index = () => {
                     })}
                   </div>
                 ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Changed here */}
+                  <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {displayedPosts.map((post, index) => (
                       <GridPostCard
                         key={post.id}
@@ -548,10 +548,10 @@ const Index = () => {
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                                  <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
-                                </AlertDialogHeader>
+                                <AlertDialogTitle className="text-lg font-semibold mb-4">
+                                  {t('adminPage.areYouSure')}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => handleDeletePost(draft.id, draft.journey_id, draft.user_id, true)}>
