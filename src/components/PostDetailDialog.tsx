@@ -93,87 +93,93 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         {/* Main content area, handles layout based on media presence */}
         <div className={cn(
           "flex flex-grow overflow-hidden",
-          hasMedia ? "gap-6" : "flex-col items-center" // gap-6 for two columns, flex-col items-center for one (to center w-4/5 content)
+          (hasMedia || hasCoordinates) ? "gap-6" : "flex-col" // gap-6 for two columns, flex-col for one
         )}>
-          {hasMedia && (
-            // Left Column: Media (w-4/5)
+          {/* Left Column: Media OR Map */}
+          {(hasMedia || hasCoordinates) && (
             <div className="w-4/5 flex flex-col items-center justify-center relative p-6 pt-4">
-              <div className="relative w-full h-full flex items-center justify-center">
-                {currentMedia?.type === 'image' && (
-                  <img
-                    ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                    src={currentMedia.urls.large || '/placeholder.svg'}
-                    alt={post.title || t('common.postImage')}
-                    className="max-w-full max-h-full object-contain rounded-md"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.svg';
-                      e.currentTarget.onerror = null;
-                      console.error(t('postDetailDialog.failedToLoadImage'), currentMedia.urls.large);
-                    }}
-                  />
-                )}
-                {currentMedia?.type === 'video' && (
-                  <video
-                    ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                    src={currentMedia.url}
-                    controls
-                    className="max-w-full max-h-full object-contain rounded-md"
-                  />
-                )}
+              {hasMedia ? (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  {currentMedia?.type === 'image' && (
+                    <img
+                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                      src={currentMedia.urls.large || '/placeholder.svg'}
+                      alt={post.title || t('common.postImage')}
+                      className="max-w-full max-h-full object-contain rounded-md"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                        e.currentTarget.onerror = null;
+                        console.error(t('postDetailDialog.failedToLoadImage'), currentMedia.urls.large);
+                      }}
+                    />
+                  )}
+                  {currentMedia?.type === 'video' && (
+                    <video
+                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                      src={currentMedia.url}
+                      controls
+                      className="max-w-full max-h-full object-contain rounded-md"
+                    />
+                  )}
 
-                {/* Button to ENTER fullscreen (only visible when NOT in fullscreen) */}
-                {document.fullscreenEnabled && currentMedia && !isMediaFullscreen && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                    onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
-                  >
-                    <Maximize className="h-4 w-4" />
-                  </Button>
-                )}
-
-                {mediaItems.length > 1 && (
-                  <>
+                  {/* Button to ENTER fullscreen (only visible when NOT in fullscreen) */}
+                  {document.fullscreenEnabled && currentMedia && !isMediaFullscreen && (
                     <Button
                       variant="outline"
                       size="icon"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                      onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
-                      disabled={isMediaFullscreen}
+                      className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <Maximize className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                      onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
-                      disabled={isMediaFullscreen}
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
-                      {mediaItems.map((_, idx) => (
-                        <span
-                          key={idx}
-                          className={cn(
-                            "h-2 w-2 rounded-full bg-white/50",
-                            idx === currentMediaIndex && "bg-white"
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+                  )}
+
+                  {mediaItems.length > 1 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
+                        disabled={isMediaFullscreen}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
+                        disabled={isMediaFullscreen}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+                        {mediaItems.map((_, idx) => (
+                          <span
+                            key={idx}
+                            className={cn(
+                              "h-2 w-2 rounded-full bg-white/50",
+                              idx === currentMediaIndex && "bg-white"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : ( // No media, but has coordinates
+                <div className="w-full h-full rounded-md overflow-hidden">
+                  <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Right Column / Single Column: Details */}
+          {/* Right Column: Details (Title, Author, Message) */}
           <div className={cn(
             "flex flex-col overflow-y-auto p-6 pt-4", // Consistent padding for details column
-            hasMedia ? "w-1/5" : (hasCoordinates ? "w-4/5 mx-auto" : "w-full") // Dynamic width based on content
+            (hasMedia || hasCoordinates) ? "w-1/5" : "w-full" // Dynamic width based on left column presence
           )}>
             <div className="flex items-center mb-4">
               <Avatar className="h-10 w-10 mr-3">
@@ -195,11 +201,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
               {post.message}
             </p>
-            {hasCoordinates && (
-              <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0 mt-auto">
-                <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
-              </div>
-            )}
+            {/* Map is now only in the left column if coordinates exist */}
           </div>
         </div>
 
