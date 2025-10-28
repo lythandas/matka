@@ -35,7 +35,7 @@ fastify.get('/health', async (request, reply) => {
 
 // 1. Register public API routes (no authentication required)
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
-fastify.register(publicJourneyRoutes, { prefix: '/api' }); // NEW: Public journey routes - REGISTERED WITH /api PREFIX
+fastify.register(publicJourneyRoutes, { prefix: '/api' }); // Public journey routes - REGISTERED WITH /api PREFIX
 
 // 2. Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
@@ -54,13 +54,19 @@ const uploadStaticOptions: FastifyStaticOptions = {
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 4. SPA fallback: Serve index.html for any unmatched route
-// This must be registered AFTER all other API routes to act as a catch-all for frontend routes.
+// 4. Serve static frontend assets (e.g., CSS, JS, images)
+// This should be registered before the catch-all route to serve actual files.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
-  fallback: 'index.html', // When a file is not found, fallback to index.html
-} as FastifyStaticOptions);
+  // Do NOT use fallback here, we'll handle it with a wildcard route
+});
+
+// 5. SPA fallback: Catch all other non-API routes and serve index.html
+// This must be registered LAST to act as a catch-all for frontend routes.
+fastify.get('/*', (request, reply) => {
+  reply.sendFile('index.html', path.join(__dirname, '../../frontend-dist'));
+});
 
 
 // Run the server
