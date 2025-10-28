@@ -24,7 +24,9 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
     return true; // No passphrase set, so access is granted
   };
 
-  fastify.get('/public/journeys/:id', async (request, reply) => {
+  // Routes are now defined without the '/journeys' prefix here.
+  // The full prefix '/api/public/journeys' will be applied in server.ts
+  fastify.get('/:id', async (request, reply) => {
     if (!isDbConnected) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
@@ -53,7 +55,7 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
     return journey;
   });
 
-  fastify.get('/public/journeys/by-name/:ownerUsername/:journeyName', async (request, reply) => {
+  fastify.get('/by-name/:ownerUsername/:journeyName', async (request, reply) => {
     if (!isDbConnected) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
@@ -84,7 +86,7 @@ export default async function publicJourneyApiRoutes(fastify: FastifyInstance) {
     return journey;
   });
 
-  fastify.get('/public/journeys/:id/posts', async (request, reply) => {
+  fastify.get('/:id/posts', async (request, reply) => {
     if (!isDbConnected) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }

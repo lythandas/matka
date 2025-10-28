@@ -36,19 +36,17 @@ fastify.get('/health', async (request, reply) => {
 // 1. Register all API routes (both public and protected) with the /api prefix.
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
 
-// Register all API routes (including public journey API routes) with a prefix.
-// The public journey API routes will handle their own authentication/passphrase logic.
-fastify.register(async (apiInstance) => {
-  // Public journey API routes (no preHandler hook here, they handle their own access)
-  apiInstance.register(publicJourneyApiRoutes);
+// Register public journey API routes with the full /api/public/journeys prefix
+fastify.register(publicJourneyApiRoutes, { prefix: '/api/public/journeys' });
 
-  // Protected API routes (apply authentication hook)
-  apiInstance.addHook('preHandler', authenticate);
-  apiInstance.register(protectedUserRoutes, { prefix: '/users' }); // Protected user routes (profile, admin user management)
-  apiInstance.register(journeyRoutes, { prefix: '/journeys' }); // Protected journey routes
-  apiInstance.register(postRoutes, { prefix: '/posts' }); // Protected post routes
-  apiInstance.register(mediaRoutes, { prefix: '/media' }); // Protected media upload route
-}, { prefix: '/api' }); // All these routes will be under /api
+// Register protected API routes with a prefix and apply authentication hook
+fastify.register(async (authenticatedInstance) => {
+  authenticatedInstance.addHook('preHandler', authenticate);
+  authenticatedInstance.register(protectedUserRoutes, { prefix: '/users' }); // Protected user routes (profile, admin user management)
+  authenticatedInstance.register(journeyRoutes, { prefix: '/journeys' }); // Protected journey routes
+  authenticatedInstance.register(postRoutes, { prefix: '/posts' }); // Protected post routes
+  authenticatedInstance.register(mediaRoutes, { prefix: '/media' }); // Protected media upload route
+}, { prefix: '/api' }); // All these routes will be under /api and authenticated
 
 // 2. Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
 const uploadStaticOptions: FastifyStaticOptions = {
