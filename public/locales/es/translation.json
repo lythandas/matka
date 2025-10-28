@@ -119,7 +119,9 @@
     "noPermissionChangePassphrase": "No tienes permiso para cambiar la frase de contraseña de este viaje.",
     "failedToUpdatePassphrase": "Error al actualizar la frase de contraseña.",
     "passphraseSetSuccessfully": "¡Frase de contraseña establecida correctamente!",
-    "passphraseClearedSuccessfully": "¡Frase de contraseña borrada correctamente!"
+    "passphraseClearedSuccessfully": "¡Frase de contraseña borrada correctamente!",
+    "authRequiredDeleteJourney": "Autenticación requerida o no autorizado para eliminar viajes.",
+    "journeyDeletedSuccessfully": "¡Viaje '{{journeyName}}' eliminado correctamente!"
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",
@@ -332,7 +334,9 @@
     "allowEditPosts": "Permitir al usuario editar publicaciones existentes en este viaje",
     "allowDeletePosts": "Permitir al usuario eliminar publicaciones de este viaje",
     "close": "Cerrar",
-    "renaming": "Renombrando..."
+    "renaming": "Renombrando...",
+    "deleteJourney": "Eliminar viaje",
+    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",

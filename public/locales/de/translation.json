@@ -119,7 +119,9 @@
     "noPermissionChangePassphrase": "Sie haben keine Berechtigung, die Passphrase für diese Reise zu ändern.",
     "failedToUpdatePassphrase": "Fehler beim Aktualisieren der Passphrase.",
     "passphraseSetSuccessfully": "Passphrase erfolgreich festgelegt!",
-    "passphraseClearedSuccessfully": "Passphrase erfolgreich gelöscht!"
+    "passphraseClearedSuccessfully": "Passphrase erfolgreich gelöscht!",
+    "authRequiredDeleteJourney": "Authentifizierung erforderlich oder nicht berechtigt, Reisen zu löschen.",
+    "journeyDeletedSuccessfully": "Reise '{{journeyName}}' erfolgreich gelöscht!"
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",
@@ -332,7 +334,9 @@
     "allowEditPosts": "Benutzer erlauben, bestehende Beiträge in dieser Reise zu bearbeiten",
     "allowDeletePosts": "Benutzer erlauben, Beiträge aus dieser Reise zu löschen",
     "close": "Schließen",
-    "renaming": "Wird umbenannt..."
+    "renaming": "Wird umbenannt...",
+    "deleteJourney": "Reise löschen",
+    "deleteJourneyDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird die Reise <span class='font-bold'>'{{journeyName}}'</span> und alle damit verbundenen Beiträge und Kollaborationsberechtigungen dauerhaft gelöscht."
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",

@@ -32,6 +32,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -49,11 +61,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const { t } = useTranslation(); // Initialize useTranslation
   const { token, user: currentUser } = useAuth();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
-  // Removed isPublic state
-  // Removed passphrase state
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
-  // Removed isTogglingPublic state
-  // Removed isUpdatingPassphrase state
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -64,10 +72,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [loadingSearch, setLoadingSearch] = useState<boolean>(false);
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
+  const [isDeletingJourney, setIsDeletingJourney] = useState<boolean>(false); // New state for deleting journey
 
   const debounceTimeoutRef = useRef<number | null>(null);
-
-  // Removed frontendBaseUrl and shareLink
 
   const fetchCollaborators = useCallback(async () => {
     if (!token || !journey?.id) return;
@@ -127,8 +134,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   useEffect(() => {
     if (isOpen && journey) {
       setJourneyName(journey.name);
-      // Removed setIsPublic(journey.is_public);
-      // Removed setPassphrase('');
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
@@ -192,10 +197,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setIsRenaming(false);
     }
   };
-
-  // Removed handleTogglePublic
-  // Removed handleUpdatePassphrase
-  // Removed handleCopyLink
 
   const handleAddCollaborator = async () => {
     if (!selectedUserToAdd || !token) {
@@ -320,9 +321,49 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
+  const handleDeleteJourney = async () => {
+    if (!token || !currentUser) {
+      showError(t('common.authRequiredDeleteJourney'));
+      return;
+    }
+
+    const isOwner = currentUser.id === journey.user_id;
+    const isAdmin = currentUser.isAdmin;
+
+    if (!isOwner && !isAdmin) {
+      showError(t('common.noPermissionDeleteJourney'));
+      return;
+    }
+
+    setIsDeletingJourney(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToDeleteJourney'));
+      }
+
+      showSuccess(t('common.journeyDeletedSuccessfully', { journeyName: journey.name }));
+      onJourneyUpdated(); // Notify parent to refresh journey list
+      onClose(); // Close the dialog
+    } catch (error: any) {
+      console.error('Error deleting journey:', error);
+      showError(error.message || t('common.failedToDeleteJourney'));
+    } finally {
+      setIsDeletingJourney(false);
+    }
+  };
+
   const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
   const canEditJourneyName = canManageJourney;
-  // Removed canTogglePublicStatus
+  const canDeleteThisJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -383,8 +424,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </Button>
             </div>
           </div>
-
-          {/* Removed Public Access Section */}
 
           {/* Add Collaborator Section with Autocomplete */}
           <div className="border rounded-md p-4">
@@ -578,8 +617,33 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             )}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+        <DialogFooter className="flex justify-between items-center">
+          {canDeleteThisJourney && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                  className="hover:ring-2 hover:ring-blue-500"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> {t('manageJourneyDialog.deleteJourney')}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                  <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('manageJourneyDialog.deleteJourneyDescription', { journeyName: journey.name }) }} />
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteJourney}>
+                    {t('adminPage.continue')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>

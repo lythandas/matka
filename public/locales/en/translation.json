@@ -119,7 +119,9 @@
     "noPermissionChangePassphrase": "You do not have permission to change the passphrase for this journey.",
     "failedToUpdatePassphrase": "Failed to update passphrase.",
     "passphraseSetSuccessfully": "Passphrase set successfully!",
-    "passphraseClearedSuccessfully": "Passphrase cleared successfully!"
+    "passphraseClearedSuccessfully": "Passphrase cleared successfully!",
+    "authRequiredDeleteJourney": "Authentication required or not authorized to delete journeys.",
+    "journeyDeletedSuccessfully": "Journey '{{journeyName}}' deleted successfully!"
   },
   "auth": {
     "loginToYourAccount": "Login to your account",
@@ -332,7 +334,9 @@
     "allowEditPosts": "Allow user to edit existing posts in this journey",
     "allowDeletePosts": "Allow user to delete posts from this journey",
     "close": "Close",
-    "renaming": "Renaming..."
+    "renaming": "Renaming...",
+    "deleteJourney": "Delete Journey",
+    "deleteJourneyDescription": "This action cannot be undone. This will permanently delete the journey <span class='font-bold'>'{{journeyName}}'</span> and all its associated posts and collaborator permissions."
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",

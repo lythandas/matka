@@ -119,7 +119,9 @@
     "noPermissionChangePassphrase": "Vous n'avez pas la permission de modifier la phrase secrète de ce voyage.",
     "failedToUpdatePassphrase": "Échec de la mise à jour de la phrase secrète.",
     "passphraseSetSuccessfully": "Phrase secrète définie avec succès !",
-    "passphraseClearedSuccessfully": "Phrase secrète effacée avec succès !"
+    "passphraseClearedSuccessfully": "Phrase secrète effacée avec succès !",
+    "authRequiredDeleteJourney": "Authentification requise ou non autorisé à supprimer des voyages.",
+    "journeyDeletedSuccessfully": "Voyage '{{journeyName}}' supprimé avec succès !"
   },
   "auth": {
     "loginToYourAccount": "Connectez-vous à votre compte",
@@ -332,7 +334,9 @@
     "allowEditPosts": "Permitir al usuario editar publicaciones existentes en este viaje",
     "allowDeletePosts": "Permitir al usuario eliminar publicaciones de este viaje",
     "close": "Cerrar",
-    "renaming": "Renombrando..."
+    "renaming": "Renombrando...",
+    "deleteJourney": "Supprimer le voyage",
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",
