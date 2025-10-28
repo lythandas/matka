@@ -134,7 +134,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     size="icon"
                     className={cn(
                       "bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                      isMediaFullscreen ? "fixed z-[1000] top-2 right-2" : "absolute bottom-2 right-2"
+                      isMediaFullscreen ? "fixed z-[1000] bottom-2 left-2" : "absolute bottom-2 right-2"
                     )}
                     onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
                   >
