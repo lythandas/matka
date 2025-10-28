@@ -225,6 +225,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({}), // Send an empty JSON object
       });
 
       if (!response.ok) {
