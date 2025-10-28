@@ -50,17 +50,16 @@ fastify.register(async (authenticatedInstance) => {
 const uploadStaticOptions: FastifyStaticOptions = {
   root: UPLOADS_DIR,
   prefix: '/uploads/',
-  decorateReply: false,
+  decorateReply: false, // No need for sendFile on this instance
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
 // 4. Serve static frontend assets (e.g., CSS, JS, images, index.html)
-// This will serve files that *actually exist* in frontend-dist.
-// It does NOT handle SPA fallback for non-existent files.
+// IMPORTANT: decorateReply is now true to enable reply.sendFile in the notFoundHandler
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
-  decorateReply: false, // Do not decorate reply for this static instance
+  decorateReply: true, // <--- Changed to true to enable reply.sendFile
 });
 
 // 5. SPA fallback: Catch all other GET requests that are not API or /uploads
@@ -68,6 +67,7 @@ fastify.register(fastifyStatic, {
 fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
   if (request.method === 'GET' && !request.url.startsWith('/api') && !request.url.startsWith('/uploads')) {
     // It's likely a frontend route, serve index.html
+    // reply.sendFile is now available because decorateReply was set to true
     reply.sendFile('index.html', path.join(__dirname, '../../frontend-dist'));
   } else {
     // It's a genuine 404 for an API route or an upload that doesn't exist
