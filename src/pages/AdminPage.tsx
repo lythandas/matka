@@ -29,11 +29,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
+import { useJourneys } from '@/contexts/JourneyContext'; // Import useJourneys
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
   const navigate = useNavigate();
   const { user: currentUser, token } = useAuth();
+  const { fetchJourneys: fetchAllJourneysForContext } = useJourneys(); // Get fetchJourneys from context
   const currentLocale = getDateFnsLocale();
 
   const [users, setUsers] = useState<User[]>([]);
@@ -160,6 +162,7 @@ const AdminPage: React.FC = () => {
 
   const handleJourneyUpdated = () => { // Callback for when a journey is updated in the dialog
     fetchJourneys(); // Re-fetch journeys to update the list
+    fetchAllJourneysForContext(); // Also update the context's journey list
   };
 
   const handleDeleteJourney = async (journeyId: string, journeyName: string) => { // New function to delete journey
@@ -184,6 +187,7 @@ const AdminPage: React.FC = () => {
 
       showSuccess(t('common.journeyDeletedSuccessfully', { journeyName })); // Translated success
       setJourneys((prev) => prev.filter((journey) => journey.id !== journeyId));
+      fetchAllJourneysForContext(); // <--- Call to update the context's journey list
     } catch (error: any) {
       console.error('Error deleting journey:', error);
       showError(error.message || t('common.failedToDeleteJourney')); // Translated error
