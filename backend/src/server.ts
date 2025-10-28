@@ -35,7 +35,7 @@ fastify.get('/health', async (request, reply) => {
 
 // 1. Register public API routes (no authentication required)
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
-fastify.register(publicJourneyRoutes, { prefix: '/api' }); // NEW: Public journey routes
+fastify.register(publicJourneyRoutes); // NEW: Public journey routes - REGISTERED WITHOUT PREFIX HERE
 
 // 2. Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
