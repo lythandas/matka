@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateUserDialog from '@/components/CreateUserDialog';
 import ResetPasswordDialog from '@/components/ResetPasswordDialog';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog'; // Import ManageJourneyDialog
-import { format } from 'date-fns';
+import { format } from 'date-fns'; // Ensure format is imported
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { API_BASE_URL } from '@/config/api';

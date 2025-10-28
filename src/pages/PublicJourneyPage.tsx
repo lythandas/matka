@@ -11,7 +11,7 @@ import MapComponent from '@/components/MapComponent';
 import GridPostCard from '@/components/GridPostCard';
 import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 import PostDetailDialog from '@/components/PostDetailDialog';
-import { format } from 'date-fns';
+import { format } from 'date-fns'; // Ensure format is imported
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';

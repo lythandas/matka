@@ -29,6 +29,7 @@ import { Post, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import SortToggle from '@/components/SortToggle';
+import { format } from 'date-fns'; // Ensure format is imported
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -527,7 +528,7 @@ const Index = () => {
                         <div>
                           <p className="font-semibold">{draft.title || draft.message.substring(0, 50) + (draft.message.length > 50 ? '...' : '') || t('indexPage.untitledDraft')}</p>
                           <p className="text-sm text-muted-foreground">
-                            {t('indexPage.lastSaved', { date: format(new Date(draft.created_at), 'PPP p', { locale: currentLocale }) })}
+                            {format(new Date(draft.created_at), 'PPP p', { locale: currentLocale })}
                           </p>
                         </div>
                         <div className="flex space-x-2">

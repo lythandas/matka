@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
 import { Post } from '@/types';
-import { format } from 'date-fns';
+import { format } from 'date-fns'; // Ensure format is imported
 import { Compass } from 'lucide-react';
 import MapComponent from './MapComponent';
 import { useTranslation } from 'react-i18next';

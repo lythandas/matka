@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Maximize, Minimize, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
-import { format } from 'date-fns';
+import { format } from 'date-fns'; // Ensure format is imported
 import MapComponent from './MapComponent';
 import { showError, showSuccess } from '@/utils/toast';
 import { cn } from '@/lib/utils';
