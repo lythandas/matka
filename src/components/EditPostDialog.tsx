@@ -252,7 +252,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           media_items: currentMediaItems.length > 0 ? currentMediaItems : null,
           coordinates: coordinates || null,
           created_at: postDate ? postDate.toISOString() : undefined,
-          is_draft: !publish, // Set is_draft based on whether we are publishing or just saving
+          is_draft: publish ? false : isDraft, // Corrected logic: if publishing, it's not a draft. Otherwise, use current draft status.
         }),
       });
 
