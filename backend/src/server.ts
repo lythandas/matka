@@ -1,4 +1,4 @@
-import Fastify, { FastifyPluginCallback } from 'fastify';
+import Fastify, { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic, { FastifyStaticOptions } from '@fastify/static';
 import path from 'path';
@@ -54,21 +54,26 @@ const uploadStaticOptions: FastifyStaticOptions = {
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 4. Serve static frontend assets and handle SPA fallback using rewrites
-// This must be registered LAST to act as a catch-all for frontend routes.
-// The 'rewrites' option is a powerful way to handle SPA routing.
+// 4. Serve static frontend assets (e.g., CSS, JS, images, index.html)
+// This will serve files that *actually exist* in frontend-dist.
+// It does NOT handle SPA fallback for non-existent files.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   decorateReply: false, // Do not decorate reply for this static instance
-  // Use rewrites to send all unmatched requests to index.html
-  rewrites: [{
-    from: '/*',
-    to: '/index.html'
-  }]
-} as FastifyStaticOptions); // Cast to FastifyStaticOptions to ensure 'rewrites' is recognized
+});
 
-// Removed setNotFoundHandler as rewrites should handle the SPA fallback.
+// 5. SPA fallback: Catch all other GET requests that are not API or /uploads
+// This must be registered LAST to act as a catch-all for frontend routes.
+fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
+  if (request.method === 'GET' && !request.url.startsWith('/api') && !request.url.startsWith('/uploads')) {
+    // It's likely a frontend route, serve index.html
+    reply.sendFile('index.html', path.join(__dirname, '../../frontend-dist'));
+  } else {
+    // It's a genuine 404 for an API route or an upload that doesn't exist
+    reply.code(404).send({ message: 'Route not found' });
+  }
+});
 
 
 // Run the server
