@@ -482,12 +482,12 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
         </Tabs>
-        <DialogFooter className="pt-4">
-          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
           {isDraft && canPublishPostUI && (
-            <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
+            <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -501,7 +501,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               )}
             </Button>
           )}
-          <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
             {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
