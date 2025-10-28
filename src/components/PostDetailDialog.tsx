@@ -128,17 +128,15 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                   />
                 )}
 
-                {document.fullscreenEnabled && currentMedia && (
+                {/* Button to ENTER fullscreen (only visible when NOT in fullscreen) */}
+                {document.fullscreenEnabled && currentMedia && !isMediaFullscreen && (
                   <Button
                     variant="outline"
                     size="icon"
-                    className={cn(
-                      "bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
-                      isMediaFullscreen ? "fixed z-[1000] bottom-2 left-2" : "absolute bottom-2 right-2"
-                    )}
+                    className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                     onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
                   >
-                    {isMediaFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    <Maximize className="h-4 w-4" />
                   </Button>
                 )}
 
@@ -211,6 +209,18 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </Button>
         )}
       </DialogContent>
+
+      {/* Button to EXIT fullscreen (only visible when IN fullscreen, fixed to viewport) */}
+      {document.fullscreenEnabled && currentMedia && isMediaFullscreen && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed z-[1000] bottom-2 left-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          onClick={() => handleToggleFullscreen(mediaRefs.current[currentMediaIndex])}
+        >
+          <Minimize className="h-4 w-4" />
+        </Button>
+      )}
     </Dialog>
   );
 };
