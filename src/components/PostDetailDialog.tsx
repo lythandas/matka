@@ -190,9 +190,9 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
             {canGoPrevious && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-white/80 text-gray-800 shadow-md hover:bg-white hover:text-gray-900 transition-colors"
                 onClick={onPrevious}
               >
                 <ChevronLeft className="h-7 w-7" />
@@ -200,9 +200,9 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             )}
             {canGoNext && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-black/50 text-white hover:bg-black/70 hover:text-white transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-white/80 text-gray-800 shadow-md hover:bg-white hover:text-gray-900 transition-colors"
                 onClick={onNext}
               >
                 <ChevronRight className="h-7 w-7" />
