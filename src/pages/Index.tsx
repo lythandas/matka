@@ -43,7 +43,7 @@ const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
-  const currentLocale = getDateFnsLocale();
+  const currentLocale = getDateFfnsLocale();
   const isMobile = useIsMobile(); // Use the mobile hook
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -608,7 +608,7 @@ const Index = () => {
       {/* Floating Action Button for Mobile */}
       {isMobile && isAuthenticated && selectedJourney && canCreatePostUI && (
         <Button
-          className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg bg-blue-600 hover:bg-blue-700 text-white z-40"
+          className="fab-button" // Applied the custom class here
           onClick={() => setIsCreatePostDialogOpen(true)}
           aria-label={t('indexPage.createNewPost')}
         >
