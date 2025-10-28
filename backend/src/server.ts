@@ -54,20 +54,17 @@ const uploadStaticOptions: FastifyStaticOptions = {
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 4. Serve static frontend assets (e.g., CSS, JS, images)
-// This should be registered before the catch-all route to serve actual files.
-// IMPORTANT: Do NOT use 'fallback' here. We'll handle the SPA fallback explicitly.
+// 4. Serve static frontend assets and handle SPA fallback
+// This must be registered LAST to act as a catch-all for frontend routes.
+// The 'fallback' option ensures that any unmatched GET request will serve index.html.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   decorateReply: false, // Do not decorate reply for this static instance
-});
+  fallback: 'index.html', // Crucial for SPA routing
+} as FastifyStaticOptions); // Cast to FastifyStaticOptions to ensure 'fallback' is recognized
 
-// 5. SPA fallback: Catch all other non-API routes and serve index.html
-// This must be registered LAST to act as a catch-all for frontend routes.
-fastify.get('/*', (request, reply) => {
-  reply.sendFile('index.html', path.join(__dirname, '../../frontend-dist'));
-});
+// Removed the explicit fastify.get('/*', ...) route as it's now fully handled by fastifyStatic's fallback.
 
 
 // Run the server
