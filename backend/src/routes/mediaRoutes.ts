@@ -34,7 +34,7 @@ export default async function mediaRoutes(fastify: FastifyInstance) {
       const buffer = Buffer.from(fileBase64, 'base64');
       await fs.writeFile(filePath, buffer);
     } catch (error: unknown) {
-      console.error('Error saving uploaded file:', error);
+      fastify.log.error(error, 'Error saving uploaded file:');
       return reply.code(500).send({ message: 'Failed to save uploaded file' });
     }
 
