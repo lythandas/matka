@@ -296,7 +296,7 @@ const Index = () => {
       <>
         {!isMobile && canCreatePostUI && ( // Render inline form on desktop if user can create posts
           <Card className="shadow-lg shadow-neon-blue mb-8">
-            <CardHeader className="flex flex-row items-center justify-end">
+            <CardHeader className="flex flex-row items-center justify-center">
               <CardTitle className="text-2xl font-bold">{t('indexPage.shareYourDay')}</CardTitle>
             </CardHeader>
             <CardContent>
