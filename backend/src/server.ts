@@ -1,6 +1,6 @@
 import Fastify, { FastifyPluginCallback } from 'fastify';
 import cors from '@fastify/cors';
-import fastifyStatic, { FastifyStaticOptions } from '@fastify/static'; // Ensure FastifyStaticOptions is imported
+import fastifyStatic, { FastifyStaticOptions } from '@fastify/static';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -35,16 +35,20 @@ fastify.get('/health', async (request, reply) => {
 
 // 1. Register all API routes (both public and protected) with the /api prefix.
 fastify.register(userRoutes, { prefix: '/api' }); // Public user routes (login, register, users/exists)
-fastify.register(publicJourneyApiRoutes, { prefix: '/api' }); // Public journey API routes
 
-// Register protected API routes with a prefix and apply authentication hook
-fastify.register(async (authenticatedInstance) => {
-  authenticatedInstance.addHook('preHandler', authenticate);
-  authenticatedInstance.register(protectedUserRoutes, { prefix: '/users' }); // Protected user routes (profile, admin user management)
-  authenticatedInstance.register(journeyRoutes, { prefix: '/journeys' }); // Protected journey routes
-  authenticatedInstance.register(postRoutes, { prefix: '/posts' }); // Protected post routes
-  authenticatedInstance.register(mediaRoutes, { prefix: '/media' }); // Protected media upload route
-}, { prefix: '/api' }); // All these routes will be under /api and authenticated
+// Register all API routes (including public journey API routes) with a prefix.
+// The public journey API routes will handle their own authentication/passphrase logic.
+fastify.register(async (apiInstance) => {
+  // Public journey API routes (no preHandler hook here, they handle their own access)
+  apiInstance.register(publicJourneyApiRoutes);
+
+  // Protected API routes (apply authentication hook)
+  apiInstance.addHook('preHandler', authenticate);
+  apiInstance.register(protectedUserRoutes, { prefix: '/users' }); // Protected user routes (profile, admin user management)
+  apiInstance.register(journeyRoutes, { prefix: '/journeys' }); // Protected journey routes
+  apiInstance.register(postRoutes, { prefix: '/posts' }); // Protected post routes
+  apiInstance.register(mediaRoutes, { prefix: '/media' }); // Protected media upload route
+}, { prefix: '/api' }); // All these routes will be under /api
 
 // 2. Register @fastify/static to serve uploaded files (e.g., /uploads/image.jpg)
 const uploadStaticOptions: FastifyStaticOptions = {
@@ -56,12 +60,11 @@ fastify.register(fastifyStatic, uploadStaticOptions);
 
 // 3. SPA fallback: Serve index.html for any unmatched route
 // This must be registered AFTER all other API routes to act as a catch-all for frontend routes.
-// Using a type assertion to explicitly tell TypeScript that these are FastifyStaticOptions.
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
   prefix: '/', // Serve from the root path
   fallback: 'index.html', // When a file is not found, fallback to index.html
-} as FastifyStaticOptions); // Explicit type assertion here
+} as FastifyStaticOptions);
 
 
 // Run the server
