@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Maximize, Minimize, ChevronLeft, ChevronRight, Compass } from 'lucide-react'; // Added Compass icon
+import { Maximize, Minimize, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError, showSuccess } from '@/utils/toast';
@@ -79,14 +79,25 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const mediaItems = post.media_items || [];
   const currentMedia = mediaItems[currentMediaIndex];
   const hasMedia = mediaItems.length > 0;
+  const hasCoordinates = !!post.coordinates;
+
+  // Determine the overall dialog width based on content
+  let dialogMaxWidthClass = "sm:max-w-[90vw] max-w-[98vw]"; // Default wide
+  if (!hasMedia && !hasCoordinates) {
+    dialogMaxWidthClass = "sm:max-w-[500px] max-w-[90vw]"; // Narrower for text-only
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[90vw] max-w-[98vw] max-h-[90vh] flex flex-col p-0"> {/* Increased width, removed default padding */}
-        <div className="flex flex-grow overflow-hidden p-6 pt-4 gap-6"> {/* Main content area for two columns */}
-          {/* Left Column: Media */}
-          {hasMedia ? (
-            <div className="w-4/5 flex flex-col items-center justify-center relative">
+      <DialogContent className={cn("max-h-[90vh] flex flex-col p-0", dialogMaxWidthClass)}>
+        {/* Main content area, handles layout based on media presence */}
+        <div className={cn(
+          "flex flex-grow overflow-hidden",
+          hasMedia ? "gap-6" : "flex-col items-center" // gap-6 for two columns, flex-col items-center for one (to center w-4/5 content)
+        )}>
+          {hasMedia && (
+            // Left Column: Media (w-4/5)
+            <div className="w-4/5 flex flex-col items-center justify-center relative p-6 pt-4">
               <div className="relative w-full h-full flex items-center justify-center">
                 {currentMedia?.type === 'image' && (
                   <img
@@ -157,12 +168,12 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 )}
               </div>
             </div>
-          ) : null}
+          )}
 
-          {/* Right Column: Details (Title, Author, Message, Map) */}
+          {/* Right Column / Single Column: Details */}
           <div className={cn(
-            "flex flex-col overflow-y-auto p-4",
-            hasMedia ? "w-1/5" : "w-full" // Adjust width based on media presence
+            "flex flex-col overflow-y-auto p-6 pt-4", // Consistent padding for details column
+            hasMedia ? "w-1/5" : (hasCoordinates ? "w-4/5 mx-auto" : "w-full") // Dynamic width based on content
           )}>
             <div className="flex items-center mb-4">
               <Avatar className="h-10 w-10 mr-3">
@@ -184,7 +195,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4">
               {post.message}
             </p>
-            {post.coordinates && (
+            {hasCoordinates && (
               <div className="w-full h-64 rounded-md overflow-hidden flex-shrink-0 mt-auto">
                 <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
               </div>
@@ -192,7 +203,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </div>
         </div>
 
-        {/* Post navigation buttons (outside two-column layout, relative to DialogContent) */}
+        {/* Post navigation buttons (outside main content, relative to DialogContent) */}
         {canGoPrevious && (
           <Button
             variant="outline"
