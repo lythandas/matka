@@ -4,7 +4,13 @@ import { dbClient } from '../db';
 
 export default async function publicJourneyRoutes(fastify: FastifyInstance) {
   // Get a public journey by its public_link_id
-  fastify.get('/public-journeys/:publicLinkId', async (request, reply) => {
+  fastify.get('/public-journeys/:publicLinkId', {
+    // Explicitly tell Fastify not to parse the body for this GET request,
+    // even if a Content-Type header is present.
+    schema: {
+      body: false,
+    }
+  }, async (request, reply) => {
     const { publicLinkId } = request.params as { publicLinkId: string };
 
     const journeyResult = await dbClient!.query(
