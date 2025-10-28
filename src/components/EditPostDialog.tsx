@@ -482,7 +482,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             )}
           </TabsContent>
         </Tabs>
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4">
+        <DialogFooter className="flex flex-wrap justify-end gap-2 pt-4">
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
