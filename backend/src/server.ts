@@ -54,6 +54,14 @@ fastify.register(fastifyStatic, {
   decorateReply: false,
 });
 
+// NEW: Register @fastify/static to serve frontend build assets
+// This must be registered BEFORE the wildcard route to ensure assets are served directly.
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../../frontend-dist'), // Path to your built frontend files
+  prefix: '/', // Serve from the root path
+  decorateReply: false, // Don't decorate reply, as we have a custom fallback
+});
+
 // 3. SPA fallback: Serve index.html for any unmatched route
 // This MUST be the ABSOLUTE LAST route registered to act as a catch-all for frontend routes.
 fastify.get('/*', async (request, reply) => {
