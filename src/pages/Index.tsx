@@ -43,7 +43,7 @@ const Index = () => {
   const { isAuthenticated, user, token } = useAuth();
   const { selectedJourney, loadingJourneys, journeys, fetchJourneys } = useJourneys();
   const { setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
-  const currentLocale = getDateFfnsLocale();
+  const currentLocale = getDateFnsLocale(); // Corrected function name
   const isMobile = useIsMobile(); // Use the mobile hook
 
   const [posts, setPosts] = useState<Post[]>([]);
