@@ -107,7 +107,7 @@ const Index = () => {
       }
       const data: Post[] = await response.json();
       setPosts(data);
-    } catch (error) => {
+    } catch (error: any) { // Corrected syntax here
       console.error('Error fetching posts:', error);
       showError(t('common.failedToLoadPosts'));
     } finally {
@@ -128,7 +128,7 @@ const Index = () => {
       }
       const data: Post[] = await response.json();
       setDrafts(data);
-    } catch (error) => {
+    } catch (error: any) { // Corrected syntax here
       console.error('Error fetching drafts:', error);
       showError(t('indexPage.failedToLoadDrafts'));
     } finally {
