@@ -111,8 +111,6 @@
 /* Custom class for the floating action button */
 .fab-button {
   position: fixed;
-  bottom: 1.5rem; /* 24px */
-  right: 1.5rem; /* 24px */
   z-index: 40; /* Ensure it's above most content */
   height: 3.5rem; /* 56px */
   width: 3.5rem; /* 56px */
@@ -123,6 +121,19 @@
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+  /* Mobile positioning (default) */
+  bottom: 1rem; /* 16px, slightly lower than 1.5rem to give more space */
+  left: 50%;
+  transform: translateX(-50%);
+
+  /* Desktop positioning (from sm breakpoint up) - keep it on the right */
+  @screen sm {
+    bottom: 1.5rem; /* 24px */
+    right: 1.5rem; /* 24px */
+    left: auto; /* Reset left for desktop */
+    transform: none; /* Reset transform for desktop */
+  }
 }
 
 .fab-button:hover {
