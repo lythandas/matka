@@ -112,7 +112,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     // A small delay can help if the container is still animating its size
     setTimeout(() => {
       currentMap.invalidateSize();
-    }, 0);
+    }, 200); // Increased delay to 200ms
 
 
     return cleanupMap;
