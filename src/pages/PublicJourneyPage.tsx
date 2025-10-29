@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ShineCard from '@/components/ShineCard';
 import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PUBLIC_JOURNEY_PASSPHRASE_SESSION_DURATION_SECONDS } from '@/config/constants'; // Import the new constant
@@ -359,7 +359,7 @@ const PublicJourneyPage: React.FC = () => {
           currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
           totalPosts={posts.length}
           onNext={handleNextPost}
-          onPrevious={handlePreviousPost}
+          onPrevious={handlePreviousPost} {/* Corrected here */}
           journey={journey}
         />
       )}
