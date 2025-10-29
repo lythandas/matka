@@ -357,7 +357,8 @@
     "updatePassphrase": "Update Passphrase",
     "setPassphrase": "Set Passphrase",
     "settingPassphrase": "Setting passphrase...",
-    "passphraseIsSet": "A passphrase is set for this journey."
+    "passphraseIsSet": "A passphrase is set for this journey.",
+    "clearPassphraseDescription": "This action cannot be undone. This will permanently remove passphrase protection for this journey."
   },
   "imageCropper": {
     "cropProfilePicture": "Crop Profile Picture",

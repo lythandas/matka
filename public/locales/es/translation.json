@@ -357,7 +357,8 @@
     "updatePassphrase": "Actualizar frase de contraseña",
     "setPassphrase": "Establecer frase de contraseña",
     "settingPassphrase": "Estableciendo frase de contraseña...",
-    "passphraseIsSet": "Se ha establecido una frase de contraseña para este viaje."
+    "passphraseIsSet": "Se ha establecido una frase de contraseña para este viaje.",
+    "clearPassphraseDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente la protección con frase de contraseña para este viaje."
   },
   "imageCropper": {
     "cropProfilePicture": "Recortar foto de perfil",

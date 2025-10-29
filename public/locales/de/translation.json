@@ -357,7 +357,8 @@
     "updatePassphrase": "Passphrase aktualisieren",
     "setPassphrase": "Passphrase festlegen",
     "settingPassphrase": "Passphrase wird festgelegt...",
-    "passphraseIsSet": "Eine Passphrase ist für diese Reise festgelegt."
+    "passphraseIsSet": "Eine Passphrase ist für diese Reise festgelegt.",
+    "clearPassphraseDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Passphrase-Schutz für diese Reise dauerhaft entfernt."
   },
   "imageCropper": {
     "cropProfilePicture": "Profilbild zuschneiden",
