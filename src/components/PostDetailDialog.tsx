@@ -66,7 +66,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={cn("max-h-[90vh] flex flex-col p-4", dialogMaxWidthClass)}>
+      <DialogContent className={cn("max-h-[90vh] flex flex-col p-4 relative", dialogMaxWidthClass)}> {/* Added relative here */}
         <DialogHeader className="pb-4">
           <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
           <DialogDescription>
@@ -199,7 +199,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              className="absolute -left-12 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
               onClick={onPrevious}
               disabled={currentIndex === 0}
               aria-label={t('postDetailDialog.previousPost')}
@@ -209,7 +209,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              className="absolute -right-12 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
               onClick={onNext}
               disabled={currentIndex === totalPosts - 1}
               aria-label={t('postDetailDialog.nextPost')}
