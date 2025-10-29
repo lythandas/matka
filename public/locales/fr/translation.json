@@ -221,10 +221,10 @@
     "titlePlaceholder": "Ajouter un titre (facultatif)",
     "message": "Message",
     "messagePlaceholder": "Qu'avez-vous en tête aujourd'hui ?",
-    "postDate": "Fecha de publicación",
+    "postDate": "Date de publication",
     "media": "Médias",
     "location": "Localisation",
-    "uploadMedia": "Télécharger des images ou des vidéos (Máx. {{maxSize}}MB por archivo)",
+    "uploadMedia": "Télécharger des images ou des vidéos (Max {{maxSize}}Mo par fichier)",
     "changeAddMedia": "Modifier/Ajouter des médias",
     "chooseMedia": "Choisir des médias",
     "uploadingMedia": "Téléchargement...",
@@ -321,7 +321,7 @@
     "public": "Public",
     "manageJourney": "Gérer le voyage",
     "deleteJourney": "Supprimer le voyage",
-    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados."
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées."
   },
   "notFoundPage": {
     "oopsPageNotFound": "Oups ! Page non trouvée",
@@ -346,7 +346,7 @@
     "close": "Fermer",
     "renaming": "Renommage...",
     "deleteJourney": "Supprimer le voyage",
-    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados.",
+    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées.",
     "publicSharing": "Partage public",
     "makeJourneyPublic": "Rendre le voyage public",
     "publicLink": "Lien public",
@@ -365,34 +365,34 @@
     "cropProfilePicture": "Recadrer la photo de profil",
     "adjustImageInstructions": "Ajustez l'image pour qu'elle s'adapte à la zone de recadrage circulaire. Utilisez le curseur pour faire zoomer.",
     "zoom": "Zoom",
-    "apply": "Aplicar",
-    "applying": "Aplicando...",
-    "noCropSelected": "No se ha seleccionado área de recorte.",
-    "failedToCropImage": "Error al recortar la imagen.",
-    "errorCroppingImage": "Error al recortar la imagen."
+    "apply": "Appliquer",
+    "applying": "Application...",
+    "noCropSelected": "Aucune zone de recadrage sélectionnée.",
+    "failedToCropImage": "Échec du recadrage de l'image.",
+    "errorCroppingImage": "Erreur lors du recadrage de l'image."
   },
   "scrollToTopButton": {
     "label": "Faire défiler vers le haut"
   },
   "publicJourneyPage": {
-    "invalidLink": "Enlace de viaje público no válido.",
-    "failedToLoadJourney": "Error al cargar el viaje público.",
-    "loadingJourney": "Cargando viaje público...",
-    "journeyNotFound": "Viaje público no encontrado",
-    "checkLink": "Por favor, comprueba el enlace e inténtalo de nuevo.",
-    "byOwner": "Por {{owner}}",
-    "noPostsYet": "¡Todavía no hay publicaciones en este viaje!",
-    "ownerHasNotAddedPosts": "El propietario del viaje aún no ha añadido ninguna publicación a este viaje público.",
-    "exploreMap": "Explorar ubicaciones de publicaciones en el mapa.",
-    "journeyProtected": "Viaje protegido",
-    "enterPassphrase": "Por favor, introduce la frase de contraseña para acceder a este viaje.",
-    "passphrasePlaceholder": "Introducir frase de contraseña",
-    "incorrectPassphrase": "Frase de contraseña incorrecta.",
-    "verifying": "Verificando...",
-    "accessJourney": "Acceder al viaje",
-    "passphraseProtected": "Protegido con frase de contraseña"
+    "invalidLink": "Lien de voyage public non valide.",
+    "failedToLoadJourney": "Échec du chargement du voyage public.",
+    "loadingJourney": "Chargement du voyage public...",
+    "journeyNotFound": "Voyage public non trouvé",
+    "checkLink": "Veuillez vérifier le lien et essayer à nouveau.",
+    "byOwner": "Par {{owner}}",
+    "noPostsYet": "Aucune publication dans ce voyage pour le moment !",
+    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
+    "exploreMap": "Explorez les positions des publications sur la carte.",
+    "journeyProtected": "Voyage protégé",
+    "enterPassphrase": "Veuillez entrer le mot de passe pour accéder à ce voyage.",
+    "passphrasePlaceholder": "Entrer le mot de passe",
+    "incorrectPassphrase": "Mot de passe incorrect.",
+    "verifying": "Vérification...",
+    "accessJourney": "Accéder au voyage",
+    "passphraseProtected": "Protégé par mot de passe"
   },
   "createPostDialog": {
-    "description": "Crea una nueva publicación para tu viaje seleccionado."
+    "description": "Créez une nouvelle publication pour votre voyage sélectionné."
   }
 }
