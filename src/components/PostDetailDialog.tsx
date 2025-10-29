@@ -56,23 +56,15 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   const dialogMaxWidthClass = "sm:max-w-[90vw] max-w-[98vw]";
 
-  // Add a console log here to confirm this part of the component is reached
   console.log(`[PostDetailDialog] Inside return statement. isOpen: ${isOpen}`);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "max-h-[90vh] flex flex-col p-4 relative bg-background shadow-lg min-h-[300px] z-50", // Added z-50
+        "max-h-[90vh] flex flex-col p-4 relative shadow-lg min-h-[300px] z-50",
+        "bg-purple-500 text-white w-full h-full", // AGGRESSIVE DEBUGGING STYLES: Bright purple background, full width/height
         dialogMaxWidthClass
       )}>
-        {/* TEMPORARY DEBUGGING DIV - REMOVE LATER */}
-        {isOpen && (
-          <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-[100] text-white text-2xl font-bold">
-            DIALOG IS OPEN!
-          </div>
-        )}
-        {/* END TEMPORARY DEBUGGING DIV */}
-
         <DialogHeader className="pb-4">
           <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
           <DialogDescription>
