@@ -105,10 +105,27 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "flex flex-col p-0", // Base is column, no padding on content itself
+        "relative flex flex-col p-0", // Added 'relative' here for positioning navigation buttons
         isFullScreen ? "w-screen h-screen max-w-none max-h-none" : "sm:max-w-[90vw] max-w-[98vw] h-[90vh]",
         "lg:flex-row" // On large screens, make it a row
       )}>
+        {/* Post Navigation - Previous (Desktop only) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrevious}
+          disabled={currentIndex === 0}
+          className={cn(
+            "absolute left-2 top-1/2 -translate-y-1/2 z-50", // Higher z-index
+            "bg-white/70 dark:bg-gray-900/70 rounded-full",
+            "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+            "hidden lg:flex" // Only show on large screens
+          )}
+          aria-label={t('postDetailDialog.previousPost')}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
+
         {/* Media Column (Left on large screens, top on small screens) */}
         <div
           ref={mediaRef}
@@ -197,7 +214,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
         )}>
           <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
-            {/* Removed DialogTitle and DialogDescription */}
+            {/* DialogTitle and DialogDescription remain removed as per previous request */}
           </DialogHeader>
 
           <div className="flex items-center mb-4">
@@ -236,6 +253,23 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             </div>
           )}
         </div>
+
+        {/* Post Navigation - Next (Desktop only) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNext}
+          disabled={currentIndex === totalPosts - 1}
+          className={cn(
+            "absolute right-2 top-1/2 -translate-y-1/2 z-50", // Higher z-index
+            "bg-white/70 dark:bg-gray-900/70 rounded-full",
+            "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit",
+            "hidden lg:flex" // Only show on large screens
+          )}
+          aria-label={t('postDetailDialog.nextPost')}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </Button>
       </DialogContent>
     </Dialog>
   );
