@@ -494,13 +494,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
             <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('editPostDialog.publishing')}
+                  {isMobile ? null : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <span>{t('editPostDialog.publishing')}</span>
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
-                  {t('editPostDialog.publishPost')}
+                  {isMobile ? null : <Send className="mr-2 h-4 w-4" />}
+                  <span>{t('editPostDialog.publishPost')}</span>
                 </>
               )}
             </Button>
@@ -508,13 +508,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
             {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('editPostDialog.saving')}
+                {isMobile ? null : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <span>{t('editPostDialog.saving')}</span>
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                {t('common.saveChanges')}
+                {isMobile ? null : <Save className="mr-2 h-4 w-4" />}
+                <span>{t('common.saveChanges')}</span>
               </>
             )}
           </Button>
