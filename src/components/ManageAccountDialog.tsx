@@ -207,7 +207,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   const currentImageSrc = localPreviewUrl || profileImageUrl;
 
   return (
-    <>
+    <React.Fragment>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
           <DialogHeader>
@@ -216,8 +216,8 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
               {t('manageAccountDialog.updatePersonalInfo')}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto p-4 space-y-4"> {/* Added space-y-4 here */}
-            <div className="flex flex-col items-center gap-4"> {/* Removed mb-4 from here */}
+          <div className="flex-grow overflow-y-auto p-4 space-y-4">
+            <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
                 {currentImageSrc ? (
                   <AvatarImage src={currentImageSrc} alt={currentUser.name || currentUser.username} />
@@ -347,6 +347,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
 
       {imageToCrop && (
         <ImageCropper
@@ -360,7 +361,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
           onCropComplete={handleCroppedImageUpload}
         />
       )}
-    </>
+    </React.Fragment>
   );
 };
 

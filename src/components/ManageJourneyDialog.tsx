@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useIsMobile } from '@/hooks/use-mobile'; // Corrected import path
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -586,8 +586,11 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 ) : (
                   <>
                     <Pencil className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                    {!isMobile && t('manageJourneyDialog.saveJourneyName')}
-                    {isMobile && <span className="sr-only">{t('manageJourneyDialog.saveJourneyName')}</span>}
+                    {isMobile ? (
+                      <span className="sr-only">{t('manageJourneyDialog.saveJourneyName')}</span>
+                    ) : (
+                      t('manageJourneyDialog.saveJourneyName')
+                    )}
                   </>
                 )}
               </Button>
@@ -681,8 +684,11 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         ) : (
                           <>
                             <Lock className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                            {!isMobile && (hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}
-                            {isMobile && <span className="sr-only">{(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}</span>}
+                            {isMobile ? (
+                              <span className="sr-only">{(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}</span>
+                            ) : (
+                              (hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))
+                            )}
                           </>
                         )}
                       </Button>
@@ -759,8 +765,11 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   ) : (
                     <>
                       <Plus className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                      {!isMobile && t('manageJourneyDialog.addCollaborator')}
-                      {isMobile && <span className="sr-only">{t('manageJourneyDialog.addCollaborator')}</span>}
+                      {isMobile ? (
+                        <span className="sr-only">{t('manageJourneyDialog.addCollaborator')}</span>
+                      ) : (
+                        t('manageJourneyDialog.addCollaborator')
+                      )}
                     </>
                   )}
                 </Button>
