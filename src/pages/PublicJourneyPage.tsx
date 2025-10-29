@@ -150,13 +150,11 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handlePostClick = useCallback((post: Post, index: number) => {
-    if (isMobile) {
-      return;
-    }
+    // Removed the isMobile check here
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
-  }, [isMobile]);
+  }, []); // Dependencies: isMobile removed
 
   const handleNextPost = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
