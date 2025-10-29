@@ -31,7 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from '@/lib/utils';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -58,19 +58,19 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   journey,
   onJourneyUpdated,
 }) => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const { token, user: currentUser } = useAuth();
-  const isMobile = useIsMobile(); // Use the mobile hook
+  const isMobile = useIsMobile();
   const [journeyName, setJourneyName] = useState<string>(journey.name);
   const [isRenaming, setIsRenaming] = useState<boolean>(false);
 
-  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public); // State for public status
-  const [publicLinkId, setPublicLinkId] = useState<string | undefined>(journey.public_link_id); // State for public link ID
-  const [hasPassphrase, setHasPassphrase] = useState<boolean>(journey.has_passphrase || false); // New state for passphrase existence
-  const [passphrase, setPassphrase] = useState<string>(''); // New state for setting passphrase
+  const [isPublic, setIsPublic] = useState<boolean>(journey.is_public);
+  const [publicLinkId, setPublicLinkId] = useState<string | undefined>(journey.public_link_id);
+  const [hasPassphrase, setHasPassphrase] = useState<boolean>(journey.has_passphrase || false);
+  const [passphrase, setPassphrase] = useState<string>('');
   const [isUpdatingPublicStatus, setIsUpdatingPublicStatus] = useState<boolean>(false);
   const [isSettingPassphrase, setIsSettingPassphrase] = useState<boolean>(false);
-  const [isClearPassphraseConfirmOpen, setIsClearPassphraseConfirmOpen] = useState<boolean>(false); // New state for passphrase clear confirmation
+  const [isClearPassphraseConfirmOpen, setIsClearPassphraseConfirmOpen] = useState<boolean>(false);
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -99,13 +99,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           setCollaborators([]);
           return;
         }
-        throw new Error(t('common.failedToFetchJourneyCollaborators')); // Translated error
+        throw new Error(t('common.failedToFetchJourneyCollaborators'));
       }
       const data: JourneyCollaborator[] = await response.json();
       setCollaborators(data);
     } catch (error) {
       console.error('Error fetching journey collaborators:', error);
-      showError(t('common.failedToLoadJourneyCollaborators')); // Translated error
+      showError(t('common.failedToLoadJourneyCollaborators'));
     } finally {
       setLoadingCollaborators(false);
     }
@@ -124,7 +124,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
       });
       if (!response.ok) {
-        throw new Error(t('common.failedToSearchUsers')); // Translated error
+        throw new Error(t('common.failedToSearchUsers'));
       }
       const data: User[] = await response.json();
       const filteredData = data.filter(u =>
@@ -133,7 +133,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSearchResults(filteredData);
     } catch (error: any) {
       console.error('Error searching users:', error);
-      showError(t('common.failedToSearchForUsers')); // Translated error
+      showError(t('common.failedToSearchForUsers'));
       setSearchResults([]);
     } finally {
       setLoadingSearch(false);
@@ -145,13 +145,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setJourneyName(journey.name);
       setIsPublic(journey.is_public);
       setPublicLinkId(journey.public_link_id);
-      setHasPassphrase(journey.has_passphrase || false); // Initialize hasPassphrase
-      setPassphrase(''); // Clear passphrase input
+      setHasPassphrase(journey.has_passphrase || false);
+      setPassphrase('');
       fetchCollaborators();
       setSearchUsername('');
       setSearchResults([]);
       setSelectedUserToAdd(null);
-      setIsClearPassphraseConfirmOpen(false); // Close confirmation dialog on dialog open
+      setIsClearPassphraseConfirmOpen(false);
     }
   }, [isOpen, journey, fetchCollaborators]);
 
@@ -172,17 +172,17 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleRenameJourney = async () => {
     if (!journeyName.trim()) {
-      showError(t('common.journeyNameCannotBeEmpty')); // Translated error
+      showError(t('common.journeyNameCannotBeEmpty'));
       return;
     }
     if (!token || !currentUser) {
-      showError(t('common.authRequiredUpdateJourney')); // Translated error
+      showError(t('common.authRequiredUpdateJourney'));
       return;
     }
 
     const canEditJourneyName = currentUser.id === journey.user_id || currentUser.isAdmin;
     if (!canEditJourneyName) {
-      showError(t('common.noPermissionEditJourney')); // Translated error
+      showError(t('common.noPermissionEditJourney'));
       return;
     }
 
@@ -199,14 +199,14 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToUpdateJourney')); // Translated error
+        throw new Error(errorData.message || t('common.failedToUpdateJourney'));
       }
 
-      showSuccess(t('common.journeyRenamedSuccessfully', { journeyName })); // Translated success
+      showSuccess(t('common.journeyRenamedSuccessfully', { journeyName }));
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error renaming journey:', error);
-      showError(error.message || t('common.failedToRenameJourney')); // Translated error
+      showError(error.message || t('common.failedToRenameJourney'));
     } finally {
       setIsRenaming(false);
     }
@@ -228,7 +228,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     try {
       const endpoint = checked ? `${API_BASE_URL}/journeys/${journey.id}/publish` : `${API_BASE_URL}/journeys/${journey.id}/unpublish`;
       
-      // Ensure a non-empty JSON body is always sent for POST requests with application/json
       const requestBody = JSON.stringify({ dummy: true }); 
 
       const response = await fetch(endpoint, {
@@ -248,7 +247,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const updatedJourney: Journey = await response.json();
       setIsPublic(updatedJourney.is_public);
       setPublicLinkId(updatedJourney.public_link_id);
-      setHasPassphrase(updatedJourney.has_passphrase || false); // Update passphrase status
+      setHasPassphrase(updatedJourney.has_passphrase || false);
       showSuccess(t('common.journeyPublicStatusUpdated', { status: updatedJourney.is_public ? t('common.public') : t('common.private') }));
       onJourneyUpdated();
     } catch (error: any) {
@@ -328,7 +327,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ dummy: true }), // Ensure non-empty body
+        body: JSON.stringify({ dummy: true }),
       });
 
       if (!response.ok) {
@@ -363,13 +362,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   const handleAddCollaborator = async () => {
     if (!selectedUserToAdd || !token) {
-      showError(t('common.selectUserToAddCollaborator')); // Translated error
+      showError(t('common.selectUserToAddCollaborator'));
       return;
     }
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError(t('common.noPermissionAddCollaborators')); // Translated error
+      showError(t('common.noPermissionAddCollaborators'));
       return;
     }
 
@@ -383,16 +382,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
         },
         body: JSON.stringify({
           username: selectedUserToAdd.username,
-          // can_read_posts is implicitly true and handled by backend
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToAddCollaborator')); // Translated error
+        throw new Error(errorData.message || t('common.failedToAddCollaborator'));
       }
 
-      showSuccess(t('common.collaboratorAddedSuccessfully', { username: selectedUserToAdd.username })); // Translated success
+      showSuccess(t('common.collaboratorAddedSuccessfully', { username: selectedUserToAdd.username }));
       fetchCollaborators();
       onJourneyUpdated();
       setSearchUsername('');
@@ -400,7 +398,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSelectedUserToAdd(null);
     } catch (error: any) {
       console.error('Error adding collaborator:', error);
-      showError(error.message || t('common.failedToAddCollaborator')); // Translated error
+      showError(error.message || t('common.failedToAddCollaborator'));
     } finally {
       setIsAddingCollaborator(false);
     }
@@ -414,7 +412,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError(t('common.noPermissionUpdateCollaboratorPermissions')); // Translated error
+      showError(t('common.noPermissionUpdateCollaboratorPermissions'));
       return;
     }
 
@@ -430,21 +428,20 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           can_publish_posts: permissions.can_publish_posts,
           can_modify_post: permissions.can_modify_post,
           can_delete_posts: permissions.can_delete_posts,
-          // can_read_posts is implicitly true and not sent for update
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToUpdateCollaboratorPermissions')); // Translated error
+        throw new Error(errorData.message || t('common.failedToUpdateCollaboratorPermissions'));
       }
 
-      showSuccess(t('common.permissionsUpdatedSuccessfully')); // Translated success
+      showSuccess(t('common.permissionsUpdatedSuccessfully'));
       fetchCollaborators();
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error updating collaborator permissions:', error);
-      showError(error.message || t('common.failedToUpdateCollaboratorPermissions')); // Translated error
+      showError(error.message || t('common.failedToUpdateCollaboratorPermissions'));
     } finally {
       setIsUpdatingCollaborator(false);
     }
@@ -455,7 +452,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
     const canManageJourney = currentUser?.id === journey.user_id || currentUser?.isAdmin;
     if (!canManageJourney) {
-      showError(t('common.noPermissionRemoveCollaborators')); // Translated error
+      showError(t('common.noPermissionRemoveCollaborators'));
       return;
     }
 
@@ -471,15 +468,15 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || t('common.failedToRemoveCollaborator')); // Translated error
+        throw new Error(errorData.message || t('common.failedToRemoveCollaborator'));
       }
 
-      showSuccess(t('common.collaboratorRemovedSuccessfully', { username })); // Translated success
+      showSuccess(t('common.collaboratorRemovedSuccessfully', { username }));
       fetchCollaborators();
       onJourneyUpdated();
     } catch (error: any) {
       console.error('Error removing collaborator:', error);
-      showError(error.message || t('common.failedToRemoveCollaborator')); // Translated error
+      showError(error.message || t('common.failedToRemoveCollaborator'));
     } finally {
       setIsUpdatingCollaborator(false);
     }
@@ -515,8 +512,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       }
 
       showSuccess(t('common.journeyDeletedSuccessfully', { journeyName: journey.name }));
-      onJourneyUpdated(); // Notify parent to refresh journey list
-      onClose(); // Close the dialog
+      onJourneyUpdated();
+      onClose();
     } catch (error: any) {
       console.error('Error deleting journey:', error);
       showError(error.message || t('common.failedToDeleteJourney'));
@@ -647,9 +644,9 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       id="passphrase-toggle"
                       checked={hasPassphrase}
                       onCheckedChange={(checked) => {
-                        if (!checked) { // User wants to turn OFF passphrase
-                          setIsClearPassphraseConfirmOpen(true); // Open confirmation dialog
-                        } else { // User wants to turn ON passphrase (enable input)
+                        if (!checked) {
+                          setIsClearPassphraseConfirmOpen(true);
+                        } else {
                           setHasPassphrase(true);
                         }
                       }}
@@ -675,12 +672,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         {isSettingPassphrase ? (
                           <>
                             <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                            {t('manageJourneyDialog.settingPassphrase')}
+                            {isMobile ? null : t('manageJourneyDialog.settingPassphrase')}
                           </>
                         ) : (
                           <>
-                            {!isMobile && <Lock className="mr-2 h-4 w-4" />}
-                            {(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}
+                            <Lock className={cn("h-4 w-4", !isMobile && "mr-2")} />
+                            {isMobile ? null : (hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}
                           </>
                         )}
                       </Button>
@@ -806,7 +803,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           onValueChange={(newValues: string[]) => {
                             handleUpdateCollaboratorPermissions(collab.user_id, {
                               ...collab,
-                              can_read_posts: true, // Always true for collaborators
+                              can_read_posts: true,
                               can_publish_posts: newValues.includes('publish'),
                               can_modify_post: newValues.includes('modify'),
                               can_delete_posts: newValues.includes('delete'),
@@ -938,8 +935,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsClearPassphraseConfirmOpen(false)}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
-              handleClearPassphrase(); // This will also set hasPassphrase to false and close the dialog
-              setIsClearPassphraseConfirmOpen(false); // Ensure dialog closes
+              handleClearPassphrase();
+              setIsClearPassphraseConfirmOpen(false);
             }}>
               {t('adminPage.continue')}
             </AlertDialogAction>
