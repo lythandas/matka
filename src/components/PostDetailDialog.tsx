@@ -197,10 +197,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
         )}>
           <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
-            <DialogTitle className="text-xl font-bold">{t('postDetailDialog.postDetails')}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {post.title || post.message.substring(0, 100) + '...'}
-            </DialogDescription>
+            {/* Removed DialogTitle and DialogDescription */}
           </DialogHeader>
 
           <div className="flex items-center mb-4">
