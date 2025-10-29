@@ -19,6 +19,7 @@ interface MapComponentProps {
   zoom?: number;
   className?: string;
   onMarkerClick?: (post: Post, index: number) => void; // Callback for marker clicks
+  mapRefreshKey?: number; // New prop to force map refresh
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({
@@ -27,6 +28,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   zoom = 7, // Changed default zoom from 14 to 7 to approximate 1cm = 50km
   className,
   onMarkerClick,
+  mapRefreshKey = 0, // Default to 0
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null); // Corrected initialization
   const mapRef = useRef<L.Map | null>(null);
@@ -116,7 +118,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
 
     return cleanupMap;
-  }, [posts, coordinates, zoom, onMarkerClick]);
+  }, [posts, coordinates, zoom, onMarkerClick, mapRefreshKey]); // Added mapRefreshKey to dependencies
 
   return (
     <div ref={mapContainerRef} className={`w-full h-64 rounded-md relative overflow-hidden z-0 ${className}`} />

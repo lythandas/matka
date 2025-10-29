@@ -66,6 +66,7 @@ const Index = () => {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState<boolean>(false); // State for the new post dialog
+  const [mapRefreshKey, setMapRefreshKey] = useState(0); // New state to force map refresh
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
@@ -242,6 +243,7 @@ const Index = () => {
     setIsDetailDialogOpen(false);
     setSelectedPostForDetail(null);
     setSelectedPostIndex(null);
+    setMapRefreshKey(prev => prev + 1); // Increment key to force map refresh
   };
 
   const handleEditPost = (post: Post) => {
@@ -493,6 +495,7 @@ const Index = () => {
                         onMarkerClick={handleSelectPostFromMap}
                         className="w-full h-full"
                         zoom={7}
+                        mapRefreshKey={mapRefreshKey} // Pass the new key here
                       />
                     </div>
                   ) : (
