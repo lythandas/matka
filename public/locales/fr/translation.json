@@ -316,10 +316,10 @@
     "areYouSure": "Êtes-vous absolument sûr ?",
     "deleteUserDescription": "Cette action est irréversible. Cela supprimera définitivement l'utilisateur <span class='font-bold'>@{{username}}</span> et tous ses voyages, publications et collaborations associés.",
     "continue": "Continuer",
-    "manageJourneys": "Voyages",
+    "manageJourneys": "Viajes",
     "loadingJourneys": "Chargement des voyages...",
     "journeyName": "Nom du voyage",
-    "owner": "Propriétaire",
+    "owner": "Propiétaire",
     "public": "Public",
     "manageJourney": "Gérer le voyage",
     "deleteJourney": "Supprimer le voyage",
@@ -340,7 +340,7 @@
     "searchUsernameToAdd": "Rechercher un nom d'utilisateur à ajouter...",
     "addingCollaborator": "Ajout de <span class='font-bold text-primary'>{{username}}</span> en tant que collaborateur. Il pourra lire et publier des publications sur ce voyage par défaut.",
     "addCollaborator": "Ajouter un collaborateur",
-    "currentCollaborators": "Collaborateurs actuels ({{count}})",
+    "currentCollaborators": "Colaboradores actuales ({{count}})",
     "noCollaboratorsAdded": "Aucun collaborateur ajouté pour le moment.",
     "allowCreatePosts": "Autoriser l'utilisateur à créer de nouvelles publications dans ce voyage",
     "allowEditPosts": "Autoriser l'utilisateur à modifier les publications existantes dans ce voyage",
@@ -396,5 +396,10 @@
   },
   "createPostDialog": {
     "description": "Créez une nouvelle publication pour votre voyage sélectionné."
+  },
+  "testDialog": {
+    "title": "Boîte de dialogue de test",
+    "description": "Ceci est une boîte de dialogue de test pour vérifier si le composant Dialog est rendu.",
+    "message": "Si vous voyez ceci, le composant Dialog fonctionne !"
   }
 }

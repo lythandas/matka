@@ -396,5 +396,10 @@
   },
   "createPostDialog": {
     "description": "Erstellen Sie einen neuen Beitrag für Ihre ausgewählte Reise."
+  },
+  "testDialog": {
+    "title": "Test-Dialog",
+    "description": "Dies ist ein Test-Dialog, um zu überprüfen, ob die Dialog-Komponente gerendert wird.",
+    "message": "Wenn Sie dies sehen, funktioniert die Dialog-Komponente!"
   }
 }

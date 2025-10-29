@@ -396,5 +396,10 @@
   },
   "createPostDialog": {
     "description": "Create a new post for your selected journey."
+  },
+  "testDialog": {
+    "title": "Test Dialog",
+    "description": "This is a test dialog to check if the Dialog component is rendering.",
+    "message": "If you see this, the Dialog component is working!"
   }
 }
