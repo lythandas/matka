@@ -10,6 +10,7 @@ import { Post } from '@/types';
 import { Compass } from 'lucide-react'; // Import the Compass icon
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
+import { format } from 'date-fns'; // Import format for date formatting
 
 interface GridPostCardProps {
   post: Post;
@@ -22,6 +23,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
   const firstMedia = post.media_items?.[0]; // Get the first media item
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
   const currentLocale = getDateFnsLocale(); // Get the current date-fns locale
+  const formattedDate = format(new Date(post.created_at), 'P', { locale: currentLocale }); // Format date in short format
 
   let mediaElement: React.ReactNode = null;
 
@@ -73,7 +75,13 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         </AspectRatio>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold">
           {post.title && (
-            <p className="truncate mb-1">{post.title}</p>
+            <p className="truncate mb-1 flex items-center">
+              {post.title}
+              <span className="ml-2 text-xs font-normal text-gray-300">{formattedDate}</span>
+            </p>
+          )}
+          {!post.title && ( // If no title, display date directly
+            <p className="truncate mb-1 text-xs font-normal text-gray-300">{formattedDate}</p>
           )}
           <div className="flex items-center text-xs text-gray-300">
             <Avatar className="h-5 w-5 mr-2">
