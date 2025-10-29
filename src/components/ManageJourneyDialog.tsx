@@ -581,16 +581,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 {isRenaming ? (
                   <>
                     <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                    <span className={cn(isMobile && "sr-only")}>{t('manageJourneyDialog.renaming')}</span>
+                    {t('manageJourneyDialog.renaming')}
                   </>
                 ) : (
                   <>
-                    <Pencil className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                    {isMobile ? (
-                      <span className="sr-only">{t('manageJourneyDialog.saveJourneyName')}</span>
-                    ) : (
-                      t('manageJourneyDialog.saveJourneyName')
-                    )}
+                    {!isMobile && <Pencil className="mr-2 h-4 w-4" />}
+                    {t('manageJourneyDialog.saveJourneyName')}
                   </>
                 )}
               </Button>
@@ -679,16 +675,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         {isSettingPassphrase ? (
                           <>
                             <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                            <span className={cn(isMobile && "sr-only")}>{t('manageJourneyDialog.settingPassphrase')}</span>
+                            {t('manageJourneyDialog.settingPassphrase')}
                           </>
                         ) : (
                           <>
-                            <Lock className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                            {isMobile ? (
-                              <span className="sr-only">{(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}</span>
-                            ) : (
-                              (hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))
-                            )}
+                            {!isMobile && <Lock className="mr-2 h-4 w-4" />}
+                            {(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}
                           </>
                         )}
                       </Button>
@@ -760,16 +752,12 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   {isAddingCollaborator ? (
                     <>
                       <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                      <span className={cn(isMobile && "sr-only")}>{t('manageJourneyDialog.addingCollaborator')}</span>
+                      {t('manageJourneyDialog.addingCollaborator')}
                     </>
                   ) : (
                     <>
-                      <Plus className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                      {isMobile ? (
-                        <span className="sr-only">{t('manageJourneyDialog.addCollaborator')}</span>
-                      ) : (
-                        t('manageJourneyDialog.addCollaborator')
-                      )}
+                      {!isMobile && <Plus className="mr-2 h-4 w-4" />}
+                      {t('manageJourneyDialog.addCollaborator')}
                     </>
                   )}
                 </Button>
@@ -914,10 +902,10 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 <Button
                   variant="destructive"
                   disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isUpdatingPublicStatus || isSettingPassphrase}
-                  className="hover:ring-2 hover:ring-blue-500"
+                  className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500"
                 >
-                  <Trash2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                  {isMobile ? null : t('manageJourneyDialog.deleteJourney')}
+                  {!isMobile && <Trash2 className="mr-2 h-4 w-4" />}
+                  {t('manageJourneyDialog.deleteJourney')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -926,8 +914,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('manageJourneyDialog.deleteJourneyDescription', { journeyName: journey.name }) }} />
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteJourney}>
+                  <AlertDialogCancel className="w-full sm:w-auto">{t('common.cancel')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteJourney} className="w-full sm:w-auto">
                     {t('adminPage.continue')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -935,7 +923,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             </AlertDialog>
           )}
           <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus || isSettingPassphrase} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            {isMobile ? null : t('manageJourneyDialog.close')}
+            {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>
       </DialogContent>

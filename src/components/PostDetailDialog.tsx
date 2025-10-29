@@ -43,9 +43,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const currentLocale = getDateFnsLocale();
   const isMobile = useIsMobile(); // Use the mobile hook
 
-  const canGoPrevious = currentIndex > 0;
-  const canGoNext = currentIndex < totalPosts - 1;
-
   const handleToggleWideView = () => {
     setIsWideViewActive(prev => !prev);
   };
@@ -93,15 +90,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         {/* Main content area, handles layout based on media presence and wide view */}
         <div className={cn(
           "flex flex-grow overflow-hidden",
-          isMobile ? "gap-0" : (isWideViewActive ? "gap-0" : "gap-6"), // Adjust padding and gap for the main content area
-          (hasMedia || hasCoordinates) ? "" : "flex-col", // Only flex-col if no media/coords, otherwise default flex row
-          "pt-0" // Remove top padding as DialogHeader provides it
+          isMobile ? "flex-col" : (isWideViewActive ? "flex-row" : "flex-row gap-6"), // Always flex-col on mobile
+          "pt-0"
         )}>
-          {/* Left Column: Media OR Map */}
+          {/* Media OR Map Section */}
           {(hasMedia || hasCoordinates) && (
             <div className={cn(
-              "flex flex-col items-center justify-center relative p-0", // Ensure no extra padding here
-              isMobile ? "w-full" : (isWideViewActive ? "w-full" : "w-4/5") // Adjust width based on mobile/wide view
+              "relative flex flex-col items-center justify-center p-0 overflow-hidden",
+              isMobile ? "w-full h-1/2 min-h-[200px]" : (isWideViewActive ? "w-full h-full" : "w-4/5 h-full")
             )}>
               {hasMedia ? (
                 <div className="relative w-full h-full flex items-center justify-center">
@@ -137,14 +133,13 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     {isWideViewActive ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                   </Button>
 
-                  {mediaItems.length > 1 && (
+                  {mediaItems.length > 1 && !isWideViewActive && ( // Only show navigation if multiple media and not in wide view
                     <>
                       <Button
                         variant="outline"
                         size="icon"
                         className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                         onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
-                        disabled={isWideViewActive} // Disable navigation in wide view if it causes issues
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </Button>
@@ -153,7 +148,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                         size="icon"
                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
                         onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
-                        disabled={isWideViewActive} // Disable navigation in wide view if it causes issues
                       >
                         <ChevronRight className="h-5 w-5" />
                       </Button>
@@ -188,42 +182,18 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             </div>
           )}
 
-          {/* Right Column: Details (Title, Author, Message) */}
+          {/* Details Column: Message */}
           <div className={cn(
-            "flex flex-col overflow-y-auto p-0", // Ensure no extra padding here
-            isMobile ? "hidden" : (isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5" : "w-full") // Hide if mobile or wide view, else adjust width
+            "flex flex-col overflow-y-auto p-4", // Always visible, always scrollable if needed
+            isMobile ? "w-full h-1/2" : (isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5 h-full" : "w-full h-full")
           )}>
-            <div className="px-4"> {/* Added horizontal padding here for the actual text content */}
-              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
-                {post.message}
-              </p>
-            </div>
+            <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-justify">
+              {post.message}
+            </p>
           </div>
         </div>
 
-        {/* Post navigation buttons (outside main content, relative to DialogContent) */}
-        {canGoPrevious && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-[-2rem] top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
-            onClick={onPrevious}
-            disabled={isWideViewActive} // Disable navigation in wide view
-          >
-            <ChevronLeft className="h-7 w-7" />
-          </Button>
-        )}
-        {canGoNext && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-[-2rem] top-1/2 -translate-y-1/2 rounded-full z-20 h-12 w-12 bg-background text-foreground border-2 border-border hover:border-blue-500 hover:bg-accent hover:text-accent-foreground transition-colors"
-            onClick={onNext}
-            disabled={isWideViewActive} // Disable navigation in wide view
-          >
-            <ChevronRight className="h-7 w-7" />
-          </Button>
-        )}
+        {/* Post navigation buttons (removed from here, handled by main Index page) */}
       </DialogContent>
     </Dialog>
   );
