@@ -38,7 +38,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 }) => {
   const { t } = useTranslation();
   const mediaRefs = useRef<(HTMLImageElement | HTMLVideoElement | null)[]>([]);
-  // Removed isWideViewActive for now to simplify layout
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const currentLocale = getDateFnsLocale();
   const isMobile = useIsMobile();
@@ -47,7 +46,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   useEffect(() => {
     setCurrentMediaIndex(0);
-    // Removed setIsWideViewActive(false)
   }, [post, isOpen]);
 
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
@@ -56,15 +54,25 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const hasMedia = mediaItems.length > 0;
   const hasCoordinates = !!post.coordinates;
 
-  // Simplified dialogMaxWidthClass
   const dialogMaxWidthClass = "sm:max-w-[90vw] max-w-[98vw]";
+
+  // Add a console log here to confirm this part of the component is reached
+  console.log(`[PostDetailDialog] Inside return statement. isOpen: ${isOpen}`);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "max-h-[90vh] flex flex-col p-4 relative bg-background shadow-lg min-h-[300px]", // Added explicit bg and min-h
+        "max-h-[90vh] flex flex-col p-4 relative bg-background shadow-lg min-h-[300px] z-50", // Added z-50
         dialogMaxWidthClass
       )}>
+        {/* TEMPORARY DEBUGGING DIV - REMOVE LATER */}
+        {isOpen && (
+          <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center z-[100] text-white text-2xl font-bold">
+            DIALOG IS OPEN!
+          </div>
+        )}
+        {/* END TEMPORARY DEBUGGING DIV */}
+
         <DialogHeader className="pb-4">
           <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
           <DialogDescription>
@@ -85,7 +93,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Main content area - always stacked for simplicity */}
         <div className="flex-grow overflow-y-auto flex flex-col gap-4 p-0">
           {hasMedia && (
             <div className="relative w-full flex-shrink-0" style={{ height: isMobile ? '200px' : '300px' }}>
@@ -145,20 +152,19 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             </div>
           )}
 
-          <div className="p-4"> {/* Padding for text content */}
+          <div className="p-4">
             <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-justify">
               {post.message}
             </p>
           </div>
 
           {hasCoordinates && (
-            <div className="relative w-full h-48 rounded-md overflow-hidden p-4"> {/* Padding for map */}
+            <div className="relative w-full h-48 rounded-md overflow-hidden p-4">
               <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
             </div>
           )}
         </div>
 
-        {/* Post navigation buttons */}
         {totalPosts > 1 && (
           <>
             <Button
