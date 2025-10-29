@@ -39,7 +39,7 @@ import CreatePostFormContent from '@/components/CreatePostFormContent'; // Impor
 import CreatePostDialog from '@/components/CreatePostDialog'; // Import the new dialog
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 import { showSuccess, showError } from '@/utils/toast'; // Import showSuccess and showError
-import TestDialog from '@/components/TestDialog'; // Import the new TestDialog
+// Removed import for TestDialog
 
 const Index = () => {
   const { t } = useTranslation();
@@ -661,11 +661,17 @@ const Index = () => {
         />
       )}
 
-      {/* Temporarily using TestDialog for debugging */}
-      {isDetailDialogOpen && (
-        <TestDialog
+      {/* Now using PostDetailDialog again */}
+      {selectedPostForDetail && isDetailDialogOpen && (
+        <PostDetailDialog
+          post={selectedPostForDetail}
           isOpen={isDetailDialogOpen}
           onClose={handleCloseDetailDialog}
+          currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
+          totalPosts={posts.length}
+          onNext={handleNextPost}
+          onPrevious={handlePreviousPost}
+          journey={selectedJourney}
         />
       )}
 
