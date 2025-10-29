@@ -125,7 +125,8 @@
     "copy": "Copiar",
     "passphraseCannotBeEmpty": "La frase de contraseña no puede estar vacía.",
     "passphraseMinLength": "La frase de contraseña debe tener al menos 6 caracteres.",
-    "passphrase": "Frase de contraseña"
+    "passphrase": "Frase de contraseña",
+    "deletePostDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente esta publicación."
   },
   "auth": {
     "loginToYourAccount": "Inicia sesión en tu cuenta",

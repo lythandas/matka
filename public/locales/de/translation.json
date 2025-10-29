@@ -125,7 +125,8 @@
     "copy": "Kopieren",
     "passphraseCannotBeEmpty": "Die Passphrase darf nicht leer sein.",
     "passphraseMinLength": "Die Passphrase muss mindestens 6 Zeichen lang sein.",
-    "passphrase": "Passphrase"
+    "passphrase": "Passphrase",
+    "deletePostDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird dieser Beitrag dauerhaft gelöscht."
   },
   "auth": {
     "loginToYourAccount": "Melden Sie sich bei Ihrem Konto an",

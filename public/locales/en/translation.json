@@ -125,7 +125,8 @@
     "copy": "Copy",
     "passphraseCannotBeEmpty": "Passphrase cannot be empty.",
     "passphraseMinLength": "Passphrase must be at least 6 characters long.",
-    "passphrase": "Passphrase"
+    "passphrase": "Passphrase",
+    "deletePostDescription": "This action cannot be undone. This will permanently delete this post."
   },
   "auth": {
     "loginToYourAccount": "Login to your account",
