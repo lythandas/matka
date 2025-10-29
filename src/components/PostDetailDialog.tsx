@@ -114,7 +114,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           ref={mediaRef}
           className={cn(
             "relative flex items-center justify-center bg-black rounded-t-md lg:rounded-l-md lg:rounded-tr-none overflow-hidden",
-            "flex-grow lg:w-2/3", // Take 2/3 width on large screens, grow to fill height
+            "flex-grow lg:w-3/4", // Changed from lg:w-2/3 to lg:w-3/4
             "min-h-[50vh] lg:min-h-full" // Ensure it has height on mobile, fills parent height on large screens
           )}
         >
@@ -193,7 +193,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
         {/* Details Column (Right on large screens, bottom on small screens) */}
         <div className={cn(
-          "flex flex-col lg:w-1/3 p-4 overflow-y-auto",
+          "flex flex-col lg:w-1/4 p-4 overflow-y-auto", // Changed from lg:w-1/3 to lg:w-1/4
           "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
         )}>
           <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
