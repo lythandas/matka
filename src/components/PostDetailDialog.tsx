@@ -87,110 +87,119 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Main content area, handles layout based on media presence and wide view */}
-        <div className={cn(
-          "flex flex-grow overflow-hidden",
-          isMobile ? "flex-col" : (isWideViewActive ? "flex-row" : "flex-row gap-6"), // Always flex-col on mobile
-          "pt-0"
-        )}>
-          {/* Media OR Map Section */}
-          {(hasMedia || hasCoordinates) && (
+        {/* Main content area */}
+        <div className="flex flex-grow overflow-hidden">
+          {(hasMedia || hasCoordinates) ? (
+            // Layout for when there is media or coordinates
             <div className={cn(
-              "relative flex flex-col items-center justify-center p-0 overflow-hidden",
-              isMobile ? "w-full h-1/2 min-h-[200px]" : (isWideViewActive ? "w-full h-full" : "w-4/5 h-full")
+              "flex flex-grow overflow-hidden",
+              isMobile ? "flex-col" : (isWideViewActive ? "flex-row" : "flex-row gap-6")
             )}>
-              {hasMedia ? (
-                <div className="relative w-full h-full flex items-center justify-center">
-                  {currentMedia?.type === 'image' && (
-                    <img
-                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                      src={currentMedia.urls.large || '/placeholder.svg'}
-                      alt={post.title || t('common.postImage')}
-                      className="max-w-full max-h-full object-contain rounded-md"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder.svg';
-                        e.currentTarget.onerror = null;
-                        console.error(t('postDetailDialog.failedToLoadImage'), currentMedia.urls.large);
-                      }}
-                    />
-                  )}
-                  {currentMedia?.type === 'video' && (
-                    <video
-                      ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
-                      src={currentMedia.url}
-                      controls
-                      className="max-w-full max-h-full object-contain rounded-md"
-                    />
-                  )}
+              {/* Media OR Map Section */}
+              <div className={cn(
+                "relative flex flex-col items-center justify-center p-0 overflow-hidden",
+                isMobile ? "w-full h-1/2 min-h-[200px]" : (isWideViewActive ? "w-full h-full" : "w-4/5 h-full")
+              )}>
+                {hasMedia ? (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {currentMedia?.type === 'image' && (
+                      <img
+                        ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                        src={currentMedia.urls.large || '/placeholder.svg'}
+                        alt={post.title || t('common.postImage')}
+                        className="max-w-full max-h-full object-contain rounded-md"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.onerror = null;
+                          console.error(t('postDetailDialog.failedToLoadImage'), currentMedia.urls.large);
+                        }}
+                      />
+                    )}
+                    {currentMedia?.type === 'video' && (
+                      <video
+                        ref={(el) => (mediaRefs.current[currentMediaIndex] = el)}
+                        src={currentMedia.url}
+                        controls
+                        className="max-w-full max-h-full object-contain rounded-md"
+                      />
+                    )}
 
-                  {/* Button to toggle wide view */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                    onClick={handleToggleWideView}
-                  >
-                    {isWideViewActive ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                  </Button>
+                    {/* Button to toggle wide view */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      onClick={handleToggleWideView}
+                    >
+                      {isWideViewActive ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    </Button>
 
-                  {mediaItems.length > 1 && !isWideViewActive && ( // Only show navigation if multiple media and not in wide view
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
-                        {mediaItems.map((_, idx) => (
-                          <span
-                            key={idx}
-                            className={cn(
-                              "h-2 w-2 rounded-full bg-white/50",
-                              idx === currentMediaIndex && "bg-white"
-                            )}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : ( // No media, but has coordinates
-                <div className="relative w-full h-full rounded-md overflow-hidden">
-                  <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
-                  {/* Button to toggle wide view for map */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                    onClick={handleToggleWideView}
-                  >
-                    {isWideViewActive ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                  </Button>
-                </div>
-              )}
+                    {mediaItems.length > 1 && !isWideViewActive && ( // Only show navigation if multiple media and not in wide view
+                      <>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1))}
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                          onClick={() => setCurrentMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1))}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+                          {mediaItems.map((_, idx) => (
+                            <span
+                              key={idx}
+                              className={cn(
+                                "h-2 w-2 rounded-full bg-white/50",
+                                idx === currentMediaIndex && "bg-white"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : ( // No media, but has coordinates
+                  <div className="relative w-full h-full rounded-md overflow-hidden">
+                    <MapComponent coordinates={post.coordinates} zoom={12} className="h-full" />
+                    {/* Button to toggle wide view for map */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute bottom-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      onClick={handleToggleWideView}
+                    >
+                      {isWideViewActive ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Details Column: Message */}
+              <div className={cn(
+                "flex flex-col overflow-y-auto p-4", // Always visible, always scrollable if needed
+                isMobile ? "w-full h-1/2" : (isWideViewActive ? "hidden" : "w-1/5 h-full")
+              )}>
+                <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-justify">
+                  {post.message}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Layout for when there is ONLY a message (no media/coordinates)
+            <div className="flex flex-col flex-grow overflow-y-auto p-4">
+              <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-justify">
+                {post.message}
+              </p>
             </div>
           )}
-
-          {/* Details Column: Message */}
-          <div className={cn(
-            "flex flex-col overflow-y-auto p-4", // Always visible, always scrollable if needed
-            isMobile ? "w-full h-1/2" : (isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5 h-full" : "w-full h-full")
-          )}>
-            <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-justify">
-              {post.message}
-            </p>
-          </div>
         </div>
 
         {/* Post navigation buttons (overlaid on content) */}
