@@ -389,7 +389,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
-          className="w-full resize-none mb-4" {/* Added mb-4 here */}
+          className="w-full resize-none mb-4" /* Added mb-4 here */
           disabled={!canCreatePostUI}
         />
 
