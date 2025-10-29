@@ -30,6 +30,7 @@ import {
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 import { useJourneys } from '@/contexts/JourneyContext'; // Import useJourneys
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation(); // Initialize useTranslation
@@ -37,6 +38,7 @@ const AdminPage: React.FC = () => {
   const { user: currentUser, token } = useAuth();
   const { fetchJourneys: fetchAllJourneysForContext } = useJourneys(); // Get fetchJourneys from context
   const currentLocale = getDateFnsLocale();
+  const isMobile = useIsMobile(); // Initialize useIsMobile hook
 
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState<boolean>(true);
@@ -218,7 +220,9 @@ const AdminPage: React.FC = () => {
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">{t('adminPage.manageUsers')}</CardTitle>
           <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
-            <Plus className="mr-2 h-4 w-4" /> {t('adminPage.createNewUser')}
+            <Plus className="h-4 w-4" />
+            {!isMobile && <span className="ml-2">{t('adminPage.createNewUser')}</span>}
+            {isMobile && <span className="sr-only">{t('adminPage.createNewUser')}</span>}
           </Button>
         </CardHeader>
         <CardContent>
