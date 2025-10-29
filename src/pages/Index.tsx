@@ -201,14 +201,14 @@ const Index = () => {
     }
   };
 
-  const handlePostClick = (post: Post, index: number) => {
+  const handlePostClick = useCallback((post: Post, index: number) => {
     if (isMobile) { // Disable post details on mobile
       return;
     }
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
-  };
+  }, [isMobile]); // Dependencies: isMobile
 
   const handleNextPost = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
@@ -248,9 +248,9 @@ const Index = () => {
     }
   };
 
-  const handleSelectPostFromMap = (post: Post, index: number) => {
+  const handleSelectPostFromMap = useCallback((post: Post, index: number) => {
     handlePostClick(post, index);
-  };
+  }, [handlePostClick]);
 
   const handleLoadDraft = (draft: Post) => {
     // This function is now handled by CreatePostFormContent directly

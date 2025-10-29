@@ -149,14 +149,14 @@ const PublicJourneyPage: React.FC = () => {
     fetchPublicJourney(passphraseInput);
   };
 
-  const handlePostClick = (post: Post, index: number) => {
+  const handlePostClick = useCallback((post: Post, index: number) => {
     if (isMobile) {
       return;
     }
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
-  };
+  }, [isMobile]);
 
   const handleNextPost = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
