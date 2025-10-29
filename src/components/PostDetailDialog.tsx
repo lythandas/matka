@@ -41,7 +41,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const isMobile = useIsMobile();
 
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const mediaRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null); // This ref will now be on the media column
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   useEffect(() => {
@@ -105,49 +105,21 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "flex flex-col p-0",
-        isFullScreen ? "w-screen h-screen max-w-none max-h-none" : "sm:max-w-[90vw] max-w-[98vw] h-[90vh]"
+        "flex flex-col p-0", // Base is column, no padding on content itself
+        isFullScreen ? "w-screen h-screen max-w-none max-h-none" : "sm:max-w-[90vw] max-w-[98vw] h-[90vh]",
+        "lg:flex-row" // On large screens, make it a row
       )}>
-        <DialogHeader className="p-4 border-b dark:border-gray-700">
-          <DialogTitle className="text-xl font-bold">{t('postDetailDialog.postDetails')}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            {post.title || post.message.substring(0, 100) + '...'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex-grow overflow-y-auto p-4">
-          <div className="flex items-center mb-4">
-            {post.author_profile_image_url ? (
-              <Avatar className="h-10 w-10 mr-3">
-                <AvatarImage src={post.author_profile_image_url} alt={authorDisplayName} />
-              </Avatar>
-            ) : (
-              <Avatar className="h-10 w-10 mr-3">
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
-                  {getAvatarInitials(post.author_name, post.author_username)}
-                </AvatarFallback>
-              </Avatar>
-            )}
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-gray-100">
-                {authorDisplayName}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
-              </p>
-            </div>
-          </div>
-
-          {post.title && (
-            <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+        {/* Media Column (Left on large screens, top on small screens) */}
+        <div
+          ref={mediaRef}
+          className={cn(
+            "relative flex items-center justify-center bg-black rounded-t-md lg:rounded-l-md lg:rounded-tr-none overflow-hidden",
+            "flex-grow lg:w-2/3", // Take 2/3 width on large screens, grow to fill height
+            "min-h-[50vh] lg:min-h-full" // Ensure it has height on mobile, fills parent height on large screens
           )}
-          <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
-            {post.message}
-          </p>
-
-          {/* Media Section */}
+        >
           {post.media_items && post.media_items.length > 0 ? (
-            <div ref={mediaRef} className="relative bg-black flex items-center justify-center rounded-md overflow-hidden mb-4" style={{ height: isFullScreen ? '100%' : 'auto' }}>
+            <>
               {currentMedia?.type === 'image' && currentMedia.urls.large && (
                 <img
                   src={currentMedia.urls.large}
@@ -210,15 +182,56 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               >
                 {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
               </Button>
-            </div>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Compass className="h-12 w-12 mx-auto mb-2" />
               <p>{t('postDetailDialog.noMedia')}</p>
             </div>
           )}
+        </div>
 
-          {/* Map Section */}
+        {/* Details Column (Right on large screens, bottom on small screens) */}
+        <div className={cn(
+          "flex flex-col lg:w-1/3 p-4 overflow-y-auto",
+          "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
+        )}>
+          <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
+            <DialogTitle className="text-xl font-bold">{t('postDetailDialog.postDetails')}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {post.title || post.message.substring(0, 100) + '...'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center mb-4">
+            {post.author_profile_image_url ? (
+              <Avatar className="h-10 w-10 mr-3">
+                <AvatarImage src={post.author_profile_image_url} alt={authorDisplayName} />
+              </Avatar>
+            ) : (
+              <Avatar className="h-10 w-10 mr-3">
+                <AvatarFallback className="bg-blue-500 text-white text-lg">
+                  {getAvatarInitials(post.author_name, post.author_username)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-gray-100">
+                {authorDisplayName}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
+              </p>
+            </div>
+          </div>
+
+          {post.title && (
+            <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+          )}
+          <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
+            {post.message}
+          </p>
+
           {post.coordinates && (
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">{t('editPostDialog.location')}</h4>
@@ -227,7 +240,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           )}
         </div>
 
-        <div className="flex justify-between items-center p-4 border-t dark:border-gray-700">
+        {/* Navigation buttons (outside columns, at the very bottom) */}
+        <div className="flex justify-between items-center p-4 border-t dark:border-gray-700 flex-shrink-0">
           <Button
             variant="outline"
             onClick={onPrevious}
