@@ -218,15 +218,13 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             </div>
           )}
 
-          {/* Map Section (Still commented out) */}
-          {/*
+          {/* Map Section */}
           {post.coordinates && (
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">{t('editPostDialog.location')}</h4>
               <MapComponent coordinates={post.coordinates} className="h-64" />
             </div>
           )}
-          */}
         </div>
 
         <div className="flex justify-between items-center p-4 border-t dark:border-gray-700">
