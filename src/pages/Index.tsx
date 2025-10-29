@@ -160,8 +160,11 @@ const Index = () => {
   };
 
   const handleDeletePost = async (id: string, journeyId: string, postAuthorId: string, isDraft: boolean = false) => {
+    console.log(`[handleDeletePost] Function entered for ID: ${id}, isDraft: ${isDraft}`);
+
     if (!isAuthenticated) {
       showError(t('common.authRequiredDeletePost'));
+      console.error('[handleDeletePost] Delete failed: Not authenticated.');
       return;
     }
 
@@ -170,12 +173,16 @@ const Index = () => {
     const isAdmin = user?.isAdmin;
     const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
 
+    console.log(`[handleDeletePost] Permissions check: isPostAuthor=${isPostAuthor}, isJourneyOwner=${isJourneyOwner}, isAdmin=${isAdmin}, canDeleteAsCollaborator=${canDeleteAsCollaborator}`);
+
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canDeleteAsCollaborator) {
       showError(t('common.noPermissionDeletePost'));
+      console.error('[handleDeletePost] Delete failed: Insufficient permissions.');
       return;
     }
 
     try {
+      console.log(`[handleDeletePost] Sending DELETE request to ${API_BASE_URL}/posts/${id}`);
       const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
         method: 'DELETE',
         headers: {
@@ -185,18 +192,23 @@ const Index = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('[handleDeletePost] API error during delete:', errorData);
         throw new Error(errorData.message || t('common.failedToDeletePost'));
       }
 
+      console.log(`[handleDeletePost] Post/draft ${id} deleted successfully from backend.`);
+
       if (isDraft) {
-        setDrafts(drafts.filter((draft) => draft.id !== id));
+        setDrafts(prevDrafts => prevDrafts.filter((draft) => draft.id !== id));
         showSuccess(t('indexPage.draftDeletedSuccessfully'));
+        console.log(`[handleDeletePost] Drafts state updated. Current drafts count: ${drafts.length - 1}`); // Log new count
       } else {
-        setPosts(posts.filter((post) => post.id !== id));
+        setPosts(prevPosts => prevPosts.filter((post) => post.id !== id));
         showSuccess(t('common.postDeletedSuccessfully'));
+        console.log(`[handleDeletePost] Posts state updated. Current posts count: ${posts.length - 1}`); // Log new count
       }
     } catch (error: any) {
-      console.error('Error deleting post:', error);
+      console.error('[handleDeletePost] Error deleting post:', error);
       showError(error.message || t('common.failedToDeletePost'));
     }
   };
@@ -404,7 +416,7 @@ const Index = () => {
                                         <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDeletePost(post.id, post.journey_id, post.user_id)}>
+                                          <AlertDialogAction onClick={async () => await handleDeletePost(post.id, post.journey_id, post.user_id)}>
                                             {t('adminPage.continue')}
                                           </AlertDialogAction>
                                         </AlertDialogFooter>
@@ -562,7 +574,10 @@ const Index = () => {
                                 <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeletePost(draft.id, draft.journey_id, draft.user_id, true)}>
+                                  <AlertDialogAction onClick={async () => {
+                                    console.log(`[AlertDialogAction] Delete button clicked for draft ID: ${draft.id}`);
+                                    await handleDeletePost(draft.id, draft.journey_id, draft.user_id, true);
+                                  }}>
                                     {t('adminPage.continue')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
