@@ -69,17 +69,38 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={cn("max-h-[90vh] flex flex-col p-0", dialogMaxWidthClass)}>
+      <DialogContent className={cn("max-h-[90vh] flex flex-col p-4", dialogMaxWidthClass)}>
+        <DialogHeader className="pb-4">
+          <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
+          <DialogDescription>
+            <div className="flex items-center mt-2">
+              <Avatar className="h-8 w-8 mr-2">
+                {post.author_profile_image_url ? (
+                  <AvatarImage src={post.author_profile_image_url} alt={displayName} />
+                ) : (
+                  <AvatarFallback className="bg-blue-500 text-white text-sm">
+                    {getAvatarInitials(post.author_name, post.author_username)}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <p className="text-sm text-muted-foreground">
+                {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p', { locale: currentLocale }) })}
+              </p>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Main content area, handles layout based on media presence and wide view */}
         <div className={cn(
           "flex flex-grow overflow-hidden",
-          isMobile ? "p-0 gap-0" : (isWideViewActive ? "p-0 gap-0" : "p-6 pt-4 gap-6"), // Adjust padding and gap for the main content area
-          (hasMedia || hasCoordinates) ? "" : "flex-col" // Only flex-col if no media/coords, otherwise default flex row
+          isMobile ? "gap-0" : (isWideViewActive ? "gap-0" : "gap-6"), // Adjust padding and gap for the main content area
+          (hasMedia || hasCoordinates) ? "" : "flex-col", // Only flex-col if no media/coords, otherwise default flex row
+          "pt-0" // Remove top padding as DialogHeader provides it
         )}>
           {/* Left Column: Media OR Map */}
           {(hasMedia || hasCoordinates) && (
             <div className={cn(
-              "flex flex-col items-center justify-center relative",
+              "flex flex-col items-center justify-center relative p-0", // Ensure no extra padding here
               isMobile ? "w-full" : (isWideViewActive ? "w-full" : "w-4/5") // Adjust width based on mobile/wide view
             )}>
               {hasMedia ? (
@@ -169,27 +190,10 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
           {/* Right Column: Details (Title, Author, Message) */}
           <div className={cn(
-            "flex flex-col overflow-y-auto",
+            "flex flex-col overflow-y-auto p-0", // Ensure no extra padding here
             isMobile ? "hidden" : (isWideViewActive ? "hidden" : (hasMedia || hasCoordinates) ? "w-1/5" : "w-full") // Hide if mobile or wide view, else adjust width
           )}>
-            <div className="p-4"> {/* Added padding here for the actual text content */}
-              <div className="flex items-center mb-4">
-                <Avatar className="h-10 w-10 mr-3">
-                  {post.author_profile_image_url ? (
-                    <AvatarImage src={post.author_profile_image_url} alt={displayName} />
-                  ) : (
-                    <AvatarFallback className="bg-blue-500 text-white text-lg">
-                      {getAvatarInitials(post.author_name, post.author_username)}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <h2 className="text-xl font-bold">{post.title || t('postDetailDialog.postDetails')}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {t('postDetailDialog.by', { author: displayName, date: format(new Date(post.created_at), 'PPP p', { locale: currentLocale }) })}
-                  </p>
-                </div>
-              </div>
+            <div className="px-4"> {/* Added horizontal padding here for the actual text content */}
               <p className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
                 {post.message}
               </p>
