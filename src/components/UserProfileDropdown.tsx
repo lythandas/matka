@@ -31,8 +31,10 @@ const UserProfileDropdown: React.FC = () => {
   const displayName = user?.name || user?.username;
 
   useEffect(() => {
-    console.log("UserProfileDropdown: Current user:", user);
-    console.log("UserProfileDropdown: Is Admin:", user?.isAdmin);
+    if (import.meta.env.DEV) {
+      console.log("UserProfileDropdown: Current user:", user);
+      console.log("UserProfileDropdown: Is Admin:", user?.isAdmin);
+    }
   }, [user]);
 
   const handleAuthButtonClick = () => {

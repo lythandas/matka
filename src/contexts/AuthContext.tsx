@@ -44,7 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     showSuccess('Logged out successfully!');
     setUsersExist(true); // Assume users still exist after logout, or will be created
-    console.log("AuthContext: User logged out.");
+    if (import.meta.env.DEV) {
+      console.log("AuthContext: User logged out.");
+    }
   }, []);
 
   const setAuthData = useCallback((userData: User, authToken: string) => {
@@ -54,7 +56,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
     setIsAuthenticated(true);
     setUsersExist(true); // After successful login/registration, we know users exist
-    console.log("AuthContext: setAuthData called. User:", userData, "Is Admin:", userData.isAdmin);
+    if (import.meta.env.DEV) {
+      console.log("AuthContext: setAuthData called. User:", userData, "Is Admin:", userData.isAdmin);
+    }
   }, []);
 
   const fetchUsersExist = useCallback(async () => {
@@ -74,9 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await response.json(); // Directly parse JSON here
 
       setUsersExist(data.exists);
-      console.log("AuthContext: Users exist check:", data.exists);
+      if (import.meta.env.DEV) {
+        console.log("AuthContext: Users exist check:", data.exists);
+      }
       if (!data.exists && isAuthenticated) {
-        console.warn("No users found in backend, but frontend is authenticated. Forcing logout.");
+        if (import.meta.env.DEV) {
+          console.warn("No users found in backend, but frontend is authenticated. Forcing logout.");
+        }
         logout();
       }
     } catch (error) {
@@ -134,7 +142,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!prevUser) return null;
       const newUser = { ...prevUser, ...updatedUserData };
       localStorage.setItem('authUser', JSON.stringify(newUser));
-      console.log("AuthContext: User updated. New User:", newUser, "Is Admin:", newUser.isAdmin);
+      if (import.meta.env.DEV) {
+        console.log("AuthContext: User updated. New User:", newUser, "Is Admin:", newUser.isAdmin);
+      }
       return newUser;
     });
     if (newToken) {
