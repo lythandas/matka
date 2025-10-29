@@ -193,25 +193,31 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </div>
         </div>
 
-        {/* Post navigation buttons */}
-        <DialogFooter className="flex justify-between p-4 border-t">
-          <Button
-            variant="outline"
-            onClick={onPrevious}
-            disabled={currentIndex === 0}
-            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> {t('postDetailDialog.previousPost')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onNext}
-            disabled={currentIndex === totalPosts - 1}
-            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-          >
-            {t('postDetailDialog.nextPost')} <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </DialogFooter>
+        {/* Post navigation buttons (overlaid on content) */}
+        {totalPosts > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              onClick={onPrevious}
+              disabled={currentIndex === 0}
+              aria-label={t('postDetailDialog.previousPost')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full z-20 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              onClick={onNext}
+              disabled={currentIndex === totalPosts - 1}
+              aria-label={t('postDetailDialog.nextPost')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
