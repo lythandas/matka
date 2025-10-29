@@ -258,10 +258,6 @@ const Index = () => {
     // The CreatePostFormContent needs a way to receive the draft to load.
     // This will require a prop to CreatePostFormContent or a ref.
     // For simplicity, I'll pass the draft to the dialog, and the dialog will pass it to the form content.
-    // This will require a slight modification to CreatePostFormContent and CreatePostDialog.
-    // For now, I'll just open the dialog and let the user manually copy content if needed,
-    // or I'll add a prop to CreatePostDialog to pre-fill the form.
-    // Let's add a prop to CreatePostDialog to pre-fill the form.
     // For now, I'll just open the dialog.
     showError(t('indexPage.loadDraftNotImplemented')); // Temporary message
   };

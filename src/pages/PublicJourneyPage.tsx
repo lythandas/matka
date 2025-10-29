@@ -6,7 +6,6 @@ import { Compass, Loader2, Map as MapIcon, Lock } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api';
 import { Journey, Post } from '@/types';
 import { showError } from '@/utils/toast';
-import AppFooter from '@/components/AppFooter';
 import MapComponent from '@/components/MapComponent';
 import GridPostCard from '@/components/GridPostCard';
 import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
@@ -136,7 +135,7 @@ const PublicJourneyPage: React.FC = () => {
     );
   }
 
-  // Render header and content based on error or journey data
+  // Render content based on error or journey data
   const renderContent = () => {
     if (error) {
       // If the error is specifically about passphrase required, show the input form
@@ -293,19 +292,7 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
-        <div className="flex items-center">
-          <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-          <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
-        </div>
-        {journey && !error && ( // Only show journey name if journey is loaded and no error
-          <div className="flex items-center space-x-2">
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{journey.name}</h2>
-          </div>
-        )}
-      </header>
-
+    <>
       {renderContent()}
 
       {selectedPostForDetail && isDetailDialogOpen && (
@@ -320,9 +307,7 @@ const PublicJourneyPage: React.FC = () => {
           journey={journey}
         />
       )}
-
-      <AppFooter />
-    </div>
+    </>
   );
 };
 

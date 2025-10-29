@@ -9,6 +9,7 @@ import AdminPage from '@/pages/AdminPage';
 import LoginPage from '@/pages/LoginPage';
 import NotFound from '@/pages/NotFound';
 import PublicJourneyPage from '@/pages/PublicJourneyPage'; // Import the new PublicJourneyPage
+import PublicPageLayout from './PublicPageLayout'; // Import the new PublicPageLayout
 
 // ProtectedRoute component to guard admin access
 const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element; adminOnly?: boolean }) => {
@@ -27,13 +28,18 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element
 };
 
 const AuthConditionalContent: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth(); // Get user to pass to PublicPageLayout
 
-  if (isAuthenticated) {
-    return (
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<Index />} />
+  return (
+    <Routes>
+      {/* Public Journey Route - always uses PublicPageLayout */}
+      <Route path="/public-journey/:publicLinkId" element={<PublicPageLayout journey={user?.currentPublicJourney} isProtected={user?.currentPublicJourney?.has_passphrase} />}>
+        <Route index element={<PublicJourneyPage />} />
+      </Route>
+
+      {isAuthenticated ? (
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<Index />} />
           <Route
             path="/admin"
             element={
@@ -42,24 +48,18 @@ const AuthConditionalContent: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* NEW: Public journey route - accessible even when authenticated */}
-          <Route path="/public-journey/:publicLinkId" element={<PublicJourneyPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* ADD ALL CUSTOM AUTHENTICATED ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppLayout>
-    );
-  } else {
-    return (
-      <Routes>
-        {/* NEW: Public journey route - accessible when not authenticated */}
-        <Route path="/public-journey/:publicLinkId" element={<PublicJourneyPage />} />
-        <Route path="/" element={<LoginPage />} />
-        {/* Redirect any other path to login if not authenticated */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    );
-  }
+        </Route>
+      ) : (
+        <>
+          <Route path="/" element={<LoginPage />} />
+          {/* Redirect any other path to login if not authenticated, unless it's a public journey */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      )}
+    </Routes>
+  );
 };
 
 export default AuthConditionalContent;

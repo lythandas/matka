@@ -8,12 +8,13 @@ import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import AppFooter from './AppFooter'; // Import AppFooter
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import ScrollToTopButton from './ScrollToTopButton'; // Import the new component
+import { Outlet } from 'react-router-dom'; // Import Outlet
 
 interface AppLayoutProps {
-  children: React.ReactNode;
+  // children: React.ReactNode; // No longer needed with Outlet
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const AppLayout: React.FC<AppLayoutProps> = () => {
   const { t } = useTranslation(); // Initialize useTranslation
   const isMobile = useIsMobile();
   const { isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
@@ -24,8 +25,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         setIsCreateJourneyDialogOpen={setIsCreateJourneyDialogOpen}
       />
       <div className="flex flex-grow">
-        <main className="flex-grow w-full"> {/* Removed max-w-3xl mx-auto and padding from here */}
-          {children}
+        <main className="flex-grow w-full">
+          <Outlet /> {/* Renders the child route component */}
         </main>
       </div>
 
@@ -33,8 +34,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         isOpen={isCreateJourneyDialogOpen}
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
-      <AppFooter /> {/* AppFooter moved here */}
-      <ScrollToTopButton /> {/* Add the ScrollToTopButton here */}
+      <AppFooter />
+      <ScrollToTopButton />
     </div>
   );
 };
