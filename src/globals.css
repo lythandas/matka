@@ -139,19 +139,3 @@
 .fab-button:hover {
   @apply bg-gray-800 shadow-neon-blue-intense; /* Slightly darker on hover and more intense neon */
 }
-
-/* AGGRESSIVE DEBUGGING: Force DialogContent to be visible */
-.radix-modal-content {
-  z-index: 99999 !important; /* Extremely high z-index */
-  background-color: yellow !important; /* Bright, unmistakable background */
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 80vw !important;
-  height: 80vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  opacity: 1 !important; /* Ensure it's not transparent */
-  visibility: visible !important; /* Ensure it's not hidden */
-}
