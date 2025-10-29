@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import PostDatePicker from './PostDatePicker';
 import { parseISO } from 'date-fns';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 
 interface EditPostDialogProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ interface EditPostDialogProps {
 const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, onUpdate, journeyOwnerId, journeyCollaborators }) => {
   const { t } = useTranslation();
   const { user: currentUser, token } = useAuth();
+  const isMobile = useIsMobile(); // Initialize useIsMobile hook
   const [title, setTitle] = useState<string>(post.title || '');
   const [message, setMessage] = useState<string>(post.message);
   const [currentMediaItems, setCurrentMediaItems] = useState<MediaInfo[]>(post.media_items || []);
@@ -486,19 +488,19 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         </div>
         <DialogFooter className="flex flex-wrap justify-end gap-2 pt-4">
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            {t('common.cancel')}
+            {isMobile ? null : t('common.cancel')}
           </Button>
           {isDraft && canPublishPostUI && (
             <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('editPostDialog.publishing')}
+                  <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
+                  {isMobile ? null : t('editPostDialog.publishing')}
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
-                  {t('editPostDialog.publishPost')}
+                  <Send className={cn("h-4 w-4", !isMobile && "mr-2")} />
+                  {isMobile ? null : t('editPostDialog.publishPost')}
                 </>
               )}
             </Button>
@@ -506,13 +508,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
             {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('editPostDialog.saving')}
+                <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
+                {isMobile ? null : t('editPostDialog.saving')}
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                {t('common.saveChanges')}
+                <Save className={cn("h-4 w-4", !isMobile && "mr-2")} />
+                {isMobile ? null : t('common.saveChanges')}
               </>
             )}
           </Button>
