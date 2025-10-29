@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react'; // Removed CalendarIcon
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"; // Import SheetHeader, SheetTitle
+import { Menu, Compass, Plus, ChevronDown, Wrench, Users } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import UserProfileDropdown from '@/components/UserProfileDropdown';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,14 +20,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 import ManageJourneyDialog from './ManageJourneyDialog';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 
 interface TopBarProps {
   setIsCreateJourneyDialogOpen: (isOpen: boolean) => void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -35,9 +35,8 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
 
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
 
-  // Simplified permission check: only journey owner or admin can manage journey
   const canManageSelectedJourney = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin);
-  const canCreateJourney = isAuthenticated; // All authenticated users can create journeys
+  const canCreateJourney = isAuthenticated;
 
   const renderJourneyDropdown = (isMobileView: boolean) => (
     <DropdownMenu>
@@ -99,7 +98,9 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
-              {/* Removed the logo and app name from here */}
+              <SheetHeader className="p-4 pb-2"> {/* Added SheetHeader */}
+                <SheetTitle className="text-xl font-bold">{t('topBar.navigation')}</SheetTitle> {/* Added SheetTitle */}
+              </SheetHeader>
               <nav className="flex-grow p-4 space-y-2">
                 {isAuthenticated && (
                   <>
@@ -110,7 +111,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                     >
                       {t('topBar.journeys')}
                     </Button>
-                    {renderJourneyDropdown(true)} {/* Mobile journey dropdown */}
+                    {renderJourneyDropdown(true)}
                     {canManageSelectedJourney && (
                       <Button
                         variant="ghost"
@@ -120,7 +121,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
                         <Wrench className="mr-2 h-4 w-4" /> {t('topBar.manageJourney')}
                       </Button>
                     )}
-                    {user?.isAdmin && ( // Only show Admin link if user is an admin
+                    {user?.isAdmin && (
                       <Button
                         variant="ghost"
                         className="w-full justify-start text-lg font-semibold"
@@ -135,7 +136,6 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             </SheetContent>
           </Sheet>
         )}
-        {/* This block remains for both mobile (when sheet is closed) and desktop */}
         <div className="flex items-center">
           <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
           <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
@@ -144,7 +144,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
 
       {!isMobile && isAuthenticated && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center space-x-2">
-          {renderJourneyDropdown(false)} {/* Desktop journey dropdown */}
+          {renderJourneyDropdown(false)}
           {canManageSelectedJourney && (
             <Button
               variant="outline"
@@ -169,7 +169,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
           onClose={() => setIsManageJourneyDialogOpen(false)}
           journey={selectedJourney}
           onJourneyUpdated={() => {
-            fetchJourneys(); // Refresh journeys list
+            fetchJourneys();
           }}
         />
       )}

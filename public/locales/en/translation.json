@@ -148,7 +148,8 @@
     "administration": "Administration",
     "toggleMenu": "Toggle menu",
     "selectJourney": "Select journey",
-    "createNewJourney": "Create new journey"
+    "createNewJourney": "Create new journey",
+    "navigation": "Navigation"
   },
   "userProfileDropdown": {
     "administration": "Administration",

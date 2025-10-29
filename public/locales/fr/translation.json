@@ -148,7 +148,8 @@
     "administration": "Administration",
     "toggleMenu": "Basculer le menu",
     "selectJourney": "Sélectionner un voyage",
-    "createNewJourney": "Créer un nouveau voyage"
+    "createNewJourney": "Créer un nouveau voyage",
+    "navigation": "Navigation"
   },
   "userProfileDropdown": {
     "administration": "Administration",
@@ -307,7 +308,7 @@
     "user": "Utilisateur",
     "admin": "Administrateur",
     "createdAt": "Créé le",
-    "actions": "Actions",
+    "actions": "Acciones",
     "resetPassword": "Réinitialiser le mot de passe",
     "deleteUser": "Supprimer l'utilisateur",
     "areYouSure": "Êtes-vous absolument sûr ?",
@@ -362,36 +363,36 @@
   },
   "imageCropper": {
     "cropProfilePicture": "Recadrer la photo de profil",
-    "adjustImageInstructions": "Ajustez l'image pour qu'elle s'adapte à la zone de recadrage circulaire. Utilisez le curseur pour zoomer.",
+    "adjustImageInstructions": "Ajustez l'image pour qu'elle s'adapte à la zone de recadrage circulaire. Utilisez le curseur pour faire zoomer.",
     "zoom": "Zoom",
-    "apply": "Appliquer",
-    "applying": "Application...",
-    "noCropSelected": "Aucune zone de recadrage sélectionnée.",
-    "failedToCropImage": "Échec du recadrage de l'image.",
-    "errorCroppingImage": "Erreur lors du recadrage de l'image."
+    "apply": "Aplicar",
+    "applying": "Aplicando...",
+    "noCropSelected": "No se ha seleccionado área de recorte.",
+    "failedToCropImage": "Error al recortar la imagen.",
+    "errorCroppingImage": "Error al recortar la imagen."
   },
   "scrollToTopButton": {
     "label": "Faire défiler vers le haut"
   },
   "publicJourneyPage": {
-    "invalidLink": "Lien de voyage public invalide.",
-    "failedToLoadJourney": "Échec du chargement du voyage public.",
-    "loadingJourney": "Chargement du voyage public...",
-    "journeyNotFound": "Voyage public introuvable",
-    "checkLink": "Veuillez vérifier le lien et réessayer.",
-    "byOwner": "Par {{owner}}",
-    "noPostsYet": "Aucune publication dans ce voyage pour le moment !",
-    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
-    "exploreMap": "Explorer les positions des publications sur la carte.",
-    "journeyProtected": "Voyage protégé",
-    "enterPassphrase": "Veuillez entrer le mot de passe pour accéder à ce voyage.",
-    "passphrasePlaceholder": "Entrer le mot de passe",
-    "incorrectPassphrase": "Mot de passe incorrect.",
-    "verifying": "Vérification...",
-    "accessJourney": "Accéder au voyage",
-    "passphraseProtected": "Protégé par mot de passe"
+    "invalidLink": "Enlace de viaje público no válido.",
+    "failedToLoadJourney": "Error al cargar el viaje público.",
+    "loadingJourney": "Cargando viaje público...",
+    "journeyNotFound": "Viaje público no encontrado",
+    "checkLink": "Por favor, comprueba el enlace e inténtalo de nuevo.",
+    "byOwner": "Por {{owner}}",
+    "noPostsYet": "¡Todavía no hay publicaciones en este viaje!",
+    "ownerHasNotAddedPosts": "El propietario del viaje aún no ha añadido ninguna publicación a este viaje público.",
+    "exploreMap": "Explorar ubicaciones de publicaciones en el mapa.",
+    "journeyProtected": "Viaje protegido",
+    "enterPassphrase": "Por favor, introduce la frase de contraseña para acceder a este viaje.",
+    "passphrasePlaceholder": "Introducir frase de contraseña",
+    "incorrectPassphrase": "Frase de contraseña incorrecta.",
+    "verifying": "Verificando...",
+    "accessJourney": "Acceder al viaje",
+    "passphraseProtected": "Protegido con frase de contraseña"
   },
   "createPostDialog": {
-    "description": "Créez une nouvelle publication pour votre voyage sélectionné."
+    "description": "Crea una nueva publicación para tu viaje seleccionado."
   }
 }

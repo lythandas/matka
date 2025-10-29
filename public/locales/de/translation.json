@@ -148,7 +148,8 @@
     "administration": "Verwaltung",
     "toggleMenu": "Menü umschalten",
     "selectJourney": "Reise auswählen",
-    "createNewJourney": "Neue Reise erstellen"
+    "createNewJourney": "Neue Reise erstellen",
+    "navigation": "Navigation"
   },
   "userProfileDropdown": {
     "administration": "Verwaltung",
