@@ -54,13 +54,15 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const hasMedia = mediaItems.length > 0;
   const hasCoordinates = !!post.coordinates;
 
-  // Removed dialogMaxWidthClass as we're using fixed positioning for debugging
+  const dialogMaxWidthClass = "sm:max-w-[90vw] max-w-[98vw]";
+
   console.log(`[PostDetailDialog] Inside return statement. isOpen: ${isOpen}`);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
-        "fixed inset-0 m-auto w-1/2 h-1/2 flex flex-col p-4 relative bg-background text-foreground shadow-lg z-[9999] !animate-none" // Aggressive debugging styles
+        "max-h-[90vh] flex flex-col p-4 relative bg-background text-foreground shadow-lg min-h-[300px]", // Reverted to original styles
+        dialogMaxWidthClass
       )}>
         <DialogHeader className="pb-4">
           <DialogTitle>{post.title || t('postDetailDialog.postDetails')}</DialogTitle>
