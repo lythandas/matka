@@ -145,8 +145,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             {post.message}
           </p>
 
-          {/* Media Section (Temporarily commented out) */}
-          {/*
+          {/* Media Section */}
           {post.media_items && post.media_items.length > 0 ? (
             <div ref={mediaRef} className="relative bg-black flex items-center justify-center rounded-md overflow-hidden mb-4" style={{ height: isFullScreen ? '100%' : 'auto' }}>
               {currentMedia?.type === 'image' && currentMedia.urls.large && (
@@ -218,9 +217,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               <p>{t('postDetailDialog.noMedia')}</p>
             </div>
           )}
-          */}
 
-          {/* Map Section (Temporarily commented out) */}
+          {/* Map Section (Still commented out) */}
           {/*
           {post.coordinates && (
             <div className="mt-4">
