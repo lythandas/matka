@@ -49,6 +49,14 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       );
     }
 
+    // If name or surname were updated, also update all posts by this user
+    if (name !== undefined || surname !== undefined) {
+      await dbClient!.query(
+        'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
+        [name === null ? null : name, surname === null ? null : surname, request.user.id]
+      );
+    }
+
     const newToken = generateToken(updatedUser);
     return { user: updatedUser, token: newToken };
   });
@@ -143,6 +151,14 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       await dbClient!.query(
         'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
         [profile_image_url === null ? null : profile_image_url, id]
+      );
+    }
+
+    // If name or surname were updated, also update all posts by this user
+    if (name !== undefined || surname !== undefined) {
+      await dbClient!.query(
+        'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
+        [name === null ? null : name, surname === null ? null : surname, id]
       );
     }
 
