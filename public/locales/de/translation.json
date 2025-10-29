@@ -302,7 +302,7 @@
   },
   "adminPage": {
     "adminDashboard": "Admin-Dashboard",
-    "manageUsers": "Benutzer verwalten",
+    "manageUsers": "Benutzer",
     "createNewUser": "Neuen Benutzer erstellen",
     "loadingUsers": "Benutzer werden geladen...",
     "user": "Benutzer",
@@ -314,7 +314,7 @@
     "areYouSure": "Sind Sie absolut sicher?",
     "deleteUserDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird der Benutzer <span class='font-bold'>@{{username}}</span> und alle damit verbundenen Reisen, Beiträge und Kollaborationen dauerhaft gelöscht.",
     "continue": "Weiter",
-    "manageJourneys": "Reisen verwalten",
+    "manageJourneys": "Reisen",
     "loadingJourneys": "Reisen werden geladen...",
     "journeyName": "Reisename",
     "owner": "Besitzer",

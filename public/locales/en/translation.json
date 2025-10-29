@@ -302,7 +302,7 @@
   },
   "adminPage": {
     "adminDashboard": "Admin dashboard",
-    "manageUsers": "Manage users",
+    "manageUsers": "Users",
     "createNewUser": "Create new user",
     "loadingUsers": "Loading users...",
     "user": "User",
@@ -314,7 +314,7 @@
     "areYouSure": "Are you absolutely sure?",
     "deleteUserDescription": "This action cannot be undone. This will permanently delete the user <span class='font-bold'>@{{username}}</span> and all their associated journeys, posts, and collaborations.",
     "continue": "Continue",
-    "manageJourneys": "Manage journeys",
+    "manageJourneys": "Journeys",
     "loadingJourneys": "Loading journeys...",
     "journeyName": "Journey Name",
     "owner": "Owner",

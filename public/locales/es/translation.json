@@ -302,7 +302,7 @@
   },
   "adminPage": {
     "adminDashboard": "Panel de administración",
-    "manageUsers": "Gestionar usuarios",
+    "manageUsers": "Usuarios",
     "createNewUser": "Crear nuevo usuario",
     "loadingUsers": "Cargando usuarios...",
     "user": "Usuario",
@@ -314,7 +314,7 @@
     "areYouSure": "¿Estás absolutamente seguro?",
     "deleteUserDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente al usuario <span class='font-bold'>@{{username}}</span> y todos sus viajes, publicaciones y colaboraciones asociados.",
     "continue": "Continuar",
-    "manageJourneys": "Gestionar viajes",
+    "manageJourneys": "Viajes",
     "loadingJourneys": "Cargando viajes...",
     "journeyName": "Nombre del viaje",
     "owner": "Propietario",
