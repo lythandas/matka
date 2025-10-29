@@ -415,7 +415,9 @@ const Index = () => {
                                         </AlertDialogTitle>
                                         <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
                                         <AlertDialogFooter>
-                                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                          <AlertDialogCancel className="w-full sm:w-auto">
+                                            {t('common.cancel')}
+                                          </AlertDialogCancel>
                                           <AlertDialogAction onClick={async () => await handleDeletePost(post.id, post.journey_id, post.user_id)}>
                                             {t('adminPage.continue')}
                                           </AlertDialogAction>
@@ -556,7 +558,6 @@ const Index = () => {
                           {canDeleteDraft && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                {/* Removed Tooltip from here to simplify trigger */}
                                 <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
                                   <Trash2 className="h-4 w-4" />
                                   <span className="sr-only">{t('indexPage.deleteDraft')}</span>
@@ -568,19 +569,17 @@ const Index = () => {
                                 </AlertDialogTitle>
                                 <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel className={cn("w-full sm:w-auto", isMobile && "p-0 h-10 w-10")}>
-                                    {isMobile ? <X className="h-4 w-4" /> : t('common.cancel')}
-                                    {isMobile && <span className="sr-only">{t('common.cancel')}</span>}
+                                  <AlertDialogCancel className="w-full sm:w-auto">
+                                    {t('common.cancel')}
                                   </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={async () => {
                                       console.log(`[AlertDialogAction] Delete button clicked for draft ID: ${draft.id}`);
                                       await handleDeletePost(draft.id, draft.journey_id, draft.user_id, true);
                                     }}
-                                    className={cn("w-full sm:w-auto", isMobile && "p-0 h-10 w-10")}
+                                    className="w-full sm:w-auto"
                                   >
-                                    {isMobile ? <Trash2 className="h-4 w-4" /> : t('adminPage.continue')}
-                                    {isMobile && <span className="sr-only">{t('adminPage.continue')}</span>}
+                                    {t('adminPage.continue')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>

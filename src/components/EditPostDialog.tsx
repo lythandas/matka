@@ -488,19 +488,19 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
         </div>
         <DialogFooter className="flex flex-wrap justify-end gap-2 pt-4">
           <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-            {isMobile ? null : t('common.cancel')}
+            {t('common.cancel')}
           </Button>
           {isDraft && canPublishPostUI && (
             <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
               {isSaving ? (
                 <>
-                  <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                  {isMobile ? null : t('editPostDialog.publishing')}
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('editPostDialog.publishing')}
                 </>
               ) : (
                 <>
-                  <Send className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                  {isMobile ? null : t('editPostDialog.publishPost')}
+                  <Send className="mr-2 h-4 w-4" />
+                  {t('editPostDialog.publishPost')}
                 </>
               )}
             </Button>
@@ -508,13 +508,13 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
             {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
-                <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                {isMobile ? null : t('editPostDialog.saving')}
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('editPostDialog.saving')}
               </>
             ) : (
               <>
-                <Save className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                {isMobile ? null : t('common.saveChanges')}
+                <Save className="mr-2 h-4 w-4" />
+                {t('common.saveChanges')}
               </>
             )}
           </Button>
