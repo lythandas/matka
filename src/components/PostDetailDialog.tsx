@@ -142,12 +142,13 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
               {post.media_items.length > 1 && (
                 <>
+                  {/* Media Navigation Buttons */}
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handlePreviousMedia}
                     disabled={currentMediaIndex === 0}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -156,10 +157,11 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     size="icon"
                     onClick={handleNextMedia}
                     disabled={currentMediaIndex === (post.media_items.length - 1)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
+                  {/* Media Indicators */}
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
                     {post.media_items.map((_, idx) => (
                       <span
