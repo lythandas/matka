@@ -49,10 +49,15 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       );
     }
 
-    // If name or surname were updated, also update all posts by this user
+    // If name or surname were updated, also update all posts and journeys by this user
     if (name !== undefined || surname !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
+        [name === null ? null : name, surname === null ? null : surname, request.user.id]
+      );
+      // NEW: Also update owner_name and owner_surname in journeys table
+      await dbClient!.query(
+        'UPDATE journeys SET owner_name = $1, owner_surname = $2 WHERE user_id = $3',
         [name === null ? null : name, surname === null ? null : surname, request.user.id]
       );
     }

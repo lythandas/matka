@@ -42,14 +42,14 @@ const PublicPageLayout: React.FC<PublicPageLayoutProps> = () => {
           <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
         </div>
         {currentJourney && (
-          <div className="flex items-baseline space-x-2"> {/* Changed to items-baseline for better alignment */}
+          <div className="flex items-baseline space-x-2">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
               {currentJourney.name}
             </h2>
             {ownerDisplayName && (
-              <p className="text-base font-normal text-gray-600 dark:text-gray-400">
+              <span className="text-base font-normal text-gray-600 dark:text-gray-400">
                 {t('publicJourneyPage.byOwner', { owner: ownerDisplayName })}
-              </p>
+              </span>
             )}
             {currentIsProtected && (
               <Lock className="h-5 w-5 text-muted-foreground" />
