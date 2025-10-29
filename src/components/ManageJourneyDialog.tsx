@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile }Hooks/use-mobile'; // Import useIsMobile
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -70,6 +70,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [passphrase, setPassphrase] = useState<string>(''); // New state for setting passphrase
   const [isUpdatingPublicStatus, setIsUpdatingPublicStatus] = useState<boolean>(false);
   const [isSettingPassphrase, setIsSettingPassphrase] = useState<boolean>(false);
+  const [isClearPassphraseConfirmOpen, setIsClearPassphraseConfirmOpen] = useState<boolean>(false); // New state for passphrase clear confirmation
 
   const [collaborators, setCollaborators] = useState<JourneyCollaborator[]>([]);
   const [loadingCollaborators, setLoadingCollaborators] = useState<boolean>(true);
@@ -150,6 +151,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSearchUsername('');
       setSearchResults([]);
       setSelectedUserToAdd(null);
+      setIsClearPassphraseConfirmOpen(false); // Close confirmation dialog on dialog open
     }
   }, [isOpen, journey, fetchCollaborators]);
 
@@ -641,41 +643,18 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                       <span>{t('manageJourneyDialog.passphraseProtection')}</span>
                     </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Switch
-                          id="passphrase-toggle"
-                          checked={hasPassphrase}
-                          onCheckedChange={(checked) => {
-                            if (!checked) {
-                              // Only trigger dialog if turning OFF passphrase
-                            } else {
-                              // If turning ON, no dialog needed, just enable input
-                              setHasPassphrase(true);
-                            }
-                          }}
-                          disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                        />
-                      </AlertDialogTrigger>
-                      {!hasPassphrase && (
-                        // Render an empty fragment or null if passphrase is not set, to avoid showing dialog when turning ON
-                        <></>
-                      )}
-                      {hasPassphrase && (
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                            <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleClearPassphrase}>
-                              {t('adminPage.continue')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      )}
-                    </AlertDialog>
+                    <Switch
+                      id="passphrase-toggle"
+                      checked={hasPassphrase}
+                      onCheckedChange={(checked) => {
+                        if (!checked) { // User wants to turn OFF passphrase
+                          setIsClearPassphraseConfirmOpen(true); // Open confirmation dialog
+                        } else { // User wants to turn ON passphrase (enable input)
+                          setHasPassphrase(true);
+                        }
+                      }}
+                      disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                    />
                   </Label>
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center space-x-2">
@@ -948,6 +927,25 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Confirmation Dialog for Clearing Passphrase */}
+      <AlertDialog open={isClearPassphraseConfirmOpen} onOpenChange={setIsClearPassphraseConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsClearPassphraseConfirmOpen(false)}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              handleClearPassphrase(); // This will also set hasPassphrase to false and close the dialog
+              setIsClearPassphraseConfirmOpen(false); // Ensure dialog closes
+            }}>
+              {t('adminPage.continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
