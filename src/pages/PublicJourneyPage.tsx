@@ -12,7 +12,7 @@ import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 import PostDetailDialog from '@/components/PostDetailDialog';
 import { format } from 'date-fns'; // Ensure format is imported
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } '@/lib/utils';
+import { getAvatarInitials } from '@/lib/utils'; // Corrected import statement
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import { Button } from '@/components/ui/button';
