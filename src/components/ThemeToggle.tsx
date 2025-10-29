@@ -46,7 +46,7 @@ export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
           aria-label={tooltipText}
           {...props}
         >
-          <Icon className="h-6 w-6" /> {/* Increased icon size here */}
+          <Icon className="h-7 w-7" /> {/* Increased icon size here */}
           <span className="sr-only">{tooltipText}</span>
         </Button>
       </TooltipTrigger>

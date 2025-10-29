@@ -556,16 +556,11 @@ const Index = () => {
                           {canDeleteDraft && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{t('indexPage.deleteDraft')}</p>
-                                  </TooltipContent>
-                                </Tooltip>
+                                {/* Removed Tooltip from here to simplify trigger */}
+                                <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">{t('indexPage.deleteDraft')}</span>
+                                </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogTitle className="text-lg font-semibold mb-4">
