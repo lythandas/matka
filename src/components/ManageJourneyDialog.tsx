@@ -522,7 +522,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{t('manageJourneyDialog.manageJourney', { journeyName: journey?.name })}</DialogTitle>
           <DialogDescription>

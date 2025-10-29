@@ -209,14 +209,14 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{t('manageAccountDialog.manageYourAccount')}</DialogTitle>
             <DialogDescription>
               {t('manageAccountDialog.updatePersonalInfo')}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="flex-grow overflow-y-auto p-4">
             <div className="flex flex-col items-center gap-4 mb-4">
               <Avatar className="h-24 w-24">
                 {currentImageSrc ? (
