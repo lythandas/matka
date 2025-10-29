@@ -12,7 +12,7 @@ import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 import PostDetailDialog from '@/components/PostDetailDialog';
 import { format } from 'date-fns'; // Ensure format is imported
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarInitials } from '@/lib/utils';
+import { getAvatarInitials } '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import ViewToggle from '@/components/ViewToggle'; // Import ViewToggle
 import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PUBLIC_JOURNEY_PASSPHRASE_SESSION_DURATION_SECONDS } from '@/config/constants'; // Import the new constant
 
 // Define the context type that PublicPageLayout will provide
 interface PublicPageLayoutContextType {
@@ -43,15 +44,17 @@ const PublicJourneyPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [passphraseInput, setPassphraseInput] = useState<string>('');
-  const [passphraseSubmitted, setPassphraseSubmitted] = useState<boolean>(false);
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
+  const [showPassphraseForm, setShowPassphraseForm] = useState<boolean>(false); // New state to control form visibility
 
   const [selectedPostForDetail, setSelectedPostForDetail] = useState<Post | null>(null);
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // New state for view mode
 
-  const fetchPublicJourney = useCallback(async (passphrase?: string) => {
+  const PASSPHRASE_STORAGE_KEY = `publicJourneyPassphrase_${publicLinkId}`;
+
+  const fetchPublicJourney = useCallback(async (passphraseAttempt?: string) => {
     if (!publicLinkId) {
       setError(t('publicJourneyPage.invalidLink'));
       setLoading(false);
@@ -62,49 +65,84 @@ const PublicJourneyPage: React.FC = () => {
 
     setLoading(true);
     setError(null);
-    setIsAuthenticating(true); // Set authenticating state
+    setIsAuthenticating(true);
+    setShowPassphraseForm(false); // Hide form while fetching
+
+    let effectivePassphrase = passphraseAttempt;
+
+    // Check local storage for a valid session
+    if (!effectivePassphrase) {
+      const storedPassphraseData = localStorage.getItem(PASSPHRASE_STORAGE_KEY);
+      if (storedPassphraseData) {
+        try {
+          const { passphrase: storedPassphrase, timestamp } = JSON.parse(storedPassphraseData);
+          if (Date.now() < timestamp + PUBLIC_JOURNEY_PASSPHRASE_SESSION_DURATION_SECONDS * 1000) {
+            effectivePassphrase = storedPassphrase;
+          } else {
+            localStorage.removeItem(PASSPHRASE_STORAGE_KEY); // Expired
+          }
+        } catch (e) {
+          console.error("Failed to parse stored passphrase data:", e);
+          localStorage.removeItem(PASSPHRASE_STORAGE_KEY);
+        }
+      }
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/public-journeys/${publicLinkId}`, {
-        method: 'POST', // Changed to POST
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ passphrase }), // Include passphrase in the body
+        body: JSON.stringify({ passphrase: effectivePassphrase }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        // If passphrase is required or incorrect, show the form
+        if (errorData.message === 'Passphrase required to access this journey.' || errorData.message === 'Incorrect passphrase.') {
+          setShowPassphraseForm(true);
+          setError(errorData.message); // Set error message for display in form
+          setJourneyInLayout(null);
+          setIsProtectedInLayout(true); // Indicate it's protected
+          return; // Exit without setting journey/posts
+        }
         throw new Error(errorData.message || t('publicJourneyPage.failedToLoadJourney'));
       }
       const data = await response.json();
-      setJourney(data.journey); // Update local state
+      setJourney(data.journey);
       setPosts(data.posts);
-      setPassphraseSubmitted(true); // Mark passphrase as successfully submitted
+
+      // Store passphrase if it was successfully used (either new or from session)
+      if (effectivePassphrase) {
+        localStorage.setItem(PASSPHRASE_STORAGE_KEY, JSON.stringify({
+          passphrase: effectivePassphrase,
+          timestamp: Date.now(),
+        }));
+      }
 
       // Update layout context with fetched journey data
       setJourneyInLayout(data.journey);
-      setIsProtectedInLayout(!!data.journey.has_passphrase); // Assuming has_passphrase is returned
+      setIsProtectedInLayout(!!data.journey.has_passphrase);
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       setError(err.message || t('publicJourneyPage.failedToLoadJourney'));
       showError(err.message || t('publicJourneyPage.failedToLoadJourney'));
-      setPassphraseSubmitted(false); // Reset if authentication fails
-      setJourneyInLayout(null); // Clear layout journey on error
+      setJourneyInLayout(null);
       setIsProtectedInLayout(false);
     } finally {
       setLoading(false);
-      setIsAuthenticating(false); // Clear authenticating state
+      setIsAuthenticating(false);
     }
-  }, [publicLinkId, setJourneyInLayout, setIsProtectedInLayout, t]); // Add context setters and t to dependencies
+  }, [publicLinkId, setJourneyInLayout, setIsProtectedInLayout, PASSPHRASE_STORAGE_KEY, t]);
 
   useEffect(() => {
     fetchPublicJourney();
-    // Cleanup function for layout context when component unmounts
     return () => {
       setJourneyInLayout(null);
       setIsProtectedInLayout(false);
     };
-  }, [fetchPublicJourney, setJourneyInLayout, setIsProtectedInLayout]); // Add fetchPublicJourney and context setters to dependencies
+  }, [fetchPublicJourney, setJourneyInLayout, setIsProtectedInLayout]);
 
   const handlePassphraseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +150,7 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handlePostClick = (post: Post, index: number) => {
-    if (isMobile) { // Disable post details on mobile
+    if (isMobile) {
       return;
     }
     setSelectedPostForDetail(post);
@@ -145,7 +183,7 @@ const PublicJourneyPage: React.FC = () => {
   const postsWithCoordinates = posts.filter(post => post.coordinates);
   const hasPostsWithCoordinates = postsWithCoordinates.length > 0;
 
-  if (loading) {
+  if (loading && !showPassphraseForm) { // Only show loading if not waiting for passphrase
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
@@ -156,46 +194,45 @@ const PublicJourneyPage: React.FC = () => {
 
   // Render content based on error or journey data
   const renderContent = () => {
-    if (error) {
-      // If the error is specifically about passphrase required, show the input form
-      if (error === 'Passphrase required to access this journey.' || error === 'Incorrect passphrase.') {
-        return (
-          <div className="flex-grow flex flex-col items-center justify-center p-4">
-            <Lock className="h-24 w-24 text-blue-500 mb-4" />
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.enterPassphrase')}</p>
-            <form onSubmit={handlePassphraseSubmit} className="w-full max-w-sm space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="passphrase">{t('common.passphrase')}</Label>
-                <Input
-                  id="passphrase"
-                  type="password"
-                  value={passphraseInput}
-                  onChange={(e) => setPassphraseInput(e.target.value)}
-                  placeholder={t('publicJourneyPage.passphrasePlaceholder')}
-                  disabled={isAuthenticating}
-                  required
-                />
-              </div>
-              {error === 'Incorrect passphrase.' && (
-                <p className="text-sm text-red-500">{t('publicJourneyPage.incorrectPassphrase')}</p>
+    if (showPassphraseForm) { // Prioritize showing passphrase form if needed
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center p-4">
+          <Lock className="h-24 w-24 text-blue-500 mb-4" />
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.enterPassphrase')}</p>
+          <form onSubmit={handlePassphraseSubmit} className="w-full max-w-sm space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="passphrase">{t('common.passphrase')}</Label>
+              <Input
+                id="passphrase"
+                type="password"
+                value={passphraseInput}
+                onChange={(e) => setPassphraseInput(e.target.value)}
+                placeholder={t('publicJourneyPage.passphrasePlaceholder')}
+                disabled={isAuthenticating}
+                required
+              />
+            </div>
+            {error === 'Incorrect passphrase.' && (
+              <p className="text-sm text-red-500">{t('publicJourneyPage.incorrectPassphrase')}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={isAuthenticating}>
+              {isAuthenticating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('publicJourneyPage.verifying')}
+                </>
+              ) : (
+                t('publicJourneyPage.accessJourney')
               )}
-              <Button type="submit" className="w-full" disabled={isAuthenticating}>
-                {isAuthenticating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('publicJourneyPage.verifying')}
-                  </>
-                ) : (
-                  t('publicJourneyPage.accessJourney')
-                )}
-              </Button>
-            </form>
-          </div>
-        );
-      }
+            </Button>
+          </form>
+        </div>
+      );
+    }
 
-      // Generic error display
+    if (error && error !== 'Passphrase required to access this journey.' && error !== 'Incorrect passphrase.') {
+      // Generic error display, excluding passphrase errors handled above
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
           <Compass className="h-24 w-24 text-red-500 mb-4" />
@@ -217,7 +254,9 @@ const PublicJourneyPage: React.FC = () => {
       );
     }
 
-    const ownerDisplayName = journey.owner_name && journey.owner_surname ? `${journey.owner_name} ${journey.owner_surname}` : journey.owner_name || journey.owner_username;
+    const ownerDisplayName = journey.owner_name && journey.owner_surname
+      ? `${journey.owner_name} ${journey.owner_surname}`
+      : journey.owner_name || journey.owner_username;
 
     return (
       <main className="flex-grow w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -273,7 +312,7 @@ const PublicJourneyPage: React.FC = () => {
                 ))}
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Changed here */}
+              <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {posts.map((post, index) => (
                   <GridPostCard
                     key={post.id}

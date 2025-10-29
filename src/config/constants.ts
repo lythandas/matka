@@ -5,3 +5,5 @@ export const MAX_CONTENT_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 export const SUPPORTED_IMAGE_TYPES = "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,image/bmp,image/tiff,image/heic,image/heif";
 export const SUPPORTED_VIDEO_TYPES = "video/mp4,video/webm,video/ogg,video/quicktime"; // Common video types
 export const SUPPORTED_MEDIA_TYPES = `${SUPPORTED_IMAGE_TYPES},${SUPPORTED_VIDEO_TYPES}`;
+
+export const PUBLIC_JOURNEY_PASSPHRASE_SESSION_DURATION_SECONDS = 3600; // 1 hour
