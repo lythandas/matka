@@ -99,10 +99,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 flex flex-col">
-              <div className="p-4 border-b dark:border-gray-800 flex items-center">
-                <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-                <h1 className="text-xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
-              </div>
+              {/* Removed the logo and app name from here */}
               <nav className="flex-grow p-4 space-y-2">
                 {isAuthenticated && (
                   <>
@@ -138,12 +135,11 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             </SheetContent>
           </Sheet>
         )}
-        {!isMobile && (
-          <div className="flex items-center">
-            <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-            <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
-          </div>
-        )}
+        {/* This block remains for both mobile (when sheet is closed) and desktop */}
+        <div className="flex items-center">
+          <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
+          <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
+        </div>
       </div>
 
       {!isMobile && isAuthenticated && (
