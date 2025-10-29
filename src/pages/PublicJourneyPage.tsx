@@ -359,7 +359,7 @@ const PublicJourneyPage: React.FC = () => {
           currentIndex={selectedPostIndex !== null ? selectedPostIndex : -1}
           totalPosts={posts.length}
           onNext={handleNextPost}
-          onPrevious={handlePreviousPost} {/* Corrected here */}
+          onPrevious={handlePreviousPost}
           journey={journey}
         />
       )}
