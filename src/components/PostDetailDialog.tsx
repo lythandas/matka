@@ -43,6 +43,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const currentLocale = getDateFnsLocale();
   const isMobile = useIsMobile();
 
+  console.log(`[PostDetailDialog] Rendering. isOpen: ${isOpen}, post:`, post);
+
   useEffect(() => {
     setCurrentMediaIndex(0);
     // Removed setIsWideViewActive(false)

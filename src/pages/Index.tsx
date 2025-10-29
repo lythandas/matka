@@ -216,10 +216,11 @@ const Index = () => {
   };
 
   const handlePostClick = useCallback((post: Post, index: number) => {
-    // Removed the isMobile check here
+    console.log(`[Index.tsx] handlePostClick called for post ID: ${post.id}, index: ${index}`);
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
+    console.log(`[Index.tsx] isDetailDialogOpen set to true. selectedPostForDetail:`, post);
   }, []); // Dependencies: isMobile removed
 
   const handleNextPost = () => {
@@ -239,6 +240,7 @@ const Index = () => {
   };
 
   const handleCloseDetailDialog = () => {
+    console.log("[Index.tsx] handleCloseDetailDialog called.");
     setIsDetailDialogOpen(false);
     setSelectedPostForDetail(null);
     setSelectedPostIndex(null);

@@ -150,10 +150,11 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handlePostClick = useCallback((post: Post, index: number) => {
-    // Removed the isMobile check here
+    console.log(`[PublicJourneyPage.tsx] handlePostClick called for post ID: ${post.id}, index: ${index}`);
     setSelectedPostForDetail(post);
     setSelectedPostIndex(index);
     setIsDetailDialogOpen(true);
+    console.log(`[PublicJourneyPage.tsx] isDetailDialogOpen set to true. selectedPostForDetail:`, post);
   }, []); // Dependencies: isMobile removed
 
   const handleNextPost = () => {
@@ -173,6 +174,7 @@ const PublicJourneyPage: React.FC = () => {
   };
 
   const handleCloseDetailDialog = () => {
+    console.log("[PublicJourneyPage.tsx] handleCloseDetailDialog called.");
     setIsDetailDialogOpen(false);
     setSelectedPostForDetail(null);
     setSelectedPostIndex(null);
