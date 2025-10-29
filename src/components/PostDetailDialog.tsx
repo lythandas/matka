@@ -114,7 +114,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           ref={mediaRef}
           className={cn(
             "relative flex items-center justify-center bg-black rounded-t-md lg:rounded-l-md lg:rounded-tr-none overflow-hidden",
-            "flex-grow lg:w-3/4", // Changed from lg:w-2/3 to lg:w-3/4
+            "flex-grow lg:w-3/4", // Take 3/4 width on large screens, grow to fill height
             "min-h-[50vh] lg:min-h-full" // Ensure it has height on mobile, fills parent height on large screens
           )}
         >
@@ -193,7 +193,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
 
         {/* Details Column (Right on large screens, bottom on small screens) */}
         <div className={cn(
-          "flex flex-col lg:w-1/4 p-4 overflow-y-auto", // Changed from lg:w-1/3 to lg:w-1/4
+          "flex flex-col lg:w-1/4 p-4 overflow-y-auto",
           "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
         )}>
           <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
@@ -238,26 +238,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               <MapComponent coordinates={post.coordinates} className="h-64" />
             </div>
           )}
-        </div>
-
-        {/* Navigation buttons (outside columns, at the very bottom) */}
-        <div className="flex justify-between items-center p-4 border-t dark:border-gray-700 flex-shrink-0">
-          <Button
-            variant="outline"
-            onClick={onPrevious}
-            disabled={currentIndex === 0}
-            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" /> {t('postDetailDialog.previousPost')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onNext}
-            disabled={currentIndex === totalPosts - 1}
-            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-          >
-            {t('postDetailDialog.nextPost')} <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
