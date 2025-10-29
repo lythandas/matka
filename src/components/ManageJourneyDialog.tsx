@@ -225,13 +225,17 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     setIsUpdatingPublicStatus(true);
     try {
       const endpoint = checked ? `${API_BASE_URL}/journeys/${journey.id}/publish` : `${API_BASE_URL}/journeys/${journey.id}/unpublish`;
+      
+      // Ensure a non-empty JSON body is always sent for POST requests with application/json
+      const requestBody = JSON.stringify({ dummy: true }); 
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({}), // Send an empty JSON object
+        body: requestBody,
       });
 
       if (!response.ok) {
@@ -322,6 +326,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({ dummy: true }), // Ensure non-empty body
       });
 
       if (!response.ok) {
@@ -457,6 +462,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -496,6 +502,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -629,25 +636,32 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
               {isPublic && (
                 <div className="space-y-2 mt-4">
-                  <Label htmlFor="passphrase-input" className="flex items-center justify-between space-x-2">
+                  <Label htmlFor="passphrase-toggle" className="flex items-center justify-between space-x-2">
                     <div className="flex items-center space-x-2">
                       {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                       <span>{t('manageJourneyDialog.passphraseProtection')}</span>
                     </div>
-                    {hasPassphrase && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Switch
-                            id="clear-passphrase-toggle"
-                            checked={hasPassphrase}
-                            onCheckedChange={(checked) => {
-                              if (!checked) {
-                                // Trigger AlertDialog for confirmation
-                              }
-                            }}
-                            disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                          />
-                        </AlertDialogTrigger>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Switch
+                          id="passphrase-toggle"
+                          checked={hasPassphrase}
+                          onCheckedChange={(checked) => {
+                            if (!checked) {
+                              // Only trigger dialog if turning OFF passphrase
+                            } else {
+                              // If turning ON, no dialog needed, just enable input
+                              setHasPassphrase(true);
+                            }
+                          }}
+                          disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                        />
+                      </AlertDialogTrigger>
+                      {!hasPassphrase && (
+                        // Render an empty fragment or null if passphrase is not set, to avoid showing dialog when turning ON
+                        <></>
+                      )}
+                      {hasPassphrase && (
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
@@ -660,8 +674,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
-                    )}
+                      )}
+                    </AlertDialog>
                   </Label>
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center space-x-2">
@@ -670,13 +684,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         type="password"
                         value={passphrase}
                         onChange={(e) => setPassphrase(e.target.value)}
-                        placeholder={hasPassphrase ? t('manageJourneyDialog.enterNewPassphrase') : t('manageJourneyDialog.setPassphraseOptional', { minLength: 6 })}
+                        placeholder={hasPassphrase ? t('manageJourneyDialog.enterNewPassphrase') : t('manageJourneyDialog.setPassphraseOptional')}
                         className="flex-grow"
-                        disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                        disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator || !hasPassphrase}
                       />
                       <Button
                         onClick={handleSetPassphrase}
-                        disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                        disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator || !hasPassphrase}
                         className="hover:ring-2 hover:ring-blue-500"
                       >
                         {isSettingPassphrase ? (
