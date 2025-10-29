@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
+import { useIsMobile } from '@/hooks/use-mobile'; // Corrected import path
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -586,7 +586,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 ) : (
                   <>
                     <Pencil className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                    <span className={cn(isMobile && "sr-only")}>{t('manageJourneyDialog.saveJourneyName')}</span>
+                    {!isMobile && t('manageJourneyDialog.saveJourneyName')}
+                    {isMobile && <span className="sr-only">{t('manageJourneyDialog.saveJourneyName')}</span>}
                   </>
                 )}
               </Button>
@@ -680,7 +681,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         ) : (
                           <>
                             <Lock className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                            <span className={cn(isMobile && "sr-only")}>{(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}</span>
+                            {!isMobile && (hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}
+                            {isMobile && <span className="sr-only">{(hasPassphrase ? t('manageJourneyDialog.updatePassphrase') : t('manageJourneyDialog.setPassphrase'))}</span>}
                           </>
                         )}
                       </Button>
@@ -757,7 +759,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                   ) : (
                     <>
                       <Plus className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                      <span className={cn(isMobile && "sr-only")}>{t('manageJourneyDialog.addCollaborator')}</span>
+                      {!isMobile && t('manageJourneyDialog.addCollaborator')}
+                      {isMobile && <span className="sr-only">{t('manageJourneyDialog.addCollaborator')}</span>}
                     </>
                   )}
                 </Button>
