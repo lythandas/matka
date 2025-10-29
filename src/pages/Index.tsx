@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 import CreatePostFormContent from '@/components/CreatePostFormContent'; // Import the new form content
 import CreatePostDialog from '@/components/CreatePostDialog'; // Import the new dialog
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 
 const Index = () => {
   const { t } = useTranslation();
@@ -254,11 +255,6 @@ const Index = () => {
   const handleLoadDraft = (draft: Post) => {
     // This function is now handled by CreatePostFormContent directly
     // When a draft is loaded, it should populate the form in the dialog
-    setIsCreatePostDialogOpen(true); // Open the dialog
-    // The CreatePostFormContent needs a way to receive the draft to load.
-    // This will require a prop to CreatePostFormContent or a ref.
-    // For simplicity, I'll pass the draft to the dialog, and the dialog will pass it to the form content.
-    // For now, I'll just open the dialog.
     showError(t('indexPage.loadDraftNotImplemented')); // Temporary message
   };
 
@@ -534,16 +530,30 @@ const Index = () => {
                         </div>
                         <div className="flex space-x-2">
                           {canEditDraft && (
-                            <Button variant="outline" size="sm" onClick={() => handleEditPost(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-                              <Edit className="mr-2 h-4 w-4" /> {t('indexPage.loadDraft')}
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="outline" size="icon" onClick={() => handleEditPost(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{t('indexPage.loadDraft')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                           {canDeleteDraft && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" className="hover:ring-2 hover:ring-blue-500">
-                                  <Trash2 className="mr-2 h-4 w-4" /> {t('indexPage.deleteDraft')}
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{t('indexPage.deleteDraft')}</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogTitle className="text-lg font-semibold mb-4">
