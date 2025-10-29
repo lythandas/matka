@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Plus, Compass, Edit, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Compass, Edit, Loader2, X } from 'lucide-react'; // Added X icon
 import { useAuth } from '@/contexts/AuthContext';
 import MapComponent from '@/components/MapComponent';
 import PostDetailDialog from '@/components/PostDetailDialog';
@@ -573,12 +573,19 @@ const Index = () => {
                                 </AlertDialogTitle>
                                 <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction onClick={async () => {
-                                    console.log(`[AlertDialogAction] Delete button clicked for draft ID: ${draft.id}`);
-                                    await handleDeletePost(draft.id, draft.journey_id, draft.user_id, true);
-                                  }}>
-                                    {t('adminPage.continue')}
+                                  <AlertDialogCancel className={cn("w-full sm:w-auto", isMobile && "p-0 h-10 w-10")}>
+                                    {isMobile ? <X className="h-4 w-4" /> : t('common.cancel')}
+                                    {isMobile && <span className="sr-only">{t('common.cancel')}</span>}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={async () => {
+                                      console.log(`[AlertDialogAction] Delete button clicked for draft ID: ${draft.id}`);
+                                      await handleDeletePost(draft.id, draft.journey_id, draft.user_id, true);
+                                    }}
+                                    className={cn("w-full sm:w-auto", isMobile && "p-0 h-10 w-10")}
+                                  >
+                                    {isMobile ? <Trash2 className="h-4 w-4" /> : t('adminPage.continue')}
+                                    {isMobile && <span className="sr-only">{t('adminPage.continue')}</span>}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
