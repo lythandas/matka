@@ -136,17 +136,12 @@ const PublicJourneyPage: React.FC = () => {
     );
   }
 
-  if (error) {
-    // If the error is specifically about passphrase required, show the input form
-    if (error === 'Passphrase required to access this journey.' || error === 'Incorrect passphrase.') {
-      return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-          <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 w-full max-w-3xl">
-            <div className="flex items-center">
-              <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-              <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
-            </div>
-          </header>
+  // Render header and content based on error or journey data
+  const renderContent = () => {
+    if (error) {
+      // If the error is specifically about passphrase required, show the input form
+      if (error === 'Passphrase required to access this journey.' || error === 'Incorrect passphrase.') {
+        return (
           <div className="flex-grow flex flex-col items-center justify-center p-4">
             <Lock className="h-24 w-24 text-blue-500 mb-4" />
             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
@@ -179,49 +174,34 @@ const PublicJourneyPage: React.FC = () => {
               </Button>
             </form>
           </div>
-          <AppFooter />
+        );
+      }
+
+      // Generic error display
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
+          <Compass className="h-24 w-24 text-red-500 mb-4" />
+          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">{t('common.error')}</h1>
+          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">{error}</p>
+          <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
         </div>
       );
     }
 
-    // Generic error display
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-        <Compass className="h-24 w-24 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">{t('common.error')}</h1>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">{error}</p>
-        <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
-        <AppFooter />
-      </div>
-    );
-  }
-
-  if (!journey) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center">
-        <Compass className="h-24 w-24 text-gray-400 dark:text-gray-600 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyNotFound')}</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.checkLink')}</p>
-        <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
-        <AppFooter />
-      </div>
-    );
-  }
-
-  const ownerDisplayName = journey.owner_name && journey.owner_surname ? `${journey.owner_name} ${journey.owner_surname}` : journey.owner_name || journey.owner_username;
-
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
-        <div className="flex items-center">
-          <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-          <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
+    if (!journey) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
+          <Compass className="h-24 w-24 text-gray-400 dark:text-gray-600 mb-4" />
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyNotFound')}</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.checkLink')}</p>
+          <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
         </div>
-        <div className="flex items-center space-x-2">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{journey.name}</h2>
-        </div>
-      </header>
+      );
+    }
 
+    const ownerDisplayName = journey.owner_name && journey.owner_surname ? `${journey.owner_name} ${journey.owner_surname}` : journey.owner_name || journey.owner_username;
+
+    return (
       <main className="flex-grow w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{journey.name}</h1>
@@ -309,6 +289,24 @@ const PublicJourneyPage: React.FC = () => {
           </div>
         )}
       </main>
+    );
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30">
+        <div className="flex items-center">
+          <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
+          <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
+        </div>
+        {journey && !error && ( // Only show journey name if journey is loaded and no error
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{journey.name}</h2>
+          </div>
+        )}
+      </header>
+
+      {renderContent()}
 
       {selectedPostForDetail && isDetailDialogOpen && (
         <PostDetailDialog
