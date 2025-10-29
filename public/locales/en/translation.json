@@ -390,5 +390,8 @@
   },
   "scrollToTopButton": {
     "label": "Scroll to top"
+  },
+  "createPostDialog": {
+    "description": "Create a new post for your selected journey."
   }
 }

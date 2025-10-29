@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription, // Import DialogDescription
 } from "@/components/ui/dialog";
 import CreatePostFormContent from './CreatePostFormContent';
 import { Journey, User, Post, JourneyCollaborator } from '@/types';
@@ -43,6 +44,9 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('indexPage.createNewPost')}</DialogTitle>
+          <DialogDescription>
+            {t('createPostDialog.description')} {/* Added DialogDescription */}
+          </DialogDescription>
         </DialogHeader>
         <CreatePostFormContent
           selectedJourney={selectedJourney}

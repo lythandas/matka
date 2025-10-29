@@ -390,5 +390,8 @@
     "verifying": "Verificando...",
     "accessJourney": "Acceder al viaje",
     "passphraseProtected": "Protegido con frase de contraseña"
+  },
+  "createPostDialog": {
+    "description": "Crea una nueva publicación para tu viaje seleccionado."
   }
 }

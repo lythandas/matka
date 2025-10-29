@@ -223,7 +223,7 @@
     "postDate": "Date de publication",
     "media": "Médias",
     "location": "Localisation",
-    "uploadMedia": "Télécharger des images ou des vidéos (Max {{maxSize}}Mo par fichier)",
+    "uploadMedia": "Télécharger des images ou des vidéos (Máx. {{maxSize}}MB por archivo)",
     "changeAddMedia": "Modifier/Ajouter des médias",
     "chooseMedia": "Choisir des médias",
     "uploadingMedia": "Téléchargement...",
@@ -248,7 +248,7 @@
   },
   "journeyMapDialog": {
     "journeyMap": "Carte du voyage",
-    "explorePostLocations": "Explorez les positions des publications dans ce voyage. Cliquez sur une épingle pour voir les détails de la publication.",
+    "explorePostLocations": "Explorez les positions des publications dans ce voyage. Faites clic sur une épingle pour voir les détails de la publication.",
     "noPostsWithLocation": "Aucune publication avec des données de position trouvée dans ce voyage."
   },
   "postDetailDialog": {
@@ -320,7 +320,7 @@
     "public": "Public",
     "manageJourney": "Gérer le voyage",
     "deleteJourney": "Supprimer le voyage",
-    "deleteJourneyDescription": "Cette action est irréversible. Cela supprimera définitivement le voyage <span class='font-bold'>'{{journeyName}}'</span> et toutes ses publications et permissions de collaborateur associées."
+    "deleteJourneyDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente el viaje <span class='font-bold'>'{{journeyName}}'</span> y todas sus publicaciones y permisos de colaborador asociados."
   },
   "notFoundPage": {
     "oopsPageNotFound": "Oups ! Page non trouvée",
@@ -390,5 +390,8 @@
     "verifying": "Vérification...",
     "accessJourney": "Accéder au voyage",
     "passphraseProtected": "Protégé par mot de passe"
+  },
+  "createPostDialog": {
+    "description": "Créez une nouvelle publication pour votre voyage sélectionné."
   }
 }
