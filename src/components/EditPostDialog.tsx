@@ -307,7 +307,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
-              className="resize-none"
+              className="resize-none mb-4" {/* Added mb-4 here */}
               disabled={isSaving || isUploadingMedia || !canEditPostUI}
             />
             <Label htmlFor="post-date">{t('editPostDialog.postDate')}</Label>
