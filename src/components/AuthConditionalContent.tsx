@@ -33,7 +33,7 @@ const AuthConditionalContent: React.FC = () => {
   return (
     <Routes>
       {/* Public Journey Route - always uses PublicPageLayout */}
-      <Route path="/public-journey/:publicLinkId" element={<PublicPageLayout journey={user?.currentPublicJourney} isProtected={user?.currentPublicJourney?.has_passphrase} />}>
+      <Route path="/public-journey/:publicLinkId" element={<PublicPageLayout />}> {/* No props here */}
         <Route index element={<PublicJourneyPage />} />
       </Route>
 

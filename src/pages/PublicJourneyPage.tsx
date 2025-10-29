@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useOutletContext } from 'react-router-dom'; // Import useOutletContext
 import { Compass, Loader2, Map as MapIcon, Lock } from 'lucide-react';
 import { API_BASE_URL } from '@/config/api';
 import { Journey, Post } from '@/types';
@@ -23,13 +23,22 @@ import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+// Define the context type that PublicPageLayout will provide
+interface PublicPageLayoutContextType {
+  setJourney: (journey: Journey | null) => void;
+  setIsProtected: (isProtected: boolean) => void;
+}
+
 const PublicJourneyPage: React.FC = () => {
   const { t } = useTranslation();
   const { publicLinkId } = useParams<{ publicLinkId: string }>();
   const currentLocale = getDateFnsLocale();
   const isMobile = useIsMobile(); // Use the mobile hook
 
-  const [journey, setJourney] = useState<Journey | null>(null);
+  // Access the context from the parent PublicPageLayout
+  const { setJourney: setJourneyInLayout, setIsProtected: setIsProtectedInLayout } = useOutletContext<PublicPageLayoutContextType>();
+
+  const [journey, setJourney] = useState<Journey | null>(null); // Keep local state for rendering content
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +51,12 @@ const PublicJourneyPage: React.FC = () => {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // New state for view mode
 
-  const fetchPublicJourney = async (passphrase?: string) => {
+  const fetchPublicJourney = useCallback(async (passphrase?: string) => {
     if (!publicLinkId) {
       setError(t('publicJourneyPage.invalidLink'));
       setLoading(false);
+      setJourneyInLayout(null); // Clear layout journey on error
+      setIsProtectedInLayout(false);
       return;
     }
 
@@ -66,26 +77,34 @@ const PublicJourneyPage: React.FC = () => {
         throw new Error(errorData.message || t('publicJourneyPage.failedToLoadJourney'));
       }
       const data = await response.json();
-      setJourney(data.journey);
+      setJourney(data.journey); // Update local state
       setPosts(data.posts);
       setPassphraseSubmitted(true); // Mark passphrase as successfully submitted
+
+      // Update layout context with fetched journey data
+      setJourneyInLayout(data.journey);
+      setIsProtectedInLayout(!!data.journey.has_passphrase); // Assuming has_passphrase is returned
     } catch (err: any) {
       console.error('Error fetching public journey:', err);
       setError(err.message || t('publicJourneyPage.failedToLoadJourney'));
       showError(err.message || t('publicJourneyPage.failedToLoadJourney'));
       setPassphraseSubmitted(false); // Reset if authentication fails
+      setJourneyInLayout(null); // Clear layout journey on error
+      setIsProtectedInLayout(false);
     } finally {
       setLoading(false);
       setIsAuthenticating(false); // Clear authenticating state
     }
-  };
+  }, [publicLinkId, setJourneyInLayout, setIsProtectedInLayout, t]); // Add context setters and t to dependencies
 
   useEffect(() => {
-    // On initial load, try to fetch without a passphrase first.
-    // If it requires a passphrase, the backend will return an error,
-    // and we'll then show the passphrase input.
     fetchPublicJourney();
-  }, [publicLinkId]);
+    // Cleanup function for layout context when component unmounts
+    return () => {
+      setJourneyInLayout(null);
+      setIsProtectedInLayout(false);
+    };
+  }, [fetchPublicJourney, setJourneyInLayout, setIsProtectedInLayout]); // Add fetchPublicJourney and context setters to dependencies
 
   const handlePassphraseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
