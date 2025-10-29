@@ -258,7 +258,9 @@
     "failedToLoadImage": "No se pudo cargar la imagen.",
     "fullscreenNotSupported": "El modo de pantalla completa no es compatible con tu navegador.",
     "failedToEnterFullscreen": "No se pudo activar el modo de pantalla completa.",
-    "noMedia": "No hay medios para esta publicación."
+    "noMedia": "No hay medios para esta publicación.",
+    "previousPost": "Publicación anterior",
+    "nextPost": "Siguiente publicación"
   },
   "gridPostCard": {
     "untitledPost": "Publicación sin título"

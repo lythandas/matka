@@ -193,7 +193,25 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           </div>
         </div>
 
-        {/* Post navigation buttons (removed from here, handled by main Index page) */}
+        {/* Post navigation buttons */}
+        <DialogFooter className="flex justify-between p-4 border-t">
+          <Button
+            variant="outline"
+            onClick={onPrevious}
+            disabled={currentIndex === 0}
+            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" /> {t('postDetailDialog.previousPost')}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onNext}
+            disabled={currentIndex === totalPosts - 1}
+            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          >
+            {t('postDetailDialog.nextPost')} <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

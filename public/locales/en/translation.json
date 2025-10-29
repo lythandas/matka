@@ -258,7 +258,9 @@
     "failedToLoadImage": "Failed to load image.",
     "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
     "failedToEnterFullscreen": "Failed to enter full-screen mode.",
-    "noMedia": "No media for this post."
+    "noMedia": "No media for this post.",
+    "previousPost": "Previous Post",
+    "nextPost": "Next Post"
   },
   "gridPostCard": {
     "untitledPost": "Untitled Post"

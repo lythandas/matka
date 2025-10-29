@@ -258,7 +258,9 @@
     "failedToLoadImage": "Bild konnte nicht geladen werden.",
     "fullscreenNotSupported": "Der Vollbildmodus wird von Ihrem Browser nicht unterstützt.",
     "failedToEnterFullscreen": "Fehler beim Aktivieren des Vollbildmodus.",
-    "noMedia": "Keine Medien für diesen Beitrag."
+    "noMedia": "Keine Medien für diesen Beitrag.",
+    "previousPost": "Vorheriger Beitrag",
+    "nextPost": "Nächster Beitrag"
   },
   "gridPostCard": {
     "untitledPost": "Unbenannter Beitrag"

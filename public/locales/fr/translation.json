@@ -258,7 +258,9 @@
     "failedToLoadImage": "Échec du chargement de l'image.",
     "fullscreenNotSupported": "Le mode plein écran n'est pas pris en charge par votre navigateur.",
     "failedToEnterFullscreen": "Échec de l'activation du mode plein écran.",
-    "noMedia": "Aucun média pour cette publication."
+    "noMedia": "Aucun média pour cette publication.",
+    "previousPost": "Publication précédente",
+    "nextPost": "Publication suivante"
   },
   "gridPostCard": {
     "untitledPost": "Publication sans titre"
