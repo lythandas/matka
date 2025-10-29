@@ -38,6 +38,7 @@ import { useIsMobile } from '@/hooks/use-mobile'; // Import useIsMobile
 import CreatePostFormContent from '@/components/CreatePostFormContent'; // Import the new form content
 import CreatePostDialog from '@/components/CreatePostDialog'; // Import the new dialog
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
+import { showSuccess, showError } from '@/utils/toast'; // Import showSuccess and showError
 
 const Index = () => {
   const { t } = useTranslation();
