@@ -629,11 +629,41 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
 
               {isPublic && (
                 <div className="space-y-2 mt-4">
-                  <Label htmlFor="passphrase-input" className="flex items-center space-x-2">
-                    {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                    <span>{t('manageJourneyDialog.passphraseProtection')}</span>
+                  <Label htmlFor="passphrase-input" className="flex items-center justify-between space-x-2">
+                    <div className="flex items-center space-x-2">
+                      {hasPassphrase ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                      <span>{t('manageJourneyDialog.passphraseProtection')}</span>
+                    </div>
+                    {hasPassphrase && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Switch
+                            id="clear-passphrase-toggle"
+                            checked={hasPassphrase}
+                            onCheckedChange={(checked) => {
+                              if (!checked) {
+                                // Trigger AlertDialog for confirmation
+                              }
+                            }}
+                            disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
+                          />
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
+                            <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleClearPassphrase}>
+                              {t('adminPage.continue')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </Label>
-                  <div className="flex flex-col gap-2"> {/* Changed to flex-col to stack input and helper text */}
+                  <div className="flex flex-col gap-2">
                     <div className="flex items-center space-x-2">
                       <Input
                         id="passphrase-input"
@@ -644,32 +674,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                         className="flex-grow"
                         disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
                       />
-                      {hasPassphrase && (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              disabled={isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
-                              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                            >
-                              <Unlock className={cn("h-4 w-4", !isMobile && "mr-2")} />
-                              {isMobile ? null : t('manageJourneyDialog.clearPassphrase')}
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('adminPage.areYouSure')}</AlertDialogTitle>
-                              <AlertDialogDescription>{t('manageJourneyDialog.clearPassphraseDescription')}</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleClearPassphrase}>
-                                {t('adminPage.continue')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
                       <Button
                         onClick={handleSetPassphrase}
                         disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator}
@@ -692,7 +696,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       <p className="text-sm text-red-500 mt-1">{t('common.passphraseMinLength')}</p>
                     )}
                   </div>
-                  {hasPassphrase && <p className="text-sm text-muted-foreground mt-1">{t('manageJourneyDialog.passphraseIsSet')}</p>}
                 </div>
               )}
             </div>
