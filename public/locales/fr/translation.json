@@ -382,7 +382,7 @@
     "loadingJourney": "Chargement du voyage public...",
     "journeyNotFound": "Voyage public non trouvé",
     "checkLink": "Veuillez vérifier le lien et essayer à nouveau.",
-    "byOwner": "Par {{owner}}",
+    "byOwner": "par {{owner}}",
     "noPostsYet": "Aucune publication dans ce voyage pour le moment !",
     "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
     "exploreMap": "Explorez les positions des publications sur la carte.",
