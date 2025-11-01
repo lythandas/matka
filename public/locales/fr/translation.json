@@ -198,7 +198,7 @@
   },
   "createUserDialog": {
     "createNewUser": "Créer un nouvel utilisateur",
-    "fillUserDetails": "Remplissez les détails du nouveau compte utilisateur.",
+    "fillUserDetails": "Remplissez les détails du nuevo compte utilisateur.",
     "newUsername": "ex: nouvelutilisateur",
     "passwordPlaceholder": "••••••••",
     "firstNameOptional": "Prénom (facultatif)",
@@ -257,7 +257,7 @@
     "by": "Par {{author}} • {{date}}",
     "failedToLoadImage": "Échec du chargement de l'image.",
     "fullscreenNotSupported": "Le mode plein écran n'est pas pris en charge par votre navigateur.",
-    "failedToEnterFullscreen": "Échec de l'activation du mode plein écran.",
+    "failedTo enterFullscreen": "Échec de l'activation du mode plein écran.",
     "noMedia": "Aucun média pour cette publication.",
     "previousPost": "Publication précédente",
     "nextPost": "Publication suivante"
@@ -401,9 +401,5 @@
     "title": "Boîte de dialogue de test",
     "description": "Ceci est une boîte de dialogue de test pour vérifier si le composant Dialog est rendu.",
     "message": "Si vous voyez ceci, le composant Dialog fonctionne !"
-  },
-  "scrollIndicator": {
-    "scrollToTop": "Faire défiler vers le haut",
-    "scrollToBottom": "Faire défiler vers le bas"
   }
 }

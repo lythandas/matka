@@ -7,7 +7,7 @@ import CreateJourneyDialog from './CreateJourneyDialog';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import AppFooter from './AppFooter'; // Import AppFooter
 import { useTranslation } from 'react-i18next'; // Import useTranslation
-import ScrollIndicator from './ScrollIndicator'; // Import the new ScrollIndicator component
+import ScrollToTopButton from './ScrollToTopButton'; // Import the ScrollToTopButton component
 import { Outlet } from 'react-router-dom'; // Import Outlet
 
 interface AppLayoutProps {
@@ -35,7 +35,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
       <AppFooter />
-      <ScrollIndicator /> {/* Render the new ScrollIndicator here */}
+      <ScrollToTopButton /> {/* Render the ScrollToTopButton here */}
     </div>
   );
 };

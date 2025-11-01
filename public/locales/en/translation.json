@@ -257,7 +257,7 @@
     "by": "By {{author}} • {{date}}",
     "failedToLoadImage": "Failed to load image.",
     "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
-    "failedToEnterFullscreen": "Failed to enter full-screen mode.",
+    "failedTo enterFullscreen": "Failed to enter full-screen mode.",
     "noMedia": "No media for this post.",
     "previousPost": "Previous Post",
     "nextPost": "Next Post"
@@ -373,6 +373,9 @@
     "failedToCropImage": "Failed to crop image.",
     "errorCroppingImage": "Error cropping image."
   },
+  "scrollToTopButton": {
+    "label": "Scroll to top"
+  },
   "publicJourneyPage": {
     "invalidLink": "Invalid public journey link.",
     "failedToLoadJourney": "Failed to load public journey.",
@@ -391,9 +394,6 @@
     "accessJourney": "Access Journey",
     "passphraseProtected": "Passphrase Protected"
   },
-  "scrollToTopButton": {
-    "label": "Scroll to top"
-  },
   "createPostDialog": {
     "description": "Create a new post for your selected journey."
   },
@@ -401,9 +401,5 @@
     "title": "Test Dialog",
     "description": "This is a test dialog to check if the Dialog component is rendering.",
     "message": "If you see this, the Dialog component is working!"
-  },
-  "scrollIndicator": {
-    "scrollToTop": "Scroll to top",
-    "scrollToBottom": "Scroll to bottom"
   }
 }

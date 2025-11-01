@@ -401,9 +401,5 @@
     "title": "Diálogo de prueba",
     "description": "Este es un diálogo de prueba para verificar si el componente Dialog se está renderizando.",
     "message": "Si ves esto, ¡el componente Dialog está funcionando!"
-  },
-  "scrollIndicator": {
-    "scrollToTop": "Desplazarse hacia arriba",
-    "scrollToBottom": "Desplazarse hacia abajo"
   }
 }

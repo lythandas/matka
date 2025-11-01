@@ -257,7 +257,7 @@
     "by": "Von {{author}} • {{date}}",
     "failedToLoadImage": "Bild konnte nicht geladen werden.",
     "fullscreenNotSupported": "Der Vollbildmodus wird von Ihrem Browser nicht unterstützt.",
-    "failedToEnterFullscreen": "Fehler beim Aktivieren des Vollbildmodus.",
+    "failedTo enterFullscreen": "Fehler beim Aktivieren des Vollbildmodus.",
     "noMedia": "Keine Medien für diesen Beitrag.",
     "previousPost": "Vorheriger Beitrag",
     "nextPost": "Nächster Beitrag"
@@ -401,9 +401,5 @@
     "title": "Test-Dialog",
     "description": "Dies ist ein Test-Dialog, um zu überprüfen, ob die Dialog-Komponente gerendert wird.",
     "message": "Wenn Sie dies sehen, funktioniert die Dialog-Komponente!"
-  },
-  "scrollIndicator": {
-    "scrollToTop": "Nach oben scrollen",
-    "scrollToBottom": "Nach unten scrollen"
   }
 }
