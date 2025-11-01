@@ -401,5 +401,9 @@
     "title": "Test Dialog",
     "description": "This is a test dialog to check if the Dialog component is rendering.",
     "message": "If you see this, the Dialog component is working!"
+  },
+  "scrollIndicator": {
+    "scrollToTop": "Scroll to top",
+    "scrollToBottom": "Scroll to bottom"
   }
 }

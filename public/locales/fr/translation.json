@@ -401,5 +401,9 @@
     "title": "Boîte de dialogue de test",
     "description": "Ceci est une boîte de dialogue de test pour vérifier si le composant Dialog est rendu.",
     "message": "Si vous voyez ceci, le composant Dialog fonctionne !"
+  },
+  "scrollIndicator": {
+    "scrollToTop": "Faire défiler vers le haut",
+    "scrollToBottom": "Faire défiler vers le bas"
   }
 }
