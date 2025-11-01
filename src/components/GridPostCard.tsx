@@ -85,18 +85,18 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
             </p>
           )}
           <div className="flex items-center text-xs text-gray-300">
-            <Avatar className="h-5 w-5 mr-2">
+            <Avatar className="h-8 w-8 mr-2"> {/* Increased avatar size */}
               {post.author_profile_image_url ? (
                 <AvatarImage src={post.author_profile_image_url} alt={displayName} />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white text-xs">
+                <AvatarFallback className="bg-blue-500 text-white text-sm"> {/* Adjusted fallback text size */}
                   {getAvatarInitials(post.author_name, post.author_username)}
                 </AvatarFallback>
               )}
             </Avatar>
             <div>
               <span>{displayName}</span>
-              <p className="text-xs font-normal text-gray-300">{formattedDate}</p> {/* Moved date here */}
+              <p className="text-xs font-normal text-gray-300">{formattedDate}</p>
             </div>
           </div>
         </div>
