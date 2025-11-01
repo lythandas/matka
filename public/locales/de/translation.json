@@ -78,7 +78,7 @@
     "failedToFetchPosts": "Fehler beim Abrufen der Beiträge.",
     "failedToLoadPosts": "Fehler beim Laden der Beiträge.",
     "failedToUploadMedia": "Fehler beim Hochladen von Medien: {{fileName}}",
-    "fileSizeExceeds": "Die Bildgröße überschreitet das Limit von {{maxSize}}MB.",
+    "fileSizeExceeds": "Die Dateigröße '{{fileName}}' überschreitet das Limit von {{maxSize}}MB.",
     "fileNotImageOrVideo": "Die Datei '{{fileName}}' ist kein Bild oder Video.",
     "mediaUploadedSuccessfully": "Medien erfolgreich hochgeladen!",
     "mediaItemRemoved": "Medienelement entfernt.",
@@ -297,7 +297,7 @@
     "draftSavedSuccessfully": "Entwurf erfolgreich gespeichert!",
     "failedToSaveDraft": "Fehler beim Speichern des Entwurfs.",
     "draftLoadedSuccessfully": "Entwurf '{{title}}' erfolgreich geladen!",
-    "draftDeletedSuccessfully": "Entwurf erfolgreich geladen!",
+    "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
     "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe.",
     "createNewPost": "Neuen Beitrag erstellen",
     "loadDraftNotImplemented": "Das Laden von Entwürfen direkt in das Formular ist noch nicht implementiert."

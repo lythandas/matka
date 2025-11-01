@@ -34,7 +34,7 @@
     "allFieldsRequired": "All fields are required.",
     "passwordsDoNotMatch": "Passwords do not match.",
     "registrationFailed": "Registration failed.",
-    "failedTo register": "Failed to register.",
+    "failedToRegister": "Failed to register.",
     "usernameAndPasswordRequired": "Username and password are required.",
     "authRequiredNotAuthorizedCreateUsers": "Authentication required or not authorized to create users.",
     "failedToCreateUser": "Failed to create user.",

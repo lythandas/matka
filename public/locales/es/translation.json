@@ -396,5 +396,10 @@
   },
   "createPostDialog": {
     "description": "Crea una nueva publicación para tu viaje seleccionado."
+  },
+  "testDialog": {
+    "title": "Diálogo de prueba",
+    "description": "Este es un diálogo de prueba para verificar si el componente Dialog se está renderizando.",
+    "message": "Si ves esto, ¡el componente Dialog está funcionando!"
   }
 }
