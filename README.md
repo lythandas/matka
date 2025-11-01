@@ -1,8 +1,97 @@
-# Welcome to your Dyad app
+<p align="center">
+  <img src="public/compass.svg" alt="Matka Logo" width="100" height="100">
+</p>
+<h1 align="center">Matka - Share Your Journey</h1>
 
-This application is a full-stack React and Fastify project, designed to help you share your journeys.
+Matka is a full-stack web application designed to help you document and share your life's journeys. Whether it's a grand adventure, a daily log, or a collection of memories, Matka provides a beautiful and intuitive platform to create posts with rich media, location data, and share them with the world or keep them private.
 
-## Running with Docker Compose (Published Image)
+## ✨ Features
+
+### 🔐 User Authentication & Management
+Matka ensures secure access with a robust authentication system.
+-   **Admin Registration:** The very first user to register automatically becomes the administrator, setting up the foundation for your application.
+-   **Login/Logout:** Securely log in and out of your account.
+-   **User Profiles:** Manage your personal information, including name, surname, profile picture, and preferred language.
+
+![Login Page](docs/screenshots/login-page.png)
+![Register Admin](docs/screenshots/register-admin.png)
+
+### 🗺️ Journey Creation & Management
+Organize your posts into meaningful journeys.
+-   **Create Journeys:** Easily create new journeys, each serving as a collection of your experiences.
+-   **Manage Journey Details:** Rename your journeys and control their visibility.
+-   **Public/Private Journeys:** Decide whether your journey is public for anyone to view or private for your eyes only.
+-   **Passphrase Protection:** For public journeys, add an optional passphrase for an extra layer of privacy.
+-   **Collaborator Management:** Invite other users to collaborate on your journeys, granting them specific permissions (read, publish, modify, delete posts).
+
+![Journeys List](docs/screenshots/journeys-list.png)
+![Create Journey Dialog](docs/screenshots/create-journey-dialog.png)
+![Manage Journey Dialog](docs/screenshots/manage-journey-dialog.png)
+![Public Journey View](docs/screenshots/public-journey-view.png)
+
+### ✍️ Rich Post Creation
+Document your experiences with detailed posts.
+-   **Text & Title:** Add descriptive titles and messages to your posts.
+-   **Media Uploads:** Include images and videos to bring your stories to life.
+-   **Location Tagging:** Pinpoint the exact location of your posts using geolocation or a search-based map.
+-   **Drafts:** Save your work as drafts and publish them when ready.
+-   **Post Date Selection:** Set a specific date for your posts, allowing for retrospective journaling.
+
+![Create Post Form](docs/screenshots/create-post-form.png)
+![Post with Media](docs/screenshots/post-with-media.png)
+![Post with Map](docs/screenshots/post-with-map.png)
+![Edit Post Dialog](docs/screenshots/edit-post-dialog.png)
+
+### 👁️ Diverse Post Viewing Options
+Explore your journeys in multiple engaging ways.
+-   **List View:** A chronological feed of your posts, ideal for detailed reading.
+-   **Grid View:** A visually rich grid layout, perfect for browsing media-heavy posts.
+-   **Map View:** See all your location-tagged posts on an interactive map, offering a geographical perspective of your journey.
+-   **Post Detail Dialog:** Click on any post to open a detailed view with full media, message, and location information.
+
+![List View](docs/screenshots/list-view.png)
+![Grid View](docs/screenshots/grid-view.png)
+![Map View](docs/screenshots/map-view.png)
+![Post Detail Dialog](docs/screenshots/post-detail-dialog.png)
+
+### ⚙️ User Settings & Preferences
+Personalize your Matka experience.
+-   **Profile Picture Cropper:** Upload and crop your profile picture directly within the app.
+-   **Language Selection:** Choose your preferred language for the application interface.
+-   **Theme Toggle:** Switch between light, dark, and system themes to suit your visual preference.
+
+![User Profile Dropdown](docs/screenshots/user-profile-dropdown.png)
+![Manage Account Dialog](docs/screenshots/manage-account-dialog.png)
+![Image Cropper](docs/screenshots/image-cropper.png)
+
+### 👑 Admin Dashboard
+For administrators, a dedicated dashboard to manage the application.
+-   **User Management:** View, create, reset passwords for, and delete users.
+-   **Journey Oversight:** View and manage all journeys created within the application.
+
+![Admin Dashboard Users](docs/screenshots/admin-dashboard-users.png)
+![Admin Dashboard Journeys](docs/screenshots/admin-dashboard-journeys.png)
+
+### 📱 Responsive Design
+Matka is designed to look great and function seamlessly across all devices, from desktops to mobile phones.
+
+![Mobile View](docs/screenshots/mobile-view.png)
+
+## 🛠️ Technical Stack
+
+-   **Frontend:** React, TypeScript, React Router
+-   **Styling:** Tailwind CSS, shadcn/ui
+-   **Backend:** Fastify, TypeScript, PostgreSQL
+-   **Database:** PostgreSQL
+-   **Deployment:** Docker, Docker Compose
+-   **Internationalization:** i18next
+-   **Mapping:** Leaflet
+
+## 🚀 Getting Started
+
+This application is a full-stack React and Fastify project.
+
+### Running with Docker Compose (Published Image)
 
 To get the application up and running quickly using pre-built Docker images:
 
@@ -19,7 +108,7 @@ To get the application up and running quickly using pre-built Docker images:
     This command will pull the necessary images (PostgreSQL and the application) and start the services in detached mode.
 4.  **Access the application:** Once the services are up, you can access the frontend in your browser at `http://localhost:8080`.
 
-## Building and Running Locally with Docker Compose
+### Building and Running Locally with Docker Compose
 
 If you want to build the Docker image for the application locally (e.g., for development or custom changes):
 
