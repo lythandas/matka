@@ -41,11 +41,11 @@ Organize your posts into meaningful journeys.
 -   **Public/Private Journeys:** Decide whether your journey is public for anyone to view or private for your eyes only.
 -   **Passphrase Protection:** For public journeys, add an optional passphrase for an extra layer of privacy.
 -   **Collaborator Management:** Invite other users to collaborate on your journeys, granting them specific permissions (read, publish, modify, delete posts).
+-   **Draft Management:** Save your work for later with the draft section. Your redacted 
 
 ![Journeys List](docs/screenshots/journeys-list.png)
-![Create Journey Dialog](docs/screenshots/create-journey-dialog.png)
 ![Manage Journey Dialog](docs/screenshots/manage-journey-dialog.png)
-![Public Journey View](docs/screenshots/public-journey-view.png)
+![Draft Management](docs/screenshots/draft-management.png)
 
 ### ✍️ Rich Post Creation
 Document your experiences with detailed posts.
@@ -55,11 +55,6 @@ Document your experiences with detailed posts.
 -   **Drafts:** Save your work as drafts and publish them when ready.
 -   **Post Date Selection:** Set a specific date for your posts, allowing for retrospective journaling.
 
-![Create Post Form](docs/screenshots/create-post-form.png)
-![Post with Media](docs/screenshots/post-with-media.png)
-![Post with Map](docs/screenshots/post-with-map.png)
-![Edit Post Dialog](docs/screenshots/edit-post-dialog.png)
-
 ### 👁️ Diverse Post Viewing Options
 Explore your journeys in multiple engaging ways.
 -   **List View:** A chronological feed of your posts, ideal for detailed reading.
@@ -67,9 +62,9 @@ Explore your journeys in multiple engaging ways.
 -   **Map View:** See all your location-tagged posts on an interactive map, offering a geographical perspective of your journey.
 -   **Post Detail Dialog:** Click on any post to open a detailed view with full media, message, and location information.
 
-![List View](docs/screenshots/list-view.png)
-![Grid View](docs/screenshots/grid-view.png)
-![Map View](docs/screenshots/map-view.png)
+![List View](docs/screenshots/public-list-view.png)
+![Grid View](docs/screenshots/public-grid-view.png)
+![Map View](docs/screenshots/public-map-view.png)
 ![Post Detail Dialog](docs/screenshots/post-detail-dialog.png)
 
 ### ⚙️ User Settings & Preferences
@@ -79,16 +74,14 @@ Personalize your Matka experience.
 -   **Theme Toggle:** Switch between light, dark, and system themes to suit your visual preference.
 
 ![User Profile Dropdown](docs/screenshots/user-profile-dropdown.png)
-![Manage Account Dialog](docs/screenshots/manage-account-dialog.png)
-![Image Cropper](docs/screenshots/image-cropper.png)
+![Manage Account Dialog](docs/screenshots/manage-account.png)
 
 ### 👑 Admin Dashboard
 For administrators, a dedicated dashboard to manage the application.
 -   **User Management:** View, create, reset passwords for, and delete users.
 -   **Journey Oversight:** View and manage all journeys created within the application.
 
-![Admin Dashboard Users](docs/screenshots/admin-dashboard-users.png)
-![Admin Dashboard Journeys](docs/screenshots/admin-dashboard-journeys.png)
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
 
 ### 📱 Responsive Design
 Matka is designed to look great and function seamlessly across all devices, from desktops to mobile phones.
