@@ -6,20 +6,37 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
-import { Post } from '@/types';
+import { Post, JourneyCollaborator } from '@/types'; // Import JourneyCollaborator
 import { Compass } from 'lucide-react'; // Import the Compass icon
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 import { format } from 'date-fns'; // Import format for date formatting
 import MapComponent from './MapComponent'; // Import MapComponent
+import PostActions from './PostActions'; // Import PostActions
 
 interface GridPostCardProps {
   post: Post;
   onClick: () => void;
   className?: string;
+  canEdit: boolean; // New prop
+  canDelete: boolean; // New prop
+  onPostUpdated: (updatedPost: Post) => void; // New prop
+  onPostDeleted: (id: string, journeyId: string, postAuthorId: string, isDraft: boolean) => Promise<void>; // New prop
+  journeyOwnerId: string; // New prop
+  journeyCollaborators: JourneyCollaborator[]; // New prop
 }
 
-const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className }) => {
+const GridPostCard: React.FC<GridPostCardProps> = ({
+  post,
+  onClick,
+  className,
+  canEdit,
+  canDelete,
+  onPostUpdated,
+  onPostDeleted,
+  journeyOwnerId,
+  journeyCollaborators,
+}) => {
   const { t } = useTranslation(); // Initialize useTranslation
   const firstMedia = post.media_items?.[0]; // Get the first media item
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
@@ -78,6 +95,17 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         <AspectRatio ratio={1 / 1}>
           {mediaElement}
         </AspectRatio>
+        <div className="absolute top-2 right-2 z-10 flex space-x-1">
+          <PostActions
+            post={post}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onPostUpdated={onPostUpdated}
+            onPostDeleted={onPostDeleted}
+            journeyOwnerId={journeyOwnerId}
+            journeyCollaborators={journeyCollaborators}
+          />
+        </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white text-sm font-semibold">
           {post.title && (
             <p className="truncate mb-1 flex items-center">

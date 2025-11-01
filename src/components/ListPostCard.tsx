@@ -4,22 +4,40 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarInitials } from '@/lib/utils';
-import { Post } from '@/types';
+import { Post, JourneyCollaborator } from '@/types'; // Import JourneyCollaborator
 import { format } from 'date-fns'; // Ensure format is imported
 import { Compass } from 'lucide-react';
 import MapComponent from './MapComponent';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import { cn } from '@/lib/utils'; // Import cn for class merging
+import PostActions from './PostActions'; // Import PostActions
 
 interface ListPostCardProps {
   post: Post;
   onClick: () => void;
   className?: string;
   id?: string; // Added id prop
+  canEdit: boolean; // New prop
+  canDelete: boolean; // New prop
+  onPostUpdated: (updatedPost: Post) => void; // New prop
+  onPostDeleted: (id: string, journeyId: string, postAuthorId: string, isDraft: boolean) => Promise<void>; // New prop
+  journeyOwnerId: string; // New prop
+  journeyCollaborators: JourneyCollaborator[]; // New prop
 }
 
-const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick, className, id }) => {
+const ListPostCard: React.FC<ListPostCardProps> = ({
+  post,
+  onClick,
+  className,
+  id,
+  canEdit,
+  canDelete,
+  onPostUpdated,
+  onPostDeleted,
+  journeyOwnerId,
+  journeyCollaborators,
+}) => {
   const { t } = useTranslation();
   const currentLocale = getDateFnsLocale();
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
@@ -35,6 +53,17 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick, className, i
       id={id} // Apply the id here
     >
       <CardContent className="p-6">
+        <div className="absolute top-4 right-4 z-10 flex space-x-2">
+          <PostActions
+            post={post}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onPostUpdated={onPostUpdated}
+            onPostDeleted={onPostDeleted}
+            journeyOwnerId={journeyOwnerId}
+            journeyCollaborators={journeyCollaborators}
+          />
+        </div>
         <div className="flex items-center mb-4">
           {post.author_profile_image_url ? (
             <Avatar className="h-10 w-10 mr-3">
@@ -87,7 +116,6 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick, className, i
         <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
           {post.message}
         </p>
-        {/* Removed old map rendering section */}
       </CardContent>
     </Card>
   );

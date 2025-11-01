@@ -40,6 +40,7 @@ import CreatePostDialog from '@/components/CreatePostDialog'; // Import the new 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 import { showSuccess, showError } from '@/utils/toast'; // Import showSuccess and showError
 import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
+import PostActions from '@/components/PostActions'; // Import PostActions
 
 const Index = () => {
   const { t } = useTranslation();
@@ -59,8 +60,9 @@ const Index = () => {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
 
-  const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
-  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
+  // Removed isEditPostDialogOpen and postToEdit states as they are now managed by PostActions
+  // const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState<boolean>(false);
+  // const [postToEdit, setPostToEdit] = useState<Post | null>(null);
 
   const [isManageJourneyDialogOpen, setIsManageJourneyDialogOpen] = useState<boolean>(false);
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
@@ -257,10 +259,11 @@ const Index = () => {
     setMapRefreshKey(prev => prev + 1); // Increment key to force map refresh
   };
 
-  const handleEditPost = (post: Post) => {
-    setPostToEdit(post);
-    setIsEditPostDialogOpen(true);
-  };
+  // Removed handleEditPost as it's now handled by PostActions
+  // const handleEditPost = (post: Post) => {
+  //   setPostToEdit(post);
+  //   setIsEditPostDialogOpen(true);
+  // };
 
   const handlePostUpdated = (updatedPost: Post) => {
     if (selectedJourney) {
@@ -289,7 +292,7 @@ const Index = () => {
 
           // Apply an offset to account for the fixed TopBar
           // Assuming TopBar height is approximately 64px (from globals.css .sticky-calendar top value)
-          const topBarHeight = 64; 
+          const topBarHeight = 64;
           window.scrollBy(0, -topBarHeight - 16); // Add some extra padding, e.g., 16px
 
           setPostIdToScrollTo(null); // Clear after scrolling
@@ -393,27 +396,48 @@ const Index = () => {
                       const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
                       const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
 
-                      const postDisplayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
-
                       return (
                         <ListPostCard
                           key={post.id}
                           post={post}
                           onClick={() => handlePostClick(post, index)}
                           id={`post-${post.id}`} // Add ID for scrolling
+                          canEdit={canEditPost}
+                          canDelete={canDeletePost}
+                          onPostUpdated={handlePostUpdated}
+                          onPostDeleted={handleDeletePost}
+                          journeyOwnerId={selectedJourney.user_id}
+                          journeyCollaborators={journeyCollaborators}
                         />
                       );
                     })}
                   </div>
                 ) : viewMode === 'grid' ? (
                   <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {displayedPosts.map((post, index) => (
-                      <GridPostCard
-                        key={post.id}
-                        post={post}
-                        onClick={() => handlePostClick(post, index)}
-                      />
-                    ))}
+                    {displayedPosts.map((post, index) => {
+                      const isPostAuthor = user?.id === post.user_id;
+                      const isJourneyOwner = selectedJourney?.user_id === user?.id;
+                      const isAdmin = user?.isAdmin;
+                      const canModifyAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_modify_post);
+                      const canDeleteAsCollaborator = journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_delete_posts);
+
+                      const canEditPost = isPostAuthor || isJourneyOwner || isAdmin || canModifyAsCollaborator;
+                      const canDeletePost = isPostAuthor || isJourneyOwner || isAdmin || canDeleteAsCollaborator;
+
+                      return (
+                        <GridPostCard
+                          key={post.id}
+                          post={post}
+                          onClick={() => handlePostClick(post, index)}
+                          canEdit={canEditPost}
+                          canDelete={canDeletePost}
+                          onPostUpdated={handlePostUpdated}
+                          onPostDeleted={handleDeletePost}
+                          journeyOwnerId={selectedJourney.user_id}
+                          journeyCollaborators={journeyCollaborators}
+                        />
+                      );
+                    })}
                   </div>
                 ) : ( // viewMode === 'map'
                   hasPostsWithCoordinates ? (
@@ -474,48 +498,15 @@ const Index = () => {
                           </p>
                         </div>
                         <div className="flex space-x-2">
-                          {canEditDraft && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="outline" size="icon" onClick={() => handleEditPost(draft)} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{t('indexPage.loadDraft')}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                          {canDeleteDraft && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">{t('indexPage.deleteDraft')}</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogTitle className="text-lg font-semibold mb-4">
-                                  {t('adminPage.areYouSure')}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('indexPage.deleteDraftDescription', { draftTitle: draft.title || draft.message.substring(0, 50) + '...' }) }} />
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel className="w-full sm:w-auto">
-                                    {t('common.cancel')}
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={async () => {
-                                      console.log(`[AlertDialogAction] Delete button clicked for draft ID: ${draft.id}`);
-                                      await handleDeletePost(draft.id, draft.journey_id, draft.user_id, true);
-                                    }}
-                                    className="w-full sm:w-auto"
-                                  >
-                                    {t('adminPage.continue')}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                          <PostActions
+                            post={draft}
+                            canEdit={canEditDraft}
+                            canDelete={canDeleteDraft}
+                            onPostUpdated={handlePostUpdated}
+                            onPostDeleted={handleDeletePost}
+                            journeyOwnerId={selectedJourney.user_id}
+                            journeyCollaborators={journeyCollaborators}
+                          />
                         </div>
                       </Card>
                     );
@@ -601,7 +592,8 @@ const Index = () => {
         />
       )}
 
-      {postToEdit && selectedJourney && (
+      {/* Removed EditPostDialog from here as it's now managed by PostActions */}
+      {/* {postToEdit && selectedJourney && (
         <EditPostDialog
           isOpen={isEditPostDialogOpen}
           onClose={() => { setIsEditPostDialogOpen(false); setPostToEdit(null); }}
@@ -610,7 +602,7 @@ const Index = () => {
           journeyOwnerId={selectedJourney.user_id}
           journeyCollaborators={journeyCollaborators}
         />
-      )}
+      )} */}
 
       {selectedJourney && (
         <ManageJourneyDialog
