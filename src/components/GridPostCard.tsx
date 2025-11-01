@@ -11,6 +11,7 @@ import { Compass } from 'lucide-react'; // Import the Compass icon
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale utility
 import { format } from 'date-fns'; // Import format for date formatting
+import MapComponent from './MapComponent'; // Import MapComponent
 
 interface GridPostCardProps {
   post: Post;
@@ -49,8 +50,12 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
         className="object-cover w-full h-full"
       />
     );
+  } else if (post.coordinates) { // New condition: if no media but has coordinates
+    mediaElement = (
+      <MapComponent coordinates={post.coordinates} className="w-full h-full" zoom={12} />
+    );
   } else {
-    // If no image/video, display the Matka compass logo and title
+    // If no image/video and no coordinates, display the Matka compass logo and title
     mediaElement = (
       <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center">
         <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />

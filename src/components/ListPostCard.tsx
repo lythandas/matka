@@ -52,7 +52,7 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
         {post.title && (
           <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
         )}
-        {firstMedia && (
+        {firstMedia ? (
           <div className="mb-4">
             {firstMedia.type === 'image' ? (
               <img
@@ -72,15 +72,15 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
               />
             )}
           </div>
-        )}
+        ) : post.coordinates ? ( // Display map if no media but has coordinates
+          <div className="mb-4">
+            <MapComponent coordinates={post.coordinates} className="h-48" />
+          </div>
+        ) : null}
         <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
           {post.message}
         </p>
-        {post.coordinates && (
-          <div className="mt-4">
-            <MapComponent coordinates={post.coordinates} className="h-48" />
-          </div>
-        )}
+        {/* Removed old map rendering section */}
       </CardContent>
     </Card>
   );
