@@ -47,6 +47,7 @@ Organize your posts into meaningful journeys.
 | Journeys List | Draft Management |
 | :---------------------------------: | :---------------------------------: |
 | ![Journeys List](docs/screenshots/journeys-list.png) |![Draft Management](docs/screenshots/draft-management.png)|
+
 ![Manage Journey Dialog](docs/screenshots/manage-journey-dialog.png)
 
 ### ✍️ Rich Post Creation
@@ -68,7 +69,7 @@ Explore your journeys in multiple engaging ways.
 ![List View](docs/screenshots/public-list-view.png)
 ![Grid View](docs/screenshots/public-grid-view.png)
 ![Map View](docs/screenshots/public-map-view.png)
-![Post Detail Dialog](docs/screenshots/post-detail-dialog.png)
+![Post Detail View](docs/screenshots/post-detail-view.png)
 
 ### ⚙️ User Settings & Preferences
 Personalize your Matka experience.
