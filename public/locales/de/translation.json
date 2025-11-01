@@ -403,7 +403,7 @@
     "message": "Wenn Sie dies sehen, funktioniert die Dialog-Komponente!"
   },
   "draggableScrollbar": {
-    "label": "Ziehbare Bildlaufleiste",
-    "thumbLabel": "Bildlaufleisten-Schieberegler"
+    "label": "Seiten-Scroller",
+    "dragToScroll": "Ziehen zum schnellen Scrollen"
   }
 }

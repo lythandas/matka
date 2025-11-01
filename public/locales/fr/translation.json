@@ -198,7 +198,7 @@
   },
   "createUserDialog": {
     "createNewUser": "Créer un nouvel utilisateur",
-    "fillUserDetails": "Remplissez les détails du nuevo compte utilisateur.",
+    "fillUserDetails": "Remplissez les détails du nouveau compte utilisateur.",
     "newUsername": "ex: nouvelutilisateur",
     "passwordPlaceholder": "••••••••",
     "firstNameOptional": "Prénom (facultatif)",
@@ -367,43 +367,43 @@
     "cropProfilePicture": "Recadrer la photo de profil",
     "adjustImageInstructions": "Ajustez l'image pour qu'elle s'adapte à la zone de recadrage circulaire. Utilisez le curseur pour faire zoomer.",
     "zoom": "Zoom",
-    "apply": "Appliquer",
+    "apply": "Anwenden",
     "applying": "Application...",
     "noCropSelected": "Aucune zone de recadrage sélectionnée.",
     "failedToCropImage": "Échec du recadrage de l'image.",
     "errorCroppingImage": "Erreur lors du recadrage de l'image."
   },
   "scrollToTopButton": {
-    "label": "Faire défiler vers le haut"
+    "label": "Nach oben scrollen"
   },
   "publicJourneyPage": {
-    "invalidLink": "Lien de voyage public non valide.",
-    "failedToLoadJourney": "Échec du chargement du voyage public.",
-    "loadingJourney": "Chargement du voyage public...",
-    "journeyNotFound": "Voyage public non trouvé",
-    "checkLink": "Veuillez vérifier le lien et essayer à nouveau.",
-    "byOwner": "par {{owner}}",
-    "noPostsYet": "Aucune publication dans ce voyage pour le moment !",
-    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de publications à ce voyage public.",
-    "exploreMap": "Explorez les positions des publications sur la carte.",
-    "journeyProtected": "Voyage protégé",
-    "enterPassphrase": "Veuillez entrer le mot de passe pour accéder à ce voyage.",
-    "passphrasePlaceholder": "Entrer le mot de passe",
-    "incorrectPassphrase": "Mot de passe incorrect.",
-    "verifying": "Vérification...",
-    "accessJourney": "Accéder au voyage",
-    "passphraseProtected": "Protégé par mot de passe"
+    "invalidLink": "Ungültiger öffentlicher Reiselink.",
+    "failedToLoadJourney": "Fehler beim Laden der öffentlichen Reise.",
+    "loadingJourney": "Öffentliche Reise wird geladen...",
+    "journeyNotFound": "Öffentliche Reise nicht gefunden",
+    "checkLink": "Bitte überprüfen Sie den Link und versuchen Sie es erneut.",
+    "byOwner": "Von {{owner}}",
+    "noPostsYet": "Noch keine Beiträge in dieser Reise!",
+    "ownerHasNotAddedPosts": "Der Reisebesitzer hat noch keine Beiträge zu dieser öffentlichen Reise hinzugefügt.",
+    "exploreMap": "Standorte der Beiträge auf der Karte erkunden.",
+    "journeyProtected": "Reise geschützt",
+    "enterPassphrase": "Bitte geben Sie die Passphrase ein, um auf diese Reise zuzugreifen.",
+    "passphrasePlaceholder": "Passphrase eingeben",
+    "incorrectPassphrase": "Falsche Passphrase.",
+    "verifying": "Wird überprüft...",
+    "accessJourney": "Reise zugreifen",
+    "passphraseProtected": "Passphrase geschützt"
   },
   "createPostDialog": {
-    "description": "Créez une nouvelle publication pour votre voyage sélectionné."
+    "description": "Erstellen Sie einen neuen Beitrag für Ihre ausgewählte Reise."
   },
   "testDialog": {
-    "title": "Boîte de dialogue de test",
-    "description": "Ceci est une boîte de dialogue de test pour vérifier si le composant Dialog est rendu.",
-    "message": "Si vous voyez ceci, le composant Dialog fonctionne !"
+    "title": "Test-Dialog",
+    "description": "Dies ist ein Test-Dialog, um zu überprüfen, ob die Dialog-Komponente gerendert wird.",
+    "message": "Wenn Sie dies sehen, funktioniert die Dialog-Komponente!"
   },
   "draggableScrollbar": {
-    "label": "Barre de défilement déplaçable",
-    "thumbLabel": "Curseur de la barre de défilement"
+    "label": "Seiten-Scroller",
+    "dragToScroll": "Ziehen zum schnellen Scrollen"
   }
 }

@@ -403,7 +403,7 @@
     "message": "Si ves esto, ¡el componente Dialog está funcionando!"
   },
   "draggableScrollbar": {
-    "label": "Barra de desplazamiento arrastrable",
-    "thumbLabel": "Control deslizante de la barra de desplazamiento"
+    "label": "Desplazador de página",
+    "dragToScroll": "Arrastra para desplazarte rápidamente"
   }
 }

@@ -257,7 +257,7 @@
     "by": "By {{author}} • {{date}}",
     "failedToLoadImage": "Failed to load image.",
     "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
-    "failedToEnterFullscreen": "Failed to enter full-screen mode.",
+    "failedTo enterFullscreen": "Failed to enter full-screen mode.",
     "noMedia": "No media for this post.",
     "previousPost": "Previous Post",
     "nextPost": "Next Post"
@@ -403,7 +403,7 @@
     "message": "If you see this, the Dialog component is working!"
   },
   "draggableScrollbar": {
-    "label": "Draggable scrollbar",
-    "thumbLabel": "Scrollbar thumb"
+    "label": "Page Scroller",
+    "dragToScroll": "Drag to quickly scroll"
   }
 }
