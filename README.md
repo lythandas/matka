@@ -31,8 +31,9 @@ Matka ensures secure access with a robust authentication system.
 -   **Login/Logout:** Securely log in and out of your account.
 -   **User Profiles:** Manage your personal information, including name, surname, profile picture, and preferred language.
 
+| Login Page | Register Admin |
 | :---------------------------------: | :---------------------------------: |
-|![Login Page](docs/screenshots/login-page.png) | ![Register Admin](docs/screenshots/register-admin.png) |
+| ![Login Page](docs/screenshots/login-page.png) | ![Register Admin](docs/screenshots/register-admin.png) |
 
 ### 🗺️ Journey Creation & Management
 Organize your posts into meaningful journeys.
@@ -43,8 +44,9 @@ Organize your posts into meaningful journeys.
 -   **Collaborator Management:** Invite other users to collaborate on your journeys, granting them specific permissions (read, publish, modify, delete posts).
 -   **Draft Management:** Save your work for later with the draft section. Your redacted post are saved automatically every minute
 
+| Journeys List | Draft Management |
 | :---------------------------------: | :---------------------------------: |
-|![Journeys List](docs/screenshots/journeys-list.png) |![Draft Management](docs/screenshots/draft-management.png)|
+| ![Journeys List](docs/screenshots/journeys-list.png) |![Draft Management](docs/screenshots/draft-management.png)|
 ![Manage Journey Dialog](docs/screenshots/manage-journey-dialog.png)
 
 ### ✍️ Rich Post Creation
