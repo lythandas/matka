@@ -7,10 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node modules and build artifacts
 node_modules
 dist
 dist-ssr
-*.local
+backend/node_modules
+backend/dist
 
 # Local environment variables
 .env
