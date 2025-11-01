@@ -286,6 +286,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
       <DialogContent
         className="sm:max-w-[500px] max-h-[90vh] flex flex-col"
         onMouseDown={(e) => e.stopPropagation()} // Stop event propagation here
+        onClick={(e) => e.stopPropagation()} // Added this line for extra measure
       >
         <DialogHeader>
           <DialogTitle>{isDraft ? t('editPostDialog.editDraft') : t('editPostDialog.editPost')}</DialogTitle>
