@@ -51,6 +51,7 @@ const PublicJourneyPage: React.FC = () => {
   const [selectedPostIndex, setSelectedPostIndex] = useState<number | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'map'>('list'); // New state for view mode
+  const [mapRefreshKey, setMapRefreshKey] = useState(0); // New state to force map refresh
 
   const PASSPHRASE_STORAGE_KEY = `publicJourneyPassphrase_${publicLinkId}`;
 
@@ -178,6 +179,7 @@ const PublicJourneyPage: React.FC = () => {
     setIsDetailDialogOpen(false);
     setSelectedPostForDetail(null);
     setSelectedPostIndex(null);
+    setMapRefreshKey(prev => prev + 1); // Increment key to force map refresh
   };
 
   const postsWithCoordinates = posts.filter(post => post.coordinates);
@@ -329,6 +331,7 @@ const PublicJourneyPage: React.FC = () => {
                     onMarkerClick={handlePostClick}
                     className="w-full h-full"
                     zoom={7}
+                    mapRefreshKey={mapRefreshKey}
                   />
                 </div>
               ) : (
