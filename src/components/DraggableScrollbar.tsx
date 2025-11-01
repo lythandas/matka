@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown } from 'lucide-react'; // Using ArrowUp/Down for consistency with ScrollToTopButton
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from 'react-i18next';
@@ -14,8 +14,10 @@ const DraggableScrollbar: React.FC = () => {
   const [buttonTop, setButtonTop] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [startScrollTop, setStartScrollTop] = useState(0);
+  
+  // Refs to store initial drag state
+  const initialMouseYRef = useRef(0);
+  const initialButtonTopRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -28,10 +30,10 @@ const DraggableScrollbar: React.FC = () => {
     }
     setIsVisible(true);
 
-    const buttonHeight = buttonRef.current?.clientHeight || 40; // Default to 40px if ref not ready
+    const buttonHeight = buttonRef.current?.clientHeight || 40;
     const viewportHeight = clientHeight;
     const scrollableHeight = scrollHeight - viewportHeight;
-    const scrollableViewportHeight = viewportHeight - buttonHeight; // Area button can move within viewport
+    const scrollableViewportHeight = viewportHeight - buttonHeight;
 
     const scrollPercentage = scrollTop / scrollableHeight;
     const newButtonTop = scrollableViewportHeight * scrollPercentage;
@@ -40,7 +42,7 @@ const DraggableScrollbar: React.FC = () => {
   }, []);
 
   const handleScroll = useCallback(() => {
-    if (!isDragging) {
+    if (!isDragging) { // Only update button position from scroll if not currently dragging
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -49,7 +51,7 @@ const DraggableScrollbar: React.FC = () => {
   }, [isDragging, calculateButtonPosition]);
 
   useEffect(() => {
-    if (isMobile) return; // Don't run on mobile
+    if (isMobile) return;
 
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', calculateButtonPosition);
@@ -67,30 +69,38 @@ const DraggableScrollbar: React.FC = () => {
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsDragging(true);
-    setStartY(e.clientY);
-    setStartScrollTop(document.documentElement.scrollTop);
-  }, []);
+    initialMouseYRef.current = e.clientY;
+    initialButtonTopRef.current = buttonTop; // Store current visual position
+  }, [buttonTop]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
 
-    const deltaY = e.clientY - startY;
+    const deltaY = e.clientY - initialMouseYRef.current;
     const { scrollHeight, clientHeight } = document.documentElement;
     const buttonHeight = buttonRef.current?.clientHeight || 40;
 
-    const scrollableHeight = scrollHeight - clientHeight;
-    const scrollableViewportHeight = clientHeight - buttonHeight;
+    const viewportHeight = clientHeight;
+    const scrollableHeight = scrollHeight - viewportHeight;
+    const scrollableViewportHeight = viewportHeight - buttonHeight;
 
-    // Calculate new scroll position based on mouse movement relative to draggable area
-    const scrollDelta = (deltaY / scrollableViewportHeight) * scrollableHeight;
-    const newScrollTop = startScrollTop + scrollDelta;
+    // Calculate new visual button position
+    let newVisualButtonTop = initialButtonTopRef.current + deltaY;
+    newVisualButtonTop = Math.max(0, Math.min(scrollableViewportHeight, newVisualButtonTop));
+    setButtonTop(newVisualButtonTop); // Update button's visual position directly
+
+    // Calculate corresponding scroll position
+    const scrollPercentage = newVisualButtonTop / scrollableViewportHeight;
+    const newScrollTop = scrollableHeight * scrollPercentage;
 
     window.scrollTo({ top: newScrollTop, behavior: 'auto' });
-  }, [isDragging, startY, startScrollTop]);
+  }, [isDragging]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  }, []);
+    // After drag ends, ensure button snaps to correct position based on actual scroll
+    calculateButtonPosition(); 
+  }, [calculateButtonPosition]);
 
   useEffect(() => {
     if (isDragging) {
@@ -115,12 +125,12 @@ const DraggableScrollbar: React.FC = () => {
       <TooltipTrigger asChild>
         <Button
           ref={buttonRef}
-          onClick={(e) => e.stopPropagation()} // Prevent accidental clicks from triggering other events
+          onClick={(e) => e.stopPropagation()}
           onMouseDown={handleMouseDown}
           className={cn(
-            "fixed right-4 h-10 w-10 rounded-full shadow-lg transition-colors duration-200 z-50 cursor-grab",
+            "fixed right-[max(1rem,calc(50vw-384px-1rem))] h-10 w-10 rounded-full shadow-lg transition-colors duration-200 z-50 cursor-grab",
             "bg-primary text-primary-foreground hover:bg-primary/90",
-            isDragging && "cursor-grabbing bg-blue-600 dark:bg-blue-500" // Indicate dragging state
+            isDragging && "cursor-grabbing bg-blue-600 dark:bg-blue-500"
           )}
           style={{ top: buttonTop }}
           aria-label={t('draggableScrollbar.label')}
