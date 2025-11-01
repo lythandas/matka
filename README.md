@@ -31,8 +31,8 @@ Matka ensures secure access with a robust authentication system.
 -   **Login/Logout:** Securely log in and out of your account.
 -   **User Profiles:** Manage your personal information, including name, surname, profile picture, and preferred language.
 
-![Login Page](docs/screenshots/login-page.png)
-![Register Admin](docs/screenshots/register-admin.png)
+| :---------------------------------: | :---------------------------------: |
+|![Login Page](docs/screenshots/login-page.png) | ![Register Admin](docs/screenshots/register-admin.png) |
 
 ### 🗺️ Journey Creation & Management
 Organize your posts into meaningful journeys.
@@ -41,11 +41,11 @@ Organize your posts into meaningful journeys.
 -   **Public/Private Journeys:** Decide whether your journey is public for anyone to view or private for your eyes only.
 -   **Passphrase Protection:** For public journeys, add an optional passphrase for an extra layer of privacy.
 -   **Collaborator Management:** Invite other users to collaborate on your journeys, granting them specific permissions (read, publish, modify, delete posts).
--   **Draft Management:** Save your work for later with the draft section. Your redacted 
+-   **Draft Management:** Save your work for later with the draft section. Your redacted post are saved automatically every minute
 
-![Journeys List](docs/screenshots/journeys-list.png)
+| :---------------------------------: | :---------------------------------: |
+|![Journeys List](docs/screenshots/journeys-list.png) |![Draft Management](docs/screenshots/draft-management.png)|
 ![Manage Journey Dialog](docs/screenshots/manage-journey-dialog.png)
-![Draft Management](docs/screenshots/draft-management.png)
 
 ### ✍️ Rich Post Creation
 Document your experiences with detailed posts.
@@ -54,6 +54,7 @@ Document your experiences with detailed posts.
 -   **Location Tagging:** Pinpoint the exact location of your posts using geolocation or a search-based map.
 -   **Drafts:** Save your work as drafts and publish them when ready.
 -   **Post Date Selection:** Set a specific date for your posts, allowing for retrospective journaling.
+![Post Dialog](docs/screenshots/post-dialog.png)
 
 ### 👁️ Diverse Post Viewing Options
 Explore your journeys in multiple engaging ways.
