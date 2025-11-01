@@ -257,7 +257,7 @@
     "by": "Par {{author}} • {{date}}",
     "failedToLoadImage": "Échec du chargement de l'image.",
     "fullscreenNotSupported": "Le mode plein écran n'est pas pris en charge par votre navigateur.",
-    "failedTo enterFullscreen": "Échec de l'activation du mode plein écran.",
+    "failedToEnterFullscreen": "Échec de l'activation du mode plein écran.",
     "noMedia": "Aucun média pour cette publication.",
     "previousPost": "Publication précédente",
     "nextPost": "Publication suivante"
@@ -401,5 +401,9 @@
     "title": "Boîte de dialogue de test",
     "description": "Ceci est une boîte de dialogue de test pour vérifier si le composant Dialog est rendu.",
     "message": "Si vous voyez ceci, le composant Dialog fonctionne !"
+  },
+  "draggableScrollbar": {
+    "label": "Barre de défilement déplaçable",
+    "thumbLabel": "Curseur de la barre de défilement"
   }
 }

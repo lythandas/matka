@@ -5,17 +5,18 @@ import TopBar from './TopBar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CreateJourneyDialog from './CreateJourneyDialog';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
-import AppFooter from './AppFooter'; // Import AppFooter
-import { useTranslation } from 'react-i18next'; // Import useTranslation
-import ScrollToTopButton from './ScrollToTopButton'; // Import the ScrollToTopButton component
-import { Outlet } from 'react-router-dom'; // Import Outlet
+import AppFooter from './AppFooter';
+import { useTranslation } from 'react-i18next';
+import ScrollToTopButton from './ScrollToTopButton'; // Keep for mobile
+import DraggableScrollbar from './DraggableScrollbar'; // Import the new DraggableScrollbar
+import { Outlet } from 'react-router-dom';
 
 interface AppLayoutProps {
   // children: React.ReactNode; // No longer needed with Outlet
 }
 
 const AppLayout: React.FC<AppLayoutProps> = () => {
-  const { t } = useTranslation(); // Initialize useTranslation
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
 
@@ -26,7 +27,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
       />
       <div className="flex flex-grow">
         <main className="flex-grow w-full">
-          <Outlet /> {/* Renders the child route component */}
+          <Outlet />
         </main>
       </div>
 
@@ -35,7 +36,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
         onClose={() => setIsCreateJourneyDialogOpen(false)}
       />
       <AppFooter />
-      <ScrollToTopButton /> {/* Render the ScrollToTopButton here */}
+      {isMobile ? <ScrollToTopButton /> : <DraggableScrollbar />} {/* Conditional rendering */}
     </div>
   );
 };

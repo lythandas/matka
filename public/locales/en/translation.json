@@ -257,7 +257,7 @@
     "by": "By {{author}} • {{date}}",
     "failedToLoadImage": "Failed to load image.",
     "fullscreenNotSupported": "Fullscreen mode is not supported by your browser.",
-    "failedTo enterFullscreen": "Failed to enter full-screen mode.",
+    "failedToEnterFullscreen": "Failed to enter full-screen mode.",
     "noMedia": "No media for this post.",
     "previousPost": "Previous Post",
     "nextPost": "Next Post"
@@ -401,5 +401,9 @@
     "title": "Test Dialog",
     "description": "This is a test dialog to check if the Dialog component is rendering.",
     "message": "If you see this, the Dialog component is working!"
+  },
+  "draggableScrollbar": {
+    "label": "Draggable scrollbar",
+    "thumbLabel": "Scrollbar thumb"
   }
 }
