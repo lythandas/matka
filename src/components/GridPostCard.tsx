@@ -82,11 +82,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
           {post.title && (
             <p className="truncate mb-1 flex items-center">
               {post.title}
-              <span className="ml-2 text-xs font-normal text-gray-300">{formattedDate}</span>
             </p>
-          )}
-          {!post.title && ( // If no title, display date directly
-            <p className="truncate mb-1 text-xs font-normal text-gray-300">{formattedDate}</p>
           )}
           <div className="flex items-center text-xs text-gray-300">
             <Avatar className="h-5 w-5 mr-2">
@@ -98,7 +94,10 @@ const GridPostCard: React.FC<GridPostCardProps> = ({ post, onClick, className })
                 </AvatarFallback>
               )}
             </Avatar>
-            <span>{displayName}</span>
+            <div>
+              <span>{displayName}</span>
+              <p className="text-xs font-normal text-gray-300">{formattedDate}</p> {/* Moved date here */}
+            </div>
           </div>
         </div>
       </CardContent>
