@@ -18,6 +18,9 @@ backend/dist
 .env
 !.env.production
 
+# Allow .png files in docs/screenshots/
+!docs/screenshots/*.png
+
 # Uploaded media and other local files
 backend/uploads/
 *.jpg
@@ -31,11 +34,6 @@ backend/uploads/
 *.mp4
 *.webm
 *.ogg
-
-# Allow .png files in docs/screenshots/
-!docs/screenshots/*.png
-# Ignore .png files elsewhere
-*.png
 
 # Editor directories and files
 .vscode/*
