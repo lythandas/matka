@@ -22,7 +22,6 @@ backend/dist
 backend/uploads/
 *.jpg
 *.jpeg
-*.png
 *.gif
 *.bmp
 *.tiff
@@ -32,6 +31,11 @@ backend/uploads/
 *.mp4
 *.webm
 *.ogg
+
+# Allow .png files in docs/screenshots/
+!docs/screenshots/*.png
+# Ignore .png files elsewhere
+*.png
 
 # Editor directories and files
 .vscode/*
