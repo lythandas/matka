@@ -85,14 +85,14 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   }, []);
 
   const handleNextMedia = () => {
-    if (post.media_items && currentMediaIndex < post.media_items.length - 1) {
-      setCurrentMediaIndex(prev => prev + 1);
+    if (post.media_items && post.media_items.length > 0) {
+      setCurrentMediaIndex((prev) => (prev === post.media_items!.length - 1 ? 0 : prev + 1));
     }
   };
 
   const handlePreviousMedia = () => {
-    if (currentMediaIndex > 0) {
-      setCurrentMediaIndex(prev => prev - 1);
+    if (post.media_items && post.media_items.length > 0) {
+      setCurrentMediaIndex((prev) => (prev === 0 ? post.media_items!.length - 1 : prev - 1));
     }
   };
 
@@ -147,7 +147,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handlePreviousMedia}
-                    disabled={currentMediaIndex === 0}
                     className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -156,7 +155,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handleNextMedia}
-                    disabled={currentMediaIndex === (post.media_items.length - 1)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronRight className="h-5 w-5" />
