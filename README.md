@@ -130,7 +130,7 @@ To get the application up and running quickly using pre-built Docker images:
 
 If you want to build the Docker image for the application locally (e.g., for development or custom changes):
 
-1.  **Ensure Docker is installed:** Make sure you have Docker and Docker Compose installed on your system.
+1.  **Ensure Docker and Node.js are installed:** Make sure you have Docker and Node.js (LTS version recommended) installed on your system.
 2.  **Clone the repository:**
     ```bash
     git clone <your-repo-url>
