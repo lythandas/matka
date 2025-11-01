@@ -281,14 +281,20 @@ const Index = () => {
   // Effect to scroll to a specific post when postIdToScrollTo changes and viewMode is 'list'
   useEffect(() => {
     if (postIdToScrollTo && viewMode === 'list') {
-      // Give React a moment to render the list view
       const timer = setTimeout(() => {
         const element = document.getElementById(`post-${postIdToScrollTo}`);
         if (element) {
+          // Scroll the element into view
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Apply an offset to account for the fixed TopBar
+          // Assuming TopBar height is approximately 64px (from globals.css .sticky-calendar top value)
+          const topBarHeight = 64; 
+          window.scrollBy(0, -topBarHeight - 16); // Add some extra padding, e.g., 16px
+
           setPostIdToScrollTo(null); // Clear after scrolling
         }
-      }, 100); // Small delay
+      }, 100); // Small delay to ensure element is rendered and positioned
       return () => clearTimeout(timer);
     }
   }, [postIdToScrollTo, viewMode, posts]); // Depend on posts to ensure they are rendered
