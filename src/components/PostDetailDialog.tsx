@@ -191,28 +191,6 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               <p>{t('postDetailDialog.noMedia')}</p>
             </div>
           )}
-
-          {/* Post Navigation Buttons (Overlay) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onPrevious}
-            disabled={currentIndex === 0}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-20"
-            aria-label={t('postDetailDialog.previousPost')}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onNext}
-            disabled={currentIndex === totalPosts - 1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-20"
-            aria-label={t('postDetailDialog.nextPost')}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
         </div>
 
         {/* Details Column (Right on large screens, bottom on small screens) */}
@@ -220,7 +198,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
           "flex flex-col lg:w-1/4 p-4 overflow-y-auto",
           "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
         )}>
-          <DialogHeader className="pb-4"> {/* Moved header here, removed border-b */}
+          <DialogHeader className="pb-4">
             {/* Removed DialogTitle and DialogDescription */}
           </DialogHeader>
 
