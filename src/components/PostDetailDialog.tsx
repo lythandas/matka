@@ -231,7 +231,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
             {post.message}
           </p>
 
-          {post.coordinates && (
+          {/* Only show minimap if there are media items AND coordinates */}
+          {post.coordinates && post.media_items && post.media_items.length > 0 && (
             <div className="mt-4">
               <h4 className="text-lg font-semibold mb-2">{t('editPostDialog.location')}</h4>
               <MapComponent coordinates={post.coordinates} className="h-64" />
