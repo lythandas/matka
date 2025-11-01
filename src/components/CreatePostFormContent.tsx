@@ -511,7 +511,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
         </div>
 
         {locationSelectionMode === 'search' && !coordinates && (
-          <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+          <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800 mt-4"> {/* Added mt-4 here */}
             <LocationSearch
               onSelectLocation={setCoordinates}
               currentCoordinates={coordinates}
