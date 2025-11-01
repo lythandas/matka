@@ -155,6 +155,7 @@ const Index = () => {
 
   const handlePostCreated = (newPost: Post) => {
     setPosts((prev) => [newPost, ...prev]);
+    setMapRefreshKey(prev => prev + 1); // Force map refresh
     // No need to show success toast here, it's handled in CreatePostFormContent
   };
 
@@ -210,6 +211,7 @@ const Index = () => {
         showSuccess(t('common.postDeletedSuccessfully'));
         console.log(`[handleDeletePost] Posts state updated. Current posts count: ${posts.length - 1}`); // Log new count
       }
+      setMapRefreshKey(prev => prev + 1); // Force map refresh after deletion
     } catch (error: any) {
       console.error('[handleDeletePost] Error deleting post:', error);
       showError(error.message || t('common.failedToDeletePost'));
@@ -262,6 +264,7 @@ const Index = () => {
     if (selectedPostForDetail?.id === updatedPost.id) {
       setSelectedPostForDetail(updatedPost);
     }
+    setMapRefreshKey(prev => prev + 1); // Force map refresh after update
   };
 
   const handleSelectPostFromMap = useCallback((post: Post, index: number) => {
