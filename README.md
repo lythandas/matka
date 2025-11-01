@@ -5,6 +5,24 @@
 
 Matka is a full-stack web application designed to help you document and share your life's journeys. Whether it's a grand adventure, a daily log, or a collection of memories, Matka provides a beautiful and intuitive platform to create posts with rich media, location data, and share them with the world or keep them private.
 
+## 🚀 Overview
+
+Matka offers a seamless experience across devices, allowing you to capture and share your moments effortlessly.
+
+### User Interface
+Experience Matka's intuitive design on any screen.
+
+| Desktop UI | Mobile UI |
+| :---------------------------------: | :---------------------------------: |
+| ![Desktop UI](docs/screenshots/desktop-ui.png) | ![Mobile UI](docs/screenshots/mobile-ui.png) |
+
+### Major Features
+*   **Secure User Accounts:** Register as an admin, log in, and manage your profile.
+*   **Organized Journeys:** Create, manage, and share your travel logs or daily diaries.
+*   **Rich Post Creation:** Add text, images, videos, and location data to your posts.
+*   **Diverse Viewing Modes:** Explore posts in list, grid, or interactive map views.
+*   **Admin Controls:** A dedicated dashboard for user and journey management.
+
 ## ✨ Features
 
 ### 🔐 User Authentication & Management
