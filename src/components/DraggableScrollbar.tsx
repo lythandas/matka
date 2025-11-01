@@ -21,11 +21,14 @@ const DraggableScrollbar: React.FC = () => {
   const animationFrameRef = useRef<number | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  const SCROLL_THRESHOLD = 200; // Pixels from top to show the scrollbar
+
   const calculateButtonPosition = useCallback(() => {
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
 
-    if (scrollHeight <= clientHeight) {
+    if (scrollHeight <= clientHeight || scrollTop < SCROLL_THRESHOLD) {
       setIsVisible(false);
+      setButtonTop(0); // Reset button position when not visible
       return;
     }
     setIsVisible(true);
@@ -128,7 +131,7 @@ const DraggableScrollbar: React.FC = () => {
           onClick={(e) => e.stopPropagation()}
           onMouseDown={handleMouseDown}
           className={cn(
-            "fixed right-[max(1rem,calc(50vw-384px-1rem))] h-10 w-10 rounded-full shadow-lg transition-colors duration-200 z-50 cursor-grab",
+            "fixed right-[max(2rem,calc(50vw-384px-2rem))] h-10 w-10 rounded-full shadow-lg transition-colors duration-200 z-50 cursor-grab",
             "bg-primary text-primary-foreground hover:bg-primary/90",
             isDragging && "cursor-grabbing bg-blue-600 dark:bg-blue-500"
           )}
