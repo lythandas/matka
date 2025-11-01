@@ -39,7 +39,7 @@ import CreatePostFormContent from '@/components/CreatePostFormContent'; // Impor
 import CreatePostDialog from '@/components/CreatePostDialog'; // Import the new dialog
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
 import { showSuccess, showError } from '@/utils/toast'; // Import showSuccess and showError
-// Removed import for TestDialog
+import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 
 const Index = () => {
   const { t } = useTranslation();
@@ -69,6 +69,8 @@ const Index = () => {
 
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState<boolean>(false); // State for the new post dialog
   const [mapRefreshKey, setMapRefreshKey] = useState(0); // New state to force map refresh
+
+  const [postIdToScrollTo, setPostIdToScrollTo] = useState<string | null>(null); // New state for scrolling
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
@@ -219,12 +221,17 @@ const Index = () => {
   };
 
   const handlePostClick = useCallback((post: Post, index: number) => {
-    console.log(`[Index.tsx] handlePostClick called for post ID: ${post.id}, index: ${index}`);
-    setSelectedPostForDetail(post);
-    setSelectedPostIndex(index);
-    setIsDetailDialogOpen(true);
-    console.log(`[Index.tsx] isDetailDialogOpen set to true. selectedPostForDetail:`, post);
-  }, []); // Dependencies: isMobile removed
+    console.log(`[Index.tsx] handlePostClick called for post ID: ${post.id}, index: ${index}, isMobile: ${isMobile}`);
+    if (isMobile) {
+      setViewMode('list'); // Switch to list view
+      setPostIdToScrollTo(post.id); // Set post to scroll to
+    } else {
+      setSelectedPostForDetail(post);
+      setSelectedPostIndex(index);
+      setIsDetailDialogOpen(true);
+      console.log(`[Index.tsx] isDetailDialogOpen set to true. selectedPostForDetail:`, post);
+    }
+  }, [isMobile]);
 
   const handleNextPost = () => {
     if (selectedPostIndex !== null && selectedPostIndex < posts.length - 1) {
@@ -270,6 +277,21 @@ const Index = () => {
   const handleSelectPostFromMap = useCallback((post: Post, index: number) => {
     handlePostClick(post, index);
   }, [handlePostClick]);
+
+  // Effect to scroll to a specific post when postIdToScrollTo changes and viewMode is 'list'
+  useEffect(() => {
+    if (postIdToScrollTo && viewMode === 'list') {
+      // Give React a moment to render the list view
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`post-${postIdToScrollTo}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setPostIdToScrollTo(null); // Clear after scrolling
+        }
+      }, 100); // Small delay
+      return () => clearTimeout(timer);
+    }
+  }, [postIdToScrollTo, viewMode, posts]); // Depend on posts to ensure they are rendered
 
   const handleLoadDraft = (draft: Post) => {
     // This function is now handled by CreatePostFormContent directly
@@ -368,117 +390,12 @@ const Index = () => {
                       const postDisplayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
 
                       return (
-                        <ShineCard
+                        <ListPostCard
                           key={post.id}
-                          className="shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group hover:ring-2 hover:ring-blue-500"
+                          post={post}
                           onClick={() => handlePostClick(post, index)}
-                        >
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4"> {/* Combined container */}
-                              <div className="flex items-center"> {/* Author info */}
-                                {post.author_profile_image_url ? (
-                                  <img
-                                    src={post.author_profile_image_url}
-                                    alt={postDisplayName}
-                                    className="w-10 h-10 rounded-full object-cover mr-3"
-                                  />
-                                ) : (
-                                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 text-gray-500 dark:text-gray-400 text-lg font-semibold">
-                                    {getAvatarInitials(post.author_name, post.author_username)}
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                    {postDisplayName}
-                                  </p>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
-                                  </p>
-                                </div>
-                              </div>
-                              {/* Edit/Delete buttons */}
-                              <div className="flex space-x-2">
-                                {isAuthenticated && selectedJourney && canEditPost && (
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
-                                    className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {isAuthenticated && selectedJourney && canDeletePost && (
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <AlertDialog key={`delete-dialog-${post.id}`}>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon" className="hover:ring-2 hover:ring-blue-500">
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogTitle className="text-lg font-semibold mb-4">
-                                          {t('adminPage.areYouSure')}
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription dangerouslySetInnerHTML={{ __html: t('common.deletePostDescription') }} />
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel className="w-full sm:w-auto">
-                                            {t('common.cancel')}
-                                          </AlertDialogCancel>
-                                          <AlertDialogAction onClick={async () => await handleDeletePost(post.id, post.journey_id, post.user_id)}>
-                                            {t('adminPage.continue')}
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {post.title && (
-                              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
-                            )}
-                            {post.media_items && post.media_items.length > 0 && (
-                              <div className={
-                                post.media_items.length === 1
-                                  ? "mb-4"
-                                  : "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"
-                              }>
-                                {post.media_items.map((mediaItem, mediaIndex) => (
-                                  <div key={mediaIndex} className="relative">
-                                    {mediaItem.type === 'image' && mediaItem.urls.large && (
-                                      <img
-                                        src={mediaItem.urls.large}
-                                        alt={t('common.postImageAlt', { index: mediaIndex + 1 })}
-                                        className="w-full h-auto max-h-96 object-cover rounded-md"
-                                        onError={(e) => {
-                                          e.currentTarget.src = '/placeholder.svg';
-                                          e.currentTarget.onerror = null;
-                                          showError(t('common.failedToLoadMedia', { fileName: `media-${mediaIndex + 1}` }));
-                                        }}
-                                      />
-                                    )}
-                                    {mediaItem.type === 'video' && mediaItem.url && (
-                                      <video
-                                        src={mediaItem.url}
-                                        controls
-                                        className="w-full h-auto max-h-96 object-cover rounded-md"
-                                      />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
-                              {post.message}
-                            </p>
-                            {post.coordinates && (
-                              <div className="mt-4">
-                                <MapComponent coordinates={post.coordinates} />
-                              </div>
-                            )}
-                          </CardContent>
-                        </ShineCard>
+                          id={`post-${post.id}`} // Add ID for scrolling
+                        />
                       );
                     })}
                   </div>

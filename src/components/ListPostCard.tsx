@@ -10,13 +10,16 @@ import { Compass } from 'lucide-react';
 import MapComponent from './MapComponent';
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
+import { cn } from '@/lib/utils'; // Import cn for class merging
 
 interface ListPostCardProps {
   post: Post;
   onClick: () => void;
+  className?: string;
+  id?: string; // Added id prop
 }
 
-const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
+const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick, className, id }) => {
   const { t } = useTranslation();
   const currentLocale = getDateFnsLocale();
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
@@ -24,8 +27,12 @@ const ListPostCard: React.FC<ListPostCardProps> = ({ post, onClick }) => {
 
   return (
     <Card
-      className="relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-blue-500 transition-all duration-200"
+      className={cn(
+        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-blue-500 transition-all duration-200",
+        className
+      )}
       onClick={onClick}
+      id={id} // Apply the id here
     >
       <CardContent className="p-6">
         <div className="flex items-center mb-4">
