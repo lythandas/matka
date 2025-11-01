@@ -12,6 +12,25 @@ dist
 dist-ssr
 *.local
 
+# Local environment variables
+.env
+!.env.production
+
+# Uploaded media and other local files
+backend/uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
+*.svg
+*.ico
+*.mp4
+*.webm
+*.ogg
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
