@@ -183,6 +183,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
               </Button>
             </>
+          ) : post.coordinates ? ( // Display map if no media but has coordinates
+            <MapComponent coordinates={post.coordinates} className="w-full h-full" zoom={12} />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Compass className="h-12 w-12 mx-auto mb-2" />
