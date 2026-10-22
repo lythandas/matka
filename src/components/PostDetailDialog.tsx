@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Maximize, Minimize, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
+import { Maximize, Minimize, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Compass } from 'lucide-react';
 import { format } from 'date-fns';
 import MapComponent from './MapComponent';
 import { showError } from '@/utils/toast';
@@ -109,6 +109,29 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         isFullScreen ? "w-screen h-screen max-w-none max-h-none" : "sm:max-w-[90vw] max-w-[98vw] h-[90vh]",
         "lg:flex-row" // On large screens, make it a row
       )}>
+        {/* Post Navigation Buttons (up = previous, down = next) */}
+        {totalPosts > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onPrevious}
+              disabled={currentIndex <= 0}
+              className="absolute top-2 left-1/2 -translate-x-1/2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit z-20"
+            >
+              <ChevronUp className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onNext}
+              disabled={currentIndex >= totalPosts - 1}
+              className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit z-20"
+            >
+              <ChevronDown className="h-5 w-5" />
+            </Button>
+          </>
+        )}
         {/* Media Column (Left on large screens, top on small screens) */}
         <div
           ref={mediaRef}
