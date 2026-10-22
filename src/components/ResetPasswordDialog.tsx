@@ -121,10 +121,10 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({ isOpen, onClo
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isResetting} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isResetting} className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleResetPassword} disabled={!newPassword.trim() || !confirmPassword.trim() || isResetting} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleResetPassword} disabled={!newPassword.trim() || !confirmPassword.trim() || isResetting} className="hover:ring-2 hover:ring-ring">
             {isResetting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

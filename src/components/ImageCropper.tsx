@@ -82,7 +82,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
             {t('imageCropper.adjustImageInstructions')}
           </DialogDescription>
         </DialogHeader>
-        <div className="relative w-full flex-grow bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
+        <div className="relative w-full flex-grow bg-muted rounded-md overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -113,10 +113,10 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isProcessing} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isProcessing} className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleApplyCrop} disabled={isProcessing} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleApplyCrop} disabled={isProcessing} className="hover:ring-2 hover:ring-ring">
             {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -111,9 +111,9 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             size="icon"
             onClick={handleClearSearch}
             disabled={disabled}
-            className="hover:ring-2 hover:ring-blue-500 ring-inset"
+            className="hover:ring-2 hover:ring-ring ring-inset"
           >
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-destructive" />
           </Button>
         )}
       </div>
@@ -143,7 +143,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
       {currentCoordinates && (
         <div className="mt-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+          <p className="text-sm text-muted-foreground text-center mb-2">
             {t('locationSearch.selected', { lat: currentCoordinates.lat.toFixed(4), lng: currentCoordinates.lng.toFixed(4) })}
           </p>
           <MapComponent coordinates={currentCoordinates} className="h-48" />

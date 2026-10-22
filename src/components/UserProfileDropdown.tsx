@@ -52,7 +52,7 @@ const UserProfileDropdown: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+        <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
           {usersExist === false ? t('auth.register') : t('auth.login')}
         </Button>
         {usersExist === false && isRegisterDialogOpen && (
@@ -69,12 +69,12 @@ const UserProfileDropdown: React.FC = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 hover:ring-2 hover:ring-blue-500 hover:bg-transparent">
+          <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 hover:ring-2 hover:ring-ring hover:bg-transparent">
             <Avatar className="h-9 w-9">
               {user?.profile_image_url ? (
                 <AvatarImage src={user.profile_image_url} alt={displayName} />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white">
+                <AvatarFallback className="bg-primary text-primary-foreground">
                   {getAvatarInitials(user?.name, user?.username)}
                 </AvatarFallback>
               )}

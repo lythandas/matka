@@ -208,7 +208,7 @@ const AdminPage: React.FC = () => {
         <Button
           variant="outline"
           onClick={() => navigate('/')}
-          className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> {t('common.backToJourneys')}
         </Button>
@@ -219,7 +219,7 @@ const AdminPage: React.FC = () => {
       <Card className="mb-8">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">{t('adminPage.manageUsers')}</CardTitle>
-          <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={() => setIsCreateUserDialogOpen(true)} className="hover:ring-2 hover:ring-ring">
             <Plus className="h-4 w-4" />
             {!isMobile && <span className="ml-2">{t('adminPage.createNewUser')}</span>}
             {isMobile && <span className="sr-only">{t('adminPage.createNewUser')}</span>}
@@ -228,8 +228,8 @@ const AdminPage: React.FC = () => {
         <CardContent>
           {loadingUsers ? (
             <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="ml-2 text-gray-600 dark:text-gray-400">{t('adminPage.loadingUsers')}</p>
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-2 text-muted-foreground">{t('adminPage.loadingUsers')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -251,7 +251,7 @@ const AdminPage: React.FC = () => {
                             {user.profile_image_url ? (
                               <AvatarImage src={user.profile_image_url} alt={user.name || user.username} />
                             ) : (
-                              <AvatarFallback className="bg-blue-500 text-white">
+                              <AvatarFallback className="bg-primary text-primary-foreground">
                                 {getAvatarInitials(user.name, user.username)}
                               </AvatarFallback>
                             )}
@@ -271,7 +271,7 @@ const AdminPage: React.FC = () => {
                             size="icon"
                             onClick={() => openResetPasswordDialog(user)}
                             disabled={isDeletingUser}
-                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                           >
                             <KeyRound className="h-4 w-4" />
                             <span className="sr-only">{t('adminPage.resetPassword')}</span>
@@ -282,7 +282,7 @@ const AdminPage: React.FC = () => {
                                 variant="destructive"
                                 size="icon"
                                 disabled={user.id === currentUser?.id || isDeletingUser}
-                                className="hover:ring-2 hover:ring-blue-500"
+                                className="hover:ring-2 hover:ring-ring"
                               >
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">{t('adminPage.deleteUser')}</span>
@@ -320,8 +320,8 @@ const AdminPage: React.FC = () => {
         <CardContent>
           {loadingJourneys ? (
             <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-              <p className="ml-2 text-gray-600 dark:text-gray-400">{t('adminPage.loadingJourneys')}</p>
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="ml-2 text-muted-foreground">{t('adminPage.loadingJourneys')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -345,7 +345,7 @@ const AdminPage: React.FC = () => {
                             {journey.owner_profile_image_url ? (
                               <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
                             ) : (
-                              <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs">
+                              <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                                 {getAvatarInitials(journey.owner_name, journey.owner_username)}
                               </AvatarFallback>
                             )}
@@ -354,7 +354,7 @@ const AdminPage: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {journey.is_public ? <Globe className="h-4 w-4 text-green-500" /> : <Globe className="h-4 w-4 text-gray-400" />}
+                        {journey.is_public ? <Globe className="h-4 w-4 text-primary" /> : <Globe className="h-4 w-4 text-muted-foreground/60" />}
                       </TableCell>
                       <TableCell>{format(new Date(journey.created_at), 'PPP', { locale: currentLocale })}</TableCell>
                       <TableCell className="text-right">
@@ -364,7 +364,7 @@ const AdminPage: React.FC = () => {
                             size="icon"
                             onClick={() => openManageJourneyDialog(journey)}
                             disabled={isDeletingJourney}
-                            className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                            className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                           >
                             <Wrench className="h-4 w-4" />
                             <span className="sr-only">{t('adminPage.manageJourney')}</span>
@@ -375,7 +375,7 @@ const AdminPage: React.FC = () => {
                                 variant="destructive"
                                 size="icon"
                                 disabled={isDeletingJourney}
-                                className="hover:ring-2 hover:ring-blue-500"
+                                className="hover:ring-2 hover:ring-ring"
                               >
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">{t('adminPage.deleteJourney')}</span>

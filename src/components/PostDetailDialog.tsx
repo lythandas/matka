@@ -147,7 +147,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handlePreviousMedia}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -155,7 +155,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={handleNextMedia}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit z-10"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit z-10"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
@@ -178,7 +178,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={toggleFullScreen}
-                className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                className="absolute top-2 right-2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
               >
                 {isFullScreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
               </Button>
@@ -196,7 +196,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         {/* Details Column (Right on large screens, bottom on small screens) */}
         <div className={cn(
           "flex flex-col lg:w-1/4 p-4 overflow-y-auto",
-          "border-t lg:border-t-0 lg:border-l dark:border-gray-700" // Border between sections
+          "border-t lg:border-t-0 lg:border-l border-border" // Border between sections
         )}>
           <DialogHeader className="pb-4">
             {/* Removed DialogTitle and DialogDescription */}
@@ -209,25 +209,25 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
               </Avatar>
             ) : (
               <Avatar className="h-10 w-10 mr-3">
-                <AvatarFallback className="bg-blue-500 text-white text-lg">
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                   {getAvatarInitials(post.author_name, post.author_username)}
                 </AvatarFallback>
               </Avatar>
             )}
             <div>
-              <p className="font-semibold text-gray-900 dark:text-gray-100">
+              <p className="font-semibold text-foreground">
                 {authorDisplayName}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
               </p>
             </div>
           </div>
 
           {post.title && (
-            <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+            <h3 className="text-2xl font-bold mb-2 text-foreground">{post.title}</h3>
           )}
-          <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
+          <p className="text-lg text-foreground whitespace-pre-wrap mb-4 text-justify">
             {post.message}
           </p>
 

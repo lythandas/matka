@@ -405,5 +405,19 @@
   "draggableScrollbar": {
     "label": "Seiten-Scroller",
     "dragToScroll": "Ziehen zum schnellen Scrollen"
+  },
+  "colorScheme": {
+    "label": "Farbschema",
+    "useMyPreference": "Meine Einstellung verwenden",
+    "vanilla": "Vanille",
+    "red": "Rot",
+    "green": "Grün",
+    "blue": "Blau",
+    "black": "Schwarz",
+    "white": "Weiß",
+    "orange": "Orange",
+    "purple": "Lila",
+    "brown": "Braun",
+    "teal": "Türkis"
   }
 }

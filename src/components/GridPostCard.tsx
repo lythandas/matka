@@ -74,9 +74,9 @@ const GridPostCard: React.FC<GridPostCardProps> = ({
   } else {
     // If no image/video and no coordinates, display the Matka compass logo and title
     mediaElement = (
-      <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-800 p-4 text-center">
-        <Compass className="h-16 w-16 text-blue-600 dark:text-blue-400 mb-4" />
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 line-clamp-3">
+      <div className="flex flex-col items-center justify-center w-full h-full bg-muted p-4 text-center">
+        <Compass className="h-16 w-16 text-primary mb-4" />
+        <h3 className="text-xl font-bold text-foreground line-clamp-3">
           {post.title || post.message.substring(0, 50) + (post.message.length > 50 ? '...' : '') || t('gridPostCard.untitledPost')}
         </h3>
       </div>
@@ -86,7 +86,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-blue-500 transition-all duration-200",
+        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-ring transition-all duration-200",
         className
       )}
       onClick={onClick}
@@ -112,19 +112,19 @@ const GridPostCard: React.FC<GridPostCardProps> = ({
               {post.title}
             </p>
           )}
-          <div className="flex items-center text-xs text-gray-300">
+          <div className="flex items-center text-xs text-foreground/80">
             <Avatar className="h-8 w-8 mr-2"> {/* Increased avatar size */}
               {post.author_profile_image_url ? (
                 <AvatarImage src={post.author_profile_image_url} alt={displayName} />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white text-sm"> {/* Adjusted fallback text size */}
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm"> {/* Adjusted fallback text size */}
                   {getAvatarInitials(post.author_name, post.author_username)}
                 </AvatarFallback>
               )}
             </Avatar>
             <div>
               <span>{displayName}</span>
-              <p className="text-xs font-normal text-gray-300">{formattedDate}</p>
+              <p className="text-xs font-normal text-foreground/80">{formattedDate}</p>
             </div>
           </div>
         </div>

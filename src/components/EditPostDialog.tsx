@@ -340,7 +340,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                     setCoordinates(null); // Clear coordinates when switching mode
                     handleGetLocation(); // Directly trigger geolocation
                   }}
-                  className="w-full hover:ring-2 hover:ring-blue-500"
+                  className="w-full hover:ring-2 hover:ring-ring"
                   disabled={isSaving || isUploadingMedia || !canEditPostUI || (locationLoading && locationSelectionMode === 'current')}
                 >
                   {locationLoading && locationSelectionMode === 'current' ? (
@@ -362,7 +362,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                     setCoordinates(null); // Clear coordinates when switching mode
                     setLocationLoading(false); // Ensure loading is false if switching from current
                   }}
-                  className="w-full hover:ring-2 hover:ring-blue-500"
+                  className="w-full hover:ring-2 hover:ring-ring"
                   disabled={isSaving || isUploadingMedia || !canEditPostUI}
                 >
                   <Search className="mr-2 h-4 w-4" /> {t('editPostDialog.searchLocation')}
@@ -371,11 +371,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
               {locationSelectionMode === 'current' && coordinates && (
                 <div className="space-y-4 mt-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                  <p className="text-sm text-muted-foreground text-center">
                     {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
                   </p>
                   <MapComponent coordinates={coordinates} className="h-48" />
-                  <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-blue-500 ring-inset" disabled={!canEditPostUI}>
+                  <Button type="button" variant="outline" onClick={handleClearLocation} className="w-full hover:ring-2 hover:ring-ring ring-inset" disabled={!canEditPostUI}>
                     {t('editPostDialog.clearLocation')}
                   </Button>
                 </div>
@@ -409,7 +409,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="flex-1 justify-start text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
+                  className="flex-1 justify-start text-muted-foreground hover:ring-2 hover:ring-ring ring-inset"
                   disabled={isSaving || isUploadingMedia || !canEditPostUI}
                 >
                   {isUploadingMedia ? (
@@ -423,7 +423,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                 </Button>
               </div>
               {isUploadingMedia && (
-                <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('editPostDialog.uploadingMedia')}</p>
+                <p className="text-sm text-center text-primary mt-1">{t('editPostDialog.uploadingMedia')}</p>
               )}
 
               {displayedMedia.length > 0 && (
@@ -446,10 +446,10 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveMedia(currentMediaPreviewIndex)}
-                    className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                    className="absolute top-2 right-2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                     disabled={isSaving || isUploadingMedia || !canEditPostUI}
                   >
-                    <XCircle className="h-5 w-5 text-red-500" />
+                    <XCircle className="h-5 w-5 text-destructive" />
                   </Button>
 
                   {displayedMedia.length > 1 && (
@@ -457,7 +457,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                         onClick={() => setCurrentMediaPreviewIndex((prev: number) => (prev === 0 ? displayedMedia.length - 1 : prev - 1))}
                         disabled={isSaving || isUploadingMedia || !canEditPostUI}
                       >
@@ -466,7 +466,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                         onClick={() => setCurrentMediaPreviewIndex((prev: number) => (prev === displayedMedia.length - 1 ? 0 : prev + 1))}
                         disabled={isSaving || isUploadingMedia || !canEditPostUI}
                       >
@@ -491,11 +491,11 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
           </Tabs>
         </div>
         <DialogFooter className="flex flex-wrap justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingMedia} className="w-full sm:w-auto hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
           {isDraft && canPublishPostUI && (
-            <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
+            <Button onClick={() => handleSave(true)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-ring">
               {isSaving ? (
                 <>
                   {isMobile ? null : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -509,7 +509,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
               )}
             </Button>
           )}
-          <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500">
+          <Button onClick={() => handleSave(false)} disabled={isSaving || isUploadingMedia || (!message.trim() && currentMediaItems.length === 0 && !coordinates) || !canEditPostUI} className="w-full sm:w-auto hover:ring-2 hover:ring-ring">
             {isSaving && !isDraft ? ( // Only show saving text if not publishing a draft
               <>
                 {isMobile ? null : <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

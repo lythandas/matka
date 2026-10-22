@@ -15,7 +15,7 @@ const TestDialog: React.FC<TestDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 rounded-lg shadow-lg">
+      <DialogContent className="sm:max-w-[425px] bg-background text-foreground p-6 rounded-lg shadow-lg">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{t('testDialog.title')}</DialogTitle>
           <DialogDescription className="text-muted-foreground mt-2">

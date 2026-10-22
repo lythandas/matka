@@ -91,6 +91,12 @@ const createTables = async (logger: FastifyBaseLogger) => {
           WHEN duplicate_column THEN NULL;
       END $$;
 
+      DO $$ BEGIN
+          ALTER TABLE users ADD COLUMN color_scheme VARCHAR(20) DEFAULT 'vanilla';
+      EXCEPTION
+          WHEN duplicate_column THEN NULL;
+      END $$;
+
       CREATE TABLE IF NOT EXISTS journeys (
         id VARCHAR(255) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -113,6 +119,12 @@ const createTables = async (logger: FastifyBaseLogger) => {
 
       DO $$ BEGIN
           ALTER TABLE journeys ADD COLUMN passphrase_hash VARCHAR(255);
+      EXCEPTION
+          WHEN duplicate_column THEN NULL;
+      END $$;
+
+      DO $$ BEGIN
+          ALTER TABLE journeys ADD COLUMN color_scheme VARCHAR(20) DEFAULT NULL;
       EXCEPTION
           WHEN duplicate_column THEN NULL;
       END $$;

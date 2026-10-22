@@ -394,7 +394,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
         />
 
         {(uploadedMediaItems.length > 0 || coordinates) && (
-          <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+          <div className="space-y-4 p-4 border rounded-md bg-muted">
             <h4 className="text-lg font-semibold">{t('indexPage.contentPreview')}</h4>
             {uploadedMediaItems.map((mediaItem, index) => (
               <div key={index} className="relative">
@@ -421,18 +421,18 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={() => handleRemoveMediaItem(index)}
-                  className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  className="absolute top-2 right-2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                 >
-                  <XCircle className="h-5 w-5 text-red-500" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                 </Button>
               </div>
             ))}
             {isUploadingMedia && (
-              <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('common.uploading')}</p>
+              <p className="text-sm text-center text-primary mt-1">{t('common.uploading')}</p>
             )}
             {coordinates && (
               <div className="relative">
-                <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
+                <p className="text-sm text-muted-foreground text-center mb-2">
                   {t('locationSearch.selected', { lat: coordinates.lat.toFixed(4), lng: coordinates.lng.toFixed(4) })}
                 </p>
                 <MapComponent coordinates={coordinates} className="h-48" />
@@ -441,9 +441,9 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleClearLocation}
-                  className="absolute top-2 right-2 bg-white/70 dark:bg-gray-900/70 rounded-full hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                  className="absolute top-2 right-2 bg-background/70 rounded-full hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                 >
-                  <XCircle className="h-5 w-5 text-red-500" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                 </Button>
               </div>
             )}
@@ -465,7 +465,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
             type="button"
             onClick={() => mediaFileInputRef.current?.click()}
             variant="outline"
-            className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+            className="flex items-center hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
             disabled={!canCreatePostUI || isUploadingMedia}
           >
             {isUploadingMedia ? (
@@ -482,7 +482,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
             type="button"
             variant="outline"
             onClick={handleGetLocation}
-            className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+            className="flex items-center hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
             disabled={!canCreatePostUI || isUploadingMedia || locationLoading}
           >
             {locationLoading ? (
@@ -503,7 +503,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
               setLocationSelectionMode('search');
               setCoordinates(null);
             }}
-            className="flex items-center hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
+            className="flex items-center hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit flex-grow sm:flex-grow-0"
             disabled={!canCreatePostUI || isUploadingMedia}
           >
             <Search className="mr-2 h-4 w-4" /> {t('indexPage.searchLocation')}
@@ -511,7 +511,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
         </div>
 
         {locationSelectionMode === 'search' && !coordinates && (
-          <div className="space-y-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800 mt-4"> {/* Added mt-4 here */}
+          <div className="space-y-4 p-4 border rounded-md bg-muted mt-4"> {/* Added mt-4 here */}
             <LocationSearch
               onSelectLocation={setCoordinates}
               currentCoordinates={coordinates}
@@ -525,7 +525,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
         <Button
           type="button"
           onClick={(e) => handleSubmit(e, false)} // Save as draft
-          className="bg-gray-600 hover:bg-gray-700 text-white hover:ring-2 hover:ring-gray-500"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:ring-2 hover:ring-ring"
           disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates) || isSavingDraft}
         >
           {isSavingDraft ? (
@@ -542,7 +542,7 @@ const CreatePostFormContent: React.FC<CreatePostFormContentProps> = ({
         </Button>
         <Button
           type="submit" // Publish post
-          className="bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground hover:ring-2 hover:ring-ring"
           disabled={isUploadingMedia || !canCreatePostUI || (!title.trim() && !message.trim() && uploadedMediaItems.length === 0 && !coordinates)}
         >
           <Send className="mr-2 h-4 w-4" /> {t('indexPage.post')}

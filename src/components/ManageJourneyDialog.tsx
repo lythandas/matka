@@ -44,6 +44,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from '@/hooks/use-mobile';
+import { COLOR_SCHEMES } from '@/contexts/ColorSchemeContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const SCHEME_SWATCH_COLORS: Record<string, string> = {
+  vanilla: 'hsl(222 47% 11%)',
+  red: 'hsl(347 70% 50%)',
+  green: 'hsl(150 45% 40%)',
+  blue: 'hsl(210 60% 45%)',
+  black: 'hsl(220 10% 25%)',
+  white: 'hsl(40 8% 30%)',
+  orange: 'hsl(25 70% 50%)',
+  purple: 'hsl(270 55% 50%)',
+  brown: 'hsl(35 35% 38%)',
+  teal: 'hsl(175 50% 38%)',
+};
 
 interface ManageJourneyDialogProps {
   isOpen: boolean;
@@ -82,6 +103,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
   const [selectedUserToAdd, setSelectedUserToAdd] = useState<User | null>(null);
   const [isAddingCollaborator, setIsAddingCollaborator] = useState<boolean>(false);
   const [isDeletingJourney, setIsDeletingJourney] = useState<boolean>(false);
+  const [journeyColorScheme, setJourneyColorScheme] = useState<string | null>(journey.color_scheme ?? null);
+  const [isUpdatingColorScheme, setIsUpdatingColorScheme] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<number | null>(null);
 
@@ -152,6 +175,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       setSearchResults([]);
       setSelectedUserToAdd(null);
       setIsClearPassphraseConfirmOpen(false);
+      setJourneyColorScheme(journey.color_scheme ?? null);
     }
   }, [isOpen, journey, fetchCollaborators]);
 
@@ -482,6 +506,53 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     }
   };
 
+  const applyColorSchemeClass = (scheme: string | null) => {
+    const html = document.documentElement;
+    COLOR_SCHEMES.forEach(s => html.classList.remove(`theme-${s}`));
+    if (scheme && scheme !== 'vanilla') {
+      html.classList.add(`theme-${scheme}`);
+    }
+  };
+
+  const handleJourneyColorSchemeChange = async (value: string) => {
+    const scheme = value === '__null__' ? null : value;
+    setJourneyColorScheme(scheme);
+    // Instant preview
+    applyColorSchemeClass(scheme);
+
+    if (!token || !currentUser) return;
+
+    const canManage = currentUser.id === journey.user_id || currentUser.isAdmin;
+    if (!canManage) return;
+
+    setIsUpdatingColorScheme(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ color_scheme: scheme }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || t('common.failedToUpdateJourney'));
+      }
+
+      onJourneyUpdated();
+    } catch (error: any) {
+      console.error('Error updating journey color scheme:', error);
+      showError(error.message || t('common.failedToUpdateJourney'));
+      // Revert
+      setJourneyColorScheme(journey.color_scheme ?? null);
+      applyColorSchemeClass(journey.color_scheme ?? null);
+    } finally {
+      setIsUpdatingColorScheme(false);
+    }
+  };
+
   const handleDeleteJourney = async () => {
     if (!token || !currentUser) {
       showError(t('common.authRequiredDeleteJourney'));
@@ -545,7 +616,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 {journey.owner_profile_image_url ? (
                   <AvatarImage src={journey.owner_profile_image_url} alt={journey.owner_name || journey.owner_username} />
                 ) : (
-                  <AvatarFallback className="bg-blue-500 text-white">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
                     {getAvatarInitials(journey.owner_name, journey.owner_username)}
                   </AvatarFallback>
                 )}
@@ -574,7 +645,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               />
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleRenameJourney} disabled={!journeyName.trim() || isRenaming || !canEditJourneyName} className="hover:ring-2 hover:ring-blue-500">
+              <Button onClick={handleRenameJourney} disabled={!journeyName.trim() || isRenaming || !canEditJourneyName} className="hover:ring-2 hover:ring-ring">
                 {isRenaming ? (
                   <>
                     <Loader2 className={cn("h-4 w-4", !isMobile && "mr-2")} />
@@ -588,6 +659,38 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 )}
               </Button>
             </div>
+
+            {/* Color Scheme Section */}
+            {canManageJourney && (
+              <div className="grid grid-cols-4 items-center gap-4 mt-4">
+                <Label htmlFor="journey-color-scheme" className="text-right">
+                  {t('colorScheme.label')}
+                </Label>
+                <Select
+                  value={journeyColorScheme ?? '__null__'}
+                  onValueChange={handleJourneyColorSchemeChange}
+                  disabled={isUpdatingColorScheme}
+                >
+                  <SelectTrigger id="journey-color-scheme" className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__null__">{t('colorScheme.useMyPreference')}</SelectItem>
+                    {COLOR_SCHEMES.map((scheme) => (
+                      <SelectItem key={scheme} value={scheme}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="inline-block h-3 w-3 rounded-full border border-border"
+                            style={{ backgroundColor: SCHEME_SWATCH_COLORS[scheme] }}
+                          />
+                          {t(`colorScheme.${scheme}`)}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Public Sharing Section */}
@@ -621,7 +724,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       size="icon"
                       onClick={handleCopyPublicLink}
                       disabled={isUpdatingPublicStatus}
-                      className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+                      className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
                     >
                       <Copy className="h-4 w-4" />
                       <span className="sr-only">{t('common.copy')}</span>
@@ -667,7 +770,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       <Button
                         onClick={handleSetPassphrase}
                         disabled={!passphrase.trim() || passphrase.trim().length < 6 || isSettingPassphrase || isUpdatingPublicStatus || isRenaming || isAddingCollaborator || isUpdatingCollaborator || !hasPassphrase}
-                        className="hover:ring-2 hover:ring-blue-500"
+                        className="hover:ring-2 hover:ring-ring"
                       >
                         {isSettingPassphrase ? (
                           <>
@@ -683,7 +786,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                       </Button>
                     </div>
                     {passphrase.trim().length > 0 && passphrase.trim().length < 6 && (
-                      <p className="text-sm text-red-500 mt-1">{t('common.passphraseMinLength')}</p>
+                      <p className="text-sm text-destructive mt-1">{t('common.passphraseMinLength')}</p>
                     )}
                   </div>
                 </div>
@@ -725,7 +828,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           {userResult.profile_image_url ? (
                             <AvatarImage src={userResult.profile_image_url} alt={userResult.name || userResult.username} />
                           ) : (
-                            <AvatarFallback className="bg-gray-200 text-gray-500 text-xs">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                               {getAvatarInitials(userResult.name, userResult.username)}
                             </AvatarFallback>
                           )}
@@ -744,7 +847,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 <Button
                   onClick={handleAddCollaborator}
                   disabled={isAddingCollaborator || isUpdatingCollaborator || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
-                  className="w-full hover:ring-2 hover:ring-blue-500"
+                  className="w-full hover:ring-2 hover:ring-ring"
                 >
                   {isAddingCollaborator ? (
                     <>
@@ -767,8 +870,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
             <h3 className="text-lg font-semibold mb-2">{t('manageJourneyDialog.currentCollaborators', { count: collaborators.length })}</h3>
             {loadingCollaborators ? (
               <div className="flex justify-center items-center h-24">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                <p className="ml-2 text-gray-600 dark:text-gray-400">{t('common.loadingCollaborators')}</p>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="ml-2 text-muted-foreground">{t('common.loadingCollaborators')}</p>
               </div>
             ) : collaborators.length === 0 ? (
               <p className="text-muted-foreground text-sm">{t('manageJourneyDialog.noCollaboratorsAdded')}</p>
@@ -782,7 +885,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           {collab.profile_image_url ? (
                             <AvatarImage src={collab.profile_image_url} alt={collab.name || collab.username} />
                           ) : (
-                            <AvatarFallback className="bg-gray-200 text-gray-500 text-sm">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                               {getAvatarInitials(collab.name, collab.username)}
                             </AvatarFallback>
                           )}
@@ -821,8 +924,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_publish_posts
-                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                    : "bg-red-100 text-red-800 hover:bg-red-200"
+                                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                    : "bg-destructive/10 text-destructive hover:bg-destructive/20"
                                 )}
                               >
                                 <PlusCircle className="h-4 w-4" />
@@ -842,8 +945,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_modify_post
-                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                    : "bg-red-100 text-red-800 hover:bg-red-200"
+                                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                    : "bg-destructive/10 text-destructive hover:bg-destructive/20"
                                 )}
                               >
                                 <Pencil className="h-4 w-4" />
@@ -863,8 +966,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                                 className={cn(
                                   "h-7 w-7 p-0",
                                   collab.can_delete_posts
-                                    ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                    : "bg-red-100 text-red-800 hover:bg-red-200"
+                                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                    : "bg-destructive/10 text-destructive hover:bg-destructive/20"
                                 )}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -880,7 +983,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                           size="icon"
                           onClick={() => handleRemoveCollaborator(collab.user_id, collab.username)}
                           disabled={isUpdatingCollaborator || isAddingCollaborator || collab.user_id === currentUser?.id || !canManageJourney || isSettingPassphrase || isUpdatingPublicStatus}
-                          className="h-7 w-7 hover:ring-2 hover:ring-blue-500"
+                          className="h-7 w-7 hover:ring-2 hover:ring-ring"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -899,7 +1002,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
                 <Button
                   variant="destructive"
                   disabled={isDeletingJourney || isRenaming || isAddingCollaborator || isUpdatingCollaborator || isUpdatingPublicStatus || isSettingPassphrase}
-                  className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500"
+                  className="w-full sm:w-auto hover:ring-2 hover:ring-ring"
                 >
                   {!isMobile && <Trash2 className="mr-2 h-4 w-4" />}
                   {t('manageJourneyDialog.deleteJourney')}
@@ -919,7 +1022,7 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus || isSettingPassphrase} className="w-full sm:w-auto hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isRenaming || isAddingCollaborator || isUpdatingCollaborator || isDeletingJourney || isUpdatingPublicStatus || isSettingPassphrase} className="w-full sm:w-auto hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
             {t('manageJourneyDialog.close')}
           </Button>
         </DialogFooter>

@@ -46,7 +46,7 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-blue-500 transition-all duration-200",
+        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-ring transition-all duration-200",
         className
       )}
       onClick={onClick}
@@ -71,22 +71,22 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
             </Avatar>
           ) : (
             <Avatar className="h-10 w-10 mr-3">
-              <AvatarFallback className="bg-blue-500 text-white text-lg">
+              <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                 {getAvatarInitials(post.author_name, post.author_username)}
               </AvatarFallback>
             </Avatar>
           )}
           <div>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">
+            <p className="font-semibold text-foreground">
               {displayName}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {format(new Date(post.created_at), 'PPP p', { locale: currentLocale })}
             </p>
           </div>
         </div>
         {post.title && (
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{post.title}</h3>
+          <h3 className="text-xl font-bold mb-2 text-foreground">{post.title}</h3>
         )}
         {firstMedia ? (
           <div className="mb-4">
@@ -113,7 +113,7 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
             <MapComponent coordinates={post.coordinates} className="h-48" />
           </div>
         ) : null}
-        <p className="text-lg text-gray-800 dark:text-gray-200 whitespace-pre-wrap mb-4 text-justify">
+        <p className="text-lg text-foreground whitespace-pre-wrap mb-4 text-justify">
           {post.message}
         </p>
       </CardContent>

@@ -13,6 +13,7 @@ interface User {
   surname?: string;
   profile_image_url?: string;
   language?: string; // New: User's preferred language
+  color_scheme?: string; // User's preferred color scheme
   created_at?: string;
 }
 

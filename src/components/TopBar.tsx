@@ -47,7 +47,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
             "justify-between text-base font-semibold flex items-center",
             isMobileView ? "w-full" : "min-w-[150px]",
             "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
-            "hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+            "hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
           )}
         >
           {selectedJourney ? selectedJourney.name : t('topBar.selectJourney')}
@@ -87,12 +87,12 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
   );
 
   return (
-    <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b dark:border-gray-800 bg-background sticky top-0 z-30 relative">
+    <div className="flex items-center justify-between py-4 px-4 sm:px-6 lg:px-8 border-b border-border bg-background sticky top-0 z-30 relative">
       <div className="flex items-center space-x-4">
         {isMobile && (
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+              <Button variant="ghost" size="icon" className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">{t('topBar.toggleMenu')}</span>
               </Button>
@@ -137,8 +137,8 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
           </Sheet>
         )}
         <div className="flex items-center">
-          <Compass className="mr-2 h-6 w-6 text-blue-600 dark:text-foreground" />
-          <h1 className="text-2xl font-extrabold text-blue-600 dark:text-foreground">{t('app.name')}</h1>
+          <Compass className="mr-2 h-6 w-6 text-foreground" />
+          <h1 className="text-2xl font-extrabold text-foreground">{t('app.name')}</h1>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ const TopBar: React.FC<TopBarProps> = ({ setIsCreateJourneyDialogOpen }) => {
               variant="outline"
               size="icon"
               onClick={() => setIsManageJourneyDialogOpen(true)}
-              className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+              className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
             >
               <Wrench className="h-4 w-4" />
               <span className="sr-only">{t('topBar.manageJourney')}</span>
