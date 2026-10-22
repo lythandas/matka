@@ -42,7 +42,7 @@ export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
           variant="outline"
           size="icon"
           onClick={cycleTheme}
-          className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
+          className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit"
           aria-label={tooltipText}
           {...props}
         >

@@ -405,5 +405,19 @@
   "draggableScrollbar": {
     "label": "Page Scroller",
     "dragToScroll": "Drag to quickly scroll"
+  },
+  "colorScheme": {
+    "label": "Color scheme",
+    "useMyPreference": "Use my preference",
+    "vanilla": "Vanilla",
+    "red": "Red",
+    "green": "Green",
+    "blue": "Blue",
+    "black": "Black",
+    "white": "White",
+    "orange": "Orange",
+    "purple": "Purple",
+    "brown": "Brown",
+    "teal": "Teal"
   }
 }

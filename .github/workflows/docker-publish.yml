@@ -1,14 +1,12 @@
 name: Build & Push Docker Image
 
 on:
-  pull_request:
-    branches: [main]
-    types: [closed]
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build-and-push:
-    # Only run when the PR was merged (not just closed without merging)
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -29,9 +27,9 @@ jobs:
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/matka
           tags: |
-            type=sha,prefix=
-            type=raw,value=latest
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v6

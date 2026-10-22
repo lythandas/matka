@@ -370,15 +370,15 @@ const Index = () => {
               )}
 
               {loadingPosts ? (
-                <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingPosts')}</p>
+                <p className="text-center text-muted-foreground">{t('indexPage.loadingPosts')}</p>
               ) : displayedPosts.length === 0 && selectedJourney ? (
                 <div className="text-center py-12">
-                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+                  <p className="text-xl text-muted-foreground font-semibold">
                     {t('indexPage.yourJourneyAwaits')}
                   </p>
                   {isAuthenticated && canCreatePostUI && (
-                    <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                    <p className="text-md text-muted-foreground mt-2">
                       {t('indexPage.useShareSection')}
                     </p>
                   )}
@@ -452,11 +452,11 @@ const Index = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                      <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                      <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+                      <p className="text-xl text-muted-foreground font-semibold">
                         {t('indexPage.noPostsWithLocation')}
                       </p>
-                      <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                      <p className="text-md text-muted-foreground mt-2">
                         {t('indexPage.addPostsWithLocation')}
                       </p>
                     </div>
@@ -466,14 +466,14 @@ const Index = () => {
             </TabsContent>
             <TabsContent value="drafts" className="mt-4">
               {loadingDrafts ? (
-                <p className="text-center text-gray-600 dark:text-gray-400">{t('indexPage.loadingDrafts')}</p>
+                <p className="text-center text-muted-foreground">{t('indexPage.loadingDrafts')}</p>
               ) : sortedDrafts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+                  <p className="text-xl text-muted-foreground font-semibold">
                     {t('indexPage.noDraftsYet')}
                   </p>
-                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  <p className="text-md text-muted-foreground mt-2">
                     {t('indexPage.saveWorkAsDraft')}
                   </p>
                 </div>
@@ -521,17 +521,17 @@ const Index = () => {
   } else if (!loadingJourneys && journeys.length === 0) {
     mainContent = (
       <div className="text-center py-12">
-        <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-        <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+        <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+        <p className="text-xl text-muted-foreground font-semibold">
           {t('indexPage.noJourneysYet')}
         </p>
-        <p className="text-md text-gray-500 dark:text-gray-500 mt-2 mb-4">
+        <p className="text-md text-muted-foreground mt-2 mb-4">
           {t('indexPage.startByCreatingJourney')}
         </p>
         {canCreateJourneyUI && (
           <Button
             onClick={() => setIsCreateJourneyDialogOpen(true)}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white hover:ring-2 hover:ring-blue-500"
+            className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground hover:ring-2 hover:ring-ring"
           >
             <Plus className="mr-2 h-4 w-4" /> {t('createJourneyDialog.createNewJourney')}
           </Button>
@@ -541,8 +541,8 @@ const Index = () => {
   } else {
     mainContent = (
       <div className="text-center py-12">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-        <p className="text-lg text-gray-600 dark:text-gray-400">{t('indexPage.loadingJourneys')}</p>
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">{t('indexPage.loadingJourneys')}</p>
       </div>
     );
   }

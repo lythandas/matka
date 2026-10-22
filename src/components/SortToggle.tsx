@@ -29,7 +29,7 @@ const SortToggle: React.FC<SortToggleProps> = ({ sortOrder, onSortOrderChange, c
           variant="outline"
           size="icon"
           onClick={handleToggleSort}
-          className={cn("hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit", className)}
+          className={cn("hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit", className)}
         >
           <Icon className="h-4 w-4" />
           <span className="sr-only">{tooltipText}</span>

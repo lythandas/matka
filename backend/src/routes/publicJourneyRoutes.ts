@@ -25,7 +25,7 @@ export default async function publicJourneyRoutes(fastify: FastifyInstance) {
     const { passphrase } = request.body as { passphrase?: string };
 
     const journeyResult = await dbClient!.query(
-      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id, j.passphrase_hash,
+      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id, j.passphrase_hash, j.color_scheme,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url
        FROM journeys j
        JOIN users u ON j.user_id = u.id

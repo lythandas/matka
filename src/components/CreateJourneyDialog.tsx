@@ -69,10 +69,10 @@ const CreateJourneyDialog: React.FC<CreateJourneyDialogProps> = ({ isOpen, onClo
           {/* Removed public switch and passphrase input */}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isCreating} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+          <Button variant="outline" onClick={onClose} disabled={isCreating} className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
             {t('common.cancel')}
           </Button>
-          <Button onClick={handleCreate} disabled={!journeyName.trim() || isCreating} className="hover:ring-2 hover:ring-blue-500">
+          <Button onClick={handleCreate} disabled={!journeyName.trim() || isCreating} className="hover:ring-2 hover:ring-ring">
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

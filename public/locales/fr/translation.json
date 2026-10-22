@@ -405,5 +405,19 @@
   "draggableScrollbar": {
     "label": "Barre de défilement",
     "dragToScroll": "Glisser pour faire défiler rapidement"
+  },
+  "colorScheme": {
+    "label": "Schéma de couleurs",
+    "useMyPreference": "Utiliser ma préférence",
+    "vanilla": "Vanille",
+    "red": "Rouge",
+    "green": "Vert",
+    "blue": "Bleu",
+    "black": "Noir",
+    "white": "Blanc",
+    "orange": "Orange",
+    "purple": "Violet",
+    "brown": "Marron",
+    "teal": "Turquoise"
   }
 }

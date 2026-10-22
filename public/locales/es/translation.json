@@ -405,5 +405,19 @@
   "draggableScrollbar": {
     "label": "Desplazador de página",
     "dragToScroll": "Arrastra para desplazarte rápidamente"
+  },
+  "colorScheme": {
+    "label": "Esquema de colores",
+    "useMyPreference": "Usar mi preferencia",
+    "vanilla": "Vainilla",
+    "red": "Rojo",
+    "green": "Verde",
+    "blue": "Azul",
+    "black": "Negro",
+    "white": "Blanco",
+    "orange": "Naranja",
+    "purple": "Morado",
+    "brown": "Marrón",
+    "teal": "Turquesa"
   }
 }

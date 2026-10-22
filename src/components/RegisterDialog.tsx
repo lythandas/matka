@@ -105,7 +105,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => {
           />
         </div>
         <div className="flex justify-end mt-2">
-          <Button type="submit" disabled={!username.trim() || !password.trim() || !confirmPassword.trim() || isRegistering} className="w-full hover:ring-2 hover:ring-blue-500">
+          <Button type="submit" disabled={!username.trim() || !password.trim() || !confirmPassword.trim() || isRegistering} className="w-full hover:ring-2 hover:ring-ring">
             {isRegistering ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

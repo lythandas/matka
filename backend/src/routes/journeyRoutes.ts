@@ -13,7 +13,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     }
 
     const result = await dbClient!.query(
-      `SELECT DISTINCT ON (j.id) j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
+      `SELECT DISTINCT ON (j.id) j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id, j.color_scheme,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
               j.passphrase_hash IS NOT NULL as has_passphrase
        FROM journeys j
@@ -32,7 +32,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     }
 
     const result = await dbClient!.query(
-      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
+      `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id, j.color_scheme,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
               j.passphrase_hash IS NOT NULL as has_passphrase
        FROM journeys j
@@ -75,7 +75,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     const result = await dbClient!.query(
       `INSERT INTO journeys (id, name, created_at, user_id, owner_username, owner_name, owner_surname, owner_profile_image_url, is_public)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
       [newJourney.id, newJourney.name, newJourney.created_at, newJourney.user_id, newJourney.owner_username, newJourney.owner_name, newJourney.owner_surname, newJourney.owner_profile_image_url, newJourney.is_public]
@@ -94,12 +94,13 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
         type: 'object',
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 255 },
+          color_scheme: { type: ['string', 'null'] },
         },
       },
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { name } = request.body as { name?: string };
+    const { name, color_scheme } = request.body as { name?: string; color_scheme?: string | null };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -121,12 +122,13 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
 
     const result = await dbClient!.query(
       `UPDATE journeys SET
-        name = COALESCE($1, name)
-       WHERE id = $2
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+        name = COALESCE($1, name),
+        color_scheme = $2
+       WHERE id = $3
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
-      [name, id]
+      [name, color_scheme !== undefined ? color_scheme : null, id]
     );
     return result.rows[0];
   });
@@ -179,7 +181,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
         public_link_id = $1,
         passphrase_hash = $2
        WHERE id = $3
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
       [newPublicLinkId, passphraseHash, id]
@@ -222,7 +224,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
         public_link_id = NULL,
         passphrase_hash = NULL
        WHERE id = $1
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
       [id]
@@ -279,7 +281,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       `UPDATE journeys SET
         passphrase_hash = $1
        WHERE id = $2
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
       [passphraseHash, id]
@@ -323,7 +325,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       `UPDATE journeys SET
         passphrase_hash = NULL
        WHERE id = $1
-       RETURNING id, name, created_at, user_id, is_public, public_link_id,
+       RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
       [id]

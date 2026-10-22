@@ -21,6 +21,7 @@ import { API_BASE_URL } from '@/config/api';
 import { MAX_PROFILE_IMAGE_SIZE_BYTES, SUPPORTED_IMAGE_TYPES } from '@/config/constants';
 import { User } from '@/types';
 import { ThreeButtonThemeToggle } from '@/components/ThreeButtonThemeToggle';
+import { COLOR_SCHEMES, type ColorScheme } from '@/contexts/ColorSchemeContext';
 import {
   Select,
   SelectContent,
@@ -31,6 +32,19 @@ import {
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import ImageCropper from './ImageCropper'; // Import the new ImageCropper component
+
+const SCHEME_SWATCH_COLORS: Record<string, string> = {
+  vanilla: 'hsl(222 47% 11%)',
+  red: 'hsl(347 70% 50%)',
+  green: 'hsl(150 45% 40%)',
+  blue: 'hsl(210 60% 45%)',
+  black: 'hsl(220 10% 25%)',
+  white: 'hsl(40 8% 30%)',
+  orange: 'hsl(25 70% 50%)',
+  purple: 'hsl(270 55% 50%)',
+  brown: 'hsl(35 35% 38%)',
+  teal: 'hsl(175 50% 38%)',
+};
 
 interface ManageAccountDialogProps {
   isOpen: boolean;
@@ -50,6 +64,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>(currentUser.language || 'en');
+  const [selectedColorScheme, setSelectedColorScheme] = useState<string>(currentUser.color_scheme || 'vanilla');
 
   const [isCropperOpen, setIsCropperOpen] = useState<boolean>(false); // State for cropper dialog
   const [imageToCrop, setImageToCrop] = useState<string | null>(null); // Image source for cropper
@@ -61,6 +76,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     setLocalPreviewUrl(null);
     setSelectedFile(null);
     setSelectedLanguage(currentUser.language || 'en');
+    setSelectedColorScheme(currentUser.color_scheme || 'vanilla');
   }, [currentUser, isOpen]);
 
   const uploadImageToServer = async (file: File) => {
@@ -164,6 +180,44 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
     showSuccess(t('manageAccountDialog.profileImageCleared'));
   };
 
+  const applyColorSchemeClass = (scheme: string) => {
+    const html = document.documentElement;
+    COLOR_SCHEMES.forEach(s => html.classList.remove(`theme-${s}`));
+    if (scheme && scheme !== 'vanilla') {
+      html.classList.add(`theme-${scheme}`);
+    }
+  };
+
+  const handleColorSchemeChange = async (scheme: string) => {
+    setSelectedColorScheme(scheme);
+    // Instant preview
+    applyColorSchemeClass(scheme);
+    // Persist to server
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ color_scheme: scheme }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update color scheme');
+      }
+      const data = await response.json();
+      updateUser(data.user, data.token);
+    } catch (error: any) {
+      console.error('Error updating color scheme:', error);
+      showError(error.message || 'Failed to update color scheme');
+      // Revert preview
+      applyColorSchemeClass(currentUser.color_scheme || 'vanilla');
+      setSelectedColorScheme(currentUser.color_scheme || 'vanilla');
+    }
+  };
+
   const handleSave = async () => {
     if (!token) {
       showError(t('common.authRequiredUpdateProfile'));
@@ -183,6 +237,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
           surname: surname.trim() || null,
           profile_image_url: profileImageUrl || null,
           language: selectedLanguage,
+          color_scheme: selectedColorScheme,
         }),
       });
 
@@ -222,7 +277,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 {currentImageSrc ? (
                   <AvatarImage src={currentImageSrc} alt={currentUser.name || currentUser.username} />
                 ) : (
-                  <AvatarFallback className="bg-blue-500 text-white text-4xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
                     {getAvatarInitials(currentUser.name, currentUser.username)}
                   </AvatarFallback>
                 )}
@@ -241,7 +296,7 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="flex-1 justify-center text-gray-600 dark:text-gray-400 hover:ring-2 hover:ring-blue-500 ring-inset"
+                  className="flex-1 justify-center text-muted-foreground hover:ring-2 hover:ring-ring ring-inset"
                   disabled={isSaving || isUploadingImage}
                 >
                   {isUploadingImage ? (
@@ -259,15 +314,15 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                     variant="ghost"
                     size="icon"
                     onClick={handleClearImage}
-                    className="hover:ring-2 hover:ring-blue-500 ring-inset"
+                    className="hover:ring-2 hover:ring-ring ring-inset"
                     disabled={isSaving || isUploadingImage}
                   >
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className="h-4 w-4 text-destructive" />
                   </Button>
                 )}
               </div>
               {isUploadingImage && (
-                <p className="text-sm text-center text-blue-500 dark:text-blue-400 mt-1">{t('common.uploading')}</p>
+                <p className="text-sm text-center text-primary mt-1">{t('common.uploading')}</p>
               )}
             </div>
 
@@ -330,12 +385,35 @@ const ManageAccountDialog: React.FC<ManageAccountDialogProps> = ({ isOpen, onClo
                 <ThreeButtonThemeToggle className="w-full justify-start" />
               </div>
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="color-scheme" className="text-right">
+                {t('colorScheme.label')}
+              </Label>
+              <Select value={selectedColorScheme} onValueChange={handleColorSchemeChange} disabled={isSaving || isUploadingImage}>
+                <SelectTrigger id="color-scheme" className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {COLOR_SCHEMES.map((scheme) => (
+                    <SelectItem key={scheme} value={scheme}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-border"
+                          style={{ backgroundColor: SCHEME_SWATCH_COLORS[scheme] }}
+                        />
+                        {t(`colorScheme.${scheme}`)}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
+            <Button variant="outline" onClick={onClose} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-ring hover:bg-transparent hover:text-inherit">
               {t('common.cancel')}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-blue-500">
+            <Button onClick={handleSave} disabled={isSaving || isUploadingImage} className="hover:ring-2 hover:ring-ring">
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

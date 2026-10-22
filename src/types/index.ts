@@ -8,6 +8,7 @@ export interface User {
   surname?: string;
   profile_image_url?: string;
   language?: string; // New: User's preferred language
+  color_scheme?: string; // User's preferred color scheme
   created_at?: string;
 }
 
@@ -24,6 +25,7 @@ export interface Journey {
   is_public: boolean; // New: Indicates if the journey is publicly viewable
   public_link_id?: string; // New: Unique ID for public sharing link
   has_passphrase?: boolean; // New: Frontend flag to indicate if a passphrase is set
+  color_scheme?: string | null; // Per-journey color scheme override
 }
 
 // Define the structure for media content
