@@ -9,6 +9,7 @@ export interface User {
   surname?: string;
   profile_image_url?: string;
   language?: string;
+  color_scheme?: string;
   created_at: string;
 }
 
@@ -20,6 +21,7 @@ export type ApiUser = {
   surname?: string;
   profile_image_url?: string;
   language?: string;
+  color_scheme?: string;
   created_at: string;
 };
 
@@ -35,6 +37,7 @@ export interface Journey {
   is_public: boolean;
   public_link_id?: string; // New: Unique ID for public sharing link
   passphrase_hash?: string; // New: Hashed passphrase for private public journeys
+  color_scheme?: string | null; // Per-journey color scheme override
 }
 
 export interface JourneyCollaborator {

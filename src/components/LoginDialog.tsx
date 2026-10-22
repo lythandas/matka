@@ -55,7 +55,7 @@ const LoginDialog: React.FC = () => {
           />
         </div>
         <div className="flex justify-end mt-2">
-          <Button type="submit" disabled={!username.trim() || !password.trim() || isLoggingIn} className="w-full hover:ring-2 hover:ring-blue-500">
+          <Button type="submit" disabled={!username.trim() || !password.trim() || isLoggingIn} className="w-full hover:ring-2 hover:ring-ring">
             {isLoggingIn ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

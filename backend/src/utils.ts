@@ -9,5 +9,6 @@ export const mapDbUserToApiUser = (dbUser: User): ApiUser => ({
   surname: dbUser.surname,
   profile_image_url: dbUser.profile_image_url,
   language: dbUser.language,
+  color_scheme: dbUser.color_scheme,
   created_at: dbUser.created_at,
 });

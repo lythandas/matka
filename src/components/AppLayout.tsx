@@ -21,7 +21,7 @@ const AppLayout: React.FC<AppLayoutProps> = () => {
   const { isCreateJourneyDialogOpen, setIsCreateJourneyDialogOpen } = useCreateJourneyDialog();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col min-h-screen bg-background">
       <TopBar
         setIsCreateJourneyDialogOpen={setIsCreateJourneyDialogOpen}
       />

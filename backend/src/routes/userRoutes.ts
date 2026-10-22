@@ -72,7 +72,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
 
       fastify.log.debug(`[/api/register] Inserting new user: ${username}, isAdmin: ${isFirstUser}`);
       const result = await dbClient!.query(
-        'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+        'INSERT INTO users (id, username, password_hash, is_admin, language, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at',
         [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.language, newUser.created_at]
       );
       fastify.log.debug('[/api/register] User inserted into database.');

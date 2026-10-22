@@ -14,7 +14,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
     const result = await dbClient!.query(
-      'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users WHERE id = $1',
+      'SELECT id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at FROM users WHERE id = $1',
       [request.user.id]
     );
     const user = result.rows[0];
@@ -34,6 +34,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
           surname: { type: ['string', 'null'] },
           profile_image_url: { type: ['string', 'null'] },
           language: { type: 'string' },
+          color_scheme: { type: 'string' },
         },
       },
     },
@@ -41,11 +42,11 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name, surname, profile_image_url, language } = request.body as { name?: string | null; surname?: string | null; profile_image_url?: string | null; language?: string };
+    const { name, surname, profile_image_url, language, color_scheme } = request.body as { name?: string | null; surname?: string | null; profile_image_url?: string | null; language?: string; color_scheme?: string };
 
     const result = await dbClient!.query(
-      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4 WHERE id = $5 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
-      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, language, request.user.id]
+      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4, color_scheme = COALESCE($5, color_scheme) WHERE id = $6 RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at',
+      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, language, color_scheme, request.user.id]
     );
 
     if (result.rows.length === 0) {
@@ -85,7 +86,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
     const result = await dbClient!.query(
-      'SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at FROM users ORDER BY created_at DESC'
     );
     return result.rows.map(mapDbUserToApiUser);
   });
@@ -134,7 +135,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     };
 
     const result = await dbClient!.query(
-      'INSERT INTO users (id, username, password_hash, is_admin, name, surname, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+      'INSERT INTO users (id, username, password_hash, is_admin, name, surname, language, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at',
       [newUser.id, newUser.username, newUser.password_hash, newUser.is_admin, newUser.name, newUser.surname, newUser.language, newUser.created_at]
     );
     return mapDbUserToApiUser(result.rows[0]);
@@ -158,12 +159,13 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
           profile_image_url: { type: ['string', 'null'] },
           is_admin: { type: 'boolean' },
           language: { type: 'string' },
+          color_scheme: { type: 'string' },
         },
       },
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { username, name, surname, profile_image_url, is_admin, language } = request.body as { username?: string; name?: string | null; surname?: string | null; profile_image_url?: string | null; is_admin?: boolean; language?: string };
+    const { username, name, surname, profile_image_url, is_admin, language, color_scheme } = request.body as { username?: string; name?: string | null; surname?: string | null; profile_image_url?: string | null; is_admin?: boolean; language?: string; color_scheme?: string };
 
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
@@ -189,10 +191,11 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
         surname = $3,
         profile_image_url = $4,
         is_admin = COALESCE($5, is_admin),
-        language = COALESCE($6, language)
-       WHERE id = $7
-       RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at`,
-      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, language, id]
+        language = COALESCE($6, language),
+        color_scheme = COALESCE($7, color_scheme)
+       WHERE id = $8
+       RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at`,
+      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, language, color_scheme, id]
     );
 
     if (result.rows.length === 0) {
@@ -304,7 +307,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
 
     const searchLower = `%${query.toLowerCase()}%`;
     const result = await dbClient!.query(
-      `SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at
+      `SELECT id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at
        FROM users
        WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3
        LIMIT 50`,

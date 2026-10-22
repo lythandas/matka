@@ -133,7 +133,7 @@ const DraggableScrollbar: React.FC = () => {
           className={cn(
             "fixed right-[max(2rem,calc(50vw-384px-2rem))] h-10 w-10 rounded-full shadow-lg transition-colors duration-200 z-50 cursor-grab",
             "bg-primary text-primary-foreground hover:bg-primary/90",
-            isDragging && "cursor-grabbing bg-blue-600 dark:bg-blue-500"
+            isDragging && "cursor-grabbing bg-primary"
           )}
           style={{ top: buttonTop }}
           aria-label={t('draggableScrollbar.label')}

@@ -188,8 +188,8 @@ const PublicJourneyPage: React.FC = () => {
   if (loading && !showPassphraseForm) { // Only show loading if not waiting for passphrase
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-        <p className="text-lg text-gray-600 dark:text-gray-400">{t('publicJourneyPage.loadingJourney')}</p>
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">{t('publicJourneyPage.loadingJourney')}</p>
       </div>
     );
   }
@@ -199,9 +199,9 @@ const PublicJourneyPage: React.FC = () => {
     if (showPassphraseForm) { // Prioritize showing passphrase form if needed
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4">
-          <Lock className="h-24 w-24 text-blue-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.enterPassphrase')}</p>
+          <Lock className="h-24 w-24 text-primary mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t('publicJourneyPage.journeyProtected')}</h1>
+          <p className="text-lg text-muted-foreground mb-4">{t('publicJourneyPage.enterPassphrase')}</p>
           <form onSubmit={handlePassphraseSubmit} className="w-full max-w-sm space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="passphrase">{t('common.passphrase')}</Label>
@@ -216,7 +216,7 @@ const PublicJourneyPage: React.FC = () => {
               />
             </div>
             {error === 'Incorrect passphrase.' && (
-              <p className="text-sm text-red-500">{t('publicJourneyPage.incorrectPassphrase')}</p>
+              <p className="text-sm text-destructive">{t('publicJourneyPage.incorrectPassphrase')}</p>
             )}
             <Button type="submit" className="w-full" disabled={isAuthenticating}>
               {isAuthenticating ? (
@@ -237,9 +237,9 @@ const PublicJourneyPage: React.FC = () => {
       // Generic error display, excluding passphrase errors handled above
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
-          <Compass className="h-24 w-24 text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">{t('common.error')}</h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">{error}</p>
+          <Compass className="h-24 w-24 text-destructive mb-4" />
+          <h1 className="text-2xl font-bold text-destructive mb-2">{t('common.error')}</h1>
+          <p className="text-lg text-muted-foreground mb-4">{error}</p>
           <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
         </div>
       );
@@ -248,9 +248,9 @@ const PublicJourneyPage: React.FC = () => {
     if (!journey) {
       return (
         <div className="flex-grow flex flex-col items-center justify-center p-4 text-center">
-          <Compass className="h-24 w-24 text-gray-400 dark:text-gray-600 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('publicJourneyPage.journeyNotFound')}</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">{t('publicJourneyPage.checkLink')}</p>
+          <Compass className="h-24 w-24 text-muted-foreground/60 mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t('publicJourneyPage.journeyNotFound')}</h1>
+          <p className="text-lg text-muted-foreground mb-4">{t('publicJourneyPage.checkLink')}</p>
           <Button onClick={() => window.location.href = '/'}>{t('notFoundPage.returnToHome')}</Button>
         </div>
       );
@@ -263,13 +263,13 @@ const PublicJourneyPage: React.FC = () => {
     return (
       <main className="flex-grow w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{journey.name}</h1>
-          <div className="flex items-center justify-center text-gray-600 dark:text-gray-400 text-sm">
+          <h1 className="text-4xl font-bold text-foreground mb-2">{journey.name}</h1>
+          <div className="flex items-center justify-center text-muted-foreground text-sm">
             <Avatar className="h-6 w-6 mr-2">
               {journey.owner_profile_image_url ? (
                 <AvatarImage src={journey.owner_profile_image_url} alt={ownerDisplayName} />
               ) : (
-                <AvatarFallback className="bg-blue-500 text-white text-xs">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {getAvatarInitials(journey.owner_name, journey.owner_username)}
                 </AvatarFallback>
               )}
@@ -289,11 +289,11 @@ const PublicJourneyPage: React.FC = () => {
 
         {posts.length === 0 ? (
           <div className="text-center py-12">
-            <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+            <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+            <p className="text-xl text-muted-foreground font-semibold">
               {t('publicJourneyPage.noPostsYet')}
             </p>
-            <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+            <p className="text-md text-muted-foreground mt-2">
               {t('publicJourneyPage.ownerHasNotAddedPosts')}
             </p>
           </div>
@@ -348,11 +348,11 @@ const PublicJourneyPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Compass className="h-24 w-24 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
-                  <p className="text-xl text-gray-600 dark:text-gray-400 font-semibold">
+                  <Compass className="h-24 w-24 mx-auto text-muted-foreground/60 mb-4" />
+                  <p className="text-xl text-muted-foreground font-semibold">
                     {t('indexPage.noPostsWithLocation')}
                   </p>
-                  <p className="text-md text-gray-500 dark:text-gray-500 mt-2">
+                  <p className="text-md text-muted-foreground mt-2">
                     {t('indexPage.addPostsWithLocation')}
                   </p>
                 </div>

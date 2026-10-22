@@ -42,7 +42,7 @@ const JourneyMapDialog: React.FC<JourneyMapDialogProps> = ({ isOpen, onClose, po
               zoom={12}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-muted-foreground">
+            <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
               <MapIcon className="h-12 w-12 mr-2" />
               <p className="text-lg">{t('journeyMapDialog.noPostsWithLocation')}</p>
             </div>

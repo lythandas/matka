@@ -32,7 +32,7 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
           <ToggleGroupItem
             value="light"
             aria-label={t('themeToggle.toggleLightTheme')}
-            className={cn("flex-1", theme === "light" && "ring-2 ring-blue-500")}
+            className={cn("flex-1", theme === "light" && "ring-2 ring-ring")}
           >
             <Sun className="h-4 w-4 mr-2" /> {t('themeToggle.light')}
           </ToggleGroupItem>
@@ -47,7 +47,7 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
           <ToggleGroupItem
             value="dark"
             aria-label={t('themeToggle.toggleDarkTheme')}
-            className={cn("flex-1", theme === "dark" && "ring-2 ring-blue-500")}
+            className={cn("flex-1", theme === "dark" && "ring-2 ring-ring")}
           >
             <Moon className="h-4 w-4 mr-2" /> {t('themeToggle.dark')}
           </ToggleGroupItem>
@@ -62,7 +62,7 @@ export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonTheme
           <ToggleGroupItem
             value="system"
             aria-label={t('themeToggle.toggleSystemTheme')}
-            className={cn("flex-1", theme === "system" && "ring-2 ring-blue-500")}
+            className={cn("flex-1", theme === "system" && "ring-2 ring-ring")}
           >
             <Monitor className="h-4 w-4 mr-2" /> {t('themeToggle.system')}
           </ToggleGroupItem>
