@@ -42,11 +42,50 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name, surname, profile_image_url, language, color_scheme } = request.body as { name?: string | null; surname?: string | null; profile_image_url?: string | null; language?: string; color_scheme?: string };
+    const body = request.body as { name?: string | null; surname?: string | null; profile_image_url?: string | null; language?: string; color_scheme?: string };
 
+    // Build SET clause dynamically — only update fields that were actually sent
+    const sets: string[] = [];
+    const values: (string | null)[] = [];
+    let paramIdx = 1;
+
+    if (body.name !== undefined) {
+      sets.push(`name = $${paramIdx++}`);
+      values.push(body.name);
+    }
+    if (body.surname !== undefined) {
+      sets.push(`surname = $${paramIdx++}`);
+      values.push(body.surname);
+    }
+    if (body.profile_image_url !== undefined) {
+      sets.push(`profile_image_url = $${paramIdx++}`);
+      values.push(body.profile_image_url);
+    }
+    if (body.language !== undefined) {
+      sets.push(`language = $${paramIdx++}`);
+      values.push(body.language);
+    }
+    if (body.color_scheme !== undefined) {
+      sets.push(`color_scheme = $${paramIdx++}`);
+      values.push(body.color_scheme);
+    }
+
+    if (sets.length === 0) {
+      // Nothing to update — just return current user
+      const result = await dbClient!.query(
+        'SELECT id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at FROM users WHERE id = $1',
+        [request.user.id]
+      );
+      if (result.rows.length === 0) {
+        return reply.code(404).send({ message: 'User not found' });
+      }
+      return mapDbUserToApiUser(result.rows[0]);
+    }
+
+    values.push(request.user.id);
     const result = await dbClient!.query(
-      'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4, color_scheme = COALESCE($5, color_scheme) WHERE id = $6 RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at',
-      [name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, language, color_scheme, request.user.id]
+      `UPDATE users SET ${sets.join(', ')} WHERE id = $${paramIdx} RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at`,
+      values
     );
 
     if (result.rows.length === 0) {
@@ -56,22 +95,22 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     const updatedUser = mapDbUserToApiUser(result.rows[0]);
 
     // If profile_image_url was updated, also update all posts by this user
-    if (profile_image_url !== undefined) {
+    if (body.profile_image_url !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
-        [profile_image_url === null ? null : profile_image_url, request.user.id]
+        [body.profile_image_url === null ? null : body.profile_image_url, request.user.id]
       );
     }
 
     // If name or surname were updated, also update all posts and journeys by this user
-    if (name !== undefined || surname !== undefined) {
+    if (body.name !== undefined || body.surname !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
-        [name === null ? null : name, surname === null ? null : surname, request.user.id]
+        [body.name === null ? null : body.name, body.surname === null ? null : body.surname, request.user.id]
       );
       await dbClient!.query(
         'UPDATE journeys SET owner_name = $1, owner_surname = $2 WHERE user_id = $3',
-        [name === null ? null : name, surname === null ? null : surname, request.user.id]
+        [body.name === null ? null : body.name, body.surname === null ? null : body.surname, request.user.id]
       );
     }
 
