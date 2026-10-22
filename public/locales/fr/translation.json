@@ -340,7 +340,7 @@
     "searchUsernameToAdd": "Rechercher un nom d'utilisateur à ajouter...",
     "addingCollaborator": "Ajout de <span class='font-bold text-primary'>{{username}}</span> en tant que collaborateur. Il pourra lire et publier des publications sur ce voyage par défaut.",
     "addCollaborator": "Ajouter un collaborateur",
-    "currentCollaborators": "Collaborateur ({{count}})",
+    "currentCollaborators": "Collaborateurs actuels ({{count}})",
     "noCollaboratorsAdded": "Aucun collaborateur ajouté pour le moment.",
     "allowCreatePosts": "Autoriser l'utilisateur à créer de nouvelles publications dans ce voyage",
     "allowEditPosts": "Autoriser l'utilisateur à modifier les publications existantes dans ce voyage",
@@ -367,43 +367,43 @@
     "cropProfilePicture": "Recadrer la photo de profil",
     "adjustImageInstructions": "Ajustez l'image pour qu'elle s'adapte à la zone de recadrage circulaire. Utilisez le curseur pour faire zoomer.",
     "zoom": "Zoom",
-    "apply": "Anwenden",
+    "apply": "Appliquer",
     "applying": "Application...",
     "noCropSelected": "Aucune zone de recadrage sélectionnée.",
     "failedToCropImage": "Échec du recadrage de l'image.",
     "errorCroppingImage": "Erreur lors du recadrage de l'image."
   },
   "scrollToTopButton": {
-    "label": "Nach oben scrollen"
+    "label": "Faire défiler vers le haut"
   },
   "publicJourneyPage": {
-    "invalidLink": "Ungültiger öffentlicher Reiselink.",
-    "failedToLoadJourney": "Fehler beim Laden der öffentlichen Reise.",
-    "loadingJourney": "Öffentliche Reise wird geladen...",
-    "journeyNotFound": "Öffentliche Reise nicht gefunden",
-    "checkLink": "Bitte überprüfen Sie den Link und versuchen Sie es erneut.",
-    "byOwner": "Von {{owner}}",
-    "noPostsYet": "Noch keine Beiträge in dieser Reise!",
-    "ownerHasNotAddedPosts": "Der Reisebesitzer hat noch keine Beiträge zu dieser öffentlichen Reise hinzugefügt.",
-    "exploreMap": "Standorte der Beiträge auf der Karte erkunden.",
-    "journeyProtected": "Reise geschützt",
-    "enterPassphrase": "Bitte geben Sie die Passphrase ein, um auf diese Reise zuzugreifen.",
-    "passphrasePlaceholder": "Passphrase eingeben",
-    "incorrectPassphrase": "Falsche Passphrase.",
-    "verifying": "Wird überprüft...",
-    "accessJourney": "Reise zugreifen",
-    "passphraseProtected": "Passphrase geschützt"
+    "invalidLink": "Lien de voyage public invalide.",
+    "failedToLoadJourney": "Échec du chargement du voyage public.",
+    "loadingJourney": "Chargement du voyage public...",
+    "journeyNotFound": "Voyage public introuvable",
+    "checkLink": "Veuillez vérifier le lien et réessayer.",
+    "byOwner": "Par {{owner}}",
+    "noPostsYet": "Aucun poste dans ce voyage !",
+    "ownerHasNotAddedPosts": "Le propriétaire du voyage n'a pas encore ajouté de postes à ce voyage public.",
+    "exploreMap": "Explorer les emplacements des postes sur la carte.",
+    "journeyProtected": "Voyage protégé",
+    "enterPassphrase": "Veuillez saisir la phrase secrète pour accéder à ce voyage.",
+    "passphrasePlaceholder": "Saisir la phrase secrète",
+    "incorrectPassphrase": "Phrase secrète incorrecte.",
+    "verifying": "Vérification...",
+    "accessJourney": "Accéder au voyage",
+    "passphraseProtected": "Protégé par phrase secrète"
   },
   "createPostDialog": {
-    "description": "Erstellen Sie einen neuen Beitrag für Ihre ausgewählte Reise."
+    "description": "Créez un nouveau poste pour votre voyage sélectionné."
   },
   "testDialog": {
-    "title": "Test-Dialog",
-    "description": "Dies ist ein Test-Dialog, um zu überprüfen, ob die Dialog-Komponente gerendert wird.",
-    "message": "Wenn Sie dies sehen, funktioniert die Dialog-Komponente!"
+    "title": "Dialogue de test",
+    "description": "Ceci est un dialogue de test pour vérifier que le composant de dialogue est rendu.",
+    "message": "Si vous voyez ceci, le composant de dialogue fonctionne !"
   },
   "draggableScrollbar": {
-    "label": "Seiten-Scroller",
-    "dragToScroll": "Ziehen zum schnellen Scrollen"
+    "label": "Barre de défilement",
+    "dragToScroll": "Glisser pour faire défiler rapidement"
   }
 }

@@ -108,7 +108,7 @@
     "noResultsFound": "No se encontraron resultados.",
     "failedToSearchLocations": "Error al buscar ubicaciones.",
     "locationSelected": "Seleccionado: Lat: {{lat}}, Lng: {{lng}}",
-    "pickADate": "Fecha de publicación",
+    "pickADate": "Elegir una fecha",
     "postImage": "Imagen de publicación",
     "postImageAlt": "Imagen de publicación {{index}}",
     "failedToLoadMedia": "No se pudo cargar el medio.",
