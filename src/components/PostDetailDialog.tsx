@@ -43,6 +43,7 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const mediaRef = useRef<HTMLDivElement>(null); // This ref will now be on the media column
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     // Reset full screen and media index when dialog opens/closes
@@ -96,6 +97,24 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+    const SWIPE_THRESHOLD = 80;
+    if (deltaY > SWIPE_THRESHOLD) {
+      // Swipe up → next post
+      onNext();
+    } else if (deltaY < -SWIPE_THRESHOLD) {
+      // Swipe down → previous post
+      onPrevious();
+    }
+    touchStartY.current = null;
+  };
+
   const authorDisplayName = post.author_name && post.author_surname
     ? `${post.author_name} ${post.author_surname}`
     : post.author_name || post.author_username;
@@ -109,8 +128,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         isFullScreen ? "w-screen h-screen max-w-none max-h-none" : "sm:max-w-[90vw] max-w-[98vw] h-[90vh]",
         "lg:flex-row" // On large screens, make it a row
       )}>
-        {/* Post Navigation Buttons (up = previous, down = next) */}
-        {totalPosts > 1 && (
+        {/* Post Navigation Buttons (desktop only — mobile uses swipe) */}
+        {totalPosts > 1 && !isMobile && (
           <>
             <Button
               variant="ghost"
@@ -135,6 +154,8 @@ const PostDetailDialog: React.FC<PostDetailDialogProps> = ({
         {/* Media Column (Left on large screens, top on small screens) */}
         <div
           ref={mediaRef}
+          onTouchStart={isMobile ? handleTouchStart : undefined}
+          onTouchEnd={isMobile ? handleTouchEnd : undefined}
           className={cn(
             "relative flex items-center justify-center bg-black rounded-t-md lg:rounded-l-md lg:rounded-tr-none overflow-hidden",
             "flex-grow lg:w-3/4", // Take 3/4 width on large screens, grow to fill height

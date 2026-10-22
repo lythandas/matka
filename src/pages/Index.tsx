@@ -336,7 +336,7 @@ const Index = () => {
     mainContent = (
       <>
         {!isMobile && canCreatePostUI && ( // Render inline form on desktop if user can create posts
-          <Card className="shadow-lg shadow-neon mb-8">
+          <Card className="shadow-lg shadow-neon mb-8 mx-auto w-full max-w-3xl">
             <CardHeader className="flex flex-row items-center justify-center">
               <CardTitle className="text-2xl font-bold">{t('indexPage.shareYourDay')}</CardTitle>
             </CardHeader>
@@ -562,7 +562,11 @@ const Index = () => {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full">
+    <div className={cn("w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full",
+      columnCount === 3 && !isMobile && viewMode === 'list' ? 'max-w-7xl' :
+      columnCount === 2 && !isMobile && viewMode === 'list' ? 'max-w-5xl' :
+      'max-w-3xl'
+    )}>
       {mainContent}
 
       {/* Floating Action Button for Mobile */}

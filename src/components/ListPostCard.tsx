@@ -49,11 +49,8 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
   const visibleImages = imageItems.slice(0, MAX_GALLERY);
   const remainingCount = imageItems.length - MAX_GALLERY;
 
-  // First photo is large, rest go in a grid below
-  const heroImage = visibleImages[0];
-  const thumbImages = visibleImages.slice(1);
-  // 2-3 thumbs → 3 cols, 4-5 → 3 cols, 6 → 3 cols. 2 thumbs → 2 cols.
-  const thumbCols = thumbImages.length <= 1 ? 1 : thumbImages.length === 2 ? 2 : 3;
+  // Masonry column count adapts to number of photos
+  const galleryColumns = visibleImages.length <= 2 ? 2 : visibleImages.length <= 4 ? 2 : 3;
 
   const firstMedia = mediaItems[0];
 
@@ -105,48 +102,36 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
         {firstMedia ? (
           <div className="mb-4">
             {imageItems.length > 1 ? (
-              <div className="rounded-md overflow-hidden">
-                {/* Hero photo — larger, natural ratio */}
-                <img
-                  src={heroImage.urls.medium || '/placeholder.svg'}
-                  alt={post.title || t('common.postImage')}
-                  className="w-full h-auto block"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                    e.currentTarget.onerror = null;
-                  }}
-                />
-                {/* Thumbnail grid — object-cover to fill the frame */}
-                {thumbImages.length > 0 && (
-                  <div
-                    className="grid gap-0.5 mt-0.5"
-                    style={{ gridTemplateColumns: `repeat(${thumbCols}, 1fr)` }}
-                  >
-                    {thumbImages.map((media, idx) => {
-                      const isLast = idx === thumbImages.length - 1;
-                      return (
-                        <div key={idx} className="relative aspect-square overflow-hidden">
-                          <img
-                            src={media.urls.medium || '/placeholder.svg'}
-                            alt={post.title || t('common.postImage')}
-                            className="w-full h-full object-cover block"
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                              e.currentTarget.onerror = null;
-                            }}
-                          />
-                          {isLast && remainingCount > 0 && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="text-white text-3xl font-bold">+{remainingCount}</span>
-                            </div>
-                          )}
+              <div
+                className="rounded-md overflow-hidden gap-1"
+                style={{ columnCount: galleryColumns, columnGap: '4px' }}
+              >
+                {visibleImages.map((media, idx) => {
+                  const isLast = idx === visibleImages.length - 1;
+                  return (
+                    <div
+                      key={idx}
+                      className="relative break-inside-avoid overflow-hidden rounded-sm"
+                      style={{ marginBottom: idx < visibleImages.length - 1 ? '4px' : 0 }}
+                    >
+                      <img
+                        src={media.urls.medium || '/placeholder.svg'}
+                        alt={post.title || t('common.postImage')}
+                        className="w-full h-auto block"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                          e.currentTarget.onerror = null;
+                        }}
+                      />
+                      {isLast && remainingCount > 0 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <span className="text-white text-3xl font-bold">+{remainingCount}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : firstMedia.type === 'image' ? (
               <img
