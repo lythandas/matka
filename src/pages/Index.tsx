@@ -562,11 +562,7 @@ const Index = () => {
   }
 
   return (
-    <div className={cn("w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full",
-      columnCount === 3 && !isMobile && viewMode === 'list' ? 'max-w-7xl' :
-      columnCount === 2 && !isMobile && viewMode === 'list' ? 'max-w-5xl' :
-      'max-w-3xl'
-    )}>
+    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full">
       {mainContent}
 
       {/* Floating Action Button for Mobile */}
