@@ -47,7 +47,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
   const [newlySelectedFiles, setNewlySelectedFiles] = useState<File[]>([]);
   const [localPreviewUrls, setLocalPreviewUrls] = useState<string[]>([]);
   const [isUploadingMedia, setIsUploadingMedia] = useState<boolean>(false);
-  const [coordinates, setCoordinates] = useState<typeof post.coordinates>(post.coordinates || null);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(post.coordinates || null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
   const [locationSelectionMode, setLocationSelectionMode] = useState<'current' | 'search'>(
@@ -386,7 +386,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
 
               {locationSelectionMode === 'search' && (
                 <LocationSearch
-                  onSelectLocation={setCoordinates}
+                  onSelectLocation={(coords: { lat: number; lng: number } | null) => setCoordinates(coords)}
                   currentCoordinates={coordinates}
                   disabled={isSaving || isUploadingMedia || !canEditPostUI}
                 />
@@ -458,7 +458,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                         variant="outline"
                         size="icon"
                         className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === 0 ? displayedMedia.length - 1 : prev - 1))}
+                        onClick={() => setCurrentMediaPreviewIndex((prev: number) => (prev === 0 ? displayedMedia.length - 1 : prev - 1))}
                         disabled={isSaving || isUploadingMedia || !canEditPostUI}
                       >
                         <ChevronLeft className="h-5 w-5" />
@@ -467,7 +467,7 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({ isOpen, onClose, post, 
                         variant="outline"
                         size="icon"
                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full z-10 bg-background/80 backdrop-blur-sm hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit"
-                        onClick={() => setCurrentMediaIndex((prev) => (prev === displayedMedia.length - 1 ? 0 : prev + 1))}
+                        onClick={() => setCurrentMediaPreviewIndex((prev: number) => (prev === displayedMedia.length - 1 ? 0 : prev + 1))}
                         disabled={isSaving || isUploadingMedia || !canEditPostUI}
                       >
                         <ChevronRight className="h-5 w-5" />

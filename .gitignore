@@ -16,7 +16,7 @@ backend/dist
 
 # Local environment variables
 .env
-!.env.production
+.env.production
 
 # Allow .png files in docs/screenshots/
 !docs/screenshots/*.png

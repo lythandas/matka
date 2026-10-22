@@ -1,16 +1,13 @@
 // backend/src/routes/journeyRoutes.ts
 import { FastifyInstance } from 'fastify';
-import { dbClient, isDbConnected } from '../db';
-import { hashPassword } from '../auth'; // Import hashPassword
+import { dbClient } from '../db';
+import { hashPassword, comparePassword } from '../auth';
 import { Journey, JourneyCollaborator } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { comparePassword } from '../auth'; // Import comparePassword
 
 export default async function journeyRoutes(fastify: FastifyInstance) {
-  // The authentication hook is applied in server.ts for this plugin, no need to add it here again.
 
-  // Get journeys for the authenticated user (owner or collaborator)
-  fastify.get('/', async (request, reply) => { // Changed from /journeys to /
+  fastify.get('/', async (request, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
@@ -18,7 +15,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     const result = await dbClient!.query(
       `SELECT DISTINCT ON (j.id) j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
-              j.passphrase_hash IS NOT NULL as has_passphrase -- Expose if passphrase exists, not the hash itself
+              j.passphrase_hash IS NOT NULL as has_passphrase
        FROM journeys j
        LEFT JOIN journey_user_permissions jup ON j.id = jup.journey_id
        JOIN users u ON j.user_id = u.id
@@ -29,8 +26,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows;
   });
 
-  // Admin-only: Get all journeys in the system
-  fastify.get('/admin', async (request, reply) => { // Changed from /admin/journeys to /admin
+  fastify.get('/admin', async (request, reply) => {
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all journeys.' });
     }
@@ -38,7 +34,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     const result = await dbClient!.query(
       `SELECT j.id, j.name, j.created_at, j.user_id, j.is_public, j.public_link_id,
               u.username as owner_username, u.name as owner_name, u.surname as owner_surname, u.profile_image_url as owner_profile_image_url,
-              j.passphrase_hash IS NOT NULL as has_passphrase -- Expose if passphrase exists
+              j.passphrase_hash IS NOT NULL as has_passphrase
        FROM journeys j
        JOIN users u ON j.user_id = u.id
        ORDER BY j.created_at DESC`
@@ -46,15 +42,21 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows;
   });
 
-  fastify.post('/', async (request, reply) => { // Changed from /journeys to /
+  fastify.post('/', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name } = request.body as { name?: string };
-
-    if (!name) {
-      return reply.code(400).send({ message: 'Journey name is required' });
-    }
+    const { name } = request.body as { name: string };
 
     const newJourney: Journey = {
       id: uuidv4(),
@@ -65,9 +67,9 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       owner_name: request.user.name,
       owner_surname: request.user.surname,
       owner_profile_image_url: request.user.profile_image_url,
-      is_public: false, // New journeys are always private by default
-      public_link_id: undefined, // No public link initially
-      passphrase_hash: undefined, // No passphrase initially
+      is_public: false,
+      public_link_id: undefined,
+      passphrase_hash: undefined,
     };
 
     const result = await dbClient!.query(
@@ -81,9 +83,23 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.put('/:id', async (request, reply) => { // Changed from /journeys/:id to /:id
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { name } = request.body as { name?: string }; // Removed is_public and passphrase
+    const { name } = request.body as { name?: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -115,8 +131,21 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  // New endpoint to publish a journey (optionally with a passphrase)
-  fastify.post('/:id/publish', async (request, reply) => {
+  fastify.post('/:id/publish', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          passphrase: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { passphrase } = request.body as { passphrase?: string };
 
@@ -158,8 +187,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  // New endpoint to unpublish a journey (clears passphrase)
-  fastify.post('/:id/unpublish', async (request, reply) => {
+  fastify.post('/:id/unpublish', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
@@ -184,7 +220,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       `UPDATE journeys SET
         is_public = FALSE,
         public_link_id = NULL,
-        passphrase_hash = NULL -- Clear passphrase when unpublishing
+        passphrase_hash = NULL
        WHERE id = $1
        RETURNING id, name, created_at, user_id, is_public, public_link_id,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
@@ -194,8 +230,22 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  // New endpoint to set/update passphrase for an already public journey
-  fastify.post('/:id/set-passphrase', async (request, reply) => {
+  fastify.post('/:id/set-passphrase', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        required: ['passphrase'],
+        properties: {
+          passphrase: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { passphrase } = request.body as { passphrase: string };
 
@@ -237,8 +287,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  // New endpoint to clear passphrase for an already public journey
-  fastify.post('/:id/clear-passphrase', async (request, reply) => {
+  fastify.post('/:id/clear-passphrase', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
@@ -274,7 +331,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.delete('/:id', async (request, reply) => { // Changed from /journeys/:id to /:id
+  fastify.delete('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
@@ -303,7 +368,15 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  fastify.get('/:id/collaborators', async (request, reply) => { // Changed from /journeys/:id/collaborators to /:id/collaborators
+  fastify.get('/:id/collaborators', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+    },
+  }, async (request, reply) => {
     const { id: journeyId } = request.params as { id: string };
 
     if (!request.user) {
@@ -339,7 +412,22 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows;
   });
 
-  fastify.post('/:id/collaborators', async (request, reply) => { // Changed from /journeys/:id/collaborators to /:id/collaborators
+  fastify.post('/:id/collaborators', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        required: ['username'],
+        properties: {
+          username: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id: journeyId } = request.params as { id: string };
     const { username } = request.body as { username: string };
 
@@ -397,7 +485,26 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.put('/:journeyId/collaborators/:userId', async (request, reply) => { // Changed from /journeys/:journeyId/collaborators/:userId to /:journeyId/collaborators/:userId
+  fastify.put('/:journeyId/collaborators/:userId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['journeyId', 'userId'],
+        properties: {
+          journeyId: { type: 'string' },
+          userId: { type: 'string' },
+        },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          can_publish_posts: { type: 'boolean' },
+          can_modify_post: { type: 'boolean' },
+          can_delete_posts: { type: 'boolean' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
     const { can_publish_posts, can_modify_post, can_delete_posts } = request.body as {
       can_publish_posts?: boolean;
@@ -439,7 +546,18 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.delete('/:journeyId/collaborators/:userId', async (request, reply) => { // Changed from /journeys/:journeyId/collaborators/:userId to /:journeyId/collaborators/:userId
+  fastify.delete('/:journeyId/collaborators/:userId', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['journeyId', 'userId'],
+        properties: {
+          journeyId: { type: 'string' },
+          userId: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { journeyId, userId } = request.params as { journeyId: string; userId: string };
 
     if (!request.user) {

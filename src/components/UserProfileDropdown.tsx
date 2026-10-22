@@ -55,17 +55,11 @@ const UserProfileDropdown: React.FC = () => {
         <Button onClick={handleAuthButtonClick} variant="outline" className="hover:ring-2 hover:ring-blue-500 hover:bg-transparent hover:text-inherit">
           {usersExist === false ? t('auth.register') : t('auth.login')}
         </Button>
-        {usersExist === false && (
-          <RegisterDialog
-            isOpen={isRegisterDialogOpen}
-            onClose={() => setIsRegisterDialogOpen(false)}
-          />
+        {usersExist === false && isRegisterDialogOpen && (
+          <RegisterDialog />
         )}
-        {usersExist === true && (
-          <LoginDialog
-            isOpen={isLoginDialogOpen}
-            onClose={() => setIsLoginDialogOpen(false)}
-          />
+        {usersExist === true && isLoginDialogOpen && (
+          <LoginDialog />
         )}
       </>
     );

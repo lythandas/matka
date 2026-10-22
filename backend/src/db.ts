@@ -1,10 +1,10 @@
 // backend/src/db.ts
-import { Client } from 'pg';
+import { Pool } from 'pg';
 import fs from 'fs/promises';
-import { UPLOADS_DIR } from './config';
-import { FastifyBaseLogger } from 'fastify'; // Import FastifyBaseLogger type
+import { UPLOADS_PATH } from './config';
+import { FastifyBaseLogger } from 'fastify';
 
-export let dbClient: Client | null = null; // Initialize as null
+export let dbClient: Pool | null = null;
 export let isDbConnected = false;
 
 export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
@@ -14,35 +14,38 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
     throw new Error('DATABASE_URL is not defined.');
   }
 
-  isDbConnected = false; // Ensure it's false at the start of connection process
+  isDbConnected = false;
 
   const MAX_RETRIES = 10;
   let retries = 0;
 
   while (retries < MAX_RETRIES) {
-    let clientForAttempt: Client | null = null; // Initialize to null
     try {
-      // Create a new client for each attempt
-      clientForAttempt = new Client({
+      const pool = new Pool({
         connectionString: databaseUrl,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
       });
-      await clientForAttempt.connect();
-      logger.info('Connected to PostgreSQL database');
-      dbClient = clientForAttempt; // Assign the successfully connected client
+
+      // Test the connection
+      await pool.query('SELECT 1');
+      logger.info('Connected to PostgreSQL database (connection pool)');
+      dbClient = pool;
       await createTables(logger);
       isDbConnected = true;
-      return; // Success, exit function
+      return;
     } catch (err: unknown) {
       retries++;
       logger.warn(`Failed to connect to PostgreSQL (attempt ${retries}/${MAX_RETRIES}): ${(err as Error).message}`);
-      // If clientForAttempt was successfully initialized before the error, try to end it.
-      // This check is important because clientForAttempt might not be assigned if new Client() itself failed.
-      if (clientForAttempt && typeof clientForAttempt.end === 'function') {
+
+      // Close the pool if it was partially created
+      if (dbClient) {
         try {
-          await clientForAttempt.end();
-          logger.debug('Closed client after failed attempt.');
+          await dbClient.end();
+          dbClient = null;
         } catch (endErr) {
-          logger.error(endErr, 'Error ending client after failed connection attempt.');
+          logger.error(endErr, 'Error closing pool after failed connection attempt.');
         }
       }
 
@@ -51,16 +54,24 @@ export const connectDbAndCreateTables = async (logger: FastifyBaseLogger) => {
       } else {
         logger.error(err as Error, 'Failed to connect to PostgreSQL after multiple retries');
         isDbConnected = false;
-        dbClient = null; // Ensure global dbClient is null on final failure
+        dbClient = null;
         throw new Error('Failed to connect to PostgreSQL after multiple retries');
       }
     }
   }
 };
 
+export const closeDb = async () => {
+  if (dbClient) {
+    await dbClient.end();
+    dbClient = null;
+    isDbConnected = false;
+  }
+};
+
 const createTables = async (logger: FastifyBaseLogger) => {
   try {
-    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+    await fs.mkdir(UPLOADS_PATH, { recursive: true });
     await dbClient!.query(`
       CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(255) PRIMARY KEY,
@@ -91,7 +102,7 @@ const createTables = async (logger: FastifyBaseLogger) => {
         owner_profile_image_url TEXT,
         is_public BOOLEAN DEFAULT FALSE,
         public_link_id VARCHAR(255) UNIQUE,
-        passphrase_hash VARCHAR(255) -- New column for passphrase hash
+        passphrase_hash VARCHAR(255)
       );
 
       DO $$ BEGIN
@@ -119,7 +130,7 @@ const createTables = async (logger: FastifyBaseLogger) => {
         media_items JSONB,
         coordinates JSONB,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        is_draft BOOLEAN DEFAULT FALSE -- New column for drafts
+        is_draft BOOLEAN DEFAULT FALSE
       );
 
       DO $$ BEGIN

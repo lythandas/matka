@@ -5,9 +5,9 @@ import { generateToken, hashPassword, comparePassword } from '../auth';
 import { mapDbUserToApiUser } from '../utils';
 import { User } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { validatePassword } from '../config';
 
 export default async function userRoutes(fastify: FastifyInstance) {
-  // Public routes for user authentication and existence check
   fastify.get('/users/exists', async (request, reply) => {
     if (!isDbConnected) {
       return reply.code(500).type('application/json').send({ message: 'Database not connected. Please try again later.' });
@@ -21,17 +21,31 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post('/register', async (request, reply) => {
+  fastify.post('/register', {
+    config: {
+      rateLimit: { max: 5, timeWindow: '1 minute' },
+    },
+    schema: {
+      body: {
+        type: 'object',
+        required: ['username', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 1, maxLength: 255 },
+          password: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     fastify.log.debug('[/api/register] Received registration request.');
     if (!isDbConnected) {
       fastify.log.error('[/api/register] Database not connected.');
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
-    const { username, password } = request.body as { username?: string; password?: string };
+    const { username, password } = request.body as { username: string; password: string };
 
-    if (!username || !password) {
-      fastify.log.warn('[/api/register] Missing username or password.');
-      return reply.code(400).send({ message: 'Username and password are required' });
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return reply.code(400).send({ message: passwordError });
     }
 
     try {
@@ -66,7 +80,6 @@ export default async function userRoutes(fastify: FastifyInstance) {
       const userForApi = mapDbUserToApiUser(result.rows[0]);
       fastify.log.info(`User ${userForApi.username} registered. isAdmin: ${userForApi.isAdmin}`);
       const token = generateToken(userForApi);
-      fastify.log.debug('[/api/register] Generated token and preparing response.');
       return { user: userForApi, token };
     } catch (error) {
       fastify.log.error(error, '[/api/register] Error during user registration');
@@ -77,15 +90,25 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post('/login', async (request, reply) => {
+  fastify.post('/login', {
+    config: {
+      rateLimit: { max: 10, timeWindow: '1 minute' },
+    },
+    schema: {
+      body: {
+        type: 'object',
+        required: ['username', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 1, maxLength: 255 },
+          password: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     if (!isDbConnected) {
       return reply.code(500).send({ message: 'Database not connected. Please try again later.' });
     }
-    const { username, password } = request.body as { username?: string; password?: string };
-
-    if (!username || !password) {
-      return reply.code(400).send({ message: 'Username and password are required' });
-    }
+    const { username, password } = request.body as { username: string; password: string };
 
     try {
       const result = await dbClient!.query('SELECT * FROM users WHERE username = $1', [username]);

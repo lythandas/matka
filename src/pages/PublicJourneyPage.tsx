@@ -310,6 +310,12 @@ const PublicJourneyPage: React.FC = () => {
                     key={post.id}
                     post={post}
                     onClick={() => handlePostClick(post, index)}
+                    canEdit={false}
+                    canDelete={false}
+                    onPostUpdated={() => {}}
+                    onPostDeleted={async () => {}}
+                    journeyOwnerId=""
+                    journeyCollaborators={[]}
                   />
                 ))}
               </div>
@@ -320,6 +326,12 @@ const PublicJourneyPage: React.FC = () => {
                     key={post.id}
                     post={post}
                     onClick={() => handlePostClick(post, index)}
+                    canEdit={false}
+                    canDelete={false}
+                    onPostUpdated={() => {}}
+                    onPostDeleted={async () => {}}
+                    journeyOwnerId=""
+                    journeyCollaborators={[]}
                   />
                 ))}
               </div>

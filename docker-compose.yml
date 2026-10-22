@@ -3,31 +3,30 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_DB: myjourney_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-myjourney_db}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
-  app: # Renamed to 'app' for the combined service
+  app:
     build:
-      context: . # Build from the root directory
-      dockerfile: Dockerfile # Use the new Dockerfile
+      context: .
+      dockerfile: Dockerfile
     restart: always
     environment:
-      DATABASE_URL: postgres://user:password@db:5432/myjourney_db
-      JWT_SECRET: supersecretjwtkey_dev
-      UPLOADS_PATH: /app/uploads # Add this line to specify the uploads directory in the container
-      # BACKEND_EXTERNAL_URL removed as it's no longer needed
+      DATABASE_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-myjourney_db}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      UPLOADS_PATH: /app/uploads
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     volumes:
-      - db_data:/var/lib/postgresql/data # Mount db_data for the app service if needed, though typically only db needs it
-      - ./backend/uploads:/app/uploads # Mount uploads directory
+      - ./backend/uploads:/app/uploads
     ports:
-      - "8080:8080" # Expose the single app port
+      - "8080:8080"
     depends_on:
-      - db # App now only waits for DB to be started
+      - db
 
 volumes:
   db_data:

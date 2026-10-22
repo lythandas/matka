@@ -5,10 +5,11 @@ import { generateToken, hashPassword } from '../auth';
 import { mapDbUserToApiUser } from '../utils';
 import { User } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { validatePassword } from '../config';
 
 export default async function protectedUserRoutes(fastify: FastifyInstance) {
   // Get current user profile
-  fastify.get('/profile', async (request, reply) => { // Changed from /users/profile to /profile
+  fastify.get('/profile', async (request, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
@@ -24,11 +25,23 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
   });
 
   // Update current user profile
-  fastify.put('/profile', async (request, reply) => { // Changed from /users/profile to /profile
+  fastify.put('/profile', {
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: ['string', 'null'] },
+          surname: { type: ['string', 'null'] },
+          profile_image_url: { type: ['string', 'null'] },
+          language: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
-    const { name, surname, profile_image_url, language } = request.body as { name?: string; surname?: string; profile_image_url?: string; language?: string };
+    const { name, surname, profile_image_url, language } = request.body as { name?: string | null; surname?: string | null; profile_image_url?: string | null; language?: string };
 
     const result = await dbClient!.query(
       'UPDATE users SET name = $1, surname = $2, profile_image_url = $3, language = $4 WHERE id = $5 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
@@ -55,7 +68,6 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
         'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
         [name === null ? null : name, surname === null ? null : surname, request.user.id]
       );
-      // NEW: Also update owner_name and owner_surname in journeys table
       await dbClient!.query(
         'UPDATE journeys SET owner_name = $1, owner_surname = $2 WHERE user_id = $3',
         [name === null ? null : name, surname === null ? null : surname, request.user.id]
@@ -68,7 +80,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
 
   // --- Admin-only User Management Routes ---
 
-  fastify.get('/', async (request, reply) => { // Changed from /users to /
+  fastify.get('/', async (request, reply) => {
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can view all users.' });
     }
@@ -78,14 +90,29 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     return result.rows.map(mapDbUserToApiUser);
   });
 
-  fastify.post('/', async (request, reply) => { // Changed from /users to /
-    const { username, password, name, surname } = request.body as { username?: string; password?: string; name?: string; surname?: string };
+  fastify.post('/', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['username', 'password'],
+        properties: {
+          username: { type: 'string', minLength: 1, maxLength: 255 },
+          password: { type: 'string', minLength: 1 },
+          name: { type: 'string' },
+          surname: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { username, password, name, surname } = request.body as { username: string; password: string; name?: string; surname?: string };
 
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can create users.' });
     }
-    if (!username || !password) {
-      return reply.code(400).send({ message: 'Username and password are required' });
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return reply.code(400).send({ message: passwordError });
     }
 
     const existingUser = await dbClient!.query('SELECT id FROM users WHERE username = $1', [username]);
@@ -113,9 +140,30 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     return mapDbUserToApiUser(result.rows[0]);
   });
 
-  fastify.put('/:id', async (request, reply) => { // Changed from /users/:id to /:id
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' },
+        },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          username: { type: 'string' },
+          name: { type: ['string', 'null'] },
+          surname: { type: ['string', 'null'] },
+          profile_image_url: { type: ['string', 'null'] },
+          is_admin: { type: 'boolean' },
+          language: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { username, name, surname, profile_image_url, is_admin, language } = request.body as { username?: string; name?: string; surname?: string; profile_image_url?: string; is_admin?: boolean; language?: string };
+    const { username, name, surname, profile_image_url, is_admin, language } = request.body as { username?: string; name?: string | null; surname?: string | null; profile_image_url?: string | null; is_admin?: boolean; language?: string };
 
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
@@ -151,7 +199,6 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    // If profile_image_url was updated, also update all posts by this user
     if (profile_image_url !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
@@ -159,7 +206,6 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
       );
     }
 
-    // If name or surname were updated, also update all posts by this user
     if (name !== undefined || surname !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
@@ -170,15 +216,34 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     return mapDbUserToApiUser(result.rows[0]);
   });
 
-  fastify.put('/:id/reset-password', async (request, reply) => { // Changed from /users/:id/reset-password to /:id/reset-password
+  fastify.put('/:id/reset-password', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' },
+        },
+      },
+      body: {
+        type: 'object',
+        required: ['newPassword'],
+        properties: {
+          newPassword: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { newPassword } = request.body as { newPassword?: string };
+    const { newPassword } = request.body as { newPassword: string };
 
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can reset user passwords.' });
     }
-    if (!newPassword) {
-      return reply.code(400).send({ message: 'New password is required' });
+
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return reply.code(400).send({ message: passwordError });
     }
 
     const userResult = await dbClient!.query('SELECT id FROM users WHERE id = $1', [id]);
@@ -191,7 +256,17 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     return reply.code(200).send({ message: 'Password reset successfully' });
   });
 
-  fastify.delete('/:id', async (request, reply) => { // Changed from /users/:id to /:id
+  fastify.delete('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
 
     if (!request.user || !request.user.isAdmin) {
@@ -210,21 +285,29 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
   });
 
   // Search users (Accessible to all authenticated users)
-  fastify.get('/search', async (request, reply) => { // Changed from /users/search to /search
+  fastify.get('/search', {
+    schema: {
+      querystring: {
+        type: 'object',
+        required: ['query'],
+        properties: {
+          query: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { query } = request.query as { query: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Authentication required to search users.' });
-    }
-    if (!query) {
-      return reply.code(400).send({ message: 'Search query is required' });
     }
 
     const searchLower = `%${query.toLowerCase()}%`;
     const result = await dbClient!.query(
       `SELECT id, username, is_admin, name, surname, profile_image_url, language, created_at
        FROM users
-       WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3`,
+       WHERE username ILIKE $1 OR name ILIKE $2 OR surname ILIKE $3
+       LIMIT 50`,
       [searchLower, searchLower, searchLower]
     );
     return result.rows.map(mapDbUserToApiUser);

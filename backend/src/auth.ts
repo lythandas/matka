@@ -22,7 +22,6 @@ export const comparePassword = async (password: string, hash: string): Promise<b
 };
 
 export const generateToken = (user: ApiUser): string => {
-  // JWT_SECRET is guaranteed to be a string due to the check in config.ts
   return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
 };
 
@@ -35,15 +34,15 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     reply.code(401).send({ message: 'Authentication token required' });
-    return;
+    return reply.sent;
   }
 
   const token = authHeader.split(' ')[1];
   try {
-    // JWT_SECRET is guaranteed to be a string due to the check in config.ts
-    const decoded = jwt.verify(token, JWT_SECRET) as unknown as ApiUser; // Safer type assertion
+    const decoded = jwt.verify(token, JWT_SECRET) as unknown as ApiUser;
     request.user = decoded;
   } catch (err) {
     reply.code(401).send({ message: 'Invalid or expired token' });
+    return reply.sent;
   }
 };

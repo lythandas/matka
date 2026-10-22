@@ -8,7 +8,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 
-interface ThreeButtonThemeToggleProps extends React.ComponentPropsWithoutRef<typeof ToggleGroup> {}
+interface ThreeButtonThemeToggleProps {
+  className?: string;
+  [key: string]: unknown;
+}
 
 export function ThreeButtonThemeToggle({ className, ...props }: ThreeButtonThemeToggleProps) {
   const { t } = useTranslation(); // Initialize useTranslation

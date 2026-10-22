@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
-import { Area, Point } from 'react-easy-crop/src/types';
+import { Area, Point } from 'react-easy-crop';
 import {
   Dialog,
   DialogContent,
@@ -36,8 +36,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
     setCrop(crop);
   }, []);
 
-  const onZoomChange = useCallback((zoom: number[]) => {
-    setZoom(zoom[0]);
+  const onZoomChange = useCallback((zoom: number) => {
+    setZoom(zoom);
   }, []);
 
   const onCropCompleteCallback = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
@@ -66,10 +66,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
     }
   };
 
-  const handleWheelZoom = useCallback((e: WheelEvent) => {
+  const handleWheelZoom = useCallback((e: WheelEvent): boolean => {
     e.preventDefault(); // Prevent page scrolling
     const zoomAmount = e.deltaY * -0.001; // Adjust sensitivity
     setZoom((prevZoom) => Math.max(1, Math.min(3, prevZoom + zoomAmount))); // Clamp zoom between 1 and 3
+    return false;
   }, []);
 
   return (
@@ -103,7 +104,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, imageSrc, onClose, 
           <span className="text-sm text-muted-foreground">{t('imageCropper.zoom')}</span>
           <Slider
             value={[zoom]}
-            onValueChange={onZoomChange}
+            onValueChange={(value: number[]) => onZoomChange(value[0])}
             min={1}
             max={3}
             step={0.1}

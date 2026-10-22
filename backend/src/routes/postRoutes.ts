@@ -1,22 +1,27 @@
 // backend/src/routes/postRoutes.ts
 import { FastifyInstance } from 'fastify';
-import { dbClient, isDbConnected } from '../db';
-import { authenticate } from '../auth';
+import { dbClient } from '../db';
 import { Post, MediaInfo } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export default async function postRoutes(fastify: FastifyInstance) {
-  // The authentication hook is applied in server.ts for this plugin, no need to add it here again.
 
-  fastify.get('/', async (request, reply) => { // Changed from /posts to /
+  fastify.get('/', {
+    schema: {
+      querystring: {
+        type: 'object',
+        required: ['journeyId'],
+        properties: {
+          journeyId: { type: 'string' },
+          is_draft: { type: 'string', enum: ['true', 'false'] },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { journeyId, is_draft } = request.query as { journeyId: string; is_draft?: string };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
-    }
-
-    if (!journeyId) {
-      return reply.code(400).send({ message: 'journeyId is required' });
     }
 
     const journeyResult = await dbClient!.query('SELECT user_id FROM journeys WHERE id = $1', [journeyId]);
@@ -37,7 +42,6 @@ export default async function postRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to read posts in this journey.' });
     }
 
-    // Filter by is_draft. If not provided, default to fetching published posts (is_draft = FALSE)
     const isDraftFilter = is_draft === 'true' ? true : false;
 
     const postsResult = await dbClient!.query(
@@ -47,24 +51,43 @@ export default async function postRoutes(fastify: FastifyInstance) {
     return postsResult.rows;
   });
 
-  fastify.post('/', async (request, reply) => { // Changed from /posts to /
+  fastify.post('/', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['journeyId'],
+        properties: {
+          journeyId: { type: 'string' },
+          title: { type: 'string' },
+          message: { type: 'string' },
+          media_items: { type: 'array' },
+          coordinates: {
+            type: 'object',
+            properties: {
+              lat: { type: 'number' },
+              lng: { type: 'number' },
+            },
+          },
+          created_at: { type: 'string' },
+          is_draft: { type: 'boolean' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { journeyId, title, message, media_items, coordinates, created_at, is_draft } = request.body as {
-      journeyId?: string;
+      journeyId: string;
       title?: string;
       message?: string;
       media_items?: MediaInfo[];
       coordinates?: { lat: number; lng: number };
       created_at?: string;
-      is_draft?: boolean; // Allow creating as a draft
+      is_draft?: boolean;
     };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
     }
 
-    if (!journeyId) {
-      return reply.code(400).send({ message: 'journeyId is required' });
-    }
     if (!title && !message && (!media_items || media_items.length === 0) && !coordinates) {
       return reply.code(400).send({ message: 'At least a title, message, media, or coordinates are required' });
     }
@@ -83,15 +106,12 @@ export default async function postRoutes(fastify: FastifyInstance) {
     );
     const canPublish = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_publish_posts : false;
 
-    // Only allow publishing if user has permission or it's a draft
     if (!is_draft && !isOwner && !isAdmin && !canPublish) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create published posts in this journey.' });
     }
-    // Allow saving drafts for anyone who can publish, or the owner/admin
     if (is_draft && !isOwner && !isAdmin && !canPublish) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to create drafts in this journey.' });
     }
-
 
     const newPostData: Post = {
       id: uuidv4(),
@@ -106,7 +126,7 @@ export default async function postRoutes(fastify: FastifyInstance) {
       media_items: media_items && media_items.length > 0 ? media_items : undefined,
       coordinates: coordinates || undefined,
       created_at: created_at || new Date().toISOString(),
-      is_draft: is_draft || false, // Set is_draft based on payload, default to false
+      is_draft: is_draft || false,
     };
 
     const result = await dbClient!.query(
@@ -132,15 +152,40 @@ export default async function postRoutes(fastify: FastifyInstance) {
     return result.rows[0];
   });
 
-  fastify.put('/:id', async (request, reply) => { // Changed from /posts/:id to /:id
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          title: { type: ['string', 'null'] },
+          message: { type: 'string' },
+          media_items: { type: 'array' },
+          coordinates: {
+            type: ['object', 'null'],
+            properties: {
+              lat: { type: 'number' },
+              lng: { type: 'number' },
+            },
+          },
+          created_at: { type: 'string' },
+          is_draft: { type: 'boolean' },
+        },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { title, message, media_items, coordinates, created_at, is_draft } = request.body as {
-      title?: string;
+      title?: string | null;
       message?: string;
       media_items?: MediaInfo[];
-      coordinates?: { lat: number; lng: number };
+      coordinates?: { lat: number; lng: number } | null;
       created_at?: string;
-      is_draft?: boolean; // Allow updating is_draft status
+      is_draft?: boolean;
     };
 
     if (!request.user) {
@@ -169,13 +214,10 @@ export default async function postRoutes(fastify: FastifyInstance) {
     const canModify = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_modify_post : false;
     const canPublish = collaboratorPermsResult.rows.length > 0 ? collaboratorPermsResult.rows[0].can_publish_posts : false;
 
-
-    // Permission check for modifying the post/draft
     if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canModify) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this post.' });
     }
 
-    // Additional permission check if trying to publish a draft (change is_draft from true to false)
     if (existingPost.is_draft === true && is_draft === false) {
       if (!isPostAuthor && !isJourneyOwner && !isAdmin && !canPublish) {
         return reply.code(403).send({ message: 'Forbidden: You do not have permission to publish posts in this journey.' });
@@ -184,10 +226,10 @@ export default async function postRoutes(fastify: FastifyInstance) {
 
     const result = await dbClient!.query(
       `UPDATE posts SET
-        title = $1,
+        title = COALESCE($1, title),
         message = COALESCE($2, message),
-        media_items = $3,
-        coordinates = $4,
+        media_items = COALESCE($3, media_items),
+        coordinates = COALESCE($4, coordinates),
         created_at = COALESCE($5, created_at),
         is_draft = COALESCE($6, is_draft)
        WHERE id = $7
@@ -198,14 +240,22 @@ export default async function postRoutes(fastify: FastifyInstance) {
         media_items && media_items.length > 0 ? JSON.stringify(media_items) : null,
         coordinates ? JSON.stringify(coordinates) : null,
         created_at,
-        is_draft, // Update is_draft status
+        is_draft,
         id
       ]
     );
     return result.rows[0];
   });
 
-  fastify.delete('/:id', async (request, reply) => { // Changed from /posts/:id to /:id
+  fastify.delete('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string' } },
+      },
+    },
+  }, async (request, reply) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
