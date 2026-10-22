@@ -29,6 +29,7 @@ import { Post, JourneyCollaborator } from '@/types';
 import { useCreateJourneyDialog } from '@/contexts/CreateJourneyDialogContext';
 import ManageJourneyDialog from '@/components/ManageJourneyDialog';
 import SortToggle from '@/components/SortToggle';
+import ColumnToggle from '@/components/ColumnToggle';
 import { format } from 'date-fns'; // Ensure format is imported
 import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
@@ -68,6 +69,7 @@ const Index = () => {
   const [journeyCollaborators, setJourneyCollaborators] = useState<JourneyCollaborator[]>([]);
 
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [columnCount, setColumnCount] = useState<1 | 2 | 3>(1);
 
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState<boolean>(false); // State for the new post dialog
   const [mapRefreshKey, setMapRefreshKey] = useState(0); // New state to force map refresh
@@ -361,9 +363,12 @@ const Index = () => {
             </TabsList>
             <TabsContent value="posts" className="mt-4">
               {displayedPosts.length > 0 && (
-                <div className="relative flex items-center justify-center mb-6 h-10">
-                  <div className="absolute left-0">
+                <div className="relative flex items-center justify-center mb-6 h-10 gap-2">
+                  <div className="absolute left-0 flex items-center gap-2">
                     <SortToggle sortOrder={sortOrder} onSortOrderChange={setSortOrder} />
+                    {!isMobile && viewMode === 'list' && (
+                      <ColumnToggle columnCount={columnCount} onColumnCountChange={setColumnCount} />
+                    )}
                   </div>
                   <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
                 </div>
@@ -385,7 +390,13 @@ const Index = () => {
                 </div>
               ) : (
                 viewMode === 'list' ? (
-                  <div className="space-y-6">
+                  <div
+                    className={columnCount > 1 ? '' : 'space-y-6'}
+                    style={columnCount > 1 ? {
+                      columnCount: columnCount,
+                      columnGap: '1.5rem',
+                    } : undefined}
+                  >
                     {displayedPosts.map((post, index) => {
                       const isPostAuthor = user?.id === post.user_id;
                       const isJourneyOwner = selectedJourney?.user_id === user?.id;
@@ -401,13 +412,14 @@ const Index = () => {
                           key={post.id}
                           post={post}
                           onClick={() => handlePostClick(post, index)}
-                          id={`post-${post.id}`} // Add ID for scrolling
+                          id={`post-${post.id}`}
                           canEdit={canEditPost}
                           canDelete={canDeletePost}
                           onPostUpdated={handlePostUpdated}
                           onPostDeleted={handleDeletePost}
                           journeyOwnerId={selectedJourney.user_id}
                           journeyCollaborators={journeyCollaborators}
+                          className={columnCount > 1 ? 'break-inside-avoid mb-6' : undefined}
                         />
                       );
                     })}
@@ -548,7 +560,11 @@ const Index = () => {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full">
+    <div className={cn("w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full",
+      columnCount === 3 && !isMobile && viewMode === 'list' ? 'max-w-7xl' :
+      columnCount === 2 && !isMobile && viewMode === 'list' ? 'max-w-5xl' :
+      'max-w-3xl'
+    )}>
       {mainContent}
 
       {/* Floating Action Button for Mobile */}

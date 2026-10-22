@@ -183,6 +183,11 @@
     "newestFirst": "Neueste zuerst",
     "oldestFirst": "Älteste zuerst"
   },
+  "columnToggle": {
+    "oneColumn": "1 Spalte",
+    "twoColumns": "2 Spalten",
+    "threeColumns": "3 Spalten"
+  },
   "viewToggle": {
     "listView": "Listenansicht",
     "gridView": "Rasteransicht",
