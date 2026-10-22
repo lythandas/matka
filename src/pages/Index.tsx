@@ -393,8 +393,10 @@ const Index = () => {
                   <div
                     className={columnCount > 1 ? '' : 'space-y-6'}
                     style={columnCount > 1 ? {
-                      columnCount: columnCount,
-                      columnGap: '1.5rem',
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                      gap: '1.5rem',
+                      alignItems: 'start',
                     } : undefined}
                   >
                     {displayedPosts.map((post, index) => {
@@ -419,7 +421,7 @@ const Index = () => {
                           onPostDeleted={handleDeletePost}
                           journeyOwnerId={selectedJourney.user_id}
                           journeyCollaborators={journeyCollaborators}
-                          className={columnCount > 1 ? 'break-inside-avoid mb-6' : undefined}
+                          className={columnCount > 1 ? 'mb-0' : undefined}
                         />
                       );
                     })}
