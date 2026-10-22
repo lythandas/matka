@@ -485,7 +485,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/collaborators/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
@@ -572,7 +571,6 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
