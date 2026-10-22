@@ -28,13 +28,13 @@ export const generateToken = (user: ApiUser): string => {
 export const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
   if (!isDbConnected) {
     reply.code(500).send({ message: 'Database not connected. Please try again later.' });
-    return reply.sent;
+    return;
   }
 
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     reply.code(401).send({ message: 'Authentication token required' });
-    return reply.sent;
+    return;
   }
 
   const token = authHeader.split(' ')[1];
@@ -43,6 +43,6 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
     request.user = decoded;
   } catch (err) {
     reply.code(401).send({ message: 'Invalid or expired token' });
-    return reply.sent;
+    return;
   }
 };

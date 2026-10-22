@@ -204,7 +204,7 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { username, name, surname, profile_image_url, is_admin, language, color_scheme } = request.body as { username?: string; name?: string | null; surname?: string | null; profile_image_url?: string | null; is_admin?: boolean; language?: string; color_scheme?: string };
+    const body = request.body as { username?: string; name?: string | null; surname?: string | null; profile_image_url?: string | null; is_admin?: boolean; language?: string; color_scheme?: string };
 
     if (!request.user || !request.user.isAdmin) {
       return reply.code(403).send({ message: 'Forbidden: Only administrators can update other users.' });
@@ -216,42 +216,81 @@ export default async function protectedUserRoutes(fastify: FastifyInstance) {
     }
     const existingUsername = existingUserResult.rows[0].username;
 
-    if (username && username !== existingUsername) {
-      const conflictCheck = await dbClient!.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
+    if (body.username && body.username !== existingUsername) {
+      const conflictCheck = await dbClient!.query('SELECT id FROM users WHERE username = $1 AND id != $2', [body.username, id]);
       if (conflictCheck.rows.length > 0) {
         return reply.code(409).send({ message: 'Username already exists' });
       }
     }
 
+    // Build SET clause dynamically — only update fields that were actually sent
+    const sets: string[] = [];
+    const values: (string | null | boolean)[] = [];
+    let paramIdx = 1;
+
+    if (body.username !== undefined) {
+      sets.push(`username = $${paramIdx++}`);
+      values.push(body.username);
+    }
+    if (body.name !== undefined) {
+      sets.push(`name = $${paramIdx++}`);
+      values.push(body.name);
+    }
+    if (body.surname !== undefined) {
+      sets.push(`surname = $${paramIdx++}`);
+      values.push(body.surname);
+    }
+    if (body.profile_image_url !== undefined) {
+      sets.push(`profile_image_url = $${paramIdx++}`);
+      values.push(body.profile_image_url);
+    }
+    if (body.is_admin !== undefined) {
+      sets.push(`is_admin = $${paramIdx++}`);
+      values.push(body.is_admin);
+    }
+    if (body.language !== undefined) {
+      sets.push(`language = $${paramIdx++}`);
+      values.push(body.language);
+    }
+    if (body.color_scheme !== undefined) {
+      sets.push(`color_scheme = $${paramIdx++}`);
+      values.push(body.color_scheme);
+    }
+
+    if (sets.length === 0) {
+      // Nothing to update — return current user
+      const currentResult = await dbClient!.query(
+        'SELECT id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at FROM users WHERE id = $1',
+        [id]
+      );
+      return mapDbUserToApiUser(currentResult.rows[0]);
+    }
+
+    values.push(id);
     const result = await dbClient!.query(
-      `UPDATE users SET
-        username = COALESCE($1, username),
-        name = $2,
-        surname = $3,
-        profile_image_url = $4,
-        is_admin = COALESCE($5, is_admin),
-        language = COALESCE($6, language),
-        color_scheme = COALESCE($7, color_scheme)
-       WHERE id = $8
+      `UPDATE users SET ${sets.join(', ')} WHERE id = $${paramIdx}
        RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at`,
-      [username, name === null ? null : name, surname === null ? null : surname, profile_image_url === null ? null : profile_image_url, is_admin, language, color_scheme, id]
+      values
     );
 
     if (result.rows.length === 0) {
       return reply.code(404).send({ message: 'User not found' });
     }
 
-    if (profile_image_url !== undefined) {
+    // Cascade updates to posts only for fields that were actually sent
+    if (body.profile_image_url !== undefined) {
       await dbClient!.query(
         'UPDATE posts SET author_profile_image_url = $1 WHERE user_id = $2',
-        [profile_image_url === null ? null : profile_image_url, id]
+        [body.profile_image_url, id]
       );
     }
 
-    if (name !== undefined || surname !== undefined) {
+    if (body.name !== undefined || body.surname !== undefined) {
+      const nameVal = body.name !== undefined ? body.name : null;
+      const surnameVal = body.surname !== undefined ? body.surname : null;
       await dbClient!.query(
-        'UPDATE posts SET author_name = $1, author_surname = $2 WHERE user_id = $3',
-        [name === null ? null : name, surname === null ? null : surname, id]
+        'UPDATE posts SET author_name = COALESCE($1, author_name), author_surname = COALESCE($2, author_surname) WHERE user_id = $3',
+        [nameVal, surnameVal, id]
       );
     }
 

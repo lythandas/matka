@@ -251,16 +251,13 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
     setIsUpdatingPublicStatus(true);
     try {
       const endpoint = checked ? `${API_BASE_URL}/journeys/${journey.id}/publish` : `${API_BASE_URL}/journeys/${journey.id}/unpublish`;
-      
-      const requestBody = JSON.stringify({ dummy: true }); 
 
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: requestBody,
+        headers: checked
+          ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+          : { 'Authorization': `Bearer ${token}` },
+        body: checked ? JSON.stringify({}) : undefined,
       });
 
       if (!response.ok) {
@@ -348,10 +345,8 @@ const ManageJourneyDialog: React.FC<ManageJourneyDialogProps> = ({
       const response = await fetch(`${API_BASE_URL}/journeys/${journey.id}/clear-passphrase`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ dummy: true }),
       });
 
       if (!response.ok) {
