@@ -58,14 +58,16 @@ const uploadStaticOptions: FastifyStaticOptions = {
   root: UPLOADS_PATH,
   prefix: '/uploads/',
   decorateReply: false,
+  wildcard: true,
 };
 fastify.register(fastifyStatic, uploadStaticOptions);
 
-// 4. Serve static frontend assets
+// 4. Serve static frontend assets (files are known at build time, so no wildcard needed)
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '../../frontend-dist'),
   prefix: '/',
   decorateReply: true,
+  wildcard: false,
 });
 
 // 5. SPA fallback

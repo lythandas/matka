@@ -100,7 +100,7 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
     },
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { name, color_scheme } = request.body as { name?: string; color_scheme?: string | null };
+    const body = request.body as { name?: string; color_scheme?: string | null };
 
     if (!request.user) {
       return reply.code(401).send({ message: 'Unauthorized' });
@@ -120,15 +120,39 @@ export default async function journeyRoutes(fastify: FastifyInstance) {
       return reply.code(403).send({ message: 'Forbidden: You do not have permission to edit this journey.' });
     }
 
+    // Build SET clause dynamically — only update fields that were actually sent
+    const sets: string[] = [];
+    const values: (string | null)[] = [];
+    let paramIdx = 1;
+
+    if (body.name !== undefined) {
+      sets.push(`name = $${paramIdx++}`);
+      values.push(body.name);
+    }
+    if (body.color_scheme !== undefined) {
+      sets.push(`color_scheme = $${paramIdx++}`);
+      values.push(body.color_scheme);
+    }
+
+    if (sets.length === 0) {
+      // Nothing to update — return current journey
+      const currentResult = await dbClient!.query(
+        `SELECT id, name, created_at, user_id, is_public, public_link_id, color_scheme,
+                owner_username, owner_name, owner_surname, owner_profile_image_url,
+                passphrase_hash IS NOT NULL as has_passphrase
+         FROM journeys WHERE id = $1`,
+        [id]
+      );
+      return currentResult.rows[0];
+    }
+
+    values.push(id);
     const result = await dbClient!.query(
-      `UPDATE journeys SET
-        name = COALESCE($1, name),
-        color_scheme = $2
-       WHERE id = $3
+      `UPDATE journeys SET ${sets.join(', ')} WHERE id = $${paramIdx}
        RETURNING id, name, created_at, user_id, is_public, public_link_id, color_scheme,
                  owner_username, owner_name, owner_surname, owner_profile_image_url,
                  passphrase_hash IS NOT NULL as has_passphrase`,
-      [name, color_scheme !== undefined ? color_scheme : null, id]
+      values
     );
     return result.rows[0];
   });

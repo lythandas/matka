@@ -150,7 +150,7 @@ export default async function mediaRoutes(fastify: FastifyInstance) {
 
     if (isProfileImage && mediaInfo.type === 'image') {
       const updateResult = await dbClient!.query(
-        'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, username, is_admin, name, surname, profile_image_url, language, created_at',
+        'UPDATE users SET profile_image_url = $1 WHERE id = $2 RETURNING id, username, is_admin, name, surname, profile_image_url, language, color_scheme, created_at',
         [mediaInfo.urls.medium, request.user.id]
       );
       if (updateResult.rows.length > 0) {
