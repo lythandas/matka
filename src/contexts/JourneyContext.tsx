@@ -40,6 +40,11 @@ export const JourneyProvider = ({ children }: { children: ReactNode }) => {
         },
       });
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token is invalid — don't show error toast, auth context will handle redirect
+          setJourneys([]);
+          return;
+        }
         throw new Error('Failed to fetch journeys');
       }
       const data: Journey[] = await response.json();

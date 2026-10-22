@@ -2,14 +2,15 @@
 
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/AppLayout';
 import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
 import LoginPage from '@/pages/LoginPage';
 import NotFound from '@/pages/NotFound';
-import PublicJourneyPage from '@/pages/PublicJourneyPage'; // Import the new PublicJourneyPage
-import PublicPageLayout from './PublicPageLayout'; // Import the new PublicPageLayout
+import PublicJourneyPage from '@/pages/PublicJourneyPage';
+import PublicPageLayout from './PublicPageLayout';
 
 // ProtectedRoute component to guard admin access
 const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element; adminOnly?: boolean }) => {
@@ -20,7 +21,6 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element
   }
 
   if (adminOnly && !user?.isAdmin) {
-    // Optionally show an error toast here
     return <Navigate to="/" replace />;
   }
 
@@ -28,12 +28,21 @@ const ProtectedRoute = ({ children, adminOnly = false }: { children: JSX.Element
 };
 
 const AuthConditionalContent: React.FC = () => {
-  const { isAuthenticated, user } = useAuth(); // Get user to pass to PublicPageLayout
+  const { isAuthenticated, isAuthLoading } = useAuth();
+
+  // Show a loading spinner while validating the stored token
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <Routes>
       {/* Public Journey Route - always uses PublicPageLayout */}
-      <Route path="/public-journey/:publicLinkId" element={<PublicPageLayout />}> {/* No props here */}
+      <Route path="/public-journey/:publicLinkId" element={<PublicPageLayout />}>
         <Route index element={<PublicJourneyPage />} />
       </Route>
 

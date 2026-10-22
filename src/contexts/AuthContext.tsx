@@ -2,13 +2,12 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { showError, showSuccess } from '@/utils/toast';
-import { API_BASE_URL } from '@/config/api'; // Centralized API_BASE_URL
+import { API_BASE_URL } from '@/config/api';
 
-// Updated User interface for the new permission model
 interface User {
   id: string;
   username: string;
-  isAdmin: boolean; // Simplified: first user is admin, others are not
+  isAdmin: boolean;
   name?: string;
   surname?: string;
   profile_image_url?: string;
@@ -19,23 +18,25 @@ interface User {
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
   user: User | null;
   token: string | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  usersExist: boolean | null; // New state to track if any users exist
-  fetchUsersExist: () => Promise<void>; // Function to fetch user existence status
-  updateUser: (updatedUserData: Partial<User>, newToken?: string) => void; // New function to update user in context
-  setAuthData: (user: User, token: string) => void; // New function to directly set auth data
+  usersExist: boolean | null;
+  fetchUsersExist: () => Promise<void>;
+  updateUser: (updatedUserData: Partial<User>, newToken?: string) => void;
+  setAuthData: (user: User, token: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [usersExist, setUsersExist] = useState<boolean | null>(null); // null means loading/unknown
+  const [usersExist, setUsersExist] = useState<boolean | null>(null);
 
   const logout = useCallback(() => {
     localStorage.removeItem('authToken');
@@ -43,8 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
-    showSuccess('Logged out successfully!');
-    setUsersExist(true); // Assume users still exist after logout, or will be created
+    setUsersExist(true);
     if (import.meta.env.DEV) {
       console.log("AuthContext: User logged out.");
     }
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(authToken);
     setUser(userData);
     setIsAuthenticated(true);
-    setUsersExist(true); // After successful login/registration, we know users exist
+    setUsersExist(true);
     if (import.meta.env.DEV) {
       console.log("AuthContext: setAuthData called. User:", userData, "Is Admin:", userData.isAdmin);
     }
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(errorData.message || 'Failed to check user existence');
       }
 
-      const data = await response.json(); // Directly parse JSON here
+      const data = await response.json();
 
       setUsersExist(data.exists);
       if (import.meta.env.DEV) {
@@ -95,23 +95,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout();
       }
     }
-  }, [isAuthenticated, logout]); // Removed setAuthData from dependencies as it's not used here
+  }, [isAuthenticated, logout]);
 
-  // Load auth state from localStorage on initial render
+  // Validate stored token on app load
   useEffect(() => {
     const storedToken = localStorage.getItem('authToken');
     const storedUser = localStorage.getItem('authUser');
-    if (storedToken && storedUser) {
-      try {
-        const parsedUser: User = JSON.parse(storedUser); // Cast to new User type
-        setAuthData(parsedUser, storedToken); // Use new setAuthData
-      } catch (error) {
-        console.error("Failed to parse stored user data:", error);
-        logout(); // Clear invalid data
-      }
+
+    if (!storedToken || !storedUser) {
+      // No stored credentials — not authenticated
+      setIsAuthLoading(false);
+      fetchUsersExist();
+      return;
     }
-    fetchUsersExist(); // Check user existence on app load
-  }, [fetchUsersExist, logout, setAuthData]); // Add setAuthData to dependencies
+
+    // Validate the token by calling the profile endpoint
+    (async () => {
+      try {
+        const parsedUser: User = JSON.parse(storedUser);
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+          headers: { 'Authorization': `Bearer ${storedToken}` },
+        });
+
+        if (response.ok) {
+          // Token is valid — restore the session
+          const freshUser = await response.json();
+          setToken(storedToken);
+          setUser(freshUser);
+          setIsAuthenticated(true);
+          setUsersExist(true);
+          // Update localStorage with fresh user data
+          localStorage.setItem('authUser', JSON.stringify(freshUser));
+        } else {
+          // Token is expired or invalid — clear it
+          if (import.meta.env.DEV) {
+            console.log("AuthContext: Stored token is invalid, clearing.");
+          }
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUser');
+        }
+      } catch (error) {
+        console.error("Failed to validate stored token:", error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+      } finally {
+        setIsAuthLoading(false);
+        fetchUsersExist();
+      }
+    })();
+  }, [fetchUsersExist]);
 
   const login = useCallback(async (username: string, password: string) => {
     try {
@@ -129,12 +161,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const data = await response.json();
-      setAuthData(data.user, data.token); // Use new setAuthData
+      setAuthData(data.user, data.token);
       showSuccess('Logged in successfully!');
     } catch (error: any) {
       console.error('Login error:', error);
       showError(error.message || 'Failed to log in.');
-      logout(); // Ensure state is cleared on failed login
+      logout();
     }
   }, [logout, setAuthData]);
 
@@ -155,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, usersExist, fetchUsersExist, updateUser, setAuthData }}>
+    <AuthContext.Provider value={{ isAuthenticated, isAuthLoading, user, token, login, logout, usersExist, fetchUsersExist, updateUser, setAuthData }}>
       {children}
     </AuthContext.Provider>
   );
