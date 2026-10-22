@@ -91,8 +91,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       boxShadow: {
-        'neon-blue': '0 0 5px theme("colors.blue.400"), 0 0 15px theme("colors.blue.500"), 0 0 30px theme("colors.blue.600")',
-        'neon-blue-intense': '0 0 8px theme("colors.blue.400"), 0 0 20px theme("colors.blue.500"), 0 0 40px theme("colors.blue.600")',
+        'neon': '0 0 5px hsl(var(--primary)), 0 0 15px hsl(var(--primary) / 0.6), 0 0 30px hsl(var(--primary) / 0.4)',
+        'neon-intense': '0 0 8px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.7), 0 0 40px hsl(var(--primary) / 0.5)',
       },
       backgroundImage: {
         'gradient-blue-light': 'linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--primary) / 0.05))',

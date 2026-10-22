@@ -60,7 +60,7 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-ring transition-all duration-200",
+        "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-ring hover:shadow-neon transition-all duration-200",
         className
       )}
       onClick={onClick}

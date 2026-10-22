@@ -640,7 +640,7 @@
   height: 3.5rem;
   width: 3.5rem;
   border-radius: 9999px;
-  @apply bg-primary text-primary-foreground shadow-neon-blue;
+  @apply bg-primary text-primary-foreground shadow-neon;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -659,5 +659,5 @@
 }
 
 .fab-button:hover {
-  @apply bg-primary/90 shadow-neon-blue-intense;
+  @apply bg-primary/90 shadow-neon-intense;
 }

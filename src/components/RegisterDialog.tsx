@@ -61,7 +61,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = () => {
   };
 
   return (
-    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground shadow-neon-blue bg-gradient-blue-light">
+    <div className="p-8 bg-card rounded-lg shadow-2xl max-w-sm w-full text-card-foreground shadow-neon bg-gradient-blue-light">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold">{t('auth.welcomeRegisterAdmin')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
