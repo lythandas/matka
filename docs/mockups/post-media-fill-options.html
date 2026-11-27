@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matka — remplissage du cadre média d'un post (block chart)</title>
+<style>
+  /* Thème repris de src/globals.css (dark) + Card/ListPostCard (rounded-lg, border, p-6) */
+  :root {
+    --background: hsl(222.2 84% 4.9%);
+    --card: hsl(222.2 47.4% 11.2%);
+    --foreground: hsl(210 40% 98%);
+    --muted-foreground: hsl(215 20.2% 65.1%);
+    --border: hsl(217.2 32.6% 17.5%);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    padding: 40px 24px 80px;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  .intro { color: var(--muted-foreground); max-width: 780px; line-height: 1.6; margin-top: 0; }
+  .intro code, p.note code { color: #a5d6ff; }
+
+  .option { margin-top: 56px; }
+  .option > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+  .option .tag {
+    font-size: .72rem; font-weight: 700; color: #fff; background: hsl(224.3 76.3% 48%);
+    border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px;
+  }
+  .option p.note { color: var(--muted-foreground); font-size: .88rem; line-height: 1.55; max-width: 780px; }
+  .option p.note b { color: var(--foreground); }
+  .sub { font-size: .8rem; color: var(--muted-foreground); text-transform: uppercase;
+         letter-spacing: .06em; margin: 24px 0 10px; }
+
+  /* Carte = ListPostCard : Card rounded-lg shadow-md + CardContent p-6 */
+  .card {
+    position: relative;
+    width: 640px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,.4);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-head { display: flex; align-items: center; margin-bottom: 16px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 9999px; margin-right: 12px;
+    background: hsl(224.3 76.3% 48%); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .author { font-weight: 600; }
+  .date { font-size: .875rem; color: var(--muted-foreground); }
+  .title { font-size: 1.25rem; font-weight: 700; margin: 0 0 8px; }
+  .message { font-size: 1.125rem; line-height: 1.5; text-align: justify; white-space: pre-wrap;
+             color: var(--foreground); margin: 16px 0 0;
+             display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* LE cadre média : identique pour tous les posts */
+  .media {
+    position: relative;
+    width: 592px;          /* 640 - 2*24 de padding */
+    height: 444px;         /* 4:3 fixe, identique pour tous les posts */
+    border-radius: .375rem;
+    overflow: hidden;
+    background: #000;
+    margin-bottom: 16px;
+  }
+  .media .blk { position: absolute; overflow: hidden; }
+  .media .blk img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* "+N" : voile léger sur le dernier bloc, petit libellé (contre text-3xl actuel) */
+  .media .veil {
+    position: absolute; z-index: 3; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem; font-weight: 700; color: #fff; pointer-events: none;
+  }
+  .media .pill {
+    position: absolute; right: 8px; bottom: 8px; z-index: 3;
+    background: rgba(0,0,0,.65); color: #fff; font-size: .78rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 999px;
+  }
+
+  /* Bande de démonstration : le même cadre, de 1 à 16 photos */
+  .strip { display: flex; flex-wrap: wrap; gap: 20px; }
+  .strip figure { margin: 0; }
+  .strip .media { width: 300px; height: 225px; margin-bottom: 8px; }
+  .strip figcaption { font-size: .75rem; color: var(--muted-foreground); text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Cadre média d'un post : remplissage en blocs de tailles différentes</h1>
+<p class="intro">
+  Exemple réel : le post <b>« Senja »</b> de Lucas Saintier (1<sup>er</sup> nov. 2025), tel que rendu par
+  <code>ListPostCard</code>. Visuels factices aux formats typiques d'un voyage (pano 16:9, paysage 3:2,
+  portrait 2:3, carré). <b>Le cadre est identique pour tous les posts</b> : 4:3, 592×444 px en carte pleine
+  largeur, 300×225 px en bande de démo ; gap de 4 px comme aujourd'hui.
+  <br><br>
+  <b>Plafond : 10 blocs affichés</b> (<code>MAX_VISIBLE = 10</code>, l'app est à 7 aujourd'hui). Au-delà, les
+  photos restantes sont comptées dans un « +N » discret posé sur le dernier bloc — même principe que le
+  <code>remainingCount</code> actuel, en plus petit. Les deux cartes de chaque option montrent 5 photos
+  (cas courant) et 13 photos (cas plafonné).
+</p>
+
+<div class="option">
+  <h2>A. Mosaïque héro <span class="tag">1 grande + cases égales</span></h2>
+  <p class="note">
+    La 1<sup>re</sup> photo occupe la moitié gauche en hauteur totale, les autres se répartissent en cases
+    égales à droite. <b>+</b> Très lisible, met une photo en avant, remplit toujours 100 % du cadre.
+    <b>−</b> À 10 photos, les 9 cases de droite deviennent étroites.
+  </p>
+  <div id="opt-a"></div>
+  <div class="strip" id="strip-a"></div>
+</div>
+
+<div class="option">
+  <h2>B. Block chart justifié <span class="tag">blocs proportionnels aux formats réels</span></h2>
+  <p class="note">
+    Lignes d'images : chaque bloc reprend le ratio réel de sa photo, les lignes ont des hauteurs différentes,
+    l'ensemble est étiré pour remplir exactement le cadre. Rendu « Google Photos / Flickr ».
+    <b>+</b> Vraiment « block chart » : aucune case identique, recadrage minimal, tient bien de 1 à 10 photos.
+    <b>−</b> Un calcul JS côté app ; l'ordre des photos influe sur le découpage.
+  </p>
+  <div id="opt-b"></div>
+  <div class="strip" id="strip-b"></div>
+</div>
+
+<div class="option">
+  <h2>C. Damier pondéré <span class="tag">grille + grand bloc, sans dépendre des ratios</span></h2>
+  <p class="note">
+    Grille régulière (colonnes calculées depuis le format du cadre), avec un premier bloc double en
+    largeur et hauteur, et les cellules restantes fusionnées pour ne laisser aucun trou.
+    <b>+</b> Découpage stable, indépendant des photos, CSS/rendering simple. <b>−</b> Recadrage plus marqué
+    sur les portraits.
+  </p>
+  <div id="opt-c"></div>
+  <div class="strip" id="strip-c"></div>
+</div>
+
+<div class="option">
+  <h2>D. Héro seul + compteur <span class="tag">référence la plus compacte</span></h2>
+  <p class="note">
+    Seule la 1<sup>re</sup> photo remplit le cadre, pastille « +N » en bas à droite. <b>+</b> Cartes parfaites,
+    zéro découpage, le plus proche d'un feed. <b>−</b> Les autres photos ne se voient qu'en ouvrant le post.
+  </p>
+  <div id="opt-d"></div>
+  <div class="strip" id="strip-d"></div>
+</div>
+
+<script>
+  // ---------- Visuels factices (data-URI SVG), ratios réels d'un post voyage ----------
+  function dummy(w, h, label, c1, c2) {
+    const fs = Math.round(Math.min(w, h) / 12);
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>` +
+      `<rect width="100%" height="100%" fill="url(#g)"/>` +
+      `<path d="M0 ${h} L${w*0.3} ${h*0.55} L${w*0.5} ${h*0.75} L${w*0.72} ${h*0.45} L${w} ${h} Z" fill="rgba(0,0,0,0.28)"/>` +
+      `<circle cx="${w*0.78}" cy="${h*0.22}" r="${Math.min(w,h)/12}" fill="rgba(255,255,255,0.55)"/>` +
+      `<text x="${w/2}" y="${h*0.93}" font-family="sans-serif" font-size="${fs}" font-weight="bold" ` +
+      `fill="rgba(255,255,255,0.95)" text-anchor="middle">${label}</text></svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+
+  const PHOTOS = [
+    { w: 1600, h: 900,  label: "Senja · 16:9",   c: ["#1e3a8a", "#0ea5e9"] },
+    { w: 1200, h: 800,  label: "Torsken · 3:2",  c: ["#065f46", "#34d399"] },
+    { w: 900,  h: 1350, label: "Gryllefjord · 2:3", c: ["#7c2d12", "#f59e0b"] },
+    { w: 1000, h: 1000, label: "Husøy · 1:1",    c: ["#4c1d95", "#c084fc"] },
+    { w: 1500, h: 850,  label: "Fjord · 16:9",   c: ["#0c4a6e", "#38bdf8"] },
+    { w: 800,  h: 1200, label: "Sentier · 2:3",  c: ["#14532d", "#a3e635"] },
+    { w: 1400, h: 600,  label: "Cap · 21:9",     c: ["#7f1d1d", "#fb923c"] },
+    { w: 1350, h: 900,  label: "Marnards · 3:2", c: ["#155e75", "#67e8f9"] },
+    { w: 950,  h: 1250, label: "Église · 3:4",   c: ["#713f12", "#facc15"] },
+    { w: 1200, h: 700,  label: "Nordkapp · 12:7", c: ["#312e81", "#818cf8"] },
+    { w: 1100, h: 1100, label: "Café · 1:1",     c: ["#831843", "#f9a8d4"] },
+    { w: 1600, h: 800,  label: "Route · 2:1",    c: ["#134e4a", "#5eead4"] },
+    { w: 900,  h: 1400, label: "Falaise · 9:14", c: ["#1e293b", "#94a3b8"] },
+    { w: 1450, h: 870,  label: "Baie · 5:3",     c: ["#1e40af", "#60a5fa"] },
+  ];
+  const src = (p) => dummy(p.w, p.h, p.label, p.c[0], p.c[1]);
+  const ratio = (p) => p.w / p.h;
+
+  const GAP = 4;          // écart actuel de la galerie (columnGap: 4px)
+  const MAX_VISIBLE = 10; // plafond de blocs affichés, le reste en "+N"
+
+  // ---------- A. Mosaïque héro : moitié gauche + cases égales à droite ----------
+  function layoutHero(photos, W, H) {
+    const n = photos.length;
+    if (n === 1) return [{ x: 0, y: 0, w: W, h: H }];
+    const half = (W - GAP) / 2;
+    const blocks = [{ x: 0, y: 0, w: half, h: H }];
+    const rest = n - 1;
+    const cols = rest <= 3 ? 1 : rest <= 6 ? 2 : 3;
+    const rows = Math.ceil(rest / cols);
+    const rh = (H - (rows - 1) * GAP) / rows;
+    const x0 = half + GAP;
+    let k = 0;
+    for (let r = 0; r < rows && k < rest; r++) {
+      const inRow = Math.min(cols, rest - k);
+      const cw = (half - (inRow - 1) * GAP) / inRow; // dernière ligne incomplète : cases élargies
+      let x = x0;
+      for (let c = 0; c < inRow; c++) {
+        blocks.push({ x, y: r * (rh + GAP), w: cw, h: rh });
+        x += cw + GAP;
+        k++;
+      }
+    }
+    return blocks;
+  }
+
+  // ---------- B. Block chart justifié : lignes, hauteurs variables, ratio de chaque photo ----------
+  function layoutJustified(photos, W, H) {
+    const n = photos.length;
+    if (n === 1) return [{ x: 0, y: 0, w: W, h: H }];
+    let best = null;
+    for (let rows = 1; rows <= n; rows++) {
+      const base = Math.floor(n / rows), extra = n % rows;
+      const groups = [];
+      let k = 0;
+      for (let r = 0; r < rows; r++) {
+        const c = base + (r < extra ? 1 : 0);
+        if (c > 0) { groups.push(photos.slice(k, k + c)); k += c; }
+      }
+      const heights = groups.map((g) => (W - GAP * (g.length - 1)) / g.reduce((a, p) => a + ratio(p), 0));
+      const total = heights.reduce((a, b) => a + b, 0) + GAP * (groups.length - 1);
+      const cost = Math.abs(total / H - 1); // on garde le nb de lignes qui colle le mieux au cadre
+      if (!best || cost < best.cost) best = { groups, heights, k: H / total, cost }; // k : échelle verticale
+    }
+    const { groups, heights, k } = best;
+    const blocks = [];
+    let y = 0;
+    groups.forEach((g, r) => {
+      const h = r === groups.length - 1 ? H - y : heights[r] * k; // dernière ligne jusqu'au bord bas
+      const sum = g.reduce((a, p) => a + ratio(p), 0);
+      const usable = W - GAP * (g.length - 1);
+      let x = 0;
+      g.forEach((p) => {
+        const w = usable * ratio(p) / sum;
+        blocks.push({ x, y, w, h });
+        x += w + GAP;
+      });
+      y += h + GAP;
+    });
+    return blocks;
+  }
+
+  // ---------- C. Damier pondéré : grille, premier bloc double, cellules fusionnées ----------
+  function layoutPattern(photos, W, H) {
+    const n = photos.length;
+    if (n === 1) return [{ x: 0, y: 0, w: W, h: H }];
+    const slack = 3; // place réservée au grand bloc 2x2
+    let cols = Math.max(2, Math.ceil(Math.sqrt((n + slack) * (W / H))));
+    let rows = Math.max(1, Math.ceil((n + slack) / cols));
+    const big = n >= 4 && rows >= 2 && cols >= 2 && rows * cols - slack >= n;
+    if (!big) { // pas de place pour un bloc double -> grille simple, cases élargies en fin
+      cols = Math.max(2, Math.round(Math.sqrt(n * (W / H))));
+      rows = Math.max(1, Math.ceil(n / cols));
+    }
+    const cell = Array.from({ length: rows }, () => Array(cols).fill(null));
+    const blocks = [];
+    const put = (r, c, sw, sh) => {
+      for (let i = r; i < r + sh; i++) for (let j = c; j < c + sw; j++) cell[i][j] = blocks.length;
+      blocks.push({ c, r, sw, sh });
+    };
+    if (big) put(0, 0, 2, 2); // grand bloc
+    outer: for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        if (cell[r][c] === null) {
+          if (blocks.length >= n) break outer;
+          put(r, c, 1, 1);
+        }
+    // fusion des cellules libres (dernière ligne incomplète) dans un bloc voisin
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++) {
+          if (cell[r][c] !== null) continue;
+          const left = c > 0 ? cell[r][c - 1] : null;
+          const up = r > 0 ? cell[r - 1][c] : null;
+          if (left !== null) {
+            const b = blocks[left];
+            if (b.c + b.sw === c && r >= b.r && r < b.r + b.sh) {
+              b.sw++; cell[r][c] = left; moved = true; continue;
+            }
+          }
+          if (up !== null) {
+            const b = blocks[up];
+            if (b.r + b.sh === r && c >= b.c && c < b.c + b.sw) {
+              b.sh++; cell[r][c] = up; moved = true;
+            }
+          }
+        }
+    }
+    const cw = (W - GAP * (cols - 1)) / cols;
+    const ch = (H - GAP * (rows - 1)) / rows;
+    return blocks.slice(0, n).map((b) => ({
+      x: b.c * (cw + GAP), y: b.r * (ch + GAP),
+      w: b.sw * cw + (b.sw - 1) * GAP, h: b.sh * ch + (b.sh - 1) * GAP,
+    }));
+  }
+
+  // ---------- D. Héro seul ----------
+  function layoutHero1(photos, W, H) {
+    return [{ x: 0, y: 0, w: W, h: H }];
+  }
+
+  // ---------- Rendu, avec plafond MAX_VISIBLE et "+N" ----------
+  const MODES = { a: layoutHero, b: layoutJustified, c: layoutPattern, d: layoutHero1 };
+
+  // la géométrie des blocs inclut déjà les gouttières de 4 px -> placement direct
+  const rect = (b) =>
+    `left:${b.x.toFixed(1)}px;top:${b.y.toFixed(1)}px;` +
+    `width:${Math.max(0, b.w).toFixed(1)}px;height:${Math.max(0, b.h).toFixed(1)}px`;
+
+  function render(allPhotos, W, H, mode) {
+    const visible = allPhotos.slice(0, MAX_VISIBLE);
+    const extra = allPhotos.length - visible.length;
+    const layout = MODES[mode](visible, W, H).slice(0, visible.length);
+    let html = "";
+    layout.forEach((b, i) => {
+      html += `<div class="blk" style="${rect(b)}"><img src="${src(visible[i])}" alt="${visible[i].label}"></div>`;
+    });
+    if (mode === "d") {
+      if (allPhotos.length > 1) html += `<div class="pill">+${allPhotos.length - 1}</div>`;
+    } else if (extra > 0) {
+      html += `<div class="veil" style="${rect(layout[layout.length - 1])}">+${extra}</div>`;
+    }
+    return `<div class="media" style="width:${W}px;height:${H}px">${html}</div>`;
+  }
+
+  const POST = {
+    author: "Lucas Saintier", initials: "LS", date: "1 novembre 2025 13:39",
+    title: "Senja",
+    message: "Senja (pronc. Sènya ; en same du Nord Sážžá) est la deuxième île de Norvège par sa superficie (le Svalbard mis à part) avec 1 586,3 km2. Son point culminant est l'Istindan (959 m).\n\nSenja appartient au comté (fylke) de Troms. L'île a une population de près de 8 000 habitants, et comprend les communes de Berg, Torsken, Tranøy et une partie de Lenvik.",
+  };
+
+  function card(mode, photos) {
+    return `<div class="card">
+      <div class="card-head">
+        <div class="avatar">${POST.initials}</div>
+        <div><div class="author">${POST.author}</div><div class="date">${POST.date}</div></div>
+      </div>
+      <h3 class="title">${POST.title}</h3>
+      ${render(photos, 592, 444, mode)}
+      <p class="message">${POST.message}</p>
+    </div>`;
+  }
+
+  function optionBlock(mode) {
+    const el = document.getElementById("opt-" + mode);
+    el.innerHTML =
+      `<div class="sub">5 photos</div>` + card(mode, PHOTOS.slice(0, 5)) +
+      `<div class="sub">13 photos → 10 blocs + « +3 »</div>` + card(mode, PHOTOS.slice(0, 13));
+    const strip = document.getElementById("strip-" + mode);
+    strip.innerHTML = [1, 2, 3, 4, 6, 8, 10, 16].map((n) =>
+      `<figure>${render(PHOTOS.slice(0, n), 300, 225, mode)}` +
+      `<figcaption>${n} photo${n > 1 ? "s" : ""}${n > MAX_VISIBLE ? " → +" + (n - MAX_VISIBLE) : ""}</figcaption></figure>`
+    ).join("");
+  }
+
+  for (const m of ["a", "b", "c", "d"]) optionBlock(m);
+</script>
+
+</body>
+</html>
