@@ -43,14 +43,60 @@ export function visibleMediaCount(frameWidth: number, total: number): number {
 }
 
 /**
+ * Final geometry for one candidate row split: rows scaled by `scale`,
+ * widths inside a row proportional to the ratios, last row reaching the
+ * bottom edge. Pure helper of computeJustifiedBlocks.
+ */
+function tileRows(
+  groups: number[][],
+  heights: number[],
+  scale: number,
+  width: number,
+  height: number,
+  gap: number,
+): MediaBlock[] {
+  const blocks: MediaBlock[] = [];
+  let y = 0;
+  groups.forEach((group, r) => {
+    const rowH = r === groups.length - 1 ? height - y : heights[r] * scale; // last row reaches the bottom edge
+    const sum = group.reduce((a, b) => a + b, 0);
+    const usable = width - gap * (group.length - 1);
+    let x = 0;
+    for (const ratio of group) {
+      const bw = (usable * ratio) / sum;
+      blocks.push({ x, y, w: bw, h: rowH });
+      x += bw + gap;
+    }
+    y += rowH + gap;
+  });
+  return blocks;
+}
+
+/**
+ * Fraction of a photo of aspect `photoRatio` that stays visible when drawn
+ * with `object-cover` in a block of aspect `blockAspect`: the part kept in
+ * both axes.
+ */
+function visibleFraction(
+  blockAspect: number,
+  photoRatio: number,
+): number {
+  return (
+    Math.min(1, blockAspect / photoRatio) * Math.min(1, photoRatio / blockAspect)
+  );
+}
+
+/**
  * Justified layout of `ratios` (width/height per photo, order preserved:
  * block i is photo i) inside a `width` x `height` frame with `gap` px gutters.
  *
  * For each candidate row count k = 1..n, split the photos into k consecutive
- * rows of as-equal-count-as-possible, compute the natural total height and
- * keep the k closest to `height`; then scale rows to fill the frame exactly,
- * widths inside a row proportional to the ratios, last row reaching the
- * bottom edge. Pure: never NaN, never empty/overlapping/out-of-frame blocks.
+ * rows of as-equal-count-as-possible, scale the rows to fill the frame
+ * exactly (widths inside a row proportional to the ratios, last row reaching
+ * the bottom edge), and keep the k that crops the least: the one maximising
+ * the mean visible source fraction over all blocks, ties going to the
+ * smaller k. The frame is covered exactly in every case. Pure: never NaN,
+ * never empty/overlapping/out-of-frame blocks.
  */
 export function computeJustifiedBlocks(
   ratios: number[],
@@ -71,8 +117,8 @@ export function computeJustifiedBlocks(
   // Sanitize ratios: a missing/zero/negative/NaN ratio is treated as square.
   const rs = ratios.map((r) => (Number.isFinite(r) && r > 0 ? r : 1));
 
-  let best: { groups: number[][]; heights: number[]; scale: number } | null = null;
-  let bestCost = Infinity;
+  let best: MediaBlock[] | null = null;
+  let bestScore = -1;
 
   for (let rows = 1; rows <= n; rows++) {
     const base = Math.floor(n / rows);
@@ -91,27 +137,20 @@ export function computeJustifiedBlocks(
       (group) => (w - g * (group.length - 1)) / group.reduce((a, b) => a + b, 0),
     );
     const total = heights.reduce((a, b) => a + b, 0) + rowGaps;
-    const cost = Math.abs(total / h - 1);
-    if (cost < bestCost) {
-      bestCost = cost;
-      best = { groups, heights, scale: h / total };
+    const scale = h / total;
+    // Build the exact final geometry for this k, then score it by how much
+    // of each photo object-cover keeps: the mean visible source fraction.
+    const blocks = tileRows(groups, heights, scale, w, h, g);
+    let visibleSum = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      visibleSum += visibleFraction(blocks[i].w / blocks[i].h, rs[i]);
+    }
+    // Strict comparison from k = 1: a tie keeps the fewer-row layout.
+    if (visibleSum / n > bestScore) {
+      bestScore = visibleSum / n;
+      best = blocks;
     }
   }
 
-  const { groups, heights, scale } = best!;
-  const blocks: MediaBlock[] = [];
-  let y = 0;
-  groups.forEach((group, r) => {
-    const rowH = r === groups.length - 1 ? h - y : heights[r] * scale; // last row reaches the bottom edge
-    const sum = group.reduce((a, b) => a + b, 0);
-    const usable = w - g * (group.length - 1);
-    let x = 0;
-    for (const ratio of group) {
-      const bw = (usable * ratio) / sum;
-      blocks.push({ x, y, w: bw, h: rowH });
-      x += bw + g;
-    }
-    y += rowH + g;
-  });
-  return blocks;
+  return best!;
 }
