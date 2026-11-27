@@ -11,7 +11,9 @@
  *     marked days per month, click on a date → scroll + flash + tooltip,
  *     and the current-day ring: set at load from the topmost visible post,
  *     following simulated wall scrolls, re-applied on month re-render and
- *     set by date clicks.
+ *     set by date clicks. The displayed month auto-switches to the current
+ *     day's month on a genuine month change, and manual chevron browsing is
+ *     not parasited by scrolls that do not change the current day's month.
  *
  * Usage: node scripts/check-calendar-mockup.mjs [path-to-html]
  * (defaults to docs/mockups/calendar-post-navigation.html)
@@ -196,15 +198,46 @@ const fireScroll = () => (window.listeners.scroll ?? []).forEach((fn) => fn());
 fireScroll(); // rect-driven lookup, still at the top
 assert(sandbox.currentKey === '2025-05-03', 'rect-driven lookup at scrollTop 0 must keep 3 May');
 
+// Auto-switch: the current day moves to April while May is displayed → the
+// grid flips to April and the ring is visible on 20 April.
 scrollState.y = 4 * CARD_H; // card idx 4 = first 2025-04-20 card at the reading line
 fireScroll();
 assert(sandbox.currentKey === '2025-04-20', `scroll must move the ring to 20 April, got ${sandbox.currentKey}`);
-assert(!dayButtons(grid).some((d) => d.classList.contains('current')), 'no ring in the May grid while the current day is in April');
+assert(byId('cal-title').textContent === 'avril 2025', `displayed month must auto-switch to April, got ${byId('cal-title').textContent}`);
+assert(hasDay(grid, '20').classList.contains('current'), '20 April must be ringed after the auto-switch');
 
+// Back to the top: the current day returns to May → the grid flips back.
 scrollState.y = 0;
 fireScroll();
 assert(sandbox.currentKey === '2025-05-03', 'scrolling back to the top must restore 3 May');
+assert(byId('cal-title').textContent === 'mai 2025', 'displayed month must auto-switch back to May');
 assert(hasDay(grid, '3').classList.contains('current'), '3 May ringed again');
+
+// Manual browsing is not parasited: flip to April by hand, then fire scrolls
+// that keep the current day in May (same day, then another May day) — the
+// display must stay on the manually chosen month.
+byId('cal-prev').click(); // manual: April
+assert(byId('cal-title').textContent === 'avril 2025');
+fireScroll(); // same current day (3 May) → setCurrent early-returns
+assert(byId('cal-title').textContent === 'avril 2025', 'a scroll that does not change the current day must not flip the manual month');
+scrollState.y = CARD_H; // current day becomes 2025-05-01 — still May
+fireScroll();
+assert(sandbox.currentKey === '2025-05-01', 'current day should now be 1 May');
+assert(byId('cal-title').textContent === 'avril 2025', 'a scroll that changes the current day within the same month must not flip the manual month');
+
+// A genuine month change follows even the manually browsed month: scroll
+// down to the April posts → the ring moves to 20 April in the April grid.
+scrollState.y = 4 * CARD_H;
+fireScroll();
+assert(sandbox.currentKey === '2025-04-20');
+assert(byId('cal-title').textContent === 'avril 2025');
+assert(hasDay(grid, '20').classList.contains('current'), 'the ring must move to 20 April without a re-render');
+
+// Scroll back to May content → the calendar follows again (auto-switch).
+scrollState.y = 0;
+fireScroll();
+assert(byId('cal-title').textContent === 'mai 2025', 'a genuine month change must flip even a manually browsed month');
+assert(hasDay(grid, '3').classList.contains('current'), '3 May ringed after the follow');
 
 // Month walk: May → April → March, bounds flip.
 byId('cal-prev').click();

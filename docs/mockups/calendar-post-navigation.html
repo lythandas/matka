@@ -273,7 +273,7 @@
       </button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
-    <p class="cal-hint">Jour pointé = publications ce jour-là ; jour entouré = là où vous êtes dans le fil. Cliquez une date pour y aller.</p>
+    <p class="cal-hint">Jour pointé = publications ce jour-là ; jour entouré = là où vous êtes dans le fil (le mois affiché suit). Cliquez une date pour y aller.</p>
     <p class="cal-status" id="cal-status"></p>
   </aside>
 
@@ -333,8 +333,10 @@
         la colonne au resize et se rabat au bord de la fenêtre s'il n'y a pas la place), borné aux
         mois du voyage (28 mars → 3 mai 2025, 17 posts sur 10 journées) ; les jours avec posts portent
         un point discret, le jour du post le plus haut visible porte l'anneau couleur du thème (il
-        suit le scroll du wall), et un clic décale le wall jusqu'au premier post du jour, qui reçoit
-        un anneau ~1,6 s. Les photos sont des dégradés factices pour rester
+        suit le scroll du wall, et le mois affiché bascule automatiquement quand ce jour change de
+        mois — le feuilletage manuel n'est parasité par aucun scroll qui ne change pas de mois), et
+        un clic décale le wall jusqu'au premier post du jour, qui reçoit un
+        anneau ~1,6 s. Les photos sont des dégradés factices pour rester
         self-contained. Mobile volontairement hors périmètre pour l'instant.
       </p>
     </main>
@@ -462,15 +464,35 @@ function findDayBtn(key) {
   return null;
 }
 
-/* Pose l'anneau « jour courant » ; la pastille n'apparaît que si le jour est
-   dans le mois affiché (le mois courant ne change pas automatiquement). */
+/* Index du mois (MONTHS) contenant une clé 'YYYY-MM-DD', -1 si hors voyage */
+function monthIndexOf(key) {
+  var ym = key.slice(0, 7);
+  for (var i = 0; i < MONTHS.length; i++) {
+    if (keyOf(MONTHS[i].y, MONTHS[i].m, 1).slice(0, 7) === ym) return i;
+  }
+  return -1;
+}
+
+/* Pose l'anneau « jour courant » ; auto-switch : quand le jour courant change
+   RÉELLEMENT de mois (par rapport au jour courant précédent, pas par rapport
+   au mois affiché), le calendrier bascule sur ce mois pour que l'anneau reste
+   visible. Un scroll qui ne change pas le jour courant, ou qui le change dans
+   le même mois, ne bascule jamais l'affichage : le feuilletage manuel aux
+   chevrons n'est donc pas parasité — pas besoin de délai de grâce. */
 function setCurrent(key) {
   if (!key || key === currentKey) return;
+  var prevMonth = currentKey ? monthIndexOf(currentKey) : -1;
   var old = findDayBtn(currentKey);
   if (old) old.classList.remove('current');
   currentKey = key;
-  var btn = findDayBtn(key);
-  if (btn) btn.classList.add('current');
+  var mi = monthIndexOf(key);
+  if (mi >= 0 && mi !== prevMonth && mi !== currentMonth) {
+    currentMonth = mi;
+    renderMonth();                       /* re-applique l'anneau au passage */
+  } else {
+    var btn = findDayBtn(key);
+    if (btn) btn.classList.add('current');
+  }
 }
 
 /* Premier post visible = première carte (ordre d'affichage) dont le bas

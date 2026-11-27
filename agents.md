@@ -36,7 +36,10 @@ in `src/components/ui/` are not edited — wrap them instead).
   column on resize, falls back to the window edge when narrow; desktop only,
   mobile out of scope). Days with posts carry a **discreet dot**; the **current
   day (topmost visible post) carries the theme-color ring** and follows the
-  wall scroll; clicking a date scrolls to the day's first post (existing
+  wall scroll, and the **displayed month auto-switches** to the current day's
+  month on a genuine month change (manual chevron browsing is never parasited
+  by scrolls that do not change the current day's month — no grace timer);
+  clicking a date scrolls to the day's first post (existing
   `postIdToScrollTo` effect) with a ~1.6 s highlight ring. v3 reproduces the
   real rendered theme (vanilla `globals.css` tokens + TopBar/wall/ListPostCard
   classes) and is checked headless by `scripts/check-calendar-mockup.mjs`

@@ -51,8 +51,11 @@ création) — un calendrier est la table des matières naturelle du voyage.
   sous le TopBar) ; après un clic sur une date, l'anneau est posé sur ce jour immédiatement.
 - Navigation ◀ ▶ entre mois, **bornée aux mois du voyage** (chevrons désactivés aux bornes) ; jours
   hors étendue atténués et non cliquables ; jour dans l'étendue sans post : inerte mais non grisé.
-  Le mois affiché ne bascule **pas** automatiquement vers le mois du jour courant (l'anneau
-  n'apparaît que si son mois est affiché).
+- **Auto-switch du mois affiché** : quand le jour courant change de mois, le calendrier bascule sur
+  ce mois — l'anneau « où je suis » est donc toujours visible. La bascule ne se déclenche que sur un
+  changement **réel** du mois du jour courant : un scroll qui ne change pas le jour courant, ou qui
+  le change dans le même mois, ne touche jamais au mois affiché (le feuilletage manuel aux chevrons
+  n'est pas parasité).
 - Mois par défaut à l'ouverture : celui du premier post affiché en haut du wall (le plus récent au
   tri par défaut).
 - Clic sur une date : bascule en **vue liste** si nécessaire (même branche que `handlePostClick`
@@ -106,8 +109,15 @@ Côte à côte dans le premier mockup, sur le voyage de démo « Norvège — Lo
   chargement c'est le post du haut ; un clic sur une date le pose immédiatement (le scroll de
   confirmation arrive ensuite). Dans le mockup : listener `scroll` direct (17 cartes, coût nul) ;
   dans l'app, throttler (rAF) ou `IntersectionObserver`.
-- **Le mois affiché ne bascule pas automatiquement** vers le mois du jour courant — l'anneau
-  n'apparaît que si son mois est affiché. Volontairement simple pour la v1.
+- **Auto-switch du mois affiché (décision utilisateur 2026-11-27)** : quand le jour courant change
+  de mois, le calendrier suit (`setCurrent` bascule `currentMonth` et re-render). Garde contre le
+  parasitage du feuilletage manuel : la bascule ne compare **pas** le mois du jour courant au mois
+  affiché, mais au mois du jour courant **précédent** — un scroll qui ne change pas le jour courant
+  (retour immédiat de `setCurrent`) ou qui le change dans le même mois ne bascule jamais l'affiché.
+  Pas de délai de grâce : la condition « changement réel de mois » couvre les mêmes cas sans timer
+  ni horloge, de façon déterministe. Un clic sur une date est cohérent par construction (le mois
+  cliqué est le mois affiché, l'auto-switch est un no-op). Les chevrons restent bornés aux mois du
+  voyage.
 - **Ancre : premier post de la journée dans l'ordre affiché**, `sortOrder` respecté.
 - **Surbrillance de la carte ciblée : anneau + halo ~1,6 s** sur la carte (`ring-2 ring-primary`
   via le prop `className` existant de `ListPostCard`), retirée par timeout.
@@ -123,10 +133,8 @@ Côte à côte dans le premier mockup, sur le voyage de démo « Norvège — Lo
   (`.day.has::after` 5 px, `.day.current` `border: 2px solid hsl(var(--primary))`).
 - Suivi du jour courant dans l'app : listener `scroll` throttlé rAF ou `IntersectionObserver` sur
   les cartes du wall — la ligne de lecture (~96 px sous le TopBar) est à caler sur la vraie hauteur
-  du TopBar.
-- Comportement « jour courant dans un autre mois que celui affiché » : v1 = rien (anneau invisible
-  tant que le mois n'est pas affiché) ; envisageable ensuite : auto-switch de mois discret ou
-  indicateur « vous êtes en avril ».
+  du TopBar. L'auto-switch du mois s'implémente comme un effet sur le **mois** de `currentDateKey`
+  (dépendance sur le mois, pas sur le jour), pas sur le mois affiché.
 - Breakpoint sous lequel le panneau est masqué (contrainte : hors périmètre mobile, donc simplement
   caché, pas d'alternative) ; en fenêtre étroite le panneau se rabat au bord gauche de la fenêtre et
   peut chevaucher le bord du wall (cf. mockup) — à arbitrer à l'implémentation.
@@ -146,3 +154,7 @@ Côte à côte dans le premier mockup, sur le voyage de démo « Norvège — Lo
   au resize, se rabat au bord de la fenêtre), jours à posts = **point discret**, **jour courant =
   anneau couleur du thème suivant le scroll** (chargement, scroll simulé, re-render du mois, clic —
   tout vérifié headless par `scripts/check-calendar-mockup.mjs`).
+- v4 (décision utilisateur 2026-11-27) : **auto-switch du mois affiché** vers le mois du jour
+  courant, déclenché uniquement sur un changement réel du mois du jour courant (le feuilletage
+  manuel n'est pas parasité, pas de délai de grâce) — auto-switch aller/retour, garde
+  feuilletage manuel et re-suivi après navigation manuelle vérifiés headless.
