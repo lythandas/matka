@@ -15,6 +15,18 @@ if (JWT_SECRET.length < 16) {
 // Use an environment variable for uploads path, with a fallback for local development
 export const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(__dirname, '../uploads');
 
+// Downscaled image thumbnails (see routes/thumbnailRoutes.ts): generated on
+// first request with sharp, cached on disk next to the uploads.
+export const THUMBS_PATH = process.env.THUMBS_PATH || path.join(UPLOADS_PATH, 'thumbs');
+
+// Only one thumbnail width is served: URLs are content-addressed (original
+// name + width), so an open-ended width parameter would let anyone fill the
+// disk with variants. Bump this and old cached thumbnails simply stop being
+// requested.
+export const THUMBNAIL_WIDTH = parseInt(process.env.THUMBNAIL_WIDTH || '800', 10);
+
+export const THUMBNAIL_JPEG_QUALITY = 75;
+
 // CORS origin — comma-separated list of allowed origins, or '*' for all
 export const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
