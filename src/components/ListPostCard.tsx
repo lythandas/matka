@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { getDateFnsLocale } from '@/utils/date-locales';
 import { cn } from '@/lib/utils'; // Import cn for class merging
 import PostActions from './PostActions'; // Import PostActions
+import PostMediaFrame, { MEDIA_FRAME_CLASS, MEDIA_FRAME_STYLE } from './PostMediaFrame';
 
 interface ListPostCardProps {
   post: Post;
@@ -43,16 +44,6 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
   const displayName = post.author_name && post.author_surname ? `${post.author_name} ${post.author_surname}` : post.author_name || post.author_username;
 
   const mediaItems = post.media_items || [];
-  const imageItems = mediaItems.filter(m => m.type === 'image');
-  const videoItems = mediaItems.filter(m => m.type === 'video');
-  const MAX_GALLERY = 7;
-  const visibleImages = imageItems.slice(0, MAX_GALLERY);
-  const remainingCount = imageItems.length - MAX_GALLERY;
-
-  // Masonry column count adapts to number of photos
-  const galleryColumns = visibleImages.length <= 2 ? 2 : visibleImages.length <= 4 ? 2 : 3;
-
-  const firstMedia = mediaItems[0];
 
   return (
     <Card
@@ -99,61 +90,15 @@ const ListPostCard: React.FC<ListPostCardProps> = ({
         {post.title && (
           <h3 className="text-xl font-bold mb-2 text-foreground">{post.title}</h3>
         )}
-        {firstMedia ? (
+        {mediaItems.length > 0 ? (
           <div className="mb-4">
-            {imageItems.length > 1 ? (
-              <div
-                className="rounded-md overflow-hidden gap-1"
-                style={{ columnCount: galleryColumns, columnGap: '4px' }}
-              >
-                {visibleImages.map((media, idx) => {
-                  const isLast = idx === visibleImages.length - 1;
-                  return (
-                    <div
-                      key={idx}
-                      className="relative break-inside-avoid overflow-hidden rounded-sm"
-                      style={{ marginBottom: idx < visibleImages.length - 1 ? '4px' : 0 }}
-                    >
-                      <img
-                        src={media.urls.medium || '/placeholder.svg'}
-                        alt={post.title || t('common.postImage')}
-                        className="w-full h-auto block"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder.svg';
-                          e.currentTarget.onerror = null;
-                        }}
-                      />
-                      {isLast && remainingCount > 0 && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <span className="text-white text-3xl font-bold">+{remainingCount}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : firstMedia.type === 'image' ? (
-              <img
-                src={firstMedia.urls.medium || '/placeholder.svg'}
-                alt={post.title || t('common.postImage')}
-                className="w-full h-auto rounded-md"
-                onError={(e) => {
-                  e.currentTarget.src = '/placeholder.svg';
-                  e.currentTarget.onerror = null;
-                }}
-              />
-            ) : (
-              <video
-                src={firstMedia.url}
-                controls
-                className="w-full h-auto rounded-md"
-              />
-            )}
+            <PostMediaFrame media={mediaItems} alt={post.title || t('common.postImage')} />
           </div>
         ) : post.coordinates ? (
           <div className="mb-4">
-            <MapComponent coordinates={post.coordinates} className="h-48" />
+            <div className={MEDIA_FRAME_CLASS} style={MEDIA_FRAME_STYLE}>
+              <MapComponent coordinates={post.coordinates} className="h-full w-full" />
+            </div>
           </div>
         ) : null}
         <p className="text-lg text-foreground whitespace-pre-wrap mb-4 text-justify">
