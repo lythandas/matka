@@ -21,6 +21,14 @@ in `src/components/ui/` are not edited — wrap them instead).
   off-screen cards measure nothing (IntersectionObserver-gated), the last
   in-flight measurement is aborted when its last card stops waiting, and
   unmeasured photos fall back to 4:3.
+- `src/utils/mediaUrls.ts` — maps an `/uploads/…` image URL to its downscaled
+  `/thumbs/…w800…` variant (unchanged URL when it can't be mapped).
+- `src/utils/imagePreloader.ts` + `src/hooks/useImagePreload.ts` — module-level
+  background preloader (max 2 concurrent, `fetchPriority=low`, dedup) fed at
+  idle time by cards in view, so PostDetailDialog's full-resolution images are
+  already in the browser cache.
+- `src/hooks/useInViewOnce.ts` — once-only IntersectionObserver gate for cards
+  that don't render a PostMediaFrame (GridPostCard).
 - `src/utils/mediaLayout.ts` — pure geometry of the block chart (no React, no DOM).
 - `backend/src/routes/` — Fastify routes: `journeyRoutes`, `postRoutes`,
   `mediaRoutes`, `publicJourneyRoutes`, `userRoutes`, `protectedUserRoutes`.
@@ -58,3 +66,40 @@ in `src/components/ui/` are not edited — wrap them instead).
   `object-contain` on the black frame, `controls` kept (whole video visible).
   On a mixed `[video, photo]` post the photos win on the card and the video is
   played from the detail dialog (accepted loss).
+
+## Image downscaling & background preloading
+
+Design spec: `docs/superpowers/specs/2026-11-27-image-downscaling-design.md`.
+Rules that later changes must keep:
+
+- **Thumbnails**: cards display `thumbnailUrl()` (800 px wide) instead of the
+  original — list via PostMediaFrame, grid via GridPostCard. The backend route
+  `GET /thumbs/:fileName` (`backend/src/routes/thumbnailRoutes.ts`) derives the
+  source from the file name (`abc-original.jpg.w800.jpg` → the `abc-original.jpg`
+  upload), generates with sharp on first request (EXIF-rotated,
+  `withoutEnlargement`), and caches in `UPLOADS_PATH/thumbs/` (temp+rename, so
+  concurrent requests race safely). Served `immutable` for a year.
+- **One width only** (800, `THUMBNAIL_WIDTH` on both sides): URLs are
+  content-addressed, an open width parameter would let anyone spray the disk
+  with variants. PNG stays PNG (alpha), svg/gif redirect to the original, other
+  formats become JPEG q75 mozjpeg flattened on white. Unprocessable sources
+  fall back to a redirect to the original, never a hard 500.
+- **Public by design**: `/thumbs` sits outside the authenticated scope, same
+  model as the `/uploads` static serving (UUID = capability token). Don't put
+  it behind auth without doing the same for `/uploads`.
+- **Ratios**: `useMediaRatios` measures the thumbnail URLs — fine, the backend
+  only shrinks (never crops), so the aspect ratio is identical. A failed
+  thumbnail (backend not upgraded, generation failed) makes the card `<img>`
+  retry the **original** URL before ever showing the placeholder — a frontend
+  deploy ahead of the backend degrades to today's behaviour, not to blank
+  cards.
+- **Preloading**: PostMediaFrame/GridPostCard call `useImagePreload` with the
+  full-resolution URLs (`large ?? original`, what PostDetailDialog shows),
+  gated on the card being near the viewport and scheduled via
+  `requestIdleCallback` (2 s timeout; `setTimeout` fallback for Safari). The
+  preloader caps at 2 concurrent low-priority downloads, dedups, and never
+  aborts a started download — the viewport gate + cap is the bandwidth guard.
+  Photos beyond the block cap are *not* preloaded (dialog fetches on demand).
+- Upload route unchanged: `mediaInfo.urls` still points everything at the
+  original; the frontend derives thumbnails client-side, so legacy DB rows and
+  new uploads behave identically.
