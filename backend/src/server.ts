@@ -13,6 +13,7 @@ import journeyRoutes from './routes/journeyRoutes';
 import postRoutes from './routes/postRoutes';
 import mediaRoutes from './routes/mediaRoutes';
 import publicJourneyRoutes from './routes/publicJourneyRoutes';
+import thumbnailRoutes from './routes/thumbnailRoutes';
 import { authenticate } from './auth';
 
 const fastify = Fastify({
@@ -44,6 +45,10 @@ fastify.get('/health', async (request, reply) => {
 fastify.register(userRoutes, { prefix: '/api' });
 fastify.register(publicJourneyRoutes, { prefix: '/api' });
 
+// 1b. Public thumbnail route — same exposure model as the /uploads static
+// serving below (UUID as capability token), so it must not sit behind auth.
+fastify.register(thumbnailRoutes);
+
 // 2. Register protected API routes with a prefix and apply authentication hook
 fastify.register(async (authenticatedInstance) => {
   authenticatedInstance.addHook('preHandler', authenticate);
@@ -72,7 +77,7 @@ fastify.register(fastifyStatic, {
 
 // 5. SPA fallback
 fastify.setNotFoundHandler((request: FastifyRequest, reply: FastifyReply) => {
-  if (request.method === 'GET' && !request.url.startsWith('/api') && !request.url.startsWith('/uploads')) {
+  if (request.method === 'GET' && !request.url.startsWith('/api') && !request.url.startsWith('/uploads') && !request.url.startsWith('/thumbs')) {
     reply.sendFile('index.html', path.join(__dirname, '../../frontend-dist'));
   } else {
     reply.code(404).send({ message: 'Route not found' });
