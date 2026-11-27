@@ -21,6 +21,8 @@ export const MEDIA_FRAME_STYLE: React.CSSProperties = {
 
 export interface PostMediaFrameProps {
   media: MediaInfo[];
+  /** Alt text for the tiled photos (ListPostCard passes the post title). */
+  alt?: string;
   className?: string;
 }
 
@@ -35,10 +37,14 @@ function imageUrl(image: ImageInfo): string {
 /**
  * One fixed 4:3 frame per post card, tiling the post's photos as a justified
  * block chart (block geometry from computeJustifiedBlocks, in px). Re-tiles
- * as the measured aspect ratios land and as the frame is resized; a lone
- * video fills the frame instead of the chart.
+ * as the measured aspect ratios land and as the frame is resized; a post
+ * with no photo at all plays its video in the frame instead.
  */
-const PostMediaFrame: React.FC<PostMediaFrameProps> = ({ media, className }) => {
+const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
+  media,
+  alt = "",
+  className,
+}) => {
   const images = React.useMemo(
     () =>
       media.filter(
@@ -73,8 +79,9 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({ media, className }) => 
   // Nothing to show at all: no frame, and never a layout call.
   if (images.length === 0 && !video) return null;
 
-  // A video takes over the whole frame when there is at most one photo.
-  const showVideo = Boolean(video) && images.length <= 1;
+  // A video plays in the frame only when the post has no photo at all —
+  // with any photo present, the photo chart wins (today's list behaviour).
+  const showVideo = Boolean(video) && images.length === 0;
 
   const visible = visibleMediaCount(width, images.length);
   const hidden = images.length - visible;
@@ -102,8 +109,7 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({ media, className }) => 
       {showVideo && video ? (
         <video
           src={video.url}
-          muted
-          playsInline
+          controls
           className="h-full w-full object-cover"
         />
       ) : (
@@ -122,7 +128,7 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({ media, className }) => 
             >
               <img
                 src={imageUrl(images[index])}
-                alt=""
+                alt={alt}
                 loading="lazy"
                 className="h-full w-full object-cover"
                 onError={(event) => {
