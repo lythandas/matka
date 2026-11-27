@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import L from 'leaflet';
 import { showError } from '@/utils/toast';
 import { Post } from '@/types';
+import { cn } from '@/lib/utils';
 
 // Fix for default Leaflet icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -124,7 +125,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, [mapRefreshKey, mapRef.current]); // Dependencies: mapRefreshKey, mapRef.current
 
   return (
-    <div ref={mapContainerRef} className={`w-full h-64 rounded-md relative overflow-hidden z-0 ${className}`} />
+    // cn (tailwind-merge): a caller's h-full must reliably override the
+    // built-in h-64 instead of relying on Tailwind's class-ordering luck.
+    <div ref={mapContainerRef} className={cn('w-full h-64 rounded-md relative overflow-hidden z-0', className)} />
   );
 };
 

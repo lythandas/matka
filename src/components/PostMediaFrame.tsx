@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { MediaInfo } from "@/types";
 import { useMediaRatios } from "@/hooks/useMediaRatios";
+import { cn } from "@/lib/utils";
 import {
   DEFAULT_GAP,
   FRAME_RATIO,
@@ -155,16 +156,17 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
   return (
     <div
       ref={frameRef}
-      className={
-        className ? `${MEDIA_FRAME_CLASS} ${className}` : MEDIA_FRAME_CLASS
-      }
+      className={cn(MEDIA_FRAME_CLASS, className)}
       style={MEDIA_FRAME_STYLE}
     >
       {showVideo && video ? (
+        // object-contain: a 9:16 phone video stays whole on the black
+        // frame instead of being cropped to ~42% of its height, with the
+        // native controls sitting over visible content.
         <video
           src={video.url}
           controls
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
       ) : (
         blocks?.map((block, index) => {
@@ -182,7 +184,9 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
             >
               <img
                 src={imageSrc(images[index])}
-                alt={alt}
+                // The post title is announced once per frame: the other
+                // blocks are decorative to a screen reader.
+                alt={index === 0 ? alt : ""}
                 loading="lazy"
                 className="h-full w-full object-cover"
                 onError={(event) => {
