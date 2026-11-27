@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matka — calendrier de navigation par date</title>
+<style>
+  /* ============================================================
+     Thème = vraie page rendue de l'app.
+     Variables copiées de src/globals.css (:root, thème vanilla clair,
+     défaut de l'app) ; les couleurs sont consommées en hsl(var(--x))
+     exactement comme tailwind.config.ts le fait.
+     Polices : stack Tailwind par défaut (aucune fonte custom dans l'app).
+     ============================================================ */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; }
+
+  /* ===== TopBar (classes réelles de src/components/TopBar.tsx) ===== */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+  .topbar-left { display: flex; align-items: center; }
+  .topbar-left svg { margin-right: .5rem; }
+  .app-name { font-size: 1.5rem; font-weight: 800; color: hsl(var(--foreground)); margin: 0; }
+  .journey-select {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: inline-flex; align-items: center; justify-content: space-between;
+    min-width: 150px; height: 2.25rem; padding: 0 1rem;
+    border: 1px solid hsl(var(--input)); border-radius: calc(var(--radius) - 2px);
+    background: hsl(var(--background)); color: hsl(var(--foreground));
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  .journey-select:hover { background: hsl(var(--accent)); }
+  .avatar {
+    width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+    background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: .9rem;
+  }
+
+  /* ===== Page : wall centré max-w-3xl, le calendrier se colle à son bord gauche ===== */
+  .page {
+    display: flex; justify-content: center;
+  }
+  .wall { width: 100%; max-width: 768px; padding: 2rem; }  /* max-w-3xl + p-8 d'Index.tsx */
+
+  /* TabsList (shadcn Tabs, comme Index.tsx : grid-cols-2 w-full) */
+  .tabslist {
+    display: grid; grid-template-columns: repeat(2, 1fr); width: 100%;
+    background: hsl(var(--muted)); border-radius: var(--radius); padding: .25rem;
+    margin-top: 2rem;
+  }
+  .tabtrigger {
+    padding: .375rem .75rem; border: 0; border-radius: calc(var(--radius) - 2px);
+    background: transparent; color: hsl(var(--muted-foreground));
+    font-size: .875rem; font-weight: 500; cursor: pointer;
+  }
+  .tabtrigger.on {
+    background: hsl(var(--background)); color: hsl(var(--foreground));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / .05);
+  }
+
+  /* Rangée de réglages (SortToggle / ColumnToggle / ViewToggle d'Index.tsx) */
+  .settings-row {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    height: 2.5rem; gap: .5rem; margin: 1.5rem 0;
+  }
+  .settings-left { position: absolute; left: 0; display: flex; gap: .5rem; }
+  .btn-outline {
+    display: inline-flex; align-items: center; gap: .4rem;
+    height: 2.25rem; padding: 0 .75rem;
+    border: 1px solid hsl(var(--input)); border-radius: calc(var(--radius) - 2px);
+    background: transparent; color: hsl(var(--foreground));
+    font-size: .875rem; font-weight: 500; cursor: pointer;
+  }
+  .btn-outline:hover { background: hsl(var(--accent)); }
+  .btn-icon { width: 2.25rem; padding: 0; justify-content: center; }
+  .toggle-group { display: inline-flex; }
+  .toggle-group .btn-outline { border-radius: calc(var(--radius) - 2px); }
+  .toggle-group .btn-outline + .btn-outline { margin-left: -1px; }
+  .toggle-group .on { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
+
+  /* ===== Cartes du wall (Card + CardContent p-6 de ListPostCard.tsx) ===== */
+  .post-card {
+    background: hsl(var(--card)); color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border)); border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    scroll-margin-top: 6rem;              /* compense le TopBar sticky au scroll */
+  }
+  .post-card-head { display: flex; align-items: center; margin-bottom: 1rem; }
+  .post-avatar {
+    width: 2.5rem; height: 2.5rem; border-radius: 9999px; margin-right: .75rem;
+    background: hsl(var(--primary)); color: hsl(var(--primary-foreground));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.125rem; font-weight: 500;
+  }
+  .post-author { font-weight: 600; margin: 0; }
+  .post-date { font-size: .875rem; color: hsl(var(--muted-foreground)); margin: 0; }
+  .post-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 .5rem; }
+  .post-message {
+    font-size: 1.125rem; margin: 1rem 0 0; text-align: justify;
+    white-space: pre-wrap;
+  }
+  /* PostMediaFrame : cadre 4:3 noir, blocs gap 4 px */
+  .media-frame {
+    display: flex; gap: 4px; width: 100%; aspect-ratio: 4 / 3;
+    background: #000; border-radius: calc(var(--radius) - 2px);
+    overflow: hidden; margin-top: 1rem;
+  }
+  .media-frame .tile { height: 100%; }
+  .g1 { background: linear-gradient(160deg, #5b8bc0, #22344d); }
+  .g2 { background: linear-gradient(200deg, #c96d4f, #4d2b1f); }
+  .g3 { background: linear-gradient(120deg, #7fae7a, #2c422a); }
+  .g4 { background: linear-gradient(140deg, #b9a56a, #4a4127); }
+  .g5 { background: linear-gradient(80deg, #8d7fb8, #37304d); }
+
+  /* Surbrillance de la carte ciblée (clic sur une date) */
+  .post-card.flash {
+    box-shadow: 0 0 0 2px hsl(var(--ring)),
+                0 4px 6px -1px rgb(0 0 0 / .1);
+    animation: halo 1.6s ease;
+  }
+  @keyframes halo {
+    0%   { box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 0 hsl(var(--ring) / .35); }
+    70%  { box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 14px hsl(var(--ring) / 0); }
+    100% { box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 14px hsl(var(--ring) / 0); }
+  }
+
+  /* ===== Le calendrier : petit, statique, collé au bord gauche du fil de posts ===== */
+  .calendar {
+    position: fixed; top: 6rem; z-index: 20;
+    /* Bord gauche exact de la colonne du wall moins la largeur du calendrier
+       et un petit écart : 50% - 384 (moitié de max-w-3xl) - 264 (calendrier)
+       - 24 (gap) = 50% - 672px. S'il n'y a pas la place (fenêtre étroite),
+       left est borné au bord de la fenêtre. Suit la colonne au resize. */
+    left: max(1.5rem, calc(50% - 672px));
+    width: 264px; padding: 1rem;
+    background: hsl(var(--card)); color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border)); border-radius: var(--radius);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1);
+  }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+  .cal-title { font-size: .9rem; font-weight: 600; text-transform: capitalize; }
+  .cal-chev {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.75rem; height: 1.75rem; padding: 0;
+    border: 0; border-radius: calc(var(--radius) - 2px);
+    background: transparent; color: hsl(var(--foreground)); cursor: pointer;
+  }
+  .cal-chev:hover:not(:disabled) { background: hsl(var(--accent)); }
+  .cal-chev:disabled { opacity: .3; cursor: default; }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 2px; justify-items: center;
+  }
+  .cal-wd {
+    height: 1.375rem; display: flex; align-items: center;
+    font-size: .75rem; font-weight: 500; color: hsl(var(--muted-foreground));
+  }
+  .day {
+    width: 2rem; height: 2rem; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 9999px;                  /* jour = pastille ronde */
+    background: transparent; color: hsl(var(--foreground));
+    font-size: .875rem; cursor: default;
+  }
+  .day.blank { visibility: hidden; }
+  .day.off { color: hsl(var(--muted-foreground) / .45); }   /* hors voyage */
+  /* Jour avec posts : point discret dans la couleur du thème */
+  .day.has {
+    position: relative;
+    font-weight: 600; cursor: pointer;
+  }
+  .day.has::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%;
+    transform: translateX(-50%);
+    width: 5px; height: 5px; border-radius: 9999px;
+    background: hsl(var(--primary));
+  }
+  .day.has:hover { background: hsl(var(--accent)); }
+  /* Jour courant (post le plus haut visible) : anneau couleur du thème */
+  .day.current {
+    border: 2px solid hsl(var(--primary));
+    background: hsl(var(--accent));
+    font-weight: 700;
+  }
+  .day.current::after { display: none; }   /* l'anneau remplace le point */
+  .cal-hint {
+    margin: .75rem 0 0; font-size: .75rem; line-height: 1.4;
+    color: hsl(var(--muted-foreground));
+  }
+  .cal-status { margin: .5rem 0 0; font-size: .75rem; font-weight: 600; min-height: 1em; }
+
+  .mocknote {
+    margin-top: 2rem; font-size: .875rem; line-height: 1.6;
+    color: hsl(var(--muted-foreground));
+  }
+  .mocknote code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .8rem; background: hsl(var(--muted)); padding: .1rem .3rem; border-radius: .25rem;
+  }
+</style>
+</head>
+<body>
+
+  <!-- TopBar — reproduction de src/components/TopBar.tsx (desktop) -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <!-- Compass (lucide) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+      </svg>
+      <h1 class="app-name">Matka</h1>
+    </div>
+    <button class="journey-select" type="button">
+      Norvège — Lofoten &amp; Senja
+      <!-- ChevronDown (lucide) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:.5rem;">
+        <path d="m6 9 6 6 6-6"/>
+      </svg>
+    </button>
+    <div class="avatar">LS</div>
+  </header>
+
+  <!-- Calendrier : petit, un mois entier, collé au bord gauche du fil de posts -->
+  <aside class="calendar" aria-label="Calendrier du voyage">
+    <div class="cal-head">
+      <button class="cal-chev" id="cal-prev" type="button" aria-label="Mois précédent">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="cal-title" id="cal-title">avril 2025</span>
+      <button class="cal-chev" id="cal-next" type="button" aria-label="Mois suivant">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <p class="cal-hint">Jour pointé = publications ce jour-là ; jour entouré = là où vous êtes dans le fil (le mois affiché suit). Cliquez une date pour y aller.</p>
+    <p class="cal-status" id="cal-status"></p>
+  </aside>
+
+  <!-- Le wall, centré max-w-3xl ; le calendrier fixe se colle à son bord gauche -->
+  <div class="page">
+    <main class="wall">
+      <div class="tabslist" role="tablist">
+        <button class="tabtrigger on" type="button">Publications publiées</button>
+        <button class="tabtrigger" type="button">Brouillons</button>
+      </div>
+
+      <div class="settings-row">
+        <div class="settings-left">
+          <!-- SortToggle : bouton icône outline (ArrowDownWideNarrow) -->
+          <button class="btn-outline btn-icon" type="button" title="Du plus récent au plus ancien">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/>
+            </svg>
+          </button>
+          <button class="btn-outline" type="button">1 colonne</button>
+        </div>
+        <!-- ViewToggle : toggle group outline, vue liste active -->
+        <div class="toggle-group" role="group">
+          <button class="btn-outline on" type="button" title="Vue liste">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+          <button class="btn-outline" type="button" title="Vue grille">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/>
+              <rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+            </svg>
+          </button>
+          <button class="btn-outline" type="button" title="Vue carte">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="wall"></div>
+
+      <p class="mocknote">
+        Mockup statique — reproduction du rendu réel de l'app (thème vanilla clair de
+        <code>src/globals.css</code>, tokens <code>tailwind.config.ts</code>, cartes
+        <code>ListPostCard</code> : <code>Card rounded-lg shadow-md</code>, <code>CardContent p-6</code>,
+        avatar <code>bg-primary</code>, cadre média 4:3). Le calendrier est un petit mois fixe, collé au
+        bord gauche de la colonne du wall (<code>left: max(1.5rem, calc(50% - 672px))</code> : il suit
+        la colonne au resize et se rabat au bord de la fenêtre s'il n'y a pas la place), borné aux
+        mois du voyage (28 mars → 3 mai 2025, 17 posts sur 10 journées) ; les jours avec posts portent
+        un point discret, le jour du post le plus haut visible porte l'anneau couleur du thème (il
+        suit le scroll du wall, et le mois affiché bascule automatiquement quand ce jour change de
+        mois — le feuilletage manuel n'est parasité par aucun scroll qui ne change pas de mois), et
+        un clic décale le wall jusqu'au premier post du jour, qui reçoit un
+        anneau ~1,6 s. Les photos sont des dégradés factices pour rester
+        self-contained. Mobile volontairement hors périmètre pour l'instant.
+      </p>
+    </main>
+  </div>
+
+<script>
+/* ===== Données de démo : posts publiés du voyage ===== */
+var POSTS = {
+  '2025-03-28': 1, '2025-03-30': 1,
+  '2025-04-02': 3, '2025-04-05': 1, '2025-04-08': 2,
+  '2025-04-14': 1, '2025-04-20': 4, '2025-04-26': 1,
+  '2025-05-01': 2, '2025-05-03': 1
+};
+var FIRST = '2025-03-28', LAST = '2025-05-03';
+var MONTHS = [
+  { y: 2025, m: 2, label: 'mars 2025' },
+  { y: 2025, m: 3, label: 'avril 2025' },
+  { y: 2025, m: 4, label: 'mai 2025' }
+];
+var WD = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];   /* locale fr, semaine lundi */
+var MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+                 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+
+/* '2025-04-20' → '20 avril 2025' (info-bulle, format PPP de la spec) */
+function frDate(key) {
+  var p = key.split('-');
+  return Number(p[2]) + ' ' + MONTHS_FR[Number(p[1]) - 1] + ' ' + p[0];
+}
+
+/* Les cartes du wall — jours du plus récent au plus ancien, et au sein d'un
+   jour heures décroissantes (tri desc de l'app) : la première carte d'un jour
+   dans le tableau est donc l'ancre du clic calendrier. Dates 'PPP p' fr. */
+var CARDS = [
+  { d: '2025-05-03', date: '3 mai 2025 à 17:20', title: 'Dernier soir à Oslo', msg: "La ville fait presque étrange après trois semaines de fjords. Dernier repas norvégien, premiers bilans.", tiles: [['g2', 3], ['g4', 2]] },
+  { d: '2025-05-01', date: '1er mai 2025 à 20:40', title: 'Crêpes au coin du poêle', msg: "Soirée pluie, cartes, et la recette de Karo pour les crêpes de sarrasin.", tiles: [['g4', 5]] },
+  { d: '2025-05-01', nth: 2, date: '1er mai 2025 à 09:12', title: 'Fête du travail, fjord du travail', msg: "Personne sur le sentier de Segla, tout le pays est en week-end. Nous avons eu la montagne pour nous.", tiles: [['g1', 2], ['g1', 3], ['g3', 2]] },
+  { d: '2025-04-26', date: '26 avril 2025 à 11:05', title: "Route des aigles", msg: "Tunnel en lacets jusqu'à Geiranger. La falaise d'Ørnesvingen vue d'en haut.", tiles: [['g5', 3], ['g1', 2]] },
+  { d: '2025-04-20', date: '20 avril 2025 à 19:32', title: 'Dernière lumière, Kvanndalen', msg: "Le couchant rose sur les crêtes, la cabane déjà en mode nuit. Dernier jour de neige.", tiles: [['g1', 3], ['g3', 2]] },
+  { d: '2025-04-20', nth: 2, date: '20 avril 2025 à 15:47', title: 'Soupe au saumon, cabane 3', msg: "Le poêle à peine éteint qu'on redescend. Photo du groupe devant la porte.", tiles: [['g4', 3], ['g2', 2]] },
+  { d: '2025-04-20', nth: 3, date: '20 avril 2025 à 11:05', title: 'Casse-croûte au col', msg: "Thermos de thé, pain de seigle et fromage brun. Le vent attend qu'on finisse pour redémarrer.", tiles: [['g4', 4]] },
+  { d: '2025-04-20', nth: 4, date: '20 avril 2025 à 08:30', title: 'Kvanndalen sous la neige', msg: "Nuit en cabane, réveil sous 20 cm de fraîche. Montée au col avant le dégel.", tiles: [['g1', 2], ['g1', 3], ['g3', 3], ['g1', 2]] },
+  { d: '2025-04-14', date: '14 avril 2025 à 16:22', title: 'Plage de Bø, vent force 7', msg: "Le sable vole à l'horizontale, les surfeurs restent au sol. Pause thé dans la voiture.", tiles: [['g1', 5]] },
+  { d: '2025-04-08', date: '8 avril 2025 à 19:03', title: 'Soleil de minuit, premier round', msg: "Il est 19 h et le soleil ne pense déjà plus à se coucher. Pano depuis le ponton.", tiles: [['g5', 4], ['g5', 3]] },
+  { d: '2025-04-08', nth: 2, date: '8 avril 2025 à 06:45', title: 'Nyksund sous la brume', msg: "Village de pêcheurs abandonné, quais moussus. Personne à l'horizon avant midi.", tiles: [['g3', 2], ['g1', 3]] },
+  { d: '2025-04-05', date: '5 avril 2025 à 10:15', title: 'Traversée Moskenes–Bodø', msg: "Trois heures de ferry, des orques signalées au large. On n'a vu que des macareux.", tiles: [['g1', 3], ['g1', 2], ['g1', 3]] },
+  { d: '2025-04-02', date: '2 avril 2025 à 21:10', title: 'Aurores, tentative 2', msg: "Cette fois c'était la bonne : rideau vert au-dessus du village, 40 minutes d'appareil photo gelé.", tiles: [['g5', 5]] },
+  { d: '2025-04-02', nth: 2, date: '2 avril 2025 à 13:40', title: 'Reine à marée basse', msg: "Les pieux de séchage du cabillaud sortent de l'eau, odeur de sel et de poisson sec.", tiles: [['g2', 2], ['g3', 3], ['g4', 2]] },
+  { d: '2025-04-02', nth: 3, date: '2 avril 2025 à 07:50', title: 'Réveil dans la brume', msg: "Le village émerge lentement des nuages, café sur le ponton en regardant tout se dévoiler.", tiles: [['g3', 4]] },
+  { d: '2025-03-30', date: '30 mars 2025 à 18:42', title: 'Arrivée à Svolvær', msg: "Loc récupérée, 200 km de neige fondue jusqu'au gîte. Premier fjord, première photo.", tiles: [['g1', 2], ['g1', 3]] },
+  { d: '2025-03-28', date: '28 mars 2025 à 07:55', title: 'Décollage', msg: "Vol Paris → Oslo → Bodø. Le sac de trek pèse ses 14 kg, tout va bien.", tiles: [['g4', 5]] }
+];
+
+function byId(id) { return document.getElementById(id); }
+
+function keyOf(y, m, d) {
+  return y + '-' + ('0' + (m + 1)).slice(-2) + '-' + ('0' + d).slice(-2);
+}
+
+/* ===== Le wall ===== */
+function makeCard(p) {
+  var card = document.createElement('article');
+  card.className = 'post-card';
+  card.id = 'card-' + p.d + (p.nth ? '-' + p.nth : '');
+  card.setAttribute('data-day', p.d);   /* jour courant : repérage au scroll */
+
+  var head = document.createElement('div');
+  head.className = 'post-card-head';
+  var av = document.createElement('div');
+  av.className = 'post-avatar';
+  av.textContent = 'LS';
+  var who = document.createElement('div');
+  var name = document.createElement('p');
+  name.className = 'post-author';
+  name.textContent = 'Lucas Saintier';
+  var date = document.createElement('p');
+  date.className = 'post-date';
+  date.textContent = p.date;
+  who.appendChild(name);
+  who.appendChild(date);
+  head.appendChild(av);
+  head.appendChild(who);
+
+  var title = document.createElement('h3');
+  title.className = 'post-title';
+  title.textContent = p.title;
+
+  var frame = document.createElement('div');
+  frame.className = 'media-frame';
+  var total = 0, i;
+  for (i = 0; i < p.tiles.length; i++) total += p.tiles[i][1];
+  for (i = 0; i < p.tiles.length; i++) {
+    var tile = document.createElement('div');
+    tile.className = 'tile ' + p.tiles[i][0];
+    tile.style.flexGrow = String(p.tiles[i][1]);
+    tile.style.flexBasis = '0';
+    frame.appendChild(tile);
+  }
+
+  var msg = document.createElement('p');
+  msg.className = 'post-message';
+  msg.textContent = p.msg;
+
+  card.appendChild(head);
+  card.appendChild(title);
+  card.appendChild(frame);
+  card.appendChild(msg);
+  return card;
+}
+
+function renderWall() {
+  var host = byId('wall');
+  for (var i = 0; i < CARDS.length; i++) host.appendChild(makeCard(CARDS[i]));
+}
+
+/* ===== Le calendrier ===== */
+var currentMonth = MONTHS.length - 1;   /* défaut : mois du post le plus récent */
+var currentKey = null;                  /* jour du post le plus haut visible */
+
+function findDayBtn(key) {
+  if (!key) return null;
+  var grid = byId('cal-grid').children;
+  for (var i = 0; i < grid.length; i++) {
+    if (grid[i].getAttribute && grid[i].getAttribute('data-key') === key) return grid[i];
+  }
+  return null;
+}
+
+/* Index du mois (MONTHS) contenant une clé 'YYYY-MM-DD', -1 si hors voyage */
+function monthIndexOf(key) {
+  var ym = key.slice(0, 7);
+  for (var i = 0; i < MONTHS.length; i++) {
+    if (keyOf(MONTHS[i].y, MONTHS[i].m, 1).slice(0, 7) === ym) return i;
+  }
+  return -1;
+}
+
+/* Pose l'anneau « jour courant » ; auto-switch : quand le jour courant change
+   RÉELLEMENT de mois (par rapport au jour courant précédent, pas par rapport
+   au mois affiché), le calendrier bascule sur ce mois pour que l'anneau reste
+   visible. Un scroll qui ne change pas le jour courant, ou qui le change dans
+   le même mois, ne bascule jamais l'affichage : le feuilletage manuel aux
+   chevrons n'est donc pas parasité — pas besoin de délai de grâce. */
+function setCurrent(key) {
+  if (!key || key === currentKey) return;
+  var prevMonth = currentKey ? monthIndexOf(currentKey) : -1;
+  var old = findDayBtn(currentKey);
+  if (old) old.classList.remove('current');
+  currentKey = key;
+  var mi = monthIndexOf(key);
+  if (mi >= 0 && mi !== prevMonth && mi !== currentMonth) {
+    currentMonth = mi;
+    renderMonth();                       /* re-applique l'anneau au passage */
+  } else {
+    var btn = findDayBtn(key);
+    if (btn) btn.classList.add('current');
+  }
+}
+
+/* Premier post visible = première carte (ordre d'affichage) dont le bas
+   descend sous la ligne de lecture (sous le TopBar sticky ~96 px). */
+function topVisibleKey() {
+  var cards = byId('wall').children;
+  for (var i = 0; i < cards.length; i++) {
+    if (cards[i].getBoundingClientRect().bottom > 96) {
+      return cards[i].getAttribute('data-day');
+    }
+  }
+  return null;
+}
+
+function renderMonth() {
+  var grid = byId('cal-grid');
+  var m = MONTHS[currentMonth];
+  byId('cal-title').textContent = m.label;
+  byId('cal-prev').disabled = currentMonth === 0;
+  byId('cal-next').disabled = currentMonth === MONTHS.length - 1;
+
+  grid.innerHTML = '';
+  var wdi, i;
+  for (wdi = 0; wdi < 7; wdi++) {
+    var wd = document.createElement('div');
+    wd.className = 'cal-wd';
+    wd.textContent = WD[wdi];
+    grid.appendChild(wd);
+  }
+
+  var lead = (new Date(m.y, m.m, 1).getDay() + 6) % 7;      /* lundi = 0 */
+  var days = new Date(m.y, m.m + 1, 0).getDate();
+  var cells = Math.ceil((lead + days) / 7) * 7;
+
+  for (i = 0; i < cells; i++) {
+    var d = i - lead + 1;
+    var day = document.createElement('button');
+    day.type = 'button';
+    day.className = 'day';
+    if (d < 1 || d > days) {
+      day.classList.add('blank');
+      day.textContent = ' ';
+      day.tabIndex = -1;
+    } else {
+      var key = keyOf(m.y, m.m, d);
+      day.textContent = String(d);
+      day.setAttribute('data-key', key);
+      var n = POSTS[key];
+      if (n) {
+        day.classList.add('has');
+        day.title = frDate(key) + ' — ' + n + (n > 1 ? ' posts' : ' post');
+        day.setAttribute('aria-label', day.title);
+        day.addEventListener('click', pickDate(key));
+      } else if (key < FIRST || key > LAST) {
+        day.classList.add('off');
+        day.disabled = true;
+      }
+      if (key === currentKey) day.classList.add('current');   /* re-render : remet l'anneau */
+    }
+    grid.appendChild(day);
+  }
+}
+
+/* ===== Clic sur une date : scroll jusqu'au premier post du jour + anneau ===== */
+function pickDate(key) {
+  return function () {
+    var target = byId('card-' + key);
+    if (!target) return;
+    byId('cal-status').textContent = '→ ' + key;
+    setCurrent(key);                      /* l'anneau « où je suis » suit le clic */
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.classList.remove('flash');
+    void target.offsetWidth;               /* relance l'animation */
+    target.classList.add('flash');
+    window.setTimeout(function () { target.classList.remove('flash'); }, 1700);
+  };
+}
+
+byId('cal-prev').addEventListener('click', function () {
+  if (currentMonth > 0) { currentMonth--; renderMonth(); }
+});
+byId('cal-next').addEventListener('click', function () {
+  if (currentMonth < MONTHS.length - 1) { currentMonth++; renderMonth(); }
+});
+
+renderWall();
+renderMonth();
+setCurrent(topVisibleKey() || CARDS[0].d);   /* au chargement : post du haut */
+
+/* Le scroll du wall déplace l'anneau « jour courant » sur le post le plus haut
+   visible. Boucle volontairement directe : 17 cartes, coût nul ; dans l'app
+   réelle, throttler via requestAnimationFrame ou un IntersectionObserver. */
+window.addEventListener('scroll', function () {
+  var key = topVisibleKey();
+  if (key) setCurrent(key);
+});
+
+/* Auto-test utilisé uniquement en vérification headless (file://...#test) :
+   simule un clic sur le 20 avril et laisse les marques vérifiables dans le DOM. */
+if (window.location.hash === '#test') {
+  currentMonth = 1;
+  renderMonth();
+  pickDate('2025-04-20')();
+  document.title = 'TEST-RAN';
+}
+</script>
+</body>
+</html>
