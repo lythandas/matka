@@ -41,6 +41,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { showSuccess, showError } from '@/utils/toast'; // Import showSuccess and showError
 import ListPostCard from '@/components/ListPostCard'; // Import ListPostCard
 import PostActions from '@/components/PostActions'; // Import PostActions
+import PostCalendarPanel from '@/components/PostCalendarPanel'; // Calendar navigation panel
+import { dateKey } from '@/utils/postDates';
 
 const Index = () => {
   const { t } = useTranslation();
@@ -73,6 +75,12 @@ const Index = () => {
   const [mapRefreshKey, setMapRefreshKey] = useState(0); // New state to force map refresh
 
   const [postIdToScrollTo, setPostIdToScrollTo] = useState<string | null>(null); // New state for scrolling
+
+  // Calendar navigation (spec: 2026-11-27-calendar-post-navigation):
+  // day of the topmost visible post (follows the wall scroll) and temporary
+  // highlight ring on the post targeted by a calendar date click.
+  const [currentDateKey, setCurrentDateKey] = useState<string | null>(null);
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null);
 
   const fetchJourneyCollaborators = useCallback(async (journeyId: string) => {
     if (!user || !user.id || !token) {
@@ -323,6 +331,57 @@ const Index = () => {
   const displayedPosts = sortedPosts;
   const hasPostsWithCoordinates = posts.some(post => post.coordinates);
 
+  // Track the topmost visible post for the calendar's "current day" marker:
+  // the first card (in display order) whose bottom passes below the reading
+  // line — TopBar (~72px: py-4 + h-10 content) + ~24px margin, cf. mockup.
+  // Window scroll is throttled with requestAnimationFrame (spec, Decisions).
+  const READ_LINE_PX = 96;
+
+  useEffect(() => {
+    if (viewMode !== 'list') return; // list cards carry the `post-<id>` anchors
+    const compute = () => {
+      for (const post of displayedPosts) {
+        const element = document.getElementById(`post-${post.id}`);
+        if (element && element.getBoundingClientRect().bottom > READ_LINE_PX) {
+          setCurrentDateKey(dateKey(post.created_at));
+          return;
+        }
+      }
+    };
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        compute();
+      });
+    };
+    compute(); // initial position: topmost post on load
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [displayedPosts, viewMode]);
+
+  // Calendar date click: switch to list view if needed, then reuse the
+  // existing postIdToScrollTo effect (scrollIntoView + TopBar compensation).
+  // The current-day ring is set immediately; the confirmation scroll follows.
+  const handleCalendarDateSelect = useCallback((key: string, postId: string) => {
+    if (viewMode !== 'list') setViewMode('list');
+    setCurrentDateKey(key);
+    setPostIdToScrollTo(postId);
+    setHighlightedPostId(postId);
+  }, [viewMode]);
+
+  // Highlight ring on the targeted card: removed after ~1.6 s (mockup timing);
+  // re-clicking another date resets the timer (single active ring).
+  useEffect(() => {
+    if (!highlightedPostId) return;
+    const timer = setTimeout(() => setHighlightedPostId(null), 1600);
+    return () => clearTimeout(timer);
+  }, [highlightedPostId]);
+
   const canCreatePostUI = isAuthenticated && selectedJourney && (user?.id === selectedJourney.user_id || user?.isAdmin || journeyCollaborators.some(collab => collab.user_id === user?.id && collab.can_publish_posts));
   const canCreateJourneyUI = isAuthenticated;
 
@@ -408,6 +467,10 @@ const Index = () => {
                           onPostDeleted={handleDeletePost}
                           journeyOwnerId={selectedJourney.user_id}
                           journeyCollaborators={journeyCollaborators}
+                          className={cn(
+                            post.id === highlightedPostId &&
+                              'ring-2 ring-primary ring-offset-2 ring-offset-background',
+                          )}
                         />
                       );
                     })}
@@ -550,6 +613,16 @@ const Index = () => {
   return (
     <div className="w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col flex-grow h-full max-w-3xl">
       {mainContent}
+
+      {/* Calendar navigation: fixed panel glued to this column's left edge
+          (desktop only, hidden below xl); the wall stays centered. */}
+      {isAuthenticated && selectedJourney && displayedPosts.length > 0 && (
+        <PostCalendarPanel
+          posts={displayedPosts}
+          currentDateKey={currentDateKey}
+          onDateSelect={handleCalendarDateSelect}
+        />
+      )}
 
       {/* Floating Action Button for Mobile */}
       {isMobile && isAuthenticated && selectedJourney && canCreatePostUI && (
