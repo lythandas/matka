@@ -72,12 +72,13 @@ function requestRatio(
  * The frame re-tiles as ratios land; nothing waits on a ready flag.
  */
 export function useMediaRatios(urls: string[]): number[] {
-  const [, setMeasured] = React.useState(0);
+  const [measured, setMeasured] = React.useState(0);
   const urlsKey = urls.join(URL_SEPARATOR);
 
   // Keyed on the joined URLs (not the array identity) so a parent re-render
   // with the same photos keeps the same array reference, and blocks never
-  // shuffle while loading.
+  // shuffle while loading. `measured` bumps whenever a ratio lands, so the
+  // memo re-runs and the returned array picks up the cached value.
   const ratios = React.useMemo(
     () =>
       urls.length === 0
@@ -85,7 +86,11 @@ export function useMediaRatios(urls: string[]): number[] {
         : urlsKey
             .split(URL_SEPARATOR)
             .map((url) => ratioCache.get(url) ?? FRAME_RATIO),
-    [urlsKey, urls.length],
+    // `measured` looks unused here but is the signal that the shared
+    // ratioCache gained an entry — removing it freezes the array at
+    // FRAME_RATIO forever.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [urlsKey, urls.length, measured],
   );
 
   React.useEffect(() => {
