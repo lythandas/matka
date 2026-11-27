@@ -25,7 +25,10 @@ in `src/components/ui/` are not edited — wrap them instead).
 - `backend/src/routes/` — Fastify routes: `journeyRoutes`, `postRoutes`,
   `mediaRoutes`, `publicJourneyRoutes`, `userRoutes`, `protectedUserRoutes`.
 - `docs/superpowers/` — design specs and plans; `docs/mockups/` — HTML mockups.
-  `docs/mockups/post-media-fill-options.html` is the reference for the media frame.
+  `docs/mockups/post-media-fill-options.html` is the reference for the media frame;
+  its option-B geometry is historical (it still implements the old "natural row
+  height closest to the frame" cost) — `src/utils/mediaLayout.ts` and the spec
+  are authoritative.
 
 ## Checks
 

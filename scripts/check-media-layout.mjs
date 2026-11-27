@@ -51,7 +51,11 @@ for (const width of [1200, 592, 480, 375, 300]) {
     const coverage = blocks.reduce((s, b) => s + b.w * b.h, 0) / (width * height);
     assert.ok(coverage >= 0.9, `couverture ${(coverage * 100).toFixed(1)}% w=${width} n=${ratios.length}`);
     // un bloc ne s'écarte pas trop du format réel de sa photo : sinon le
-    // recadrage object-cover mange la photo même si le pavage est propre
+    // recadrage object-cover mange la photo même si le pavage est propre.
+    // NB : borne valable pour la distribution balayée ici (ratios
+    // 0.5–2.33), pas un invariant global — sur des ratios 0.3–3.0,
+    // crop-min atteint légitimement ~3.3x (n=3, [2.883, 2.233, 0.439]) :
+    // inhérent au crop-min sur un ensemble surtout portrait, pas un défaut.
     if (ratios.length >= 2)
       blocks.forEach((b, i) => {
         const dev = (b.w / b.h) / ratios[i];
