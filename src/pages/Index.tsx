@@ -618,6 +618,7 @@ const Index = () => {
           (desktop only, hidden below xl); the wall stays centered. */}
       {isAuthenticated && selectedJourney && displayedPosts.length > 0 && (
         <PostCalendarPanel
+          key={selectedJourney.id} // reset internal month state on journey switch
           posts={displayedPosts}
           currentDateKey={currentDateKey}
           onDateSelect={handleCalendarDateSelect}
