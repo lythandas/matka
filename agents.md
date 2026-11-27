@@ -29,6 +29,11 @@ in `src/components/ui/` are not edited — wrap them instead).
   its option-B geometry is historical (it still implements the old "natural row
   height closest to the frame" cost) — `src/utils/mediaLayout.ts` and the spec
   are authoritative.
+- `docs/mockups/calendar-post-navigation.html` + spec/plan
+  `2026-11-27-calendar-post-navigation*` — calendar navigation by post date:
+  popover from the settings row (option C), `post.created_at` is the travel date
+  (author-set), dot markers, click scrolls to the day's first post via the
+  existing `postIdToScrollTo` effect. Spec/plan only — not implemented yet.
 
 ## Checks
 

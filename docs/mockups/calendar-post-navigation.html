@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matka — calendrier de navigation par date autour du voyage</title>
+<style>
+  /* Thème repris de src/globals.css (dark) + Card/ListPostCard (rounded-lg, border, p-6) */
+  :root {
+    --background: hsl(222.2 84% 4.9%);
+    --card: hsl(222.2 47.4% 11.2%);
+    --foreground: hsl(210 40% 98%);
+    --muted-foreground: hsl(215 20.2% 65.1%);
+    --border: hsl(217.2 32.6% 17.5%);
+    --primary: hsl(224.3 76.3% 48%);
+    --primary-soft: hsla(224.3 76.3% 48%, .22);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    padding: 40px 24px 80px;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 8px; }
+  .intro { color: var(--muted-foreground); max-width: 820px; line-height: 1.6; margin-top: 0; }
+  .intro code, p.note code { color: #a5d6ff; }
+
+  .option { margin-top: 56px; }
+  .option > h2 { font-size: 1.15rem; margin: 0 0 4px; }
+  .option .tag {
+    font-size: .72rem; font-weight: 700; color: #fff; background: var(--primary);
+    border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: 2px;
+  }
+  .option .tag.alt { background: transparent; border: 1px solid var(--border); color: var(--muted-foreground); }
+  .option p.note { color: var(--muted-foreground); font-size: .88rem; line-height: 1.55; max-width: 820px; }
+  .option p.note b { color: var(--foreground); }
+  .sub { font-size: .8rem; color: var(--muted-foreground); text-transform: uppercase;
+         letter-spacing: .06em; margin: 24px 0 10px; }
+
+  /* ===== Fausse fenêtre / TopBar ===== */
+  .frame {
+    border: 1px solid var(--border); border-radius: .5rem; overflow: hidden;
+    background: var(--background); margin: 16px 0;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,.4);
+  }
+  .fakebar {
+    height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 16px;
+    background: var(--card); border-bottom: 1px solid var(--border);
+    font-size: .9rem;
+  }
+  .logo { font-weight: 800; letter-spacing: .04em; color: var(--primary); }
+  .chip {
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px;
+    font-size: .8rem; color: var(--muted-foreground); background: var(--background);
+  }
+
+  /* ===== Calendrier (grille react-day-picker stylée aux tokens shadcn) ===== */
+  .cal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: .5rem; padding: 12px; width: 308px;
+  }
+  .cal.wide { width: 100%; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .cal-title { font-weight: 600; font-size: .95rem; text-transform: capitalize; }
+  .chev {
+    background: transparent; border: 1px solid var(--border); color: var(--foreground);
+    border-radius: .375rem; width: 28px; height: 28px; cursor: pointer; font-size: .9rem;
+  }
+  .chev[disabled] { opacity: .3; cursor: default; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .wd { text-align: center; font-size: .68rem; color: var(--muted-foreground); height: 22px; line-height: 22px; }
+  .day {
+    position: relative; height: 38px; border: 0; background: transparent;
+    color: var(--foreground); border-radius: .375rem; font-size: .85rem;
+    cursor: default; font-family: inherit; padding: 0;
+  }
+  .day.blank { visibility: hidden; }
+  .day.out { opacity: .3; }            /* hors étendue du voyage */
+  .day.has { cursor: pointer; font-weight: 600; }
+  .day.has:hover { background: var(--primary-soft); }
+  .day.has::after {                    /* point sous le numéro */
+    content: ''; position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%);
+    width: 5px; height: 5px; border-radius: 50%; background: var(--primary);
+  }
+  .cal.compact .day { height: 30px; font-size: .78rem; }
+  .cal.compact .day.has::after { bottom: 2px; width: 4px; height: 4px; }
+
+  /* Variantes de marquage (section dédiée) */
+  .grid-count .day.has::after { display: none; }
+  .cnt {
+    position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
+    min-width: 16px; height: 14px; line-height: 14px; padding: 0 4px;
+    background: var(--primary); color: #fff; border-radius: 999px;
+    font-size: .6rem; font-weight: 700;
+  }
+  .grid-fill .day.has { background: var(--primary-soft); }
+  .grid-fill .day.has::after { display: none; }
+
+  /* ===== Rangée de réglages du wall (toggles existants) ===== */
+  .toolbar {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    gap: 8px; height: 40px; margin: 8px 0 16px;
+  }
+  .tgroup { position: absolute; left: 0; display: flex; gap: 8px; }
+  .tgroup.right { left: auto; right: 0; }
+  .tbtn {
+    display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px;
+    border: 1px solid var(--border); border-radius: .5rem; background: transparent;
+    color: var(--foreground); font-size: .8rem; font-family: inherit; cursor: pointer;
+  }
+  .tbtn:hover { background: var(--primary-soft); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: .5rem; overflow: hidden; }
+  .seg button {
+    height: 32px; padding: 0 12px; background: transparent; border: 0;
+    color: var(--muted-foreground); font-size: .8rem; cursor: pointer; font-family: inherit;
+  }
+  .seg button.on { background: var(--primary); color: #fff; }
+
+  /* Popover ouvert sous le bouton calendrier */
+  .popwrap { position: relative; display: inline-block; }
+  .popwrap .cal {
+    position: absolute; top: 40px; left: 0; z-index: 5;
+    box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  }
+
+  /* ===== Layout B : panneau latéral ===== */
+  .layout-b { display: flex; gap: 24px; align-items: flex-start; margin-top: 16px; }
+  .layout-b .wallcol { flex: 1; min-width: 0; max-width: 640px; }
+
+  /* ===== Le wall (cards façon ListPostCard) ===== */
+  .card {
+    position: relative; background: var(--card); border: 1px solid var(--border);
+    border-radius: .5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.4);
+    padding: 24px; margin-bottom: 16px;
+  }
+  .card-head { display: flex; align-items: center; margin-bottom: 16px; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 9999px; margin-right: 12px;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem;
+  }
+  .author { font-weight: 600; font-size: .9rem; }
+  .date { font-size: .8rem; color: var(--muted-foreground); }
+  .title { font-size: 1.1rem; font-weight: 700; margin: 0 0 8px; }
+  .message { font-size: .95rem; line-height: 1.5; color: var(--foreground); margin: 12px 0 0; }
+  .media {
+    display: flex; gap: 4px; width: 100%; aspect-ratio: 4 / 3;
+    border-radius: .375rem; overflow: hidden; background: #000;
+  }
+  .tile { height: 100%; }
+  .g1 { background: linear-gradient(160deg, #5b8bc0, #22344d); }
+  .g2 { background: linear-gradient(200deg, #c96d4f, #4d2b1f); }
+  .g3 { background: linear-gradient(120deg, #7fae7a, #2c422a); }
+  .g4 { background: linear-gradient(80deg, #b9a56a, #4a4127); }
+  .g5 { background: linear-gradient(140deg, #8d7fb8, #37304d); }
+
+  /* Cible du scroll : anneau + halo, ~1,6 s puis fondu */
+  .card.flash {
+    outline: 2px solid var(--primary); outline-offset: 3px;
+    animation: halo 1.6s ease;
+  }
+  @keyframes halo {
+    0%   { box-shadow: 0 0 0 0 hsla(224.3, 76.3%, 48%, .55); }
+    70%  { box-shadow: 0 0 0 18px hsla(224.3, 76.3%, 48%, 0); }
+    100% { box-shadow: 0 0 0 18px hsla(224.3, 76.3%, 48%, 0); }
+  }
+
+  .scroller {
+    height: 460px; overflow-y: auto; border: 1px solid var(--border);
+    border-radius: .5rem; padding: 16px; background: var(--background);
+  }
+  .demo { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-top: 16px; }
+  .demo .grow { flex: 1; min-width: 420px; max-width: 640px; }
+
+  /* ===== Mobile ===== */
+  .phone {
+    width: 375px; border: 8px solid #111; border-radius: 28px; overflow: hidden;
+    background: var(--background); position: relative; height: 720px; margin-top: 16px;
+  }
+  .phone .fakebar { position: sticky; top: 0; z-index: 3; }
+  .phone .toolbar { padding: 0 8px; }
+  .phone .tgroup { position: static; }
+  .phone .popwrap .cal { position: static; width: calc(100% - 16px); margin: 8px; }
+  .phone .cal.compact .day { height: 34px; }
+  .fab {
+    position: absolute; bottom: 24px; right: 16px; width: 52px; height: 52px;
+    border-radius: 999px; background: var(--primary); color: #fff; font-size: 1.4rem;
+    display: flex; align-items: center; justify-content: center; border: 0;
+    box-shadow: 0 0 18px hsla(224.3, 76.3%, 48%, .6);
+  }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: .8rem; color: var(--muted-foreground); margin-top: 10px; }
+  .legend .k { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+</style>
+</head>
+<body>
+
+<h1>Calendrier de navigation : sauter aux posts d'une date du voyage</h1>
+<p class="intro">
+  Contexte : le wall de <code>Index.tsx</code> (vue liste, 1 à 3 colonnes). Données réelles — chaque post
+  porte <code>created_at</code>, <b>date choisie par l'auteur</b> à la création via <code>PostDatePicker</code>
+  (éditable ensuite) : c'est donc la date du jour de voyage, aucun champ nouveau n'est nécessaire.
+  Exemple support : le voyage <b>« Norvège — Lofoten &amp; Senja »</b>, 28 mars → 3 mai 2025, 17 posts
+  sur 10 journées (dont des journées à 2, 3 et 4 posts). Trois placements proposés, un recommandé.
+  La section « effet du clic » est <b>interactive</b> : clique une date à point dans le calendrier de droite.
+</p>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>A. Bandeau horizontal sticky <span class="tag alt">sous le TopBar</span></h2>
+  <p class="note">
+    Un mini-calendrier du mois courant reste collé sous le TopBar (64 px) pendant le scroll.
+    <b>+</b> Toujours visible : la densité de posts du mois se lit en continu.
+    <b>−</b> Consomme 180–260 px de hauteur en permanence sur un contenu qui <b>est</b> un scroll ;
+    s'empile au-dessus de la TabsList posts/brouillons et de la rangée de réglages déjà dense ;
+    sur un voyage multi-mois, le bandeau n'affiche qu'un mois à la fois et il faut naviguer pour
+    voir le reste. <b>Non retenu.</b>
+  </p>
+  <div class="frame">
+    <div class="fakebar"><span class="logo">Matka</span> <span class="chip">Norvège — Lofoten &amp; Senja ▾</span></div>
+    <div id="bandeau"></div>
+    <div style="padding:16px;">
+      <div class="toolbar">
+        <div class="tgroup"><span class="tbtn">▾ Récent</span><span class="tbtn">▦ 1 col.</span></div>
+        <span class="seg"><button class="on">☰ Liste</button><button>▦ Grille</button><button>🗺 Carte</button></span>
+      </div>
+      <div id="wall-a"></div>
+    </div>
+  </div>
+  <p class="note">
+    Variante « ruban » encore plus plate (≈ 56 px) : une ligne de jours défilant horizontalement avec
+    les points — mais elle perd la lecture en grille du mois et se comporte mal dès que le voyage
+    dépasse ~5 semaines. Le bandeau serait repliable, au prix d'un état de plus.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>B. Panneau latéral sticky <span class="tag alt">colonne dédiée, xl et plus</span></h2>
+  <p class="note">
+    Le calendrier vit dans une colonne à droite du wall, collée en haut
+    (<code>position: sticky; top: 64px</code> — la classe <code>.sticky-calendar</code> existe déjà,
+    orpheline, dans <code>globals.css</code>). <b>+</b> Vision continue de « où je suis dans le voyage »
+    pendant le scroll ; le plus confortable à la souris.
+    <b>−</b> Le wall passe de <code>max-w-3xl</code> à <code>max-w-7xl</code> selon
+    <code>columnCount</code> : à 3 colonnes il n'y a plus de place, le panneau doit disparaître sous xl ;
+    deux layouts à maintenir ; aucune version mobile naturelle (il faudrait de toute façon un autre
+    composant). <b>Non retenu</b> — bon candidat plus tard en « mode lecture » immersif à colonne unique.
+  </p>
+  <div class="frame" style="max-width: 1100px;">
+    <div class="fakebar"><span class="logo">Matka</span> <span class="chip">Norvège — Lofoten &amp; Senja ▾</span></div>
+    <div style="padding:16px;">
+      <div class="layout-b">
+        <div class="wallcol" id="wall-b"></div>
+        <div id="side-cal"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>C. Popover depuis un bouton de la rangée de réglages <span class="tag">recommandé</span></h2>
+  <p class="note">
+    Un bouton <b>calendrier</b> (icône + « 17 posts ») est posé dans la rangée existante, à côté du
+    <code>SortToggle</code> / <code>ColumnToggle</code> ; il ouvre un popover contenant le calendrier
+    du mois. <b>+</b> Coût nul au repos, quel que soit <code>columnCount</code> ; un seul code path
+    desktop/mobile ; réutilise tel quel le composant <code>Calendar</code> shadcn déjà installé
+    (react-day-picker v8, locales date-fns déjà branchées dans <code>PostDatePicker</code>) ; le
+    popover se referme après le clic sur une date, qui déclenche le scroll.
+    <b>−</b> Le calendrier n'est pas visible d'emblée (découvrabilité) et ne dit pas « où je suis »
+    pendant le scroll. <b>Retenu</b> : la navigation par date est un acte ponctuel (« va au 20 avril »),
+    pas un compagnon permanent ; le bouton compensé par son libellé et son placement dans une rangée
+    déjà consacrée aux réglages du wall.
+  </p>
+  <div class="frame">
+    <div class="fakebar"><span class="logo">Matka</span> <span class="chip">Norvège — Lofoten &amp; Senja ▾</span></div>
+    <div style="padding:16px;">
+      <div class="toolbar">
+        <div class="tgroup">
+          <span class="tbtn">▾ Récent</span><span class="tbtn">▦ 1 col.</span>
+          <div class="popwrap">
+            <span class="tbtn" style="border-color: var(--primary);">📅 17 posts</span>
+            <div id="pop-cal"></div>
+          </div>
+        </div>
+        <span class="seg"><button class="on">☰ Liste</button><button>▦ Grille</button><button>🗺 Carte</button></span>
+      </div>
+      <div id="wall-c"></div>
+    </div>
+  </div>
+  <p class="note">
+    Ouverture : <code>Popover</code> Radix/shadcn (déjà utilisé par <code>PostDatePicker</code>), déclencheur
+    <code>variant="outline"</code> assorti aux autres toggles. Sur clic, le popover se ferme et le wall
+    défile — la date choisie n'a pas besoin de rester affichée.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>Mise en valeur des dates qui ont des posts</h2>
+  <p class="note">
+    Trois traitements, montrés sur avril 2025 (6 journées avec posts dont une à 4).
+    <b>Reco : le point</b> — un marqueur unique, discret, qui scale à n'importe quel nombre de posts ;
+    le compte exact n'aide pas à choisir un jour, il va en info-bulle
+    (<code>title</code>/<code>aria-label</code> « 20 avril 2025 — 4 posts »). La pastille de compte
+    précise mais charge la grille (surtout en compact mobile) ; le fond rempli marche bien en bandeau
+    compressé mais écrase le numéro en 38 px. Côté code : rien à inventer — react-day-picker expose
+    <code>modifiers</code> + <code>modifiersClassNames</code>, le style ci-dessous est du CSS pur.
+  </p>
+  <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:16px;">
+    <div>
+      <div class="sub" style="margin-top:0;">1. Point <span style="color:var(--primary);">recommandé</span></div>
+      <div id="v-dot"></div>
+    </div>
+    <div>
+      <div class="sub" style="margin-top:0;">2. Pastille de compte</div>
+      <div id="v-count"></div>
+    </div>
+    <div>
+      <div class="sub" style="margin-top:0;">3. Fond rempli</div>
+      <div id="v-fill"></div>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="k"><span class="dot"></span> jour avec posts (cliquable)</span>
+    <span class="k"><span style="opacity:.35;">17</span> hors étendue du voyage (atténué)</span>
+    <span class="k">les jours du mois hors voyage sont désactivés</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>Voyage multi-mois : navigation entre mois</h2>
+  <p class="note">
+    L'étendue du voyage est calculée sur les posts réels : <code>min(created_at)</code> →
+    <code>max(created_at)</code> des posts publiés, arrondie au mois. Les chevrons ◀ ▶ naviguent de
+    mois en mois <b>borné</b> (premier/dernier chevron désactivé aux extrémités), les jours hors
+    étendue sont atténués et non cliquables. Le mois par défaut à l'ouverture est celui du premier
+    post affiché en haut du wall (le plus récent avec le tri par défaut). Les libellés passent par la
+    locale date-fns de l'utilisateur (fr ici).
+  </p>
+  <div class="demo">
+    <div id="nav-cal-1"></div>
+    <div id="nav-cal-2"></div>
+    <div id="nav-cal-3"></div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>Effet du clic : scroll automatique + surbrillance de la carte <span class="tag">démo interactive</span></h2>
+  <p class="note">
+    Clique une date à point dans le calendrier : le wall (conteneur scrollable simulé) défile en douceur
+    jusqu'à la carte du <b>premier post de la journée</b> (l'ordre affiché — donc le <code>sortOrder</code>
+    courant — est respecté), qui reçoit un anneau <code>--primary</code> + halo qui s'estompe en ~1,6 s.
+    Dans l'app, le mécanisme existe déjà : <code>postIdToScrollTo</code> +
+    <code>element.scrollIntoView({ behavior: 'smooth', block: 'start' })</code> avec compensation du
+    TopBar 64 px (<code>Index.tsx</code>, effet déjà utilisé par le clic mobile depuis la carte). Si la
+    vue courante est grille ou carte, on repasse d'abord en vue liste — même branche que
+    <code>handlePostClick</code> mobile. Les autres posts du même jour restent groupés juste dessous.
+  </p>
+  <div class="demo">
+    <div>
+      <div id="click-cal"></div>
+      <div class="legend" style="max-width:308px;">Cible actuelle : <b id="picked-label">—</b></div>
+    </div>
+    <div class="grow">
+      <div class="fakebar" style="border-radius:.5rem .5rem 0 0;"><span class="logo">Matka</span> <span class="chip">Norvège — Lofoten &amp; Senja ▾</span></div>
+      <div class="scroller" id="demo-wall" style="border-top:0; border-radius:0 0 .5rem .5rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<div class="option">
+  <h2>Mobile (≤ 375 px)</h2>
+  <p class="note">
+    Même composant, zéro variante dédiée : le popover s'ouvre <b>sous le bouton</b> dans la rangée de
+    réglages — sur mobile la rangée devient un flot simple (<code>position: static</code> des groupes,
+    wrap) et le calendrier prend toute la largeur moins les marges, en cellules compactes 34 px.
+    La rangée garde le <code>ViewToggle</code> centré ; le <code>ColumnToggle</code> est déjà masqué sur
+    mobile, le bouton calendrier prend sa place. Après le clic : fermeture du popover, scroll et
+    anneau identiques au desktop. Alternative écartée : un <code>Drawer</code> plein écran — plus de
+    place mais un second pattern à maintenir pour un calendrier de 7 colonnes qui tient déjà.
+  </p>
+  <div class="phone">
+    <div class="fakebar"><span class="logo">Matka</span> <span class="chip">Norvège ▾</span></div>
+    <div style="padding:8px;">
+      <div class="toolbar" style="flex-wrap:wrap; height:auto; margin:4px 0;">
+        <div class="tgroup" style="position:static; margin-bottom:8px;">
+          <span class="tbtn">▾ Récent</span>
+          <div class="popwrap">
+            <span class="tbtn" style="border-color: var(--primary);">📅 17</span>
+            <div id="mobile-cal"></div>
+          </div>
+        </div>
+        <span class="seg"><button class="on">☰</button><button>▦</button><button>🗺</button></span>
+      </div>
+      <div id="wall-m"></div>
+    </div>
+    <button class="fab">+</button>
+  </div>
+</div>
+
+<script>
+/* ===== Données de démo : posts publiés du voyage ===== */
+const POSTS = {
+  '2025-03-28': 2, '2025-03-30': 1,
+  '2025-04-02': 3, '2025-04-05': 1, '2025-04-08': 2,
+  '2025-04-14': 1, '2025-04-20': 4, '2025-04-26': 1,
+  '2025-05-01': 2, '2025-05-03': 1
+};
+const MONTHS = [
+  { y: 2025, m: 2, label: 'mars 2025' },
+  { y: 2025, m: 3, label: 'avril 2025' },
+  { y: 2025, m: 4, label: 'mai 2025' }
+];
+const WD = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+function iso(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+
+/* Grille d'un mois — mêmes règles que react-day-picker : semaine commençant lundi,
+   cellules fantômes pour compléter, borne = étendue du voyage (28/03 → 03/05). */
+function renderCal(el, mi, opts = {}) {
+  const { y, m, label } = MONTHS[mi];
+  el.innerHTML = '';
+  const cal = document.createElement('div');
+  cal.className = 'cal' + (opts.compact ? ' compact' : '') + (opts.wide ? ' wide' : '');
+  const head = document.createElement('div');
+  head.className = 'cal-head';
+  const prev = document.createElement('button');
+  prev.className = 'chev'; prev.textContent = '◀'; prev.disabled = mi === 0;
+  prev.onclick = () => renderCal(el, mi - 1, opts);
+  const next = document.createElement('button');
+  next.className = 'chev'; next.textContent = '▶'; next.disabled = mi === MONTHS.length - 1;
+  next.onclick = () => renderCal(el, mi + 1, opts);
+  const title = document.createElement('span');
+  title.className = 'cal-title'; title.textContent = label;
+  head.append(prev, title, next);
+
+  const grid = document.createElement('div');
+  grid.className = 'cal-grid' + (opts.variant ? ' grid-' + opts.variant : '');
+  WD.forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'wd'; d.textContent = w; grid.appendChild(d);
+  });
+
+  const first = new Date(y, m, 1);
+  const lead = (first.getDay() + 6) % 7;              // lundi = 0
+  const days = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < lead; i++) {
+    const b = document.createElement('div'); b.className = 'day blank'; grid.appendChild(b);
+  }
+  for (let d = 1; d <= days; d++) {
+    const key = iso(y, m, d);
+    const btn = document.createElement('button');
+    btn.className = 'day';
+    const n = POSTS[key];
+    if (n) {
+      btn.classList.add('has');
+      btn.title = key + ' — ' + n + (n > 1 ? ' posts' : ' post');
+      if (opts.variant === 'count') {
+        const c = document.createElement('span'); c.className = 'cnt'; c.textContent = n;
+        btn.appendChild(c);
+      }
+      if (opts.onPick) btn.onclick = () => opts.onPick(key, n);
+    } else if (key < '2025-03-28' || key > '2025-05-03') {
+      btn.classList.add('out'); btn.disabled = true;
+    }
+    btn.insertBefore(document.createTextNode(String(d)), btn.firstChild);
+    grid.appendChild(btn);
+  }
+  cal.append(head, grid);
+  el.appendChild(cal);
+}
+
+/* ===== Cartes du wall ===== */
+const CARDS = [
+  { d: '2025-05-03', date: '3 mai 2025, 17:20', title: 'Dernier soir à Oslo', msg: "La ville fait presque étrange après trois semaines de fjords. Dernier repas norvégien, premiers bilans.", tiles: [['g2', 3], ['g4', 2]] },
+  { d: '2025-05-01', date: '1er mai 2025, 09:12', title: 'Fête du travail, fjord du travail', msg: "Personne sur le sentier de Segla, tout le pays est en week-end. Nous avons eu la montagne pour nous.", tiles: [['g1', 2], ['g1', 3], ['g3', 2]] },
+  { d: '2025-05-01', date: '1er mai 2025, 20:40', title: 'Crêpes au coin du poêle', msg: "Soirée pluie, cartes, et la recette de Karo pour les crêpes de sarrasin.", tiles: [['g4', 5]] },
+  { d: '2025-04-26', date: '26 avril 2025, 11:05', title: 'Route des eagles', msg: "Tunnel en lacets jusqu'à Geiranger. La falaise d'Ørnesvingen vue d'en haut.", tiles: [['g5', 3], ['g1', 2]] },
+  { d: '2025-04-20', date: '20 avril 2025, 08:30', title: 'Kvanndalen sous la neige', msg: "Nuit en cabane, réveil sous 20 cm de fraîche. Montée au col avant le dégel.", tiles: [['g1', 2], ['g1', 3], ['g3', 3], ['g1', 2]] },
+  { d: '2025-04-20', date: '20 avril 2025, 15:47', title: 'Soupe au saumon, cabane 3', msg: "Le poêle à peine éteint qu'on redescend. Photo du groupe devant la porte.", tiles: [['g4', 3], ['g2', 2]] },
+  { d: '2025-04-14', date: '14 avril 2025, 16:22', title: 'Plage de Bø, vent force 7', msg: "Le sable vole à l'horizontale, les surfeurs kites restent au sol. Pause thé dans la voiture.", tiles: [['g1', 5]] },
+  { d: '2025-04-08', date: '8 avril 2025, 19:03', title: "Soleil de minuit, premier round", msg: "Il est 19 h et le soleil ne pense déjà plus à se coucher. Pano depuis le ponton.", tiles: [['g5', 4], ['g5', 3]] },
+  { d: '2025-04-05', date: '5 avril 2025, 10:15', title: 'Traversée Moskenes–Bodø', msg: "Trois heures de ferry, des orques signalés au large. On n'a vu que des macareux.", tiles: [['g1', 3], ['g1', 2], ['g1', 3]] },
+  { d: '2025-04-02', date: '2 avril 2025, 13:40', title: 'Reine à marée basse', msg: "Les pieux de séchage du cabillaud sortent de l'eau, odeur de sel et de poisson sec.", tiles: [['g2', 2], ['g3', 3], ['g4', 2]] },
+  { d: '2025-04-02', date: '2 avril 2025, 21:10', title: 'Aurores, tentative 2', msg: "Cette fois c'était la bonne : rideau vert au-dessus du village, 40 minutes d'appareil photo gelé.", tiles: [['g5', 5]] },
+  { d: '2025-03-30', date: '30 mars 2025, 18:42', title: 'Arrivée à Svolvær', msg: "Loc récupérée, 200 km de neige fondue jusqu'au gîte. Premier fjord, première photo.", tiles: [['g1', 2], ['g1', 3]] },
+  { d: '2025-03-28', date: '28 mars 2025, 07:55', title: 'Décollage', msg: "Vol Paris → Oslo → Bodø. Le sac de trek pèse ses 14 kg, tout va bien.", tiles: [['g4', 5]] }
+];
+
+function renderWall(el, ids, cardWidth) {
+  el.innerHTML = '';
+  const seen = new Set();
+  CARDS.forEach(p => {
+    if (ids && !ids.includes(p.d)) return;
+    if (seen.has(p.d)) return;         // une carte par jour suffit pour les walls décoratifs
+    seen.add(p.d);
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.id = 'card-' + p.d;
+    if (cardWidth) card.style.width = cardWidth + 'px';
+    const head = document.createElement('div');
+    head.className = 'card-head';
+    head.innerHTML = '<div class="avatar">LS</div><div><div class="author">Lucas Saintier</div><div class="date">' + p.date + '</div></div>';
+    const t = document.createElement('h3');
+    t.className = 'title'; t.textContent = p.title;
+    const media = document.createElement('div');
+    media.className = 'media';
+    const tot = p.tiles.reduce((s, x) => s + x[1], 0);
+    p.tiles.forEach(([g, w]) => {
+      const tile = document.createElement('div');
+      tile.className = 'tile ' + g;
+      tile.style.flex = w / tot;
+      media.appendChild(tile);
+    });
+    const msg = document.createElement('p');
+    msg.className = 'message'; msg.textContent = p.msg;
+    card.append(head, t, media, msg);
+    el.appendChild(card);
+  });
+}
+
+/* ===== Rendu des sections ===== */
+renderCal(bandeau, 1, { compact: true, wide: true });
+renderWall(wall_a, null, null);
+
+renderWall(wall_b, ['2025-05-03', '2025-05-01', '2025-04-26', '2025-04-20'], 640);
+renderCal(side_cal, 1, {});
+renderWall(wall_c, null, null);
+renderCal(pop_cal, 1, {});
+renderWall(wall_m, ['2025-05-03', '2025-05-01', '2025-04-26'], null);
+
+renderCal(v_dot, 1, { variant: 'dot' });
+renderCal(v_count, 1, { variant: 'count' });
+renderCal(v_fill, 1, { variant: 'fill' });
+
+renderCal(nav_cal_1, 0, {});
+renderCal(nav_cal_2, 1, {});
+renderCal(nav_cal_3, 2, {});
+
+renderWall(demo_wall, null, null);
+
+/* ===== Démo interactive : clic date → scroll + surbrillance ===== */
+renderCal(click_cal, 2, { onPick: pickDate });   // ouvert sur mai (mois le plus récent = défaut)
+
+function pickDate(key, count) {
+  const target = document.getElementById('card-' + key);
+  if (!target) return;
+  document.getElementById('picked-label').textContent = key + ' (' + count + (count > 1 ? ' posts' : ' post') + ')';
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  target.classList.remove('flash');
+  void target.offsetWidth;               // relance l'animation
+  target.classList.add('flash');
+  setTimeout(() => target.classList.remove('flash'), 1700);
+}
+
+renderCal(mobile_cal, 1, { compact: true, wide: true });
+</script>
+</body>
+</html>
