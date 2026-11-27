@@ -39,7 +39,7 @@ in `src/components/ui/` are not edited — wrap them instead).
 - `npm run dev` — Vite dev server on port **8080** (set in both `package.json`
   and `vite.config.ts`).
 
-## Media-frame conventions (list view, branch `feat/post-media-block-chart`)
+## Media-frame conventions (list view)
 
 - One fixed **4:3 frame** per post card (`FRAME_RATIO`, `frameHeight` in
   `mediaLayout.ts`); all the post's photos tile inside it as a justified block
