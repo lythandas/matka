@@ -59,14 +59,18 @@ Shown side by side in the mockup, with the real "Senja" post at 5 and 13 photos,
 - Layout is a **pure function** `computeJustifiedBlocks(photos, width, height, gap)` in
   `src/utils/mediaLayout.ts`; the component measures the frame with a `ResizeObserver` (width follows
   `columnCount` and viewport). Geometry validated for 1→16 photos at both card sizes (no overflow, no
-  overlap, ≥ 93 % frame coverage).
-- Row count: among all splits of 1..n, keep the one whose natural row heights sum closest to the frame
-  height, then scale and stretch the last row to the bottom edge.
+  overlap). Coverage is a tiling check — rows span the full width and the last row is stretched to the
+  bottom edge, so the measured floor is ~96 % of the frame minus gutters; the crop promise is what
+  `check:layout` pins, on the visible fraction of each photo.
+- Row count: among all splits of 1..n, the row count is the one that maximises the visible area of the
+  photos (mean visible source fraction under `object-cover`), the frame still covered exactly; ties go
+  to fewer rows.
 - **Mobile: below 480 px of frame width, 4 blocks max** (rest in `+N`) — builder's proposal: at 350 px, 7
   blocks are ~110 px tiles, unreadable. Overridable.
-- **Videos**: if the post has at most one image and a video comes first, the video fills the same 4:3 frame
-  (today's behaviour); videos are not tiled in the block chart. Builder's call: a muted tile in a mosaic is
-  misleading.
+- **Videos**: a video fills the same 4:3 frame only when the post has **no image at all** — drawn
+  `object-contain` on the black frame (whole video visible), native `controls` kept. Videos are not
+  tiled in the block chart; builder's call: a muted tile in a mosaic is misleading. Accepted loss on a
+  mixed `[video, photo]` post: the photos win on the card, the video is played from the detail dialog.
 - `+N` stays a plain label (no new i18n keys).
 
 ## Left to the builder

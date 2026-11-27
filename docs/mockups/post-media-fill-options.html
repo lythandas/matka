@@ -100,7 +100,7 @@
   portrait 2:3, carré). <b>Le cadre est identique pour tous les posts</b> : 4:3, 592×444 px en carte pleine
   largeur, 300×225 px en bande de démo ; gap de 4 px comme aujourd'hui.
   <br><br>
-  <b>Plafond : 10 blocs affichés</b> (<code>MAX_VISIBLE = 10</code>, l'app est à 7 aujourd'hui). Au-delà, les
+  <b>Plafond : 7 blocs affichés</b> (<code>MAX_VISIBLE = 7</code>, comme dans l'app). Au-delà, les
   photos restantes sont comptées dans un « +N » discret posé sur le dernier bloc — même principe que le
   <code>remainingCount</code> actuel, en plus petit. Les deux cartes de chaque option montrent 5 photos
   (cas courant) et 13 photos (cas plafonné).
@@ -111,7 +111,7 @@
   <p class="note">
     La 1<sup>re</sup> photo occupe la moitié gauche en hauteur totale, les autres se répartissent en cases
     égales à droite. <b>+</b> Très lisible, met une photo en avant, remplit toujours 100 % du cadre.
-    <b>−</b> À 10 photos, les 9 cases de droite deviennent étroites.
+    <b>−</b> À 7 photos, les 6 cases de droite deviennent étroites.
   </p>
   <div id="opt-a"></div>
   <div class="strip" id="strip-a"></div>
@@ -187,7 +187,7 @@
   const ratio = (p) => p.w / p.h;
 
   const GAP = 4;          // écart actuel de la galerie (columnGap: 4px)
-  const MAX_VISIBLE = 10; // plafond de blocs affichés, le reste en "+N"
+  const MAX_VISIBLE = 7; // plafond de blocs affichés, comme dans l'app (MAX_MEDIA_BLOCKS), le reste en "+N"
 
   // ---------- A. Mosaïque héro : moitié gauche + cases égales à droite ----------
   function layoutHero(photos, W, H) {
@@ -357,7 +357,7 @@
     const el = document.getElementById("opt-" + mode);
     el.innerHTML =
       `<div class="sub">5 photos</div>` + card(mode, PHOTOS.slice(0, 5)) +
-      `<div class="sub">13 photos → 10 blocs + « +3 »</div>` + card(mode, PHOTOS.slice(0, 13));
+      `<div class="sub">13 photos → 7 blocs + « +6 »</div>` + card(mode, PHOTOS.slice(0, 13));
     const strip = document.getElementById("strip-" + mode);
     strip.innerHTML = [1, 2, 3, 4, 6, 8, 10, 16].map((n) =>
       `<figure>${render(PHOTOS.slice(0, n), 300, 225, mode)}` +
