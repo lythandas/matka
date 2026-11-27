@@ -150,7 +150,15 @@ export function useMediaRatios(
     return () => {
       unsubscribe.forEach((off) => off());
     };
-  }, [urls, enabled]);
+    // Keyed on the encoded URLs (like the memo above), never on the array
+    // identity: a caller passing a fresh, equal-content array must not
+    // re-subscribe — with an already-cached URL the synchronous notify →
+    // setMeasured → re-render → re-subscribe cycle would never terminate,
+    // and with an in-flight URL every parent render would abort and restart
+    // the measurement. The module-level cache that breaks that cycle is
+    // invisible to the rule, hence the targeted disable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlsKey, enabled]);
 
   return ratios;
 }

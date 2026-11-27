@@ -71,17 +71,24 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
     (item): item is VideoInfo => item.type === "video",
   );
 
-  // Only URLs that can be rendered are measured: the block cap bounds both
-  // lists (the narrow 4-block cap is a subset of the 7-block one), so this
-  // stays index-aligned with the rendered images. A 20-photo post measures
-  // 7 photos, not 20.
-  const measuredUrls = React.useMemo(
-    () => images.slice(0, MAX_MEDIA_BLOCKS).map(imageUrl),
-    [images],
-  );
-
   const frameRef = React.useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = React.useState(0);
+
+  // Only URLs that can be rendered are measured, under the same cap the
+  // render path uses: once the frame width is known, visibleMediaCount gives
+  // the real block count (4 below 480 px), so a mobile card never keeps
+  // fetching photos it cannot show. Before the first ResizeObserver callback
+  // the cap falls back to MAX_MEDIA_BLOCKS — measurement is viewport-gated
+  // and the observer reports an initial size before the frame can come into
+  // view, so the fallback list is rarely requested. The slice is always a
+  // prefix of `images`, so block↔ratio index alignment cannot shift, and
+  // shrinking it releases the dropped URLs' waiters (aborting their in-flight
+  // measurements). A 20-photo post on a phone measures 4 photos, not 20.
+  const measuredUrls = React.useMemo(() => {
+    const cap =
+      width > 0 ? visibleMediaCount(width, images.length) : MAX_MEDIA_BLOCKS;
+    return images.slice(0, cap).map(imageUrl);
+  }, [images, width]);
 
   // Measurement is viewport-gated: until the frame comes within a few
   // hundred pixels of the viewport, zero ratio requests are issued (the
