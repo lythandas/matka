@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "npm run preview",
-    "check:layout": "esbuild src/utils/mediaLayout.ts --format=esm --outfile=node_modules/.cache/media-layout.mjs --log-level=error && node scripts/check-media-layout.mjs"
+    "check:layout": "esbuild src/utils/mediaLayout.ts --format=esm --outfile=node_modules/.cache/media-layout.mjs --log-level=error && node scripts/check-media-layout.mjs",
+    "check:dates": "esbuild src/utils/postDates.ts --format=esm --outfile=node_modules/.cache/post-dates.mjs --log-level=error && node scripts/check-post-dates.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
