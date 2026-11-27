@@ -5,6 +5,7 @@ import { useMediaRatios } from "@/hooks/useMediaRatios";
 import {
   DEFAULT_GAP,
   FRAME_RATIO,
+  MAX_MEDIA_BLOCKS,
   computeJustifiedBlocks,
   frameHeight,
   visibleMediaCount,
@@ -19,6 +20,9 @@ export const MEDIA_FRAME_STYLE: React.CSSProperties = {
   aspectRatio: String(FRAME_RATIO),
 };
 
+/** Rendered for an image with no URL at all (never measured). */
+const PLACEHOLDER_SRC = "/placeholder.svg";
+
 export interface PostMediaFrameProps {
   media: MediaInfo[];
   /** Alt text for the tiled photos (ListPostCard passes the post title). */
@@ -29,16 +33,26 @@ export interface PostMediaFrameProps {
 type ImageInfo = Extract<MediaInfo, { type: "image" }>;
 type VideoInfo = Extract<MediaInfo, { type: "video" }>;
 
-/** Display URL of an image media item, in ListPostCard's preference order. */
+/**
+ * Display URL of an image media item, in ListPostCard's preference order —
+ * "" when the item has no URL at all.
+ */
 function imageUrl(image: ImageInfo): string {
   return image.urls.medium ?? image.urls.original ?? "";
+}
+
+/** Src of a rendered block: a URL-less image shows the placeholder directly. */
+function imageSrc(image: ImageInfo): string {
+  return imageUrl(image) || PLACEHOLDER_SRC;
 }
 
 /**
  * One fixed 4:3 frame per post card, tiling the post's photos as a justified
  * block chart (block geometry from computeJustifiedBlocks, in px). Re-tiles
  * as the measured aspect ratios land and as the frame is resized; a post
- * with no photo at all plays its video in the frame instead.
+ * with no photo at all plays its video in the frame instead. Ratio requests
+ * are issued only for photos that can be rendered, and only once the frame
+ * is near the viewport.
  */
 const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
   media,
@@ -56,20 +70,60 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
     (item): item is VideoInfo => item.type === "video",
   );
 
-  const ratios = useMediaRatios(
-    React.useMemo(() => images.map(imageUrl), [images]),
+  // Only URLs that can be rendered are measured: the block cap bounds both
+  // lists (the narrow 4-block cap is a subset of the 7-block one), so this
+  // stays index-aligned with the rendered images. A 20-photo post measures
+  // 7 photos, not 20.
+  const measuredUrls = React.useMemo(
+    () => images.slice(0, MAX_MEDIA_BLOCKS).map(imageUrl),
+    [images],
   );
 
   const frameRef = React.useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = React.useState(0);
 
+  // Measurement is viewport-gated: until the frame comes within a few
+  // hundred pixels of the viewport, zero ratio requests are issued (the
+  // rendered <img loading="lazy"> handles its own gating). Once seen, a
+  // card keeps its ratios — there is no un-see on scroll-up.
+  const [inView, setInView] = React.useState(false);
+  React.useEffect(() => {
+    const element = frameRef.current;
+    if (!element || inView) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setInView(true);
+      },
+      { rootMargin: "300px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [inView]);
+
+  // Index-aligned with `images` ("" entries included): the hook never
+  // requests an empty URL — the placeholder's ratio is nobody's business,
+  // and "" would poison a shared cache key — so such entries simply stay at
+  // the FRAME_RATIO fallback.
+  const ratios = useMediaRatios(measuredUrls, inView);
+
   React.useEffect(() => {
     const element = frameRef.current;
     if (!element) return;
+    // Browsers without ResizeObserver still get a one-shot whole-pixel
+    // width instead of a blank wall.
+    if (typeof ResizeObserver === "undefined") {
+      const px = Math.floor(element.clientWidth);
+      setWidth((previous) => (px !== previous ? px : previous));
+      return;
+    }
     const observer = new ResizeObserver((entries) => {
       const px = Math.floor(entries[entries.length - 1].contentRect.width);
       // Only whole-pixel changes update the state, so a settling layout
-      // with fractional width jitters cannot re-render in a loop.
+      // with fractional width jitter cannot re-render in a loop.
       setWidth((previous) => (px !== previous ? px : previous));
     });
     observer.observe(element);
@@ -127,12 +181,12 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
               }}
             >
               <img
-                src={imageUrl(images[index])}
+                src={imageSrc(images[index])}
                 alt={alt}
                 loading="lazy"
                 className="h-full w-full object-cover"
                 onError={(event) => {
-                  event.currentTarget.src = "/placeholder.svg";
+                  event.currentTarget.src = PLACEHOLDER_SRC;
                   event.currentTarget.onerror = null;
                 }}
               />
