@@ -9,7 +9,8 @@ in `src/components/ui/` are not edited — wrap them instead).
 ## Where things live
 
 - `src/pages/Index.tsx` — the wall: `viewMode` state (`'list' | 'grid' | 'map'`) picks
-  the card style; `columnCount` (`1 | 2 | 3`) sets the list-view columns.
+  the card style; the list view is a single `max-w-3xl` column (the multi-column
+  selector was rolled back on 2026-11-27).
 - `src/components/ListPostCard.tsx` — list-view post card; renders
   `PostMediaFrame` for media, a fixed 4:3 `MapComponent` frame when the post only
   has coordinates.
