@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "npm run preview"
+    "start": "npm run preview",
+    "check:layout": "esbuild src/utils/mediaLayout.ts --format=esm --outfile=node_modules/.cache/media-layout.mjs --log-level=error && node scripts/check-media-layout.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
