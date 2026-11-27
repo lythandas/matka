@@ -39,31 +39,42 @@ in `src/components/ui/` are not edited — wrap them instead).
   height closest to the frame" cost) — `src/utils/mediaLayout.ts` and the spec
   are authoritative.
 - `docs/mockups/calendar-post-navigation.html` + spec/plan
-  `2026-11-27-calendar-post-navigation*` — calendar navigation by post date:
-  **small static calendar glued to the left edge of the post column**
-  (`left: max(1.5rem, calc(50% - 672px))` — follows the centered `max-w-3xl`
-  column on resize, falls back to the window edge when narrow; desktop only,
-  mobile out of scope). Days with posts carry a **discreet dot**; the **current
-  day (topmost visible post) carries the theme-color ring** and follows the
-  wall scroll, and the **displayed month auto-switches** to the current day's
-  month on a genuine month change (manual chevron browsing is never parasited
-  by scrolls that do not change the current day's month — no grace timer);
-  clicking a date scrolls to the day's first post (existing
-  `postIdToScrollTo` effect) with a ~1.6 s highlight ring. v3 reproduces the
-  real rendered theme (vanilla `globals.css` tokens + TopBar/wall/ListPostCard
-  classes) and is checked headless by `scripts/check-calendar-mockup.mjs`
-  (emulated DOM incl. simulated scroll → current-day ring, no browser, no
-  image). v1 (commit 4420320) broke in the browser — its script referenced
-  bare globals (`wall_a`) that the browser's named-element access never
-  resolves (ids were hyphenated: `wall-a`) → `ReferenceError` killed the whole
-  script. v2 floated far from the thread with the wall pushed aside — v3
-  glued it per user feedback. Spec/plan updated — not implemented in the app
-  yet.
+  `2026-11-27-calendar-post-navigation*` — calendar navigation by post date,
+  **implemented** (2026-11-27, commits ce178fe..db59894):
+  - `src/utils/postDates.ts` — pure grouping (local-date key, month range,
+    first post of a day in displayed order), pinned by `npm run check:dates`.
+  - `src/components/PostCalendarPanel.tsx` — fixed one-month panel glued to
+    the left edge of the centered `max-w-3xl` wall column
+    (`left: max(1.5rem, calc(50% - 650px))`: 384 half-wall + 242 panel +
+    24 gap; follows the column on resize, falls back to the window edge).
+    Wrapper around the shadcn `Calendar` (react-day-picker v8, `ui/` never
+    edited): compact 32px round cells, `modifiersClassNames` for the markers
+    (days with posts = discreet `primary` dot; current day = theme-color ring
+    + accent bg), `fromMonth`/`toMonth` bound the chevrons to the journey
+    months, days outside the journey extent are disabled, days without posts
+    are inert. Custom `Day` component (via `useDayRender`) adds the per-day
+    `title`/`aria-label` (« date — n posts »).
+  - `src/pages/Index.tsx` — renders the panel (`key={journey.id}`) and tracks
+    the topmost visible post: window `scroll` throttled by rAF, reading line
+    at 96px (real TopBar ~72px + margin); the anchor on date click reuses the
+    existing `postIdToScrollTo` effect (list-view switch first, then scroll +
+    ~1.6 s `ring-primary` highlight on the card, timer reset on re-click).
+  - **Auto-switch of the displayed month** only on a genuine month change of
+    the current day (effect keyed on the current day's month, not on the
+    displayed month) — manual chevron browsing is never parasited, no timer.
+  - **Desktop only**: hidden below `xl` (1280px) — above xl the panel's right
+    edge exactly touches the cards' left edge, so it never overlaps; mobile
+    is out of scope (spec). i18n keys `indexPage.calendarPanel` /
+    `indexPage.dayWithPosts` in the four locales. The mockup itself (v1–v4
+    history: browser break of v1, v2 floated, v3 glued per user feedback)
+    remains checked headless by `scripts/check-calendar-mockup.mjs`.
 
 ## Checks
 
 - `npm run check:layout` — unit-checks `mediaLayout` geometry via
   `scripts/check-media-layout.mjs`.
+- `npm run check:dates` — unit-checks `postDates` grouping via
+  `scripts/check-post-dates.mjs` (esbuild + node:assert, TZ pinned).
 - `node scripts/check-calendar-mockup.mjs` — headless check of the calendar
   mockup (static references + emulated-DOM execution + behaviour assertions).
 - `npx tsc --noEmit -p tsconfig.app.json` — type-check.
