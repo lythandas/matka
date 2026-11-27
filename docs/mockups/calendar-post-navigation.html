@@ -71,9 +71,8 @@
     font-weight: 600; font-size: .9rem;
   }
 
-  /* ===== Page : wall décalé à droite du calendrier fixe ===== */
+  /* ===== Page : wall centré max-w-3xl, le calendrier se colle à son bord gauche ===== */
   .page {
-    padding-left: 316px;                 /* place pour le calendrier fixe */
     display: flex; justify-content: center;
   }
   .wall { width: 100%; max-width: 768px; padding: 2rem; }  /* max-w-3xl + p-8 d'Index.tsx */
@@ -162,9 +161,14 @@
     100% { box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 14px hsl(var(--ring) / 0); }
   }
 
-  /* ===== Le calendrier : petit, statique, fixé en haut à gauche ===== */
+  /* ===== Le calendrier : petit, statique, collé au bord gauche du fil de posts ===== */
   .calendar {
-    position: fixed; top: 6rem; left: 1.5rem; z-index: 20;
+    position: fixed; top: 6rem; z-index: 20;
+    /* Bord gauche exact de la colonne du wall moins la largeur du calendrier
+       et un petit écart : 50% - 384 (moitié de max-w-3xl) - 264 (calendrier)
+       - 24 (gap) = 50% - 672px. S'il n'y a pas la place (fenêtre étroite),
+       left est borné au bord de la fenêtre. Suit la colonne au resize. */
+    left: max(1.5rem, calc(50% - 672px));
     width: 264px; padding: 1rem;
     background: hsl(var(--card)); color: hsl(var(--card-foreground));
     border: 1px solid hsl(var(--border)); border-radius: var(--radius);
@@ -197,12 +201,25 @@
   }
   .day.blank { visibility: hidden; }
   .day.off { color: hsl(var(--muted-foreground) / .45); }   /* hors voyage */
-  /* Jour avec posts : entouré dans la couleur du thème */
+  /* Jour avec posts : point discret dans la couleur du thème */
   .day.has {
-    border: 2px solid hsl(var(--primary));
+    position: relative;
     font-weight: 600; cursor: pointer;
   }
+  .day.has::after {
+    content: ''; position: absolute; bottom: 2px; left: 50%;
+    transform: translateX(-50%);
+    width: 5px; height: 5px; border-radius: 9999px;
+    background: hsl(var(--primary));
+  }
   .day.has:hover { background: hsl(var(--accent)); }
+  /* Jour courant (post le plus haut visible) : anneau couleur du thème */
+  .day.current {
+    border: 2px solid hsl(var(--primary));
+    background: hsl(var(--accent));
+    font-weight: 700;
+  }
+  .day.current::after { display: none; }   /* l'anneau remplace le point */
   .cal-hint {
     margin: .75rem 0 0; font-size: .75rem; line-height: 1.4;
     color: hsl(var(--muted-foreground));
@@ -242,7 +259,7 @@
     <div class="avatar">LS</div>
   </header>
 
-  <!-- Calendrier : petit, un mois entier, fixé en haut à gauche de la page -->
+  <!-- Calendrier : petit, un mois entier, collé au bord gauche du fil de posts -->
   <aside class="calendar" aria-label="Calendrier du voyage">
     <div class="cal-head">
       <button class="cal-chev" id="cal-prev" type="button" aria-label="Mois précédent">
@@ -256,11 +273,11 @@
       </button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
-    <p class="cal-hint">Jour entouré = publications ce jour-là. Cliquez pour défiler jusqu'à elles.</p>
+    <p class="cal-hint">Jour pointé = publications ce jour-là ; jour entouré = là où vous êtes dans le fil. Cliquez une date pour y aller.</p>
     <p class="cal-status" id="cal-status"></p>
   </aside>
 
-  <!-- Le wall, décalé à droite du calendrier fixe -->
+  <!-- Le wall, centré max-w-3xl ; le calendrier fixe se colle à son bord gauche -->
   <div class="page">
     <main class="wall">
       <div class="tabslist" role="tablist">
@@ -311,10 +328,13 @@
         Mockup statique — reproduction du rendu réel de l'app (thème vanilla clair de
         <code>src/globals.css</code>, tokens <code>tailwind.config.ts</code>, cartes
         <code>ListPostCard</code> : <code>Card rounded-lg shadow-md</code>, <code>CardContent p-6</code>,
-        avatar <code>bg-primary</code>, cadre média 4:3). Le calendrier est un petit mois fixé en haut à
-        gauche, borné aux mois du voyage (28 mars → 3 mai 2025, 17 posts sur 10 journées) ; les jours
-        avec posts sont entourés dans la couleur du thème et un clic décale le wall jusqu'au premier
-        post du jour, qui reçoit un anneau ~1,6 s. Les photos sont des dégradés factices pour rester
+        avatar <code>bg-primary</code>, cadre média 4:3). Le calendrier est un petit mois fixe, collé au
+        bord gauche de la colonne du wall (<code>left: max(1.5rem, calc(50% - 672px))</code> : il suit
+        la colonne au resize et se rabat au bord de la fenêtre s'il n'y a pas la place), borné aux
+        mois du voyage (28 mars → 3 mai 2025, 17 posts sur 10 journées) ; les jours avec posts portent
+        un point discret, le jour du post le plus haut visible porte l'anneau couleur du thème (il
+        suit le scroll du wall), et un clic décale le wall jusqu'au premier post du jour, qui reçoit
+        un anneau ~1,6 s. Les photos sont des dégradés factices pour rester
         self-contained. Mobile volontairement hors périmètre pour l'instant.
       </p>
     </main>
@@ -378,6 +398,7 @@ function makeCard(p) {
   var card = document.createElement('article');
   card.className = 'post-card';
   card.id = 'card-' + p.d + (p.nth ? '-' + p.nth : '');
+  card.setAttribute('data-day', p.d);   /* jour courant : repérage au scroll */
 
   var head = document.createElement('div');
   head.className = 'post-card-head';
@@ -430,6 +451,39 @@ function renderWall() {
 
 /* ===== Le calendrier ===== */
 var currentMonth = MONTHS.length - 1;   /* défaut : mois du post le plus récent */
+var currentKey = null;                  /* jour du post le plus haut visible */
+
+function findDayBtn(key) {
+  if (!key) return null;
+  var grid = byId('cal-grid').children;
+  for (var i = 0; i < grid.length; i++) {
+    if (grid[i].getAttribute && grid[i].getAttribute('data-key') === key) return grid[i];
+  }
+  return null;
+}
+
+/* Pose l'anneau « jour courant » ; la pastille n'apparaît que si le jour est
+   dans le mois affiché (le mois courant ne change pas automatiquement). */
+function setCurrent(key) {
+  if (!key || key === currentKey) return;
+  var old = findDayBtn(currentKey);
+  if (old) old.classList.remove('current');
+  currentKey = key;
+  var btn = findDayBtn(key);
+  if (btn) btn.classList.add('current');
+}
+
+/* Premier post visible = première carte (ordre d'affichage) dont le bas
+   descend sous la ligne de lecture (sous le TopBar sticky ~96 px). */
+function topVisibleKey() {
+  var cards = byId('wall').children;
+  for (var i = 0; i < cards.length; i++) {
+    if (cards[i].getBoundingClientRect().bottom > 96) {
+      return cards[i].getAttribute('data-day');
+    }
+  }
+  return null;
+}
 
 function renderMonth() {
   var grid = byId('cal-grid');
@@ -463,6 +517,7 @@ function renderMonth() {
     } else {
       var key = keyOf(m.y, m.m, d);
       day.textContent = String(d);
+      day.setAttribute('data-key', key);
       var n = POSTS[key];
       if (n) {
         day.classList.add('has');
@@ -473,6 +528,7 @@ function renderMonth() {
         day.classList.add('off');
         day.disabled = true;
       }
+      if (key === currentKey) day.classList.add('current');   /* re-render : remet l'anneau */
     }
     grid.appendChild(day);
   }
@@ -484,6 +540,7 @@ function pickDate(key) {
     var target = byId('card-' + key);
     if (!target) return;
     byId('cal-status').textContent = '→ ' + key;
+    setCurrent(key);                      /* l'anneau « où je suis » suit le clic */
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     target.classList.remove('flash');
     void target.offsetWidth;               /* relance l'animation */
@@ -501,6 +558,15 @@ byId('cal-next').addEventListener('click', function () {
 
 renderWall();
 renderMonth();
+setCurrent(topVisibleKey() || CARDS[0].d);   /* au chargement : post du haut */
+
+/* Le scroll du wall déplace l'anneau « jour courant » sur le post le plus haut
+   visible. Boucle volontairement directe : 17 cartes, coût nul ; dans l'app
+   réelle, throttler via requestAnimationFrame ou un IntersectionObserver. */
+window.addEventListener('scroll', function () {
+  var key = topVisibleKey();
+  if (key) setCurrent(key);
+});
 
 /* Auto-test utilisé uniquement en vérification headless (file://...#test) :
    simule un clic sur le 20 avril et laisse les marques vérifiables dans le DOM. */

@@ -2,14 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Un petit calendrier d'un mois, statique, fixé en haut à gauche de la page (desktop uniquement, mobile hors périmètre), borné aux mois du voyage ; les dates avec posts sont entourées d'un anneau dans la couleur du thème, un clic scrolle jusqu'au premier post de la journée et le surligne brièvement.
+**Goal:** Un petit calendrier d'un mois, statique, collé au bord gauche de la colonne du wall (desktop uniquement, mobile hors périmètre), borné aux mois du voyage ; les dates avec posts portent un point discret, le jour du post le plus haut visible porte un anneau dans la couleur du thème (il suit le scroll), et un clic scrolle jusqu'au premier post de la journée en le surlignant brièvement.
 
-**Architecture:** Le regroupement post→date est une fonction pure (`src/utils/postDates.ts`) prouvée par un script de check node sans dépendance (même astuce esbuild que `check:layout`). Le calendrier est un composant d'enveloppe (`src/components/PostCalendarPanel.tsx`) autour du `Calendar` shadcn existant (react-day-picker v8), rendu en panneau fixe haut-gauche — pas de popover — les fichiers de `src/components/ui/` ne sont jamais édités (AI_RULES). Le panneau vit dans `Index.tsx`, qui réutilise le mécanisme existant `postIdToScrollTo` (effet de scroll + compensation TopBar 64 px).
+**Architecture:** Le regroupement post→date est une fonction pure (`src/utils/postDates.ts`) prouvée par un script de check node sans dépendance (même astuce esbuild que `check:layout`). Le calendrier est un composant d'enveloppe (`src/components/PostCalendarPanel.tsx`) autour du `Calendar` shadcn existant (react-day-picker v8), rendu en panneau fixe **collé au bord gauche de la colonne du wall** — pas de popover — les fichiers de `src/components/ui/` ne sont jamais édités (AI_RULES). Le panneau vit dans `Index.tsx`, qui réutilise le mécanisme existant `postIdToScrollTo` (effet de scroll + compensation TopBar 64 px) et suit le post le plus haut visible pour le marqueur « jour courant ».
 
 **Tech Stack:** React 18 + TypeScript, Tailwind CSS, shadcn/ui `Calendar` (react-day-picker v8), date-fns v3 (déjà installés — aucune dépendance nouvelle).
 
 **Spec:** `docs/superpowers/specs/2026-11-27-calendar-post-navigation-design.md`
-**Mockup (panneau fixe haut-gauche + démo interactive du clic, testé headless) :** `docs/mockups/calendar-post-navigation.html` — vérifiable par `node scripts/check-calendar-mockup.mjs`
+**Mockup (panneau collé au fil + démo interactive clic/jour courant, testé headless) :** `docs/mockups/calendar-post-navigation.html` — vérifiable par `node scripts/check-calendar-mockup.mjs`
 
 ## Global Constraints
 
@@ -28,7 +28,8 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 - **Plusieurs posts le même jour :** le scroll s'arrête sur le **premier** de la journée dans l'ordre affiché ; avec `sortOrder = 'asc'`, c'est le plus ancien du jour.
 - **Clic depuis la vue grille ou carte :** bascule en liste d'abord, puis scroll (le post ciblé est bien à l'écran après la bascule, pas scrollé avant le rendu de la liste).
 - **Surbrillance :** l'anneau apparaît après l'arrêt du scroll et disparaît en ~1,6 s ; pas d'anneau fantôme si on re-clique une autre date rapidement.
-- **Panneau fixe :** il reste en haut à gauche pendant tout le scroll ; le wall n'est jamais recouvert ; à `columnCount` 2/3 le décalage tient toujours (cf. Left to the builder de la spec).
+- **Panneau collé au fil :** il reste fixe pendant tout le scroll, adjacent au bord gauche de la colonne du wall, et suit cette colonne au resize de la fenêtre ; en fenêtre étroite il se rabat au bord gauche de la fenêtre (cf. mockup).
+- **Jour courant :** au chargement, l'anneau est sur le jour du post du haut ; en scrollant le wall, il suit le jour du post le plus haut visible ; après un clic sur une date, il est sur ce jour ; il n'apparaît que si son mois est affiché (pas de bascule automatique de mois).
 - **Locale :** noms de mois/jours suivent la langue de l'utilisateur (fr/en/de/es).
 - **Journey sans post :** pas de panneau calendrier (rien à naviguer).
 
@@ -37,8 +38,8 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 - Create `src/utils/postDates.ts` — pur : clé de date locale, regroupement, étendue mensuelle du voyage.
 - Create `scripts/check-post-dates.mjs` — assertions sur l'util transpilé.
 - Modify `package.json` — ajouter le script `check:dates`.
-- Create `src/components/PostCalendarPanel.tsx` — panneau fixe haut-gauche + calendrier marqué, enveloppe de `ui/calendar`.
-- Modify `src/pages/Index.tsx` — rendu du panneau, décalage du wall, handler de clic, état de surbrillance.
+- Create `src/components/PostCalendarPanel.tsx` — panneau fixe collé au bord gauche du fil + calendrier marqué (point/jour courant), enveloppe de `ui/calendar`.
+- Modify `src/pages/Index.tsx` — rendu du panneau, suivi du post le plus haut visible, handler de clic, état de surbrillance.
 - Modify `public/locales/{fr,en,de,es}/translation.json` — clés i18n.
 - Modify `agents.md` — conventions calendrier (une ligne).
 
@@ -96,17 +97,18 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
   ```ts
   interface PostCalendarPanelProps {
     posts: Post[];                      // posts publiés, dans l'ordre affiché
+    currentDateKey: string | null;      // jour du post le plus haut visible
     onDateSelect: (dateKey: string, firstPostId: string) => void;
   }
   ```
   et `PostCalendarPanel` en export par défaut. Référence de rendu : le mockup
-  `docs/mockups/calendar-post-navigation.html` (panneau fixe haut-gauche).
+  `docs/mockups/calendar-post-navigation.html` (panneau collé au bord gauche du fil).
 
 - [ ] **Step 1: Implement the component.**
   - `group = useMemo(() => groupPostsByDate(posts), [posts])` ; `range = useMemo(() => journeyMonthRange(posts), [posts])`.
-  - Panneau : conteneur `fixed` haut-gauche (`top: 6rem; left: 1.5rem` au mockup, largeur ≈ 264 px, `Card` + bordure + ombre assorties au wall), `aria-label` i18n. Non rendu si `posts.length === 0`. **Desktop uniquement** : masqué sous le breakpoint choisi (mobile hors périmètre — cf. spec), p. ex. `hidden lg:block`.
+  - Panneau : conteneur `fixed` **collé au bord gauche de la colonne du wall** — `top: 6rem`, `left: max(1.5rem, calc(50% - 672px))` au mockup (672 = 384 demi-`max-w-3xl` + 264 calendrier + 24 gap ; le padding symétrique du conteneur d'Index fait que ce calcul tient tel quel dans l'app), largeur ≈ 264 px, `Card` + bordure + ombre assorties au wall, `aria-label` i18n. Non rendu si `posts.length === 0`. **Desktop uniquement** : masqué sous le breakpoint choisi (mobile hors périmètre — cf. spec), p. ex. `hidden lg:block`. Le wall n'est **pas** décalé : il reste centré `max-w-3xl`, le panneau s'accole à son bord gauche.
   - `Calendar` `mode="single"` (aucune sélection persistante : `selected` non contrôlé, `onSelect` intercepté), `locale={getDateFnsLocale()}`, `fromMonth={range.startMonth}` / `toMonth={range.endMonth}`, `month` contrôlé (state interne, défaut = `startOfMonth` du **premier post du tableau** — l'ordre affiché) + `onMonthChange`, `fixedWeeks`, style compact du mockup (cellules ~2rem).
-  - `modifiers={{ hasPosts: datesDuGroupe }}` (une `Date` locale par clé, construite à midi pour éviter tout glissement frontière) et `modifiersClassNames={{ hasPosts: '... rounded-full ring-2 ring-primary font-semibold cursor-pointer hover:bg-primary/20' }}` — **jour entouré d'un anneau dans la couleur du thème** (remplace le point de la v1), calé sur le mockup ; jour hors étendue atténué et non cliquable.
+  - Deux marqueurs distincts (retour utilisateur) : `modifiers={{ hasPosts: datesDuGroupe, current: currentDateKey ? [dateDe(currentDateKey)] : [] }}` avec `modifiersClassNames={{ hasPosts: 'relative font-semibold cursor-pointer after:absolute after:bottom-[2px] after:left-1/2 after:-translate-x-1/2 after:size-[5px] after:rounded-full after:bg-primary', current: 'rounded-full border-2 border-primary bg-accent font-bold' }}` — **jours à posts = point discret, jour courant = anneau dans la couleur du thème** ; jour hors étendue atténué et non cliquable.
   - Chaque jour marqué : `title` et `aria-label` « {date PPP} — {n} post(s) » (clé i18n avec interpolation `count`).
   - `onSelect(date)` → `key = dateKey(date.toISOString())` ; `firstPostIdForDate(group, key)` ; si trouvé : `onDateSelect(key, firstPostId)` (pas de fermeture de popover : le panneau est permanent) ; jour sans post : ignorer.
 
@@ -124,23 +126,25 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 **Interfaces:**
 - Consumes: `PostCalendarPanel` (Task 2).
 
-- [ ] **Step 1: Render the panel** au-dessus/à côté du wall (le wall est décalé d'un `padding-left` pour ne jamais passer sous le panneau fixe — valeur du mockup : 316 px desktop). Passé `posts={displayedPosts}` (l'ordre trié courant) et `onDateSelect={handleCalendarDateSelect}`. Non rendu quand `displayedPosts.length === 0`.
+- [ ] **Step 1: Render the panel** au-dessus/à côté du wall : le wall reste centré `max-w-3xl`, **aucun décalage** — le panneau fixe s'accole de lui-même à son bord gauche (cf. Task 2). Passé `posts={displayedPosts}` (l'ordre trié courant), `currentDateKey={currentDateKey}` (Step 2) et `onDateSelect={handleCalendarDateSelect}`. Non rendu quand `displayedPosts.length === 0`.
 
-- [ ] **Step 2: Implement the handler** — même squelette que la branche mobile de `handlePostClick` :
+- [ ] **Step 2: Track the topmost visible post** — `const [currentDateKey, setCurrentDateKey] = useState<string | null>(null)` ; un `useEffect` (dépendances `displayedPosts`, `viewMode`) pose un listener `scroll` sur `window`, throttlé par `requestAnimationFrame` : à chaque frame, parcourir les cartes du rendu liste dans l'ordre et prendre la première dont `getBoundingClientRect().bottom` passe sous la ligne de lecture (hauteur TopBar ~64 px + marge ~32 px, à caler) → `setCurrentDateKey(dateKey(post.created_at))`. Initialiser dès le montage avec le post du haut (même calcul). Cleanup du listener et de l'animation rAF au démontage. (Le mockup fait la boucle en direct ; l'app throttle — cf. spec, Decisions.)
+
+- [ ] **Step 3: Implement the handler** — même squelette que la branche mobile de `handlePostClick` :
   ```ts
   const handleCalendarDateSelect = (_key: string, postId: string) => {
     if (viewMode !== 'list') setViewMode('list');
     setPostIdToScrollTo(postId);            // effet existant : scrollIntoView + offset TopBar 64px
-    setHighlightedPostId(postId);           // Step 3
+    setHighlightedPostId(postId);           // Step 4
   };
   ```
-  Noter la dépendance : l'effet de scroll existant dépend déjà de `viewMode` et `posts` — vérifier que le scroll part bien **après** le rendu de la liste quand on vient de la vue carte/grille (le `setTimeout(100)` de l'effet suffit en pratique ; sinon attendre `viewMode === 'list'` dans l'effet, ce qu'il fait déjà).
+  Noter la dépendance : l'effet de scroll existant dépend déjà de `viewMode` et `posts` — vérifier que le scroll part bien **après** le rendu de la liste quand on vient de la vue carte/grille (le `setTimeout(100)` de l'effet suffit en pratique ; sinon attendre `viewMode === 'list'` dans l'effet, ce qu'il fait déjà). Le marqueur « jour courant » suit de lui-même : le listener de la Step 2 voit arriver la carte ciblée en haut de vue (le mockup le pose en plus immédiatement au clic — dans l'app, `setCurrentDateKey(_key)` dans le handler donne la même garantie).
 
-- [ ] **Step 3: Add the highlight state** — `const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null)` ; un `useEffect` sur `highlightedPostId` pose un `setTimeout` de 1600 ms qui le remet à `null` (cleanup au démontage/changement). Sur le `ListPostCard` ciblé du rendu liste : `className={cn(columnCount > 1 ? 'mb-0' : undefined, post.id === highlightedPostId && 'ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow')}` — le prop `className` existe déjà et l'anneau disparait avec l'état (pas d'animation halo en v1 : l'anneau suffit, le mockup montre la cible).
+- [ ] **Step 4: Add the highlight state** — `const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null)` ; un `useEffect` sur `highlightedPostId` pose un `setTimeout` de 1600 ms qui le remet à `null` (cleanup au démontage/changement). Sur le `ListPostCard` ciblé du rendu liste : `className={cn(post.id === highlightedPostId && 'ring-2 ring-primary ring-offset-2 ring-offset-background transition-shadow')}` — le prop `className` existe déjà et l'anneau disparait avec l'état (pas d'animation halo en v1 : l'anneau suffit, le mockup montre la cible).
 
-- [ ] **Step 4: Verify the build** — `npx tsc --noEmit -p tsconfig.app.json && npm run build && npm run check:dates`. Expected: exit 0 partout.
+- [ ] **Step 5: Verify the build** — `npx tsc --noEmit -p tsconfig.app.json && npm run build && npm run check:dates`. Expected: exit 0 partout.
 
-- [ ] **Step 5: Commit** — commit `feat(posts): navigate the wall by date from a fixed calendar panel`.
+- [ ] **Step 6: Commit** — commit `feat(posts): navigate the wall by date from a fixed calendar panel`.
 
 ---
 
@@ -164,9 +168,9 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 **Files:**
 - Modify: `agents.md`
 
-- [ ] **Step 1: Run the app and walk the Review Focus list** — `npm run dev` (port 8080). Sur un voyage multi-mois : mois par défaut = celui du post du haut ; chevrons bornés ; jours hors voyage atténués ; jour dans l'étendue sans post inerte ; clic sur un jour à 2+ posts → ancre sur le premier selon le tri courant ; tri inversé puis re-clic → ancre sur l'autre post ; clic depuis la vue carte et la vue grille → bascule liste + scroll + anneau 1,6 s ; re-clic rapide sur une autre date → un seul anneau actif ; le panneau reste fixe pendant le scroll et le wall ne passe jamais dessous ; `columnCount` 1→3 ; langue en (noms de mois anglais) ; voyage vide → pas de panneau. Reporter ce qui a été vu avant de déclarer le fait.
+- [ ] **Step 1: Run the app and walk the Review Focus list** — `npm run dev` (port 8080). Sur un voyage multi-mois : mois par défaut = celui du post du haut ; chevrons bornés ; jours hors voyage atténués ; jour dans l'étendue sans post inerte ; clic sur un jour à 2+ posts → ancre sur le premier selon le tri courant ; tri inversé puis re-clic → ancre sur l'autre post ; clic depuis la vue carte et la vue grille → bascule liste + scroll + anneau 1,6 s ; re-clic rapide sur une autre date → un seul anneau actif ; **jour courant** : anneau sur le jour du post du haut au chargement, qui suit le scroll du wall et se pose sur le jour cliqué ; **panneau collé au fil** : adjacent au bord gauche de la colonne, suit la colonne au resize, se rabat au bord de la fenêtre en étroit ; langue en (noms de mois anglais) ; voyage vide → pas de panneau. Reporter ce qui a été vu avant de déclarer le fait.
 
-- [ ] **Step 2: Update `agents.md`** — ajouter aux conventions une ligne : navigation par date = `PostCalendarPanel` (panneau fixe haut-gauche, desktop only, `postDates.ts` pour le regroupement, ancre = premier post du jour dans l'ordre affiché, marquage = anneau `ring-primary`, surbrillance 1,6 s), et `check:dates` dans les Checks.
+- [ ] **Step 2: Update `agents.md`** — ajouter aux conventions une ligne : navigation par date = `PostCalendarPanel` (panneau fixe collé au bord gauche du fil, desktop only, `postDates.ts` pour le regroupement, ancre = premier post du jour dans l'ordre affiché, jours à posts = point discret, jour courant = anneau `ring-primary` suivant le post le plus haut visible, surbrillance 1,6 s), et `check:dates` dans les Checks.
 
 - [ ] **Step 3: Commit** — commit `chore(docs): document calendar navigation conventions in agents.md`.
 

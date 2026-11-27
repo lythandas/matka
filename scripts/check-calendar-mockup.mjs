@@ -8,7 +8,10 @@
  *  2. Execution: the extracted <script> runs in a minimal emulated DOM
  *     (elements, classList, appendChild, getElementById, listeners, timeouts).
  *  3. Behaviour: 17 cards rendered, month grid arithmetic, chevron bounds,
- *     marked days per month, click on a date → scroll + flash + tooltip.
+ *     marked days per month, click on a date → scroll + flash + tooltip,
+ *     and the current-day ring: set at load from the topmost visible post,
+ *     following simulated wall scrolls, re-applied on month re-render and
+ *     set by date clicks.
  *
  * Usage: node scripts/check-calendar-mockup.mjs [path-to-html]
  * (defaults to docs/mockups/calendar-post-navigation.html)
@@ -87,8 +90,10 @@ class El {
   set innerHTML(v) { assert(v === '', 'innerHTML setter only supports clearing'); this.children = []; }
   addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); }
   setAttribute(k, v) { this.attrs[k] = v; }
+  getAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k) ? this.attrs[k] : null; }
   click() { (this.listeners.click ?? []).forEach((fn) => fn()); }
   scrollIntoView(opts) { this.scrolledIntoView = opts; }
+  getBoundingClientRect() { return { top: 0, bottom: 0 }; } // overridden per-card by the checker
   descendants() { return [...this.children, ...this.children.flatMap((c) => c.descendants())]; }
 }
 
@@ -114,6 +119,8 @@ const document = {
 };
 const window = {
   location: { hash: '' },
+  listeners: {},
+  addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
   setTimeout: (fn, ms) => { timeouts.push({ fn, ms }); return timeouts.length; },
 };
 // Browsers expose elements with an id as window properties ("named access")
@@ -164,6 +171,41 @@ assert(may10, 'no cell for 10 May');
 assert(may10.disabled === true, '10 May (after the journey) must be disabled');
 assert(may10.classList.contains('off'), 'day outside the span must be attenuated');
 
+// Positioning: calendar glued to the wall column's left edge, wall centered.
+assert(css.includes('left: max(1.5rem, calc(50% - 672px))'), 'calendar must sit at the wall column left edge (clamped to the window edge)');
+assert(!css.includes('padding-left: 316px'), 'the wall must not be pushed aside by a fixed 316px gutter anymore');
+assert(css.includes('.day.has::after'), 'has-days must use the discreet dot marker');
+assert(css.includes('.day.current'), 'current day must have a ring rule');
+
+// Current-day ring at load: topmost visible post's day (2025-05-03).
+// (Default emulated rects are {0,0} → the load path falls back to CARDS[0].d.)
+assert(sandbox.currentKey === '2025-05-03', `currentKey at load, got ${sandbox.currentKey}`);
+const may3 = hasDay(grid, '3');
+assert(may3 && may3.classList.contains('current'), '3 May must carry the current ring at load');
+assert(may3.classList.contains('has'), 'the current day is necessarily a post day');
+
+// Simulated scroll: cards get viewport rects driven by a fake scrollTop,
+// then the scroll listeners recorded on window are fired.
+const CARD_H = 400;
+const scrollState = { y: 0 };
+wall.children.forEach((c, i) => {
+  c.getBoundingClientRect = () => ({ top: i * CARD_H - scrollState.y, bottom: (i + 1) * CARD_H - scrollState.y });
+});
+const fireScroll = () => (window.listeners.scroll ?? []).forEach((fn) => fn());
+
+fireScroll(); // rect-driven lookup, still at the top
+assert(sandbox.currentKey === '2025-05-03', 'rect-driven lookup at scrollTop 0 must keep 3 May');
+
+scrollState.y = 4 * CARD_H; // card idx 4 = first 2025-04-20 card at the reading line
+fireScroll();
+assert(sandbox.currentKey === '2025-04-20', `scroll must move the ring to 20 April, got ${sandbox.currentKey}`);
+assert(!dayButtons(grid).some((d) => d.classList.contains('current')), 'no ring in the May grid while the current day is in April');
+
+scrollState.y = 0;
+fireScroll();
+assert(sandbox.currentKey === '2025-05-03', 'scrolling back to the top must restore 3 May');
+assert(hasDay(grid, '3').classList.contains('current'), '3 May ringed again');
+
 // Month walk: May → April → March, bounds flip.
 byId('cal-prev').click();
 assert(byId('cal-title').textContent === 'avril 2025', 'one prev click should land on April');
@@ -187,6 +229,8 @@ assert(target, 'anchor card for 20 April missing');
 assert.deepEqual(target.scrolledIntoView, { behavior: 'smooth', block: 'start' }, 'click must scrollIntoView the anchor card');
 assert(target.classList.contains('flash'), 'anchor card must get the flash ring');
 assert(byId('cal-status').textContent === '→ 2025-04-20');
+assert(sandbox.currentKey === '2025-04-20', 'clicking a date must move the current-day ring');
+assert(hasDay(grid, '20').classList.contains('current'), '20 April must be ringed after the click');
 
 // Off-journey day behaviour was checked above (May). Anchor card checks follow.
 

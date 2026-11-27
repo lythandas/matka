@@ -31,16 +31,21 @@ in `src/components/ui/` are not edited — wrap them instead).
   are authoritative.
 - `docs/mockups/calendar-post-navigation.html` + spec/plan
   `2026-11-27-calendar-post-navigation*` — calendar navigation by post date:
-  **small static calendar fixed top-left** of the page (desktop only, mobile
-  out of scope), days with posts **ringed in the theme color**, click scrolls
-  to the day's first post (existing `postIdToScrollTo` effect) with a ~1.6 s
-  highlight ring. v2 reproduces the real rendered theme (vanilla `globals.css`
-  tokens + TopBar/wall/ListPostCard classes) and is checked headless by
-  `scripts/check-calendar-mockup.mjs` (emulated DOM, no browser, no image).
-  v1 (commit 4420320) broke in the browser — its script referenced bare
-  globals (`wall_a`) that the browser's named-element access never resolves
-  (ids were hyphenated: `wall-a`) → `ReferenceError` killed the whole script.
-  Spec/plan updated to the fixed-panel decision — not implemented in the app
+  **small static calendar glued to the left edge of the post column**
+  (`left: max(1.5rem, calc(50% - 672px))` — follows the centered `max-w-3xl`
+  column on resize, falls back to the window edge when narrow; desktop only,
+  mobile out of scope). Days with posts carry a **discreet dot**; the **current
+  day (topmost visible post) carries the theme-color ring** and follows the
+  wall scroll; clicking a date scrolls to the day's first post (existing
+  `postIdToScrollTo` effect) with a ~1.6 s highlight ring. v3 reproduces the
+  real rendered theme (vanilla `globals.css` tokens + TopBar/wall/ListPostCard
+  classes) and is checked headless by `scripts/check-calendar-mockup.mjs`
+  (emulated DOM incl. simulated scroll → current-day ring, no browser, no
+  image). v1 (commit 4420320) broke in the browser — its script referenced
+  bare globals (`wall_a`) that the browser's named-element access never
+  resolves (ids were hyphenated: `wall-a`) → `ReferenceError` killed the whole
+  script. v2 floated far from the thread with the wall pushed aside — v3
+  glued it per user feedback. Spec/plan updated — not implemented in the app
   yet.
 
 ## Checks
