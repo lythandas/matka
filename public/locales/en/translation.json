@@ -300,7 +300,9 @@
     "draftDeletedSuccessfully": "Draft deleted successfully!",
     "failedToFetchDrafts": "Failed to fetch drafts.",
     "createNewPost": "Create New Post",
-    "loadDraftNotImplemented": "Loading drafts directly into the form is not yet implemented."
+    "loadDraftNotImplemented": "Loading drafts directly into the form is not yet implemented.",
+    "calendarPanel": "Journey calendar",
+    "dayWithPosts": "{{date}} — {{count}} post(s)"
   },
   "adminPage": {
     "adminDashboard": "Admin dashboard",

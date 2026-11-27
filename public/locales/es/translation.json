@@ -300,7 +300,9 @@
     "draftDeletedSuccessfully": "¡Borrador eliminado correctamente!",
     "failedToFetchDrafts": "Error al obtener los borradores.",
     "createNewPost": "Crear nueva publicación",
-    "loadDraftNotImplemented": "La carga de borradores directamente en el formulario aún no está implementada."
+    "loadDraftNotImplemented": "La carga de borradores directamente en el formulario aún no está implementada.",
+    "calendarPanel": "Calendario del viaje",
+    "dayWithPosts": "{{date}} — {{count}} publicación(es)"
   },
   "adminPage": {
     "adminDashboard": "Panel de administración",

@@ -300,7 +300,9 @@
     "draftDeletedSuccessfully": "Brouillon supprimé avec succès !",
     "failedToFetchDrafts": "Échec de la récupération des brouillons.",
     "createNewPost": "Créer une nouvelle publication",
-    "loadDraftNotImplemented": "Le chargement des brouillons directement dans le formulaire n'est pas encore implémenté."
+    "loadDraftNotImplemented": "Le chargement des brouillons directement dans le formulaire n'est pas encore implémenté.",
+    "calendarPanel": "Calendrier du voyage",
+    "dayWithPosts": "{{date}} — {{count}} publication(s)"
   },
   "adminPage": {
     "adminDashboard": "Tableau de bord administrateur",

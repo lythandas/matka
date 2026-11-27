@@ -300,7 +300,9 @@
     "draftDeletedSuccessfully": "Entwurf erfolgreich gelöscht!",
     "failedToFetchDrafts": "Fehler beim Abrufen der Entwürfe.",
     "createNewPost": "Neuen Beitrag erstellen",
-    "loadDraftNotImplemented": "Das Laden von Entwürfen direkt in das Formular ist noch nicht implementiert."
+    "loadDraftNotImplemented": "Das Laden von Entwürfen direkt in das Formular ist noch nicht implementiert.",
+    "calendarPanel": "Reisekalender",
+    "dayWithPosts": "{{date}} — {{count}} Beitrag/Beiträge"
   },
   "adminPage": {
     "adminDashboard": "Admin-Dashboard",
