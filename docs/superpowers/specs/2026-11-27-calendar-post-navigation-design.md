@@ -1,8 +1,9 @@
 # Calendar Post-Navigation Design
 
 Date: 2026-11-27
-Status: pending approval (placement to confirm — see Decisions)
-Mockup: `docs/mockups/calendar-post-navigation.html` (option C recommandée, démo interactive du clic)
+Status: approved — placement and marking decided by the user (2026-11-27)
+Mockup: `docs/mockups/calendar-post-navigation.html` (calendrier fixe haut-gauche,
+démo interactive du clic, testé headless par `scripts/check-calendar-mockup.mjs`)
 
 ## Intent
 
@@ -37,65 +38,80 @@ création) — un calendrier est la table des matières naturelle du voyage.
 
 ## Goals
 
-- Calendrier mensuel borné à l'étendue réelle du voyage, navigation ◀ ▶ entre mois (chevrons
-  désactivés aux bornes).
-- Dates avec posts marquées d'un **point** sous le numéro ; compte exact en info-bulle
-  (`title`/`aria-label` « 20 avril 2025 — 4 posts »).
+- **Petit calendrier d'un mois entier, statique, fixé en haut à gauche de la page** (au-dessus / à
+  côté du wall), toujours visible pendant le scroll ; le wall est décalé pour ne pas passer dessous
+  (cf. mockup : `padding-left` de la page).
+- Dates avec posts **entourées d'un anneau dans la couleur du thème** (cercle autour du numéro,
+  `primary`) ; compte exact en info-bulle (`title`/`aria-label` « 20 avril 2025 — 4 posts »).
+- Navigation ◀ ▶ entre mois, **bornée aux mois du voyage** (chevrons désactivés aux bornes) ; jours
+  hors étendue atténués et non cliquables ; jour dans l'étendue sans post : inerte mais non grisé.
 - Mois par défaut à l'ouverture : celui du premier post affiché en haut du wall (le plus récent au
   tri par défaut).
-- Clic sur une date : fermeture du popover, bascule en **vue liste** si nécessaire (même branche que
-  `handlePostClick` mobile), puis scroll doux jusqu'au premier post de la journée via le mécanisme
-  **existant** `postIdToScrollTo` (effet de `Index.tsx` : `scrollIntoView` + compensation TopBar
-  64 px), plus une **surbrillance temporaire** (anneau `ring-primary` + halo, ~1,6 s) sur la carte
-  ciblée.
-- Un seul code path desktop/mobile ; libellés i18n ; noms de mois/jours via la locale date-fns.
+- Clic sur une date : bascule en **vue liste** si nécessaire (même branche que `handlePostClick`
+  mobile), puis scroll doux jusqu'au premier post de la journée via le mécanisme **existant**
+  `postIdToScrollTo` (effet de `Index.tsx` : `scrollIntoView` + compensation TopBar 64 px), plus une
+  **surbrillance temporaire** (anneau `ring-primary` + halo, ~1,6 s) sur la carte ciblée.
+- Libellés i18n ; noms de mois/jours via la locale date-fns.
 
 ## Non-goals
 
+- **Mobile / petits écrans : explicitement hors périmètre** pour l'instant (pas de version
+  responsive du panneau ; caché sous un breakpoint à définir à l'implémentation).
+- La reco « popover depuis la rangée de réglages » (ancienne option C) est **retirée** : remplacée
+  par le panneau fixe.
 - `PublicJourneyPage` : la même mécanique y sera réutilisable, mais ce n'est pas dans ce périmètre.
 - Les brouillons (posts publiés seulement).
 - Filtre « afficher uniquement ce jour », vue planning/agenda.
-- Conserver le popover ouvert après le clic (il se referme : la navigation est un acte ponctuel).
-- Indicateur permanent « où je suis pendant le scroll » (évolution possible, cf. option B).
+- Indicateur permanent « où je suis pendant le scroll » (le calendrier fixe le remplace de facto).
 
 ## Approaches considered
 
-Côte à côte dans le mockup, sur le voyage de démo « Norvège — Lofoten & Senja » (28 mars → 3 mai
-2025, 17 posts sur 10 journées, dont une à 4 posts) :
+Côte à côte dans le premier mockup, sur le voyage de démo « Norvège — Lofoten & Senja » (28 mars →
+3 mai 2025, 17 posts sur 10 journées, dont une à 4 posts) :
 
-- **A. Bandeau horizontal sticky** sous le TopBar (avec variante « ruban » ≈ 56 px). Toujours
-  visible, mais consomme 180–260 px de hauteur en permanence sur un contenu qui *est* un scroll,
-  s'empile sur la TabsList + rangée de réglages, et n'affiche qu'un mois à la fois. *Non retenu.*
-- **B. Panneau latéral sticky** (la classe `.sticky-calendar` existe déjà, orpheline, dans
-  `globals.css`). Le plus confortable, mais le wall passe de `max-w-3xl` à `max-w-7xl` selon
-  `columnCount` : à 3 colonnes il n'y a plus de place, le panneau disparaît sous xl, deux layouts à
-  maintenir, pas de version mobile naturelle. *Non retenu* — bon candidat pour un futur « mode
-  lecture » à colonne unique.
-- **C. Popover depuis un bouton de la rangée de réglages** (à côté de `SortToggle` /
-  `ColumnToggle`). Coût nul au repos quel que soit `columnCount`, un seul code path, réutilise le
-  `Calendar` shadcn et le popover déjà en place dans `PostDatePicker`, et le mécanisme de scroll
-  existe déjà. **Recommandé.**
+- **A. Bandeau horizontal sticky** sous le TopBar. Toujours visible, mais consomme 180–260 px de
+  hauteur en permanence sur un contenu qui *est* un scroll. *Non retenu.*
+- **B. Panneau latéral sticky.** Le plus confortable, mais en conflit avec le `max-w-3xl` →
+  `max-w-7xl` du wall à 3 colonnes. *Non retenu en l'état* — c'est lui qui a été revisité.
+- **C. Popover depuis un bouton de la rangée de réglages.** Coût nul au repos, mais le calendrier
+  n'est pas visible d'emblée et ne dit pas « où je suis » pendant le scroll. *D'abord recommandé,
+  puis écarté par la décision utilisateur du 2026-11-27.*
+- **D. Petit calendrier fixe en haut à gauche (retenu).** Un mois compact (≈ 264 px) en
+  `position: fixed`, toujours visible pendant le scroll sans consommer de hauteur de scroll ; le
+  wall est décalé à droite. Simple, un seul code path desktop. C'est ce que montre le mockup.
 
 ## Decisions
 
-- **Placement : C recommandé** — *décision humaine requise* (A et B restent réalisables ; le mockup
-  montre les trois). Argument : la navigation par date est un acte ponctuel, pas un compagnon
-  permanent ; C n'impose rien au layout existant et couvre mobile sans composant dédié.
-- **Marquage : point unique** sous le numéro (variantes pastille-de-compte et fond-rempli montrées
-  dans le mockup, écartées : charge visuelle / lisibilité en cellule 38 px). Compte exact en
-  info-bulle.
+- **Placement : panneau fixe haut-gauche** (décision utilisateur 2026-11-27) — remplace la reco
+  popover. À l'implémentation : `position: fixed; top: 6rem; left: 1.5rem`, page du wall décalée
+  d'autant (cf. mockup).
+- **Marquage : jour entouré** — anneau (`primary`) autour du numéro du jour. Remplace le point
+  unique de la première version. Compte exact en info-bulle/`aria-label`.
 - **Ancre : premier post de la journée dans l'ordre affiché**, `sortOrder` respecté.
 - **Surbrillance : anneau + halo ~1,6 s** sur la carte (`ring-2 ring-primary` via le prop
   `className` existant de `ListPostCard`), retirée par timeout.
-- **Mobile : même popover**, pleine largeur moins marges, cellules compactes ; pas de Drawer dédié
-  (second pattern à maintenir pour un calendrier qui tient déjà).
+- **Mobile : hors périmètre** — pas de popover plein écran, pas de Drawer ; le panneau sera
+  simplement masqué sous un breakpoint à définir.
 - **Étendue navigable : les mois du voyage uniquement** (chevrons bornés, jours hors étendue
   atténués) — on ne peut pas se perdre en 2019.
 
 ## Left to the builder
 
-- Style exact du point et de l'état survolé avec les tokens react-day-picker
-  (`modifiersClassNames`), à caler sur le rendu du mockup.
-- Placement exact du déclencheur dans la rangée de réglages (groupe de gauche avec
-  `SortToggle`/`ColumnToggle`, vs groupe de droite) — reprendre le mockup : groupe de gauche.
+- Style exact de l'anneau avec les tokens react-day-picker (`modifiersClassNames`), à caler sur le
+  rendu du mockup (`.day.has { border: 2px solid hsl(var(--primary)) }`, cellule ronde).
+- Breakpoint sous lequel le panneau est masqué (contrainte : hors périmètre mobile, donc simplement
+  caché, pas d'alternative).
+- Coexistence avec `columnCount` 2/3 (le wall s'élargit en `max-w-5xl`/`max-w-7xl`) : décalage
+  constant de la page ou masquage du panneau — à trancher à l'implémentation.
 - Durée fine de la surbrillance (1,6 s au mockup) et gestion du timeout au démontage.
+
+## Mockup history
+
+- v1 (commit 4420320) : trois placements côte à côte + popover reco. **Cassée en navigateur** : le
+  script référençait des identifiants globaux (`wall_a`, `pop_cal`, …) que le named-access du
+  navigateur ne résout pas (ids en tirets `wall-a` dans le markup) → `ReferenceError` dès
+  `renderWall(wall_a, …)`, tout le contenu peint par le JS restait vide. Reprouvé headless par
+  `scripts/check-calendar-mockup.mjs /path/to/v1.html`.
+- v2 (branche `calendar-mockups`) : panneau fixe haut-gauche seul, thème = vraie page rendue
+  (tokens `globals.css` vanilla consommés comme `tailwind.config.ts`), démo interactive conservée,
+  vérifiée headless sans navigateur ni image.

@@ -2,18 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Un calendrier borné aux mois du voyage, dans un popover ouvert depuis un bouton de la rangée de réglages du wall ; les dates avec posts sont marquées d'un point, un clic scrolle jusqu'au premier post de la journée et le surligne brièvement.
+**Goal:** Un petit calendrier d'un mois, statique, fixé en haut à gauche de la page (desktop uniquement, mobile hors périmètre), borné aux mois du voyage ; les dates avec posts sont entourées d'un anneau dans la couleur du thème, un clic scrolle jusqu'au premier post de la journée et le surligne brièvement.
 
-**Architecture:** Le regroupement post→date est une fonction pure (`src/utils/postDates.ts`) prouvée par un script de check node sans dépendance (même astuce esbuild que `check:layout`). Le calendrier est un composant d'enveloppe (`src/components/PostCalendarPopover.tsx`) autour du `Calendar` shadcn existant (react-day-picker v8) — les fichiers de `src/components/ui/` ne sont jamais édités (AI_RULES). Le déclencheur et le comportement de scroll vivent dans `Index.tsx`, qui réutilise le mécanisme existant `postIdToScrollTo` (effet de scroll + compensation TopBar 64 px).
+**Architecture:** Le regroupement post→date est une fonction pure (`src/utils/postDates.ts`) prouvée par un script de check node sans dépendance (même astuce esbuild que `check:layout`). Le calendrier est un composant d'enveloppe (`src/components/PostCalendarPanel.tsx`) autour du `Calendar` shadcn existant (react-day-picker v8), rendu en panneau fixe haut-gauche — pas de popover — les fichiers de `src/components/ui/` ne sont jamais édités (AI_RULES). Le panneau vit dans `Index.tsx`, qui réutilise le mécanisme existant `postIdToScrollTo` (effet de scroll + compensation TopBar 64 px).
 
-**Tech Stack:** React 18 + TypeScript, Tailwind CSS, shadcn/ui `Popover` + `Calendar` (react-day-picker v8), date-fns v3 (déjà installés — aucune dépendance nouvelle).
+**Tech Stack:** React 18 + TypeScript, Tailwind CSS, shadcn/ui `Calendar` (react-day-picker v8), date-fns v3 (déjà installés — aucune dépendance nouvelle).
 
 **Spec:** `docs/superpowers/specs/2026-11-27-calendar-post-navigation-design.md`
-**Mockup (option C retenue + démo interactive du clic) :** `docs/mockups/calendar-post-navigation.html`
+**Mockup (panneau fixe haut-gauche + démo interactive du clic, testé headless) :** `docs/mockups/calendar-post-navigation.html` — vérifiable par `node scripts/check-calendar-mockup.mjs`
 
 ## Global Constraints
 
-- Aucune dépendance nouvelle : `react-day-picker`, `date-fns`, `Popover`, `Calendar` sont déjà en place.
+- Aucune dépendance nouvelle : `react-day-picker`, `date-fns`, `Calendar` sont déjà en place.
 - Ne pas éditer `src/components/ui/*` : tout stylage du calendrier passe par une enveloppe et des classes Tailwind/`modifiersClassNames`.
 - Données : `post.created_at` uniquement (choisie par l'auteur via `PostDatePicker`) — pas de nouveau champ, pas de backend. Regroupement en **date locale**, cohérent avec l'affichage des cartes.
 - Posts **publiés** seulement (`posts`, jamais `drafts`) ; ancre = premier post de la journée **dans l'ordre affiché** (`sortOrder` respecté).
@@ -24,22 +24,21 @@
 
 Comportement que la spec implique mais qu'aucun test ne épingle directement — à vérifier à l'œil dans l'app (Task 5) :
 
-- **Voyage multi-mois :** les chevrons passent de mois en mois et se désactivent aux bornes ; les jours hors étendue du voyage sont atténués et non cliquables.
+- **Voyage multi-mois :** les chevrons passent de mois en mois et se désactivent aux bornes ; les jours hors étendue du voyage sont atténués et non cliquables ; un jour dans l'étendue sans post reste actif visuellement mais inerte.
 - **Plusieurs posts le même jour :** le scroll s'arrête sur le **premier** de la journée dans l'ordre affiché ; avec `sortOrder = 'asc'`, c'est le plus ancien du jour.
 - **Clic depuis la vue grille ou carte :** bascule en liste d'abord, puis scroll (le post ciblé est bien à l'écran après la bascule, pas scrollé avant le rendu de la liste).
 - **Surbrillance :** l'anneau apparaît après l'arrêt du scroll et disparaît en ~1,6 s ; pas d'anneau fantôme si on re-clique une autre date rapidement.
-- **Mobile 375 px :** le popover tient en largeur (cellules compactes), la rangée de réglages wrappe proprement, le FAB n'est pas recouvert.
+- **Panneau fixe :** il reste en haut à gauche pendant tout le scroll ; le wall n'est jamais recouvert ; à `columnCount` 2/3 le décalage tient toujours (cf. Left to the builder de la spec).
 - **Locale :** noms de mois/jours suivent la langue de l'utilisateur (fr/en/de/es).
-- **`columnCount` 1→3 :** le bouton ne décale pas la rangée de réglages ni le centrage du `ViewToggle`.
-- **Journey sans post :** pas de bouton calendrier (rien à naviguer).
+- **Journey sans post :** pas de panneau calendrier (rien à naviguer).
 
 ## File Structure
 
 - Create `src/utils/postDates.ts` — pur : clé de date locale, regroupement, étendue mensuelle du voyage.
 - Create `scripts/check-post-dates.mjs` — assertions sur l'util transpilé.
 - Modify `package.json` — ajouter le script `check:dates`.
-- Create `src/components/PostCalendarPopover.tsx` — bouton + popover + calendrier marqué, enveloppe de `ui/calendar`.
-- Modify `src/pages/Index.tsx` — déclencheur dans la rangée de réglages, handler de clic, état de surbrillance.
+- Create `src/components/PostCalendarPanel.tsx` — panneau fixe haut-gauche + calendrier marqué, enveloppe de `ui/calendar`.
+- Modify `src/pages/Index.tsx` — rendu du panneau, décalage du wall, handler de clic, état de surbrillance.
 - Modify `public/locales/{fr,en,de,es}/translation.json` — clés i18n.
 - Modify `agents.md` — conventions calendrier (une ligne).
 
@@ -86,47 +85,46 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 
 ---
 
-### Task 2: PostCalendarPopover (enveloppe du Calendar shadcn)
+### Task 2: PostCalendarPanel (enveloppe du Calendar shadcn, panneau fixe)
 
 **Files:**
-- Create: `src/components/PostCalendarPopover.tsx`
+- Create: `src/components/PostCalendarPanel.tsx`
 
 **Interfaces:**
-- Consumes: `groupPostsByDate`, `journeyMonthRange`, `dateKey` (Task 1) ; `Calendar` de `@/components/ui/calendar`, `Popover`/`PopoverTrigger`/`PopoverContent` de `@/components/ui/popover`, `Button` de `@/components/ui/button`, `getDateFnsLocale`, `useTranslation`, `cn`.
+- Consumes: `groupPostsByDate`, `journeyMonthRange`, `dateKey` (Task 1) ; `Calendar` de `@/components/ui/calendar`, `getDateFnsLocale`, `useTranslation`, `cn`.
 - Produces:
   ```ts
-  interface PostCalendarPopoverProps {
+  interface PostCalendarPanelProps {
     posts: Post[];                      // posts publiés, dans l'ordre affiché
     onDateSelect: (dateKey: string, firstPostId: string) => void;
-    disabled?: boolean;
   }
   ```
-  et `PostCalendarPopover` en export par défaut. Référence de rendu : option C du mockup.
+  et `PostCalendarPanel` en export par défaut. Référence de rendu : le mockup
+  `docs/mockups/calendar-post-navigation.html` (panneau fixe haut-gauche).
 
 - [ ] **Step 1: Implement the component.**
   - `group = useMemo(() => groupPostsByDate(posts), [posts])` ; `range = useMemo(() => journeyMonthRange(posts), [posts])`.
-  - Déclencheur : `PopoverTrigger asChild` sur un `Button variant="outline"` hauteur 32 px assorti aux toggles, icône `CalendarDays` (lucide) + compte des posts datés ; `aria-label` i18n. Ne rien rendre si `posts.length === 0`.
-  - `PopoverContent` `w-auto p-0` (comme `PostDatePicker`), `align="start"`.
-  - `Calendar` `mode="single"` (aucune sélection persistante : `selected` non contrôlé, `onSelect` intercepté), `locale={getDateFnsLocale()}`, `fromMonth={range.startMonth}` / `toMonth={range.endMonth}`, `month` contrôlé (state interne, défaut = `startOfMonth` du **premier post du tableau** — l'ordre affiché) + `onMonthChange`, `fixedWeeks`.
-  - `modifiers={{ hasPosts: datesDuGroupe }}` (une `Date` locale par clé, construite à midi pour éviter tout glissement frontière) et `modifiersClassNames={{ hasPosts: 'relative font-semibold ...' }}` avec le point en pseudo-élément Tailwind Arbitrary (`after:absolute after:bottom-1 after:left-1/2 ... after:bg-primary after:rounded-full after:size-[5px]`) — calé sur le mockup ; jour survolé `hover:bg-primary/20`.
+  - Panneau : conteneur `fixed` haut-gauche (`top: 6rem; left: 1.5rem` au mockup, largeur ≈ 264 px, `Card` + bordure + ombre assorties au wall), `aria-label` i18n. Non rendu si `posts.length === 0`. **Desktop uniquement** : masqué sous le breakpoint choisi (mobile hors périmètre — cf. spec), p. ex. `hidden lg:block`.
+  - `Calendar` `mode="single"` (aucune sélection persistante : `selected` non contrôlé, `onSelect` intercepté), `locale={getDateFnsLocale()}`, `fromMonth={range.startMonth}` / `toMonth={range.endMonth}`, `month` contrôlé (state interne, défaut = `startOfMonth` du **premier post du tableau** — l'ordre affiché) + `onMonthChange`, `fixedWeeks`, style compact du mockup (cellules ~2rem).
+  - `modifiers={{ hasPosts: datesDuGroupe }}` (une `Date` locale par clé, construite à midi pour éviter tout glissement frontière) et `modifiersClassNames={{ hasPosts: '... rounded-full ring-2 ring-primary font-semibold cursor-pointer hover:bg-primary/20' }}` — **jour entouré d'un anneau dans la couleur du thème** (remplace le point de la v1), calé sur le mockup ; jour hors étendue atténué et non cliquable.
   - Chaque jour marqué : `title` et `aria-label` « {date PPP} — {n} post(s) » (clé i18n avec interpolation `count`).
-  - `onSelect(date)` → `key = dateKey(date.toISOString())` ; `firstPostIdForDate(group, key)` ; si trouvé : fermer le popover (state interne) puis `onDateSelect(key, firstPostId)` ; jour sans post : ignorer (pas de scroll, pas de fermeture).
+  - `onSelect(date)` → `key = dateKey(date.toISOString())` ; `firstPostIdForDate(group, key)` ; si trouvé : `onDateSelect(key, firstPostId)` (pas de fermeture de popover : le panneau est permanent) ; jour sans post : ignorer.
 
-- [ ] **Step 2: Typecheck and lint** — `npx tsc --noEmit -p tsconfig.app.json && npx eslint src/components/PostCalendarPopover.tsx`. Expected: exit 0 both.
+- [ ] **Step 2: Typecheck and lint** — `npx tsc --noEmit -p tsconfig.app.json && npx eslint src/components/PostCalendarPanel.tsx`. Expected: exit 0 both.
 
-- [ ] **Step 3: Commit** — commit `feat(posts): add calendar popover with post-date markers`.
+- [ ] **Step 3: Commit** — commit `feat(posts): add fixed calendar panel with post-date ring markers`.
 
 ---
 
-### Task 3: Wire into Index.tsx (déclencheur, scroll, surbrillance)
+### Task 3: Wire into Index.tsx (panneau, décalage du wall, scroll, surbrillance)
 
 **Files:**
-- Modify: `src/pages/Index.tsx` (rangée de réglages lignes ~366-374 ; handler ; état)
+- Modify: `src/pages/Index.tsx`
 
 **Interfaces:**
-- Consumes: `PostCalendarPopover` (Task 2).
+- Consumes: `PostCalendarPanel` (Task 2).
 
-- [ ] **Step 1: Add the trigger** dans la rangée de réglages du `TabsContent value="posts"` : dans le groupe absolu de gauche, après `ColumnToggle` (avant le `ViewToggle` centré). Passé `posts={displayedPosts}` (l'ordre trié courant) et `onDateSelect={handleCalendarDateSelect}`. Non rendu quand `displayedPosts.length === 0` (la rangée n'existe déjà que dans ce cas inverse).
+- [ ] **Step 1: Render the panel** au-dessus/à côté du wall (le wall est décalé d'un `padding-left` pour ne jamais passer sous le panneau fixe — valeur du mockup : 316 px desktop). Passé `posts={displayedPosts}` (l'ordre trié courant) et `onDateSelect={handleCalendarDateSelect}`. Non rendu quand `displayedPosts.length === 0`.
 
 - [ ] **Step 2: Implement the handler** — même squelette que la branche mobile de `handlePostClick` :
   ```ts
@@ -142,7 +140,7 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 
 - [ ] **Step 4: Verify the build** — `npx tsc --noEmit -p tsconfig.app.json && npm run build && npm run check:dates`. Expected: exit 0 partout.
 
-- [ ] **Step 5: Commit** — commit `feat(posts): navigate the wall by date from a calendar popover`.
+- [ ] **Step 5: Commit** — commit `feat(posts): navigate the wall by date from a fixed calendar panel`.
 
 ---
 
@@ -152,7 +150,7 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 - Modify: `public/locales/fr/translation.json`, `en`, `de`, `es`
 
 - [ ] **Step 1: Add the keys** (reprendre l'existant du namespace `indexPage`) :
-  - `indexPage.calendarNavigatePosts` — aria-label du bouton (fr : « Naviguer par date », en : « Navigate by date », de : « Nach Datum navigieren », es : « Navegar por fecha ») ;
+  - `indexPage.calendarPanel` — aria-label du panneau (fr : « Calendrier du voyage », en : « Journey calendar », de : « Reisekalender », es : « Calendario del viaje ») ;
   - `indexPage.dayWithPosts` — info-bulle des jours marqués, avec `{{date}}` et `{{count}}` (fr : « {{date}} — {{count}} post » / pluriel « posts » via les formes i18next `_one`/`_other` si le fichier les utilise déjà, sinon forme simple).
 
 - [ ] **Step 2: Typecheck** (les JSON ne sont pas typés, mais `npm run build` les valide au chargement i18next-http-backend) — `npx tsc --noEmit -p tsconfig.app.json && npm run build`. Expected: exit 0.
@@ -166,10 +164,10 @@ Comportement que la spec implique mais qu'aucun test ne épingle directement —
 **Files:**
 - Modify: `agents.md`
 
-- [ ] **Step 1: Run the app and walk the Review Focus list** — `npm run dev` (port 8080). Sur un voyage multi-mois : mois par défaut = celui du post du haut ; chevrons bornés ; jours hors voyage atténués ; clic sur un jour à 2+ posts → ancre sur le premier selon le tri courant ; tri inversé puis re-clic → ancre sur l'autre post ; clic depuis la vue carte et la vue grille → bascule liste + scroll + anneau 1,6 s ; re-clic rapide sur une autre date → un seul anneau actif ; `columnCount` 1→3 ; viewport 375 px (popover pleine largeur, rangée wrappée, FAB visible) ; langue en (noms de mois anglais) ; voyage vide → pas de bouton. Reporter ce qui a été vu avant de déclarer le fait.
+- [ ] **Step 1: Run the app and walk the Review Focus list** — `npm run dev` (port 8080). Sur un voyage multi-mois : mois par défaut = celui du post du haut ; chevrons bornés ; jours hors voyage atténués ; jour dans l'étendue sans post inerte ; clic sur un jour à 2+ posts → ancre sur le premier selon le tri courant ; tri inversé puis re-clic → ancre sur l'autre post ; clic depuis la vue carte et la vue grille → bascule liste + scroll + anneau 1,6 s ; re-clic rapide sur une autre date → un seul anneau actif ; le panneau reste fixe pendant le scroll et le wall ne passe jamais dessous ; `columnCount` 1→3 ; langue en (noms de mois anglais) ; voyage vide → pas de panneau. Reporter ce qui a été vu avant de déclarer le fait.
 
-- [ ] **Step 2: Update `agents.md`** — ajouter aux conventions une ligne : navigation par date = `PostCalendarPopover` (popover depuis la rangée de réglages, `postDates.ts` pour le regroupement, ancre = premier post du jour dans l'ordre affiché, surbrillance 1,6 s), et `check:dates` dans les Checks.
+- [ ] **Step 2: Update `agents.md`** — ajouter aux conventions une ligne : navigation par date = `PostCalendarPanel` (panneau fixe haut-gauche, desktop only, `postDates.ts` pour le regroupement, ancre = premier post du jour dans l'ordre affiché, marquage = anneau `ring-primary`, surbrillance 1,6 s), et `check:dates` dans les Checks.
 
 - [ ] **Step 3: Commit** — commit `chore(docs): document calendar navigation conventions in agents.md`.
 
-- [ ] **Step 4: Report.** Push/merge : le contrôleur demande au partenaire humain. Le placement (option C) et le style de marquage (point) restent à confirmer par l'humain — cf. spec, section Decisions.
+- [ ] **Step 4: Report.** Push/merge : le contrôleur demande au partenaire humain. Le mockup est testé headless (`node scripts/check-calendar-mockup.mjs`) ; le breakpoint de masquage mobile reste à choisir à l'implémentation — cf. spec, section Left to the builder.

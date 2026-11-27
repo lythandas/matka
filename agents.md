@@ -31,14 +31,24 @@ in `src/components/ui/` are not edited — wrap them instead).
   are authoritative.
 - `docs/mockups/calendar-post-navigation.html` + spec/plan
   `2026-11-27-calendar-post-navigation*` — calendar navigation by post date:
-  popover from the settings row (option C), `post.created_at` is the travel date
-  (author-set), dot markers, click scrolls to the day's first post via the
-  existing `postIdToScrollTo` effect. Spec/plan only — not implemented yet.
+  **small static calendar fixed top-left** of the page (desktop only, mobile
+  out of scope), days with posts **ringed in the theme color**, click scrolls
+  to the day's first post (existing `postIdToScrollTo` effect) with a ~1.6 s
+  highlight ring. v2 reproduces the real rendered theme (vanilla `globals.css`
+  tokens + TopBar/wall/ListPostCard classes) and is checked headless by
+  `scripts/check-calendar-mockup.mjs` (emulated DOM, no browser, no image).
+  v1 (commit 4420320) broke in the browser — its script referenced bare
+  globals (`wall_a`) that the browser's named-element access never resolves
+  (ids were hyphenated: `wall-a`) → `ReferenceError` killed the whole script.
+  Spec/plan updated to the fixed-panel decision — not implemented in the app
+  yet.
 
 ## Checks
 
 - `npm run check:layout` — unit-checks `mediaLayout` geometry via
   `scripts/check-media-layout.mjs`.
+- `node scripts/check-calendar-mockup.mjs` — headless check of the calendar
+  mockup (static references + emulated-DOM execution + behaviour assertions).
 - `npx tsc --noEmit -p tsconfig.app.json` — type-check.
 - `npm run build` — production build. `npm run lint` — ESLint.
 - `npm run dev` — Vite dev server on port **8080** (set in both `package.json`
