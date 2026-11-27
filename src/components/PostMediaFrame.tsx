@@ -2,6 +2,8 @@ import * as React from "react";
 
 import { MediaInfo } from "@/types";
 import { useMediaRatios } from "@/hooks/useMediaRatios";
+import { useImagePreload } from "@/hooks/useImagePreload";
+import { thumbnailUrl } from "@/utils/mediaUrls";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_GAP,
@@ -36,15 +38,49 @@ type VideoInfo = Extract<MediaInfo, { type: "video" }>;
 
 /**
  * Display URL of an image media item, in ListPostCard's preference order —
- * "" when the item has no URL at all.
+ * downscaled to the backend's thumbnail variant when the URL maps to one
+ * (same aspect ratio, a fraction of the bytes), "" when the item has no URL
+ * at all.
  */
 function imageUrl(image: ImageInfo): string {
-  return image.urls.medium ?? image.urls.original ?? "";
+  return thumbnailUrl(image.urls.medium ?? image.urls.original) ?? "";
+}
+
+/**
+ * Full-resolution URL of an image media item, in PostDetailDialog's
+ * preference order — what a click on the card will show, and therefore what
+ * the background preloader should warm the browser cache with.
+ */
+function fullSizeUrl(image: ImageInfo): string {
+  return image.urls.large ?? image.urls.original ?? image.urls.medium ?? "";
 }
 
 /** Src of a rendered block: a URL-less image shows the placeholder directly. */
 function imageSrc(image: ImageInfo): string {
   return imageUrl(image) || PLACEHOLDER_SRC;
+}
+
+/**
+ * onError of a block <img>: a failed thumbnail (backend not upgraded,
+ * generation failed) retries the original full-size URL rather than dropping
+ * the photo; only a second failure shows the placeholder. The attribute is
+ * read back because `element.src` would return an absolute URL.
+ */
+function handleImageError(
+  event: React.SyntheticEvent<HTMLImageElement>,
+  image: ImageInfo,
+): void {
+  const element = event.currentTarget;
+  if (element.getAttribute("src")?.startsWith("/thumbs/")) {
+    element.onerror = () => {
+      element.onerror = null;
+      element.src = PLACEHOLDER_SRC;
+    };
+    element.src = image.urls.medium ?? image.urls.original ?? PLACEHOLDER_SRC;
+    return;
+  }
+  element.onerror = null;
+  element.src = PLACEHOLDER_SRC;
 }
 
 /**
@@ -84,11 +120,23 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
   // prefix of `images`, so block↔ratio index alignment cannot shift, and
   // shrinking it releases the dropped URLs' waiters (aborting their in-flight
   // measurements). A 20-photo post on a phone measures 4 photos, not 20.
-  const measuredUrls = React.useMemo(() => {
+  const cappedImages = React.useMemo(() => {
     const cap =
       width > 0 ? visibleMediaCount(width, images.length) : MAX_MEDIA_BLOCKS;
-    return images.slice(0, cap).map(imageUrl);
+    return images.slice(0, cap);
   }, [images, width]);
+  const measuredUrls = React.useMemo(
+    () => cappedImages.map(imageUrl),
+    [cappedImages],
+  );
+
+  // Same slice, full-resolution URLs: what PostDetailDialog will show when
+  // the card is clicked. Measuring ratios on the thumbnails is correct (the
+  // backend only shrinks, never crops, so the ratio is identical).
+  const preloadUrls = React.useMemo(
+    () => cappedImages.map(fullSizeUrl),
+    [cappedImages],
+  );
 
   // Measurement is viewport-gated: until the frame comes within a few
   // hundred pixels of the viewport, zero ratio requests are issued (the
@@ -117,6 +165,14 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
   // and "" would poison a shared cache key — so such entries simply stay at
   // the FRAME_RATIO fallback.
   const ratios = useMediaRatios(measuredUrls, inView);
+
+  // Full-resolution preload for the detail dialog, gated on the same
+  // in-view signal as the thumbnails and scheduled at idle: the visible
+  // photos of a card the user has actually scrolled to are what a click will
+  // open, and the preloader's concurrency cap keeps this off the critical
+  // path. Photos beyond the block cap stay unloaded — the dialog fetches
+  // them on demand (accepted trade: they are behind a "+N" veil anyway).
+  useImagePreload(preloadUrls, inView);
 
   React.useEffect(() => {
     const element = frameRef.current;
@@ -196,10 +252,7 @@ const PostMediaFrame: React.FC<PostMediaFrameProps> = ({
                 alt={index === 0 ? alt : ""}
                 loading="lazy"
                 className="h-full w-full object-cover"
-                onError={(event) => {
-                  event.currentTarget.src = PLACEHOLDER_SRC;
-                  event.currentTarget.onerror = null;
-                }}
+                onError={(event) => handleImageError(event, images[index])}
               />
               {isLast && hidden > 0 && (
                 <div className="absolute inset-0 bg-black/45 flex items-center justify-center text-sm font-bold text-white">

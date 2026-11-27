@@ -13,6 +13,9 @@ import { getDateFnsLocale } from '@/utils/date-locales'; // Import the locale ut
 import { format } from 'date-fns'; // Import format for date formatting
 import MapComponent from './MapComponent'; // Import MapComponent
 import PostActions from './PostActions'; // Import PostActions
+import { useImagePreload } from '@/hooks/useImagePreload';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { thumbnailUrl } from '@/utils/mediaUrls';
 
 interface GridPostCardProps {
   post: Post;
@@ -45,15 +48,35 @@ const GridPostCard: React.FC<GridPostCardProps> = ({
 
   let mediaElement: React.ReactNode = null;
 
+  // Full-resolution URL of the first image: what PostDetailDialog shows on
+  // click, queued for background preload once the card nears the viewport.
+  const firstImageUrl = firstMedia?.type === 'image'
+    ? (firstMedia.urls.large ?? firstMedia.urls.original ?? firstMedia.urls.medium)
+    : undefined;
+  const [gridCardRef, gridCardInView] = useInViewOnce<HTMLDivElement>();
+  useImagePreload(firstImageUrl ? [firstImageUrl] : [], gridCardInView);
+
   if (firstMedia?.type === 'image') {
     mediaElement = (
       <img
-        src={firstMedia.urls.medium || '/placeholder.svg'}
+        src={thumbnailUrl(firstMedia.urls.medium || firstMedia.urls.original) || '/placeholder.svg'}
         alt={post.title || t('common.postImage')}
         className="object-cover w-full h-full"
+        loading="lazy"
         onError={(e) => {
-          e.currentTarget.src = '/placeholder.svg';
-          e.currentTarget.onerror = null;
+          // Failed thumbnail: retry the original before giving up on the
+          // placeholder (attribute read back: element.src is absolute).
+          const img = e.currentTarget;
+          if (img.getAttribute('src')?.startsWith('/thumbs/')) {
+            img.onerror = () => {
+              img.onerror = null;
+              img.src = '/placeholder.svg';
+            };
+            img.src = firstMedia.urls.medium || firstMedia.urls.original || '/placeholder.svg';
+            return;
+          }
+          img.src = '/placeholder.svg';
+          img.onerror = null;
         }}
       />
     );
@@ -85,6 +108,7 @@ const GridPostCard: React.FC<GridPostCardProps> = ({
 
   return (
     <Card
+      ref={gridCardRef}
       className={cn(
         "relative overflow-hidden rounded-lg shadow-md cursor-pointer group hover:ring-2 hover:ring-ring hover:shadow-neon transition-all duration-200",
         className
